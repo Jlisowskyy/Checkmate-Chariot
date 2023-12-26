@@ -1,6 +1,7 @@
-#include <iostream>
+#include <cstdlib>
+#include "include/ChessEngine.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
+    ChessEngineMainEntry();
+    return EXIT_SUCCESS;
 }

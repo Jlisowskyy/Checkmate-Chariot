@@ -1,0 +1,8 @@
+//
+// Created by Jlisowskyy on 12/26/23.
+//
+
+#ifndef SEARCHTHREADCORDINATION_H
+#define SEARCHTHREADCORDINATION_H
+
+#endif //SEARCHTHREADCORDINATION_H
