@@ -6,33 +6,28 @@
 #define ENGINE_H
 
 #include "UCIOptions.h"
+#include "EngineTypeDefs.h"
+#include "FenTranslator.h"
 
 class Engine {
-// ------------------------------
-    // Class inner types
-    // ------------------------------
-public:
-
-    struct SearchResult{
-
-    };
-
-
     // --------------------------------------
     // Type creation and initialization
     // --------------------------------------
 public:
     Engine() {}
 
-    void Initialize() {}
+    void Initialize() {
+        board = FenTranslator::Translate(startingPosition);
+    }
 
     // ------------------------------
     // Type interaction
     // ------------------------------
 
+    void writeBoard() const { std::cout << board; }
     static const EngineInfo& GetEngineInfo() { return engineInfo; }
     void RestartEngine() { std::cout << "ucinewgame result! " << std::endl; }
-    void StopSearch() { std::cout << "stop seearch resullt! " << std::endl; }
+    void StopSearch() { std::cout << "stop search resullt! " << std::endl; }
     void GoPerft() { std::cout << "go perft result! " << std::endl; }
     void GoDepth(lli depth) { std::cout << "go depth resutl: " << depth << std::endl; }
     void GoMovetime(lli time) { std::cout << "go movetime resutl: " << time << std::endl; }
@@ -46,7 +41,6 @@ public:
 
         return true;
     }
-
 
     // ------------------------------
     // private methods
@@ -65,9 +59,18 @@ private:
     // private fields
     // ------------------------------
 private:
+
+    Board board{};
+    inline static const char* startingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+    // ------------------------------
+    // Engine options
+    // ------------------------------
+
     lli _threadCount = 1;
     std::string _debugPath;
 
+    // Options available in engine
     inline static const OptionT<Option::OptionType::spin> Threads{"Threads", _changeThreadCount, 1, 1024, 1};
     inline static const OptionT<Option::OptionType::string> DebugLogFile{"Debug Log File", _changeDebugState, ""};
 

@@ -10,8 +10,10 @@ add_executable(ChessEngine main.cpp
         src/SearchThreadCordination.cpp
         include/SearchThreadCordination.h
         src/UCITranslator.cpp
-        include/UCITranslator.h
         include/UCIOptions.h
         src/Engine.cpp
         include/Engine.h
+        include/EngineTypeDefs.h
+        src/FenTranslator.cpp
+        include/FenTranslator.h
 )
