@@ -6,6 +6,7 @@
 #define UCITRANSLATOR_H
 
 #include <iostream>
+#include <variant>
 
 #include "Engine.h"
 
@@ -72,43 +73,114 @@ private:
                 return _goResponse(buffer.substr(pos));
             if (workStr == "stop")
                 return _stopResponse();
-            if (workStr == "quit")
+            if (workStr == "quit" || workStr == "exit")
                 return UCICommand::quitCommand;
         }
 
         return UCICommand::InvalidCommand;
     }
 
-    [[nodiscard]] UCICommand _stopResponse() {
+    UCICommand _stopResponse() const {
+        engine.StopSearch();
         return  UCICommand::stopCommand;
     }
 
-    [[nodiscard]] UCICommand _goResponse(const std::string& str) {
+    [[nodiscard]] UCICommand _goResponse(const std::string& str) const{
+        std::string workStr;
+        size_t pos = _genNextWord(str, workStr, 0);
+        if (pos == 0) return UCICommand::InvalidCommand;
+
+        if (workStr == "perft")
+            engine.GoPerft();
+        else if (workStr == "infinite")
+            engine.GoInfinite();
+        else if (workStr == "depth") {
+            pos = _genNextWord(str, workStr, pos);
+            if (pos == 0) return UCICommand::InvalidCommand;
+            const lli arg = _parseTolli(workStr);
+            if (arg <= 0) return UCICommand::InvalidCommand;
+
+            engine.GoMovetime(arg);
+        }
+        else if (workStr == "movetime"){
+            pos = _genNextWord(str, workStr, pos);
+            if (pos == 0) return UCICommand::InvalidCommand;
+            const lli arg = _parseTolli(workStr);
+            if (arg <= 0) return UCICommand::InvalidCommand;
+
+            engine.GoMovetime(arg);
+        }
 
         return UCICommand::goCommand;
     }
 
     [[nodiscard]] UCICommand _positionResponse(const std::string& str) {
+        std::string workStr;
+        size_t pos = _genNextWord(str, workStr, 0);
+        if (pos == 0) return UCICommand::InvalidCommand;
+
+        const size_t movesCord = str.find("moves", pos);
+
+        if (workStr == "fen") {
+            const std::string fenPos = movesCord == std::string::npos ?
+                _getTrimmed(str.substr(pos)) : _getTrimmed(str.substr(pos, movesCord - pos));
+
+            engine.SetFenPosition(fenPos);
+        }
+        else if (workStr != "startpos")
+            return UCICommand::InvalidCommand;
+
+        if (movesCord != std::string::npos) {
+            pos = movesCord + 5;
+
+            std::vector<std::string> movesVect{};
+            while((pos = _genNextWord(str, workStr, pos)) != 0) {
+                movesVect.push_back(workStr);
+            }
+
+            if (!engine.ApplyMoves(movesVect))
+                return UCICommand::InvalidCommand;
+        }
 
         return UCICommand::positionCommand;
     }
 
-    [[nodiscard]] UCICommand _ucinewgameResponse() {
-
+    UCICommand _ucinewgameResponse() const {
+        engine.RestartEngine();
         return UCICommand::ucinewgameCommand;
     }
 
-    [[nodiscard]] UCICommand _setoptionResponse(const std::string& str) {
+    [[nodiscard]] UCICommand _setoptionResponse(const std::string& str) const {
+        std::string workStr;
+        size_t pos = _genNextWord(str, workStr, 0);
+        if (pos == 0 || workStr != "name") return UCICommand::InvalidCommand;
 
-        return UCICommand::setoptionCommand;
+        std::string optionName{};
+        while((pos = _genNextWord(str, workStr, pos)) != 0 && workStr != "value") {
+            optionName += workStr + ' ';
+        }
+
+        // space cleaning
+        if (!optionName.empty()) optionName.pop_back();
+
+        // TODO: Consider error mesage here - unrecognized option
+        if (!Engine::GetEngineInfo().options.contains(optionName))
+            return UCICommand::InvalidCommand;
+
+
+        // argument option
+        std::string arg = workStr != "value" ? std::string() : _getTrimmed(str.substr(pos));
+        if (Engine::GetEngineInfo().options.at(optionName)->TryChangeValue(arg, engine))
+            return UCICommand::setoptionCommand;
+        return UCICommand::InvalidCommand;
     }
 
-    UCICommand _uciResponse() const {
+    static UCICommand _uciResponse() {
         std::cout << "id name " << Engine::GetEngineInfo().name << '\n';
         std::cout << "id author " << Engine::GetEngineInfo().author << '\n';
 
         for(const auto& opt: Engine::GetEngineInfo().options) {
-            std::cout << opt.second;
+            std::cout << *opt.second;
         }
         std::cout << "uciok" << std::endl;
         return UCICommand::uciCommand;
@@ -126,7 +198,7 @@ private:
     {
         while(pos < str.length() && isblank(str[pos])) { ++pos; }
         const size_t beg = pos;
-        while(pos < str.length() && isalnum(str[pos])) { ++pos; }
+        while(pos < str.length() && !isblank(str[pos])) { ++pos; }
         const size_t end = pos;
 
         if (beg == end) return 0;
@@ -135,13 +207,37 @@ private:
         return end;
     }
 
+    static lli _parseTolli(const std::string& str) {
+        errno = 0;
+        return strtoll(str.c_str(), nullptr, 10);
+    }
+
+    static size_t _trimLeft(const std::string& str){
+        size_t ind = 0;
+        while(ind < str.length() && std::isblank(str[ind])) { ++ind; }
+        return ind;
+    }
+
+    static size_t _trimRight(const std::string& str) {
+        size_t ind = str.length();
+        while(ind > 0 && std::isblank(str[ind])) { -- ind; }
+        return ind;
+    }
+
+    static std::string _getTrimmed(const std::string& str) {
+        const size_t tLeft = _trimLeft(str);
+        const size_t tRight = _trimRight(str);
+
+        if (tLeft > tRight) return "";
+
+        return str.substr(tLeft, tRight - tLeft);
+    }
+
     // ------------------------------
     // private fields
     // ------------------------------
 
     Engine& engine;
 };
-
-
 
 #endif //UCITRANSLATOR_H

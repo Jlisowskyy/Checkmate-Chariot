@@ -41,7 +41,7 @@ struct Option {
         return opt._printDetails(out);
     }
 
-    bool virtual TryChangeValue(std::string& nArg, Engine& eng) {
+    bool virtual TryChangeValue(std::string& nArg, Engine& eng) const {
         return false;
     }
 
@@ -92,7 +92,7 @@ private:
 
 public:
 
-    bool TryChangeValue(std::string& nArg, Engine& eng) override {
+    bool TryChangeValue(std::string& nArg, Engine& eng) const override {
         if (nArg == "true") {
             changeReaction(eng, true);
             return true;
@@ -136,7 +136,7 @@ private:
 
 public:
 
-    bool TryChangeValue(std::string& nArg, Engine& eng) override {
+    bool TryChangeValue(std::string& nArg, Engine& eng) const override {
         errno = 0;
 
         const lli result = strtoll(nArg.c_str(), nullptr, 10);
@@ -173,17 +173,17 @@ struct OptionT<Option::OptionType::combo>final : Option{
 
 private:
 
-    std::ostream& _printDetails(std::ostream& out) const final {
+    std::ostream& _printDetails(std::ostream& out) const override{
         out << "default " << defaultVal;
         for (const auto& var : predefinedVals) {
-            out << " var " << var;
+            out << " var \"" << var << "\"";
         }
         return out << '\n';
     }
 
 public:
 
-    bool TryChangeValue(std::string& nArg, Engine& eng) override {
+    bool TryChangeValue(std::string& nArg, Engine& eng) const override {
         if (!_isValidOption(nArg))
             return false;
 
@@ -230,7 +230,7 @@ private:
     // -------------------------------
 public:
 
-    bool TryChangeValue(std::string& nArg, Engine& eng) override {
+    bool TryChangeValue(std::string& nArg, Engine& eng) const override {
         changeReaction(eng);
         return true;
     }
@@ -251,13 +251,13 @@ struct OptionT<Option::OptionType::string>final : Option{
 
 private:
 
-    std::ostream& _printDetails(std::ostream& out) const final {
-        return out << "default " << defaultVal << '\n';
+    std::ostream& _printDetails(std::ostream& out) const override {
+        return out << "default \"" << defaultVal << "\"\n";
     }
 
 public:
 
-    bool TryChangeValue(std::string& nArg, Engine& eng) override {
+    bool TryChangeValue(std::string& nArg, Engine& eng) const override {
         changeReaction(eng, nArg);
         return true;
     }
@@ -276,7 +276,7 @@ struct EngineInfo {
     std::string author;
     std::string name;
 
-    std::map<std::string, Option> options;
+    std::map<std::string, const Option*> options;
 };
 
 #endif //UCIOPTIONS_H
