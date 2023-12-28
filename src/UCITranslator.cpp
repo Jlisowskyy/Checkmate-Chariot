@@ -4,7 +4,7 @@
 
 #include "../include/UCITranslator.h"
 
-void UCITranslator::BeginCommandTranslation() {
+void UCITranslator::BeginCommandTranslation() const {
     auto lastCommand = UCICommand::InvalidCommand;
 
     while (lastCommand != UCICommand::quitCommand) {
@@ -17,7 +17,7 @@ void UCITranslator::BeginCommandTranslation() {
     }
 }
 
-UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string& buffer) {
+UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string& buffer) const {
     std::string workStr;
     size_t pos = 0;
 

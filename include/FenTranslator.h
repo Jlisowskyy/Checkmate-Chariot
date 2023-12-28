@@ -6,9 +6,7 @@
 #define FENTRANSLATOR_H
 
 #include <string>
-#include <exception>
 #include <format>
-#include <stdexcept>
 
 #include "EngineTypeDefs.h"
 
@@ -17,70 +15,70 @@ struct FenTranslator {
     // Class interaction
     // ------------------------------
 
-    static Board Translate(const std::string& fenPos) {
-        Board workBoard{};
-        size_t pos = 0;
-
-        pos = _skipBlanks(pos, fenPos);
-        pos = _processPositions(workBoard, pos, fenPos);
-        pos = _skipBlanks(pos, fenPos);
-
-        return workBoard;
-    }
+    static Board GetDefault() { return StartBoard; }
+    static Board Translate(const std::string& fenPos)
+        // Function simply translates position from FEN notation into inner representation.
+    ;
 
     // ------------------------------
     // private methods
     // ------------------------------
 
+    static size_t _processElPassant(Board& bd, size_t pos, const std::string& fenPos)
+        // Function reads from fenPos ElPassant field specifying substring
+        // and saves this field inside inner board representation.
+        // Returns index of first blank character after that substring or EndOfString.
+    ;
 
-    static size_t _processPositions(Board& bd, size_t pos, const std::string& fenPos) {
-        int processedFields = 0;
-        std::string posBuffer = "00";
+    static size_t _processCastlings(Board& bd, size_t pos, const std::string& fenPos)
+        // Function reads from fenPos castling specifying substring and applies possibilites accordingly to that string.
+        // Returns index of first blank character after that substring or EndOfString.
+    ;
 
-        while(pos < fenPos.length() && !std::isblank(fenPos[pos])) {
-            posBuffer[0] = processedFields % 8 + 'a';
-            posBuffer[1] = '8' - (processedFields >> 3);
+    static size_t _processMovingColor(Board& bd, size_t pos, const std::string& fenPos)
+        // Function validates and applies moving color from fen notation into inner representation.
+        // Returns first blank character after color specifying character, that is pos + 1.
+    ;
 
-            const char val = fenPos[pos];
-            if (val >= '1' && val <= '8')
-                processedFields += val - '0';
-            else if (val != '/'){
-                _addFigure(posBuffer, val, bd);
-                ++processedFields;
-            }
+    static size_t _processPositions(Board& bd, size_t pos, const std::string& fenPos)
+        // Function translates fen figure representation to inner board representation.
+        // Returns index of first blank character after the solid position substring or EndOfString.
+    ;
 
-            if (processedFields > Board::BoardFields)
-                throw std::runtime_error(
-                    std::format("[ ERROR ] Too much fields are used inside passed fen position!\n")
-                );
+    static void _addFigure(const std::string& pos, char fig, Board& bd)
+        // Function simply adds figure encoded in 'fig' to board using map translating
+        // character encoding to to actual figure represetntation. String 'pos' contains position
+        // encoded in string also used to retreive inner board representation using translating map.
+    ;
 
-            ++pos;
+    static size_t _skipBlanks(size_t pos, const std::string& fenPos)
+        // Function returns first non blank character inside fenPos substring,
+        // which starts at 'pos' index and ends naturally
+    ;
+
+    // ------------------------------
+    // class fields
+    // ------------------------------
+
+    inline static constexpr Board StartBoard = {
+        .Castlings = { true, true, true, true },
+        .elPassantField = INVALID,
+        .movColor = WHITE,
+        .boards = {
+            65280LLU,
+            66LLU,
+            36LLU,
+            129LLU,
+            8LLU,
+            16LLU,
+            71776119061217280LLU,
+            4755801206503243776LLU,
+            2594073385365405696LLU,
+            9295429630892703744LLU,
+            576460752303423488LLU,
+            1152921504606846976LLU,
         }
-
-        if (processedFields < Board::BoardFields)
-            throw std::runtime_error(
-                std::format("[ ERROR ] Not enugh fields are used inside passed fen position!\n")
-            );
-
-        return pos;
-    }
-
-    static void _addFigure(const std::string& pos, char fig, Board& bd) {
-        const auto field = static_cast<uint64_t>(strFieldMap.at(pos));
-
-        if (!figToDescMap.contains(fig))
-            throw std::runtime_error(
-            std::format("[ ERROR ] Encountered invalid character ({0})inside fen position description!\n", fig)
-            );
-
-        bd.boards[figToDescMap.at(fig)] |= field;
-    }
-
-    static size_t _skipBlanks(size_t pos, const std::string& fenPos) {
-        while(pos < fenPos.length() && std::isblank(fenPos[pos])) { ++pos; }
-        return pos;
-    }
-
+    };
 };
 
 #endif //FENTRANSLATOR_H

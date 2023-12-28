@@ -97,11 +97,11 @@ enum Field : uint64_t {
     H8 = 1LLU << 63
 };
 
-enum class CastlingPossibilities: size_t {
-    WhiteKingSite,
-    WhiteQueenSite,
-    BlackKingSite,
-    BlackQueenSite,
+enum CastlingPossibilities: size_t {
+    WhiteKingSide,
+    WhiteQueenSide,
+    BlackKingSide,
+    BlackQueenSide,
 };
 
 inline const std::unordered_map<size_t, Descriptors> figToDescMap{
@@ -277,38 +277,8 @@ struct Board {
         movColor = (movColor + 1) & 1;
     }
 
-    friend std::ostream& operator<<(std::ostream& out, const Board& bd) {
-        std::string posBuffer = "00";
+    friend std::ostream& operator<<(std::ostream& out, const Board& bd);
 
-        for(size_t y = 0; y < 8; ++y){
-            for(size_t x = 0; x < 8; ++x){
-                posBuffer[0] = x + 'a';
-                posBuffer[1] = '8' - y;
-                const uint64_t field = strFieldMap.at(posBuffer);
-
-                std::cout << ' ';
-
-                bool found = false;
-                for (size_t desc = 0; desc < Board::BoardsCount; ++desc) {
-                    if ((bd.boards[desc] & field) != 0) {
-                        std::cout << descToFigMap.at(desc);
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) std::cout << ' ';
-                std::cout << ' ';
-
-                if (x != 7) std::cout << '|';
-            }
-
-            std::cout << std::endl;
-            if (y != 7) std::cout << std::string(7 + 3 * 8, '-') << std::endl;
-        }
-
-
-        return out;
-    }
     // ------------------------------
     // Class fields
     // ------------------------------
@@ -317,11 +287,12 @@ struct Board {
     inline static constexpr size_t CastlingCount = 4;
     inline static constexpr size_t BoardFields = 64;
 
-    char Castlings[CastlingCount] = { false, false, false, false };
+    bool Castlings[CastlingCount] = { false, false, false, false };
     Field elPassantField = INVALID;
     unsigned int movColor = WHITE;
     uint64_t boards[BoardsCount] = { 0 };
 };
+
 
 struct SearchResult{
 

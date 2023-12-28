@@ -8,6 +8,7 @@
 #include "UCIOptions.h"
 #include "EngineTypeDefs.h"
 #include "FenTranslator.h"
+#include "Logger.h"
 
 class Engine {
     // --------------------------------------
@@ -32,7 +33,11 @@ public:
     void GoDepth(lli depth) { std::cout << "go depth resutl: " << depth << std::endl; }
     void GoMovetime(lli time) { std::cout << "go movetime resutl: " << time << std::endl; }
     void GoInfinite() { std::cout << "go infinite result! " << std::endl; }
-    void SetFenPosition(const std::string& fenStr) { std::cout << "Received fen pos: " << fenStr << std::endl; }
+
+    void SetFenPosition(const std::string& fenStr) {
+        board = FenTranslator::Translate(fenStr);
+    }
+
     bool ApplyMoves(const std::vector<std::string>& UCIMoves) {
         std::cout << "Received moves: ";
         for(auto& move : UCIMoves)
@@ -52,7 +57,7 @@ private:
     }
 
     static void _changeDebugState(Engine& eng, std::string& nPath) {
-        std::cout << "New debug path: " << nPath << '\n';
+        Logger::ChangeLogStream(nPath);
     }
 
     // ------------------------------

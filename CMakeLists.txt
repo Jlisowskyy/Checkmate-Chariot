@@ -16,4 +16,7 @@ add_executable(ChessEngine main.cpp
         include/EngineTypeDefs.h
         src/FenTranslator.cpp
         include/FenTranslator.h
+        src/Logger.cpp
+        include/Logger.h
+        src/EngineTypeDefs.cpp
 )

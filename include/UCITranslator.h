@@ -5,9 +5,6 @@
 #ifndef UCITRANSLATOR_H
 #define UCITRANSLATOR_H
 
-#include <iostream>
-#include <variant>
-
 #include "Engine.h"
 
 class UCITranslator {
@@ -38,14 +35,14 @@ public:
     // Clas interaction
     // ------------------------------
 
-    void BeginCommandTranslation();
+    void BeginCommandTranslation() const;
 
     // ------------------------------
     // private methods
     // ------------------------------
 private:
 
-    [[nodiscard]] UCICommand _cleanMessage(const std::string& buffer);
+    [[nodiscard]] UCICommand _cleanMessage(const std::string& buffer) const;
     UCICommand _stopResponse() const;
     [[nodiscard]] UCICommand _goResponse(const std::string& str) const;
     [[nodiscard]] UCICommand _positionResponse(const std::string& str) const;
