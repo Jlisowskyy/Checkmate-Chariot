@@ -50,8 +50,9 @@ struct RookMap {
     // ---------------------------------------
 
      RookMap(){
-        _initMasks();
-        _initMaps();
+         _initMasks();
+         _initMaps();
+         _initMoves();
     }
 
     void FindHashParameters() {
@@ -116,6 +117,10 @@ struct RookMap {
     // private methods
     // ------------------------------
 private:
+
+    void _initMoves() {
+
+    }
 
     void _initMaps() {
         for (size_t y = 0; y < 8; ++y) {
