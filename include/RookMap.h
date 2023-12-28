@@ -6,11 +6,18 @@
 #define ROOKMAP_H
 
 #include <array>
+#include <cmath>
+#include <mutex>
+#include <vector>
+#include <random>
+#include <unistd.h>
 
 #include "EngineTypeDefs.h"
 
 struct RookMap {
-    constexpr RookMap() = default;
+    // ------------------------------
+    // Class inner types
+    // ------------------------------
 
     struct GenRecord {
         Field field;
@@ -19,16 +26,132 @@ struct RookMap {
     };
 
     struct mapRecord {
-        uint64_t lMask;
-        uint64_t rMask;
-        uint64_t uMask;
-        uint64_t dMask;
+        uint64_t lMask{};
+        uint64_t rMask{};
+        uint64_t uMask{};
+        uint64_t dMask{};
+        uint64_t mask{};
 
-        // TODO: second map
+        uint64_t a{}, b{};
+        uint64_t moduloMask{};
+        uint64_t primeNumber{};
+
+        uint64_t* map{};
+        size_t mapSize{};
+
+        mapRecord() = default;
+        ~mapRecord() {
+            delete[] map;
+        }
     };
 
+    // ---------------------------------------
+    // Class creation and initialization
+    // ---------------------------------------
+
+     RookMap(){
+        _initMasks();
+        _initMaps();
+    }
+
+    void FindHashParameters() {
+        std::mutex guard{};
+
+        #pragma omp parallel for
+        for(int i = 0; i < Board::BoardFields; ++i) {
+            const int bInd = 63 - i;
+            std::mt19937_64 gen64{};
+            gen64.seed(time(nullptr));
+
+            // Possible neighbors generation.
+            auto possibilities = _genPossibleNeighbors(bInd, layer1[i]);
+
+            guard.lock();
+            std::cout << "Starting hash parameters search on index: " << bInd << std::endl;
+            guard.unlock();
+
+            bool wasColision = true;
+            while(wasColision) {
+                wasColision = false;
+
+                const uint64_t a = gen64();
+                const uint64_t b = gen64();
+
+                for (size_t j = 0; j < layer1[i].mapSize; ++j)
+                    layer1[i].map[j] = 0;
+
+                const size_t range = std::get<1>(possibilities);
+                for (size_t j = 0; j < range; ++j) {
+                    const size_t hash = ((a * possibilities[j] + b) % layer1[i].primeNumber) & layer1[i].moduloMask;
+
+                    if (layer1[i].map[hash] == 1) {
+                        wasColision = true;
+                        break;
+                    }
+
+                    layer1[i].map[hash] = 1;
+                }
+
+                if (!wasColision) {
+                    layer1[i].a = a;
+                    layer1[i].b = b;
+                }
+            }
+
+            guard.lock();
+            std::cout << "Finished hashing on mapIndex: " << i << " with acquired parameteres 'a': "
+                << layer1[i].a << " 'b': " << layer1[i].b << std::endl;
+            guard.unlock();
+        }
+    }
+
+    [[nodiscard]] uint64_t GetMoves(const int msbInd, const uint64_t fullBoard) const {
+        const size_t hash = ((layer1[msbInd].a * (fullBoard & layer1[msbInd].mask) + layer1[msbInd].b)
+            % layer1[msbInd].primeNumber) & layer1[msbInd].moduloMask;
+
+        return layer1[msbInd].map[hash];
+    }
+
+    // ------------------------------
+    // private methods
+    // ------------------------------
+private:
+
+    void _initMaps() {
+        for (size_t y = 0; y < 8; ++y) {
+            for (size_t x = 0; x < 8; ++x) {
+                const size_t bInd = y*8 + x;
+                const size_t mapInd = 63 - bInd;
+
+                const size_t minimalSize = _neighborLayoutPossibleCountOnField(static_cast<int>(x), static_cast<int>(y));
+                const size_t min2Pow = std::ceil(std::log2(static_cast<double>(minimalSize)));
+                layer1[mapInd].mapSize = 1 << min2Pow;
+                layer1[mapInd].moduloMask = (1 << min2Pow) - 1;
+                layer1[mapInd].primeNumber = PrimeNumberMap.at(1  << min2Pow);
+                layer1[mapInd].map = new uint64_t[1 << min2Pow]{0};
+            }
+        }
+    }
+
+    constexpr void _initMasks(){
+        for(int i = 0; i < Board::BoardFields; ++i) {
+            const int bInd = 63 - i;
+
+            // Calculating borders for valid mask generation;
+            const int lBarrier = (bInd / 8) * 8;
+            const int rBarrier = lBarrier + 7;
+
+            // Mask generation.
+            layer1[i].dMask = _genDMask(bInd);
+            layer1[i].lMask = _genLMask(lBarrier, bInd);
+            layer1[i].rMask = _genRMask(rBarrier, bInd);
+            layer1[i].uMask = _genUMask(bInd);
+            layer1[i].mask = layer1[i].lMask | layer1[i].rMask | layer1[i].uMask | layer1[i].dMask;
+        }
+    }
+
     template<class incFunc, class boundryCheckFunc>
-    constexpr static uint64_t GenMask(int barrier, int boardIndex, incFunc inc, boundryCheckFunc boundryCheck) {
+    constexpr static uint64_t _genMask(int barrier, int boardIndex, incFunc inc, boundryCheckFunc boundryCheck) {
         uint64_t mask = 0;
 
         while(boundryCheck(boardIndex = inc(boardIndex), barrier))
@@ -37,32 +160,39 @@ struct RookMap {
         return mask;
     }
 
-    constexpr static uint64_t GenRMask(const int barrier, const int boardIndex) {
-        return GenMask(barrier, boardIndex, [](const int x) -> int { return x + 1; }, [](const int ind, const int bar) -> bool { return ind < bar; });
+    constexpr static uint64_t _genRMask(const int barrier, const int boardIndex) {
+        return _genMask(barrier, boardIndex,
+            [](const int x) -> int { return x + 1; },
+            [](const int ind, const int bar) -> bool { return ind < bar; });
     }
 
-    constexpr static uint64_t GenLMask(const int barrier, const int boardIndex) {
-        return GenMask(barrier, boardIndex, [](const int x) -> int { return x - 1; }, [](const int ind, const int bar) -> bool { return ind > bar; });
+    constexpr static uint64_t _genLMask(const int barrier, const int boardIndex) {
+        return _genMask(barrier, boardIndex,
+            [](const int x) -> int { return x - 1; },
+            [](const int ind, const int bar) -> bool { return ind > bar; });
     }
 
-    constexpr static uint64_t GenUMask(const int barrier, const int boardIndex) {
-        return GenMask(barrier, boardIndex, [](const int x) -> int { return x + 8; }, [](const int ind, const int bar) -> bool { return ind < bar; });
+    constexpr static uint64_t _genUMask(const int boardIndex) {
+        return _genMask(56, boardIndex,
+            [](const int x) -> int { return x + 8; },
+            [](const int ind, const int bar) -> bool { return ind < bar; });
     }
 
-    constexpr static uint64_t GenDMask(const int barrier, const int boardIndex) {
-        return GenMask(barrier, boardIndex, [](const int x) -> int { return x - 8; }, [](const int ind, const int bar) -> bool { return ind > bar; });
+    constexpr static uint64_t _genDMask(const int boardIndex) {
+        return _genMask(7, boardIndex,
+            [](const int x) -> int { return x - 8; },
+            [](const int ind, const int bar) -> bool { return ind > bar; });
     }
 
-    static constexpr size_t MaxRookPossibleNeighbors = 7396;
-    static constexpr std::tuple<std::array<uint64_t, MaxRookPossibleNeighbors>, size_t>
-    GenPossibleNeighbors(const int bInd, const mapRecord& record) {
-        auto ret = std::make_tuple(std::array<uint64_t, MaxRookPossibleNeighbors>{}, size_t{});
+    static constexpr size_t MaxRookPossibleNeighbors = 144;
+    static std::array<uint64_t, MaxRookPossibleNeighbors> _genPossibleNeighbors(const int bInd, const mapRecord& record) {
+        std::array<uint64_t, MaxRookPossibleNeighbors> ret{};
         size_t usedFields = 0;
 
         const int lBarrier = ((bInd >> 3) << 3) - 1;
         const int rBarrier = lBarrier + 9;
-        const int uBarrier = 64;
-        const int dBarrier = -1;
+        constexpr int uBarrier = 64;
+        constexpr int dBarrier = -1;
 
         const uint64_t bPos = 1LLU << bInd;
         for (int l = bInd; l > lBarrier; --l) {
@@ -87,61 +217,43 @@ struct RookMap {
                             continue;
 
                         const uint64_t neighbor = (dPos | uPos | rPos | lPos) ^ bInd;
-                        std::get<0>(ret)[usedFields++] = neighbor;
+                        ret[usedFields++] = neighbor;
                     }
                 }
             }
         }
 
-        std::get<1>(ret) = usedFields;
         return ret;
     }
 
-    void Init() {
-
-        // Mask generation and possibilities generation
-        size_t allNeighbors = 0;
-        for(int i = 0; i < Board::BoardFields; ++i) {
-            const int bInd = 63 - i;
-
-            const int lBarrier = ((bInd >> 3) << 3);
-            const int rBarrier = lBarrier + 7;
-            const int uBarrier = 56;
-            const int dBarrier = 7;
-
-            layer1[i].dMask = GenDMask(dBarrier, bInd);
-            layer1[i].lMask = GenLMask(lBarrier, bInd);
-            layer1[i].rMask = GenRMask(rBarrier, bInd);
-            layer1[i].uMask = GenUMask(uBarrier, bInd);
-
-            auto possibilities = GenPossibleNeighbors(bInd, layer1[i]);
-            allNeighbors += std::get<1>(possibilities);
-            std::cout << "Position index: " << bInd << ", " << std::get<1>(possibilities) << std::endl;
-        }
-
-        std::cout << "All possible neighbors: " << allNeighbors << std::endl;
+    static constexpr uint64_t _genModuloMask(const size_t modSize) {
+        return (1LLU << modSize) - 1;
     }
 
-    // uint64_t GetMoves(uint64_t field, uint64_t neighbors) {
-    //
-    // }
-    //
-    // static uint64_t GetLeftBlock(uint64_t board, uint64_t field) {
-    //
-    // }
-    //
-    // static uint64_t GetRightBlock(uint64_t board, uint64_t field) {
-    //
-    // }
-    //
-    // static uint64_t GetUpperBlock(uint64_t board, uint64_t field) {
-    //
-    // }
-    //
-    // static uint64_t GetLowerBlock(uint64_t board, uint64_t field) {
-    //
-    // }
-private:
+    static size_t _neighborLayoutPossibleCountOnField(const int x, const int y){
+        const int lCount = std::max(1, x);
+        const int dCount = std::max(1, y);
+        const int uCount = std::max(1, 7-y);
+        const int rCount = std::max(1, 7-x);
+
+        return lCount * rCount * dCount * uCount;
+    }
+
+    static size_t _calculatePossibleMovesCount() {
+        size_t sum{};
+        for (int x = 0; x < 8; ++x) {
+            for (int y = 0; y < 8; ++y) {
+                sum += _neighborLayoutPossibleCountOnField(x, y);
+            }
+        }
+
+        return sum;
+    }
+
+    // ------------------------------
+    // Class fields
+    // ------------------------------
+
     mapRecord layer1[Board::BoardFields] {};
 };
 

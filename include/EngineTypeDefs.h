@@ -268,6 +268,15 @@ inline const std::unordered_map<std::string, Field> strFieldMap{
         {"h8", H8}
 };
 
+inline std::unordered_map<size_t, uint64_t> PrimeNumberMap{
+    {8, 11},
+    {16, 17},
+    {32, 37},
+    {64, 67},
+    {128, 131},
+    {256, 257},
+};
+
 void DisplayMask(uint64_t mask);
 
 struct Board {

@@ -21,4 +21,16 @@ add_executable(ChessEngine main.cpp
         src/EngineTypeDefs.cpp
         src/RookMap.cpp
         include/RookMap.h
+        src/BishopMap.cpp
+        include/BishopMap.h
+        src/KnightMap.cpp
+        include/KnightMap.h
 )
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(ChessEngine PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
+target_compile_options(ChessEngine  PUBLIC -O3;-march=native;-fopenmp)
+#target_compile_options(ChessEngine PUBLIC -fopenmp)

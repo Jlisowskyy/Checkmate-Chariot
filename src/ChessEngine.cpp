@@ -17,8 +17,10 @@ void ChessEngineMainEntry() {
 
 void ChessHashingTest1() {
     static constexpr const char* rookTest = "R7/7R/8/8/8/3R4/8/8 w - -";
+    srand(time(nullptr));
+
     RookMap rMap{};
-    rMap.Init();
+    rMap.FindHashParameters();
 
     // Engine engine{};
     // engine.SetFenPosition(rookTest);
