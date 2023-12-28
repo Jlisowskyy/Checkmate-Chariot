@@ -19,4 +19,6 @@ add_executable(ChessEngine main.cpp
         src/Logger.cpp
         include/Logger.h
         src/EngineTypeDefs.cpp
+        src/RookMap.cpp
+        include/RookMap.h
 )

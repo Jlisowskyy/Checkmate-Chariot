@@ -47,3 +47,15 @@ std::ostream& operator<<(std::ostream& out, const Board& bd) {
 
     return out;
 }
+
+void DisplayMask(const uint64_t mask) {
+    for (int y = 56; y >= 0; y-=8) {
+        for (int x = 0; x < 8; ++x) {
+            const uint64_t pos = 1LLU << (y + x);
+
+            std::cout << ' ' << ((pos & mask) != 0 ? 'x' : ' ') << ' ' <<  (x != 7 ? '|' : '\n');
+        }
+
+        if (y != 0) std::cout << std::string(7 + 3 * 8, '-') << std::endl;
+    }
+}

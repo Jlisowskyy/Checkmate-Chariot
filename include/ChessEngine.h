@@ -6,5 +6,6 @@
 #define CHESS_ENGINE_H
 
 void ChessEngineMainEntry();
+void ChessHashingTest1();
 
 #endif //CHESS_ENGINE_H

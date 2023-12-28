@@ -268,6 +268,8 @@ inline const std::unordered_map<std::string, Field> strFieldMap{
         {"h8", H8}
 };
 
+void DisplayMask(uint64_t mask);
+
 struct Board {
     // ------------------------------
     // class interaction
@@ -292,7 +294,6 @@ struct Board {
     unsigned int movColor = WHITE;
     uint64_t boards[BoardsCount] = { 0 };
 };
-
 
 struct SearchResult{
 
