@@ -161,6 +161,8 @@ void RookMap::FindHashParameters() {
 
     #pragma omp parallel for
     for(int i = 0; i < Board::BoardFields; ++i) {
+        if (aHashValues[i] != 0 && bHashValues[i] != 0) continue;
+
         const int bInd = ConvertToReversedPos(i);
         std::mt19937_64 gen64{};
         gen64.seed(std::chrono::steady_clock::now().time_since_epoch().count());

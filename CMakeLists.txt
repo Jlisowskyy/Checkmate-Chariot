@@ -27,6 +27,8 @@ add_executable(ChessEngine main.cpp
         include/KnightMap.h
         include/BitOperations.h
         include/movesHashMap.h
+        src/KingMap.cpp
+        include/KingMap.h
 )
 
 find_package(OpenMP)

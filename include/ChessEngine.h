@@ -7,5 +7,7 @@
 
 void ChessEngineMainEntry();
 void ChessHashingTest1();
+void ChessHashingTest2();
+
 
 #endif //CHESS_ENGINE_H
