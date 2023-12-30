@@ -8,6 +8,7 @@
 #include <array>
 
 #include "EngineTypeDefs.h"
+#include "BitOperations.h"
 
 class KnightMap {
     // ---------------------------------------
@@ -15,7 +16,6 @@ class KnightMap {
     // ---------------------------------------
 
     constexpr KnightMap() {
-        movesMap = std::array<uint64_t, Board::BoardFields>{};
         for (int y = 0; y < 8; ++y) {
             for (int x = 0; x < 8; ++x) {
                 const int mapInd = 63 - (y*8 + x);
@@ -32,14 +32,20 @@ class KnightMap {
     }
 
     // ------------------------------
-    // private methods
+    // Class interaction
     // ------------------------------
+
+    [[nodiscard]] uint64_t GetMoves(const int msbInd, const uint64_t, const uint64_t allyMap) const {
+        const uint64_t moves = movesMap[msbInd];
+
+        return ClearAFromIntersectingBits(moves, allyMap);
+    }
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
-    constexpr std::array<uint64_t, Board::BoardFields> movesMap;
+    std::array<uint64_t, Board::BoardFields> movesMap{};
 
     static constexpr size_t maxMovesCount = 8;
     static constexpr int moves[] = { 6, 15, 17, 10, -6, -15, -17, -10 };
