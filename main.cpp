@@ -2,6 +2,6 @@
 #include "include/ChessEngine.h"
 
 int main() {
-    ChessHashingTest2();
+    ChessHashingTest1();
     return EXIT_SUCCESS;
 }

@@ -9,6 +9,6 @@ void ChessEngineMainEntry();
 void ChessHashingTest1();
 void ChessHashingTest2();
 void ChessHashingTest3();
-
+void ChessHashingTest4();
 
 #endif //CHESS_ENGINE_H

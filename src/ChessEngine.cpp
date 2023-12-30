@@ -3,6 +3,8 @@
 //
 
 #include "../include/ChessEngine.h"
+
+#include "../include/BishopMap.h"
 #include "../include/UCITranslator.h"
 #include "../include/Engine.h"
 #include "../include/KingMap.h"
@@ -47,4 +49,10 @@ void ChessHashingTest3() {
         DisplayMask(map.GetMoves(i, 0, 0));
     }
 
+}
+
+void ChessHashingTest4() {
+    BishopMap map{};
+
+    map.Tester();
 }

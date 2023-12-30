@@ -7,17 +7,24 @@
 
 #include <array>
 
-#include "BitOperations.h"
 #include "movesHashMap.h"
 #include "EngineTypeDefs.h"
 
-struct RookMap {
+class RookMap {
+    static constexpr size_t MaxRookPossibleNeighbors = 144;
+
+public:
     // ---------------------------------------
     // Class creation and initialization
     // ---------------------------------------
 
     RookMap();
     void FindHashParameters();
+
+    // ------------------------------
+    // Class interaction
+    // ------------------------------
+
     [[nodiscard]] uint64_t GetMoves(int msbInd, uint64_t fullBoard, uint64_t allyBoard) const;
 
     // ------------------------------
@@ -29,33 +36,37 @@ private:
     [[nodiscard]] constexpr static uint64_t _genMovesOnLine(uint64_t neighbors, int bInd,
         incFunc inc, boundryCheckFunc boundryCheck);
 
-    template<class incFunc, class boundryCheckFunc>
-    constexpr static uint64_t _genMask(int barrier, int boardIndex, incFunc inc, boundryCheckFunc boundryCheck);
-
-    void _integrityTest();
     constexpr void _initMoves();
     void _initMaps();
-    [[nodiscard]] static std::array<uint64_t, movesHashMap::MasksCount> _initMasks(int bInd);
+    [[nodiscard]] constexpr static std::array<uint64_t, movesHashMap::MasksCount> _initMasks(int bInd);
     [[nodiscard]] constexpr static uint64_t _genMoves(uint64_t neighbors, int bInd);
-    constexpr static uint64_t _genRMask(int barrier, int boardIndex);
-    constexpr static uint64_t _genLMask(int barrier, int boardIndex);
-    constexpr static uint64_t _genUMask(int boardIndex);
-    constexpr static uint64_t _genDMask(int boardIndex);
-    static constexpr size_t MaxRookPossibleNeighbors = 144;
-    constexpr static std::tuple<std::array<uint64_t, MaxRookPossibleNeighbors>, size_t> _genPossibleNeighbors(int bInd, const movesHashMap& record);
-    static constexpr uint64_t _genModuloMask(size_t modSize);
-    static constexpr size_t _neighborLayoutPossibleCountOnField(int x, int y);
-    static constexpr size_t _calculatePossibleMovesCount();
-    static void _displayMasks(const movesHashMap& map);
+    [[nodiscard]] constexpr static uint64_t _genRMask(int boardIndex);
+    [[nodiscard]] constexpr static uint64_t _genLMask(int boardIndex);
+    [[nodiscard]] constexpr static uint64_t _genUMask(int boardIndex);
+    [[nodiscard]] constexpr static uint64_t _genDMask(int boardIndex);
+    [[nodiscard]] constexpr static std::tuple<std::array<uint64_t, MaxRookPossibleNeighbors>, size_t> _genPossibleNeighbors(int bInd, const movesHashMap& record);
+    [[nodiscard]] static constexpr uint64_t _genModuloMask(size_t modSize);
+    [[nodiscard]] static constexpr size_t _neighborLayoutPossibleCountOnField(int x, int y);
+
+    // ------------------------------
+    // Class inner types
+    // ------------------------------
+
+    enum maskInd {
+        lMask,
+        rMask,
+        uMask,
+        dMask,
+    };
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
     static constexpr uint64_t aHashValues[Board::BoardFields] = {
-        0,
-        0,
-        0,
+        3393641422875280979LLU,
+        5471342235767773913LLU,
+        15250091735978237630LLU,
         0,
         0,
         0,
@@ -120,9 +131,9 @@ private:
     };
 
     static constexpr uint64_t bHashValues[Board::BoardFields] = {
-        0,
-        0,
-        0,
+        17312422767356678212LLU,
+        17307815045900276771LLU,
+        16356769246725350830LLU,
         0,
         0,
         0,
@@ -186,12 +197,7 @@ private:
         7109284141322176083LLU,
     };
 
-    enum maskInd {
-        lMask,
-        rMask,
-        uMask,
-        dMask,
-    };
+    static constexpr const char* names[] = { "lMask", "rMask", "uMask", "dMask" };
 
     movesHashMap layer1[Board::BoardFields];
 };
@@ -210,16 +216,6 @@ constexpr uint64_t RookMap::_genMovesOnLine(const uint64_t neighbors, const int 
     }
 
     return ret;
-}
-
-template<class incFunc, class boundryCheckFunc>
-constexpr uint64_t RookMap::_genMask(int barrier, int boardIndex, incFunc inc, boundryCheckFunc boundryCheck) {
-    uint64_t mask = 0;
-
-    while(boundryCheck(boardIndex = inc(boardIndex), barrier))
-        mask |= (1LLU<<boardIndex);
-
-    return mask;
 }
 
 #endif //ROOKMAP_H

@@ -2,13 +2,14 @@
 // Created by Jlisowskyy on 12/28/23.
 //
 
-#include <cmath>
 #include <mutex>
 #include <vector>
 #include <random>
 #include <chrono>
 
 #include "../include/RookMap.h"
+
+#include "../include/MoveGeneration.h"
 
 constexpr void RookMap::_initMoves() {
     for(int i = 0; i < Board::BoardFields; ++i) {
@@ -60,28 +61,25 @@ constexpr uint64_t RookMap::_genMoves(const uint64_t neighbors, const int bInd) 
     return moves;
 }
 
-constexpr uint64_t RookMap::_genRMask(const int barrier, const int boardIndex) {
-    return _genMask(barrier, boardIndex,
-                    [](const int x) -> int { return x + 1; },
-                    [](const int ind, const int bar) -> bool { return ind < bar; });
+constexpr uint64_t RookMap::_genRMask(const int boardIndex) {
+    const int lBarrier = (boardIndex / 8) * 8;
+    const int barrier = lBarrier + 7;
+
+    return GenMask(barrier, boardIndex, 1, std::less{});
 }
 
-constexpr uint64_t RookMap::_genLMask(const int barrier, const int boardIndex) {
-    return _genMask(barrier, boardIndex,
-                    [](const int x) -> int { return x - 1; },
-                    [](const int ind, const int bar) -> bool { return ind > bar; });
+constexpr uint64_t RookMap::_genLMask(const int boardIndex) {
+    const int barrier = (boardIndex / 8) * 8;
+
+    return GenMask(barrier, boardIndex, -1, std::greater{});
 }
 
 constexpr uint64_t RookMap::_genUMask(const int boardIndex) {
-    return _genMask(56, boardIndex,
-                    [](const int x) -> int { return x + 8; },
-                    [](const int ind, const int bar) -> bool { return ind < bar; });
+    return GenMask(56, boardIndex, 8, std::less{});
 }
 
 constexpr uint64_t RookMap::_genDMask(const int boardIndex) {
-    return _genMask(7, boardIndex,
-                    [](const int x) -> int { return x - 8; },
-                    [](const int ind, const int bar) -> bool { return ind > bar; });
+    return GenMask(7, boardIndex, -8, std::greater{});
 }
 
 constexpr std::tuple<std::array<uint64_t, RookMap::MaxRookPossibleNeighbors>, size_t> RookMap::_genPossibleNeighbors(
@@ -139,20 +137,13 @@ constexpr size_t RookMap::_neighborLayoutPossibleCountOnField(const int x, const
     return lCount * rCount * dCount * uCount;
 }
 
-constexpr size_t RookMap::_calculatePossibleMovesCount() {
-    size_t sum{};
-    for (int x = 0; x < 8; ++x) {
-        for (int y = 0; y < 8; ++y) {
-            sum += _neighborLayoutPossibleCountOnField(x, y);
-        }
-    }
-
-    return sum;
-}
 
 RookMap::RookMap() {
     _initMaps();
-    _integrityTest();
+    IntegrityTest(
+        [](const int bInd, const movesHashMap& map){ return _genPossibleNeighbors(bInd, map); },
+        layer1
+        );
     _initMoves();
 }
 
@@ -212,64 +203,21 @@ uint64_t RookMap::GetMoves(const int msbInd, const uint64_t fullBoard, const uin
     return ClearAFromIntersectingBits(moves, allyBoard);
 }
 
-void RookMap::_integrityTest() {
-    for (int i = 0; i < Board::BoardFields; ++i) {
-        const int bInd = ConvertToReversedPos(i);
-        const auto [possibilities, posSize] = _genPossibleNeighbors(bInd, layer1[i]);
-
-        layer1[i].clear();
-        for (size_t j = 0; j < posSize; ++j) {
-            if (layer1[i][possibilities[j]] == 1) {
-                std::cerr << "[ ERROR ] Integrity failed on index: " << i << std::endl;
-                break;
-            }
-
-            layer1[i][possibilities[j]] = 1;
-        }
-    }
-}
-
 void RookMap::_initMaps() {
-    for (int y = 0; y < 8; ++y) {
-        for (int x = 0; x < 8; ++x) {
-            const int bInd = y*8 + x;
-            const int mapInd = ConvertToReversedPos(bInd);
-
-            const size_t minimalSize = _neighborLayoutPossibleCountOnField(x, y);
-            const size_t min2Pow = std::ceil(std::log2(static_cast<double>(minimalSize)));
-            const size_t mapSize = 1 << min2Pow;
-            const uint64_t moduloMask = mapSize - 1;
-            const uint64_t primeNumber = PrimeNumberMap.at(mapSize);
-            const uint64_t a = aHashValues[mapInd];
-            const uint64_t b = bHashValues[mapInd];
-            const auto masks = _initMasks(bInd);
-
-            layer1[mapInd] = movesHashMap{masks, a, b, moduloMask, primeNumber, mapSize};
-        }
-    }
+    MapInitializer(aHashValues, bHashValues, layer1,
+        [](const int x, const int y) { return _neighborLayoutPossibleCountOnField(x, y); },
+        [](const int bInd) { return _initMasks(bInd); }
+    );
 }
 
-std::array<uint64_t, movesHashMap::MasksCount> RookMap::_initMasks(const int bInd) {
+constexpr std::array<uint64_t, movesHashMap::MasksCount> RookMap::_initMasks(const int bInd) {
     std::array<uint64_t, movesHashMap::MasksCount> ret{};
-
-    // Calculating borders for valid mask generation;
-    const int lBarrier = (bInd / 8) * 8;
-    const int rBarrier = lBarrier + 7;
 
     // Mask generation.
     ret[dMask] = _genDMask(bInd);
-    ret[lMask] = _genLMask(lBarrier, bInd);
-    ret[rMask] = _genRMask(rBarrier, bInd);
+    ret[lMask] = _genLMask(bInd);
+    ret[rMask] = _genRMask(bInd);
     ret[uMask] = _genUMask(bInd);
 
     return ret;
-}
-
-void RookMap::_displayMasks(const movesHashMap& map) {
-    static constexpr const char* names[] = { "lMask", "rMask", "uMask", "dMask" };
-
-    for (size_t i = 0; i < movesHashMap::MasksCount; ++i) {
-        std::cout << "Mask name: " << names[i] << std::endl;
-        DisplayMask(map.masks[i]);
-    }
 }
