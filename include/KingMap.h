@@ -11,6 +11,8 @@
 
 #include "EngineTypeDefs.h"
 #include "movesHashMap.h"
+#include "BitOperations.h"
+#include "MoveGeneration.h"
 
 /*              NOTES:
  *  In future there should be compared two options:
@@ -27,31 +29,30 @@ class KingMap {
     // ------------------------------
 public:
     constexpr KingMap() {
-        movesMap = _genMoves();
+        movesMap = GenStaticMoves(maxMovesCount, movesCords, rowCords);
     }
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] constexpr uint64_t GetMoves(int msbInd, uint64_t, uint64_t allyMap) const;
+    [[nodiscard]] constexpr uint64_t GetMoves(const int msbInd, const uint64_t, const uint64_t allyMap) const{
+        const uint64_t moves = movesMap[msbInd];
 
-    // ------------------------------
-    // private methods
-    // ------------------------------
-private:
-
-    // Pregenerates all king moves on compilation stage.
-    [[nodiscard]] static constexpr std::array<uint64_t, Board::BoardFields> _genMoves();
+        return ClearAFromIntersectingBits(moves, allyMap);
+    }
 
     // ------------------------------
     // Class Fields
     // ------------------------------
+private:
 
     std::array<uint64_t, Board::BoardFields> movesMap{};
 
+    static constexpr size_t maxMovesCount = 8;
+
     // Describes king possible moves cordinates.
-    static constexpr int moveCords[] = { -1, -9, -8, -7, 1, 9, 8, 7 };
+    static constexpr int movesCords[] = { -1, -9, -8, -7, 1, 9, 8, 7 };
 
     // Describes accordingly y positions after the move relatively to king's y position.
     // Used to omit errors during generation.

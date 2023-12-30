@@ -23,12 +23,11 @@ add_executable(ChessEngine main.cpp
         include/RookMap.h
         src/BishopMap.cpp
         include/BishopMap.h
-        src/KnightMap.cpp
         include/KnightMap.h
         include/BitOperations.h
         include/movesHashMap.h
-        src/KingMap.cpp
         include/KingMap.h
+        include/MoveGeneration.h
 )
 
 find_package(OpenMP)

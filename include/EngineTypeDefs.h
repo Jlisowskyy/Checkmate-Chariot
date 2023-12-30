@@ -279,6 +279,7 @@ inline std::unordered_map<size_t, uint64_t> PrimeNumberMap{
 
 void DisplayMask(uint64_t mask);
 
+
 struct Board {
     // ------------------------------
     // class interaction
@@ -302,10 +303,6 @@ struct Board {
     Field elPassantField = INVALID;
     unsigned int movColor = WHITE;
     uint64_t boards[BoardsCount] = { 0 };
-};
-
-struct SearchResult{
-
 };
 
 #endif //ENGINETYPEDEFS_H
