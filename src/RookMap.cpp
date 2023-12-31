@@ -3,7 +3,6 @@
 //
 
 #include <mutex>
-#include <vector>
 #include <random>
 #include <chrono>
 
@@ -12,18 +11,12 @@
 #include "../include/MoveGeneration.h"
 
 constexpr void RookMap::_initMoves() {
-    for(int i = 0; i < Board::BoardFields; ++i) {
-        const int bInd = ConvertToReversedPos(i);
-
-        // Possible neighbors generation.
-        const auto [possibilities, posSize] = _genPossibleNeighbors(bInd, layer1[i]);
-
-        for (size_t j = 0; j < posSize; ++j) {
-            const uint64_t moves = _genMoves(possibilities[j], bInd);
-
-            layer1[i][possibilities[j]] = moves;
-        }
-    }
+    MoveInitializer(layer1,
+        [](const uint64_t neighbors, const int bInd) constexpr
+                        { return _genMoves(neighbors, bInd); },
+        [](const int bInd, const movesHashMap& record) constexpr
+                        { return _genPossibleNeighbors(bInd, record); }
+    );
 }
 
 constexpr uint64_t RookMap::_genMoves(const uint64_t neighbors, const int bInd) {
@@ -35,51 +28,26 @@ constexpr uint64_t RookMap::_genMoves(const uint64_t neighbors, const int bInd) 
     uint64_t moves = 0;
 
     // upper lines moves
-    moves |= _genMovesOnLine(neighbors, bInd,
-                             [](const int x){ return x + 8;},
-                             [&](const int x){ return x < uBarrier; }
+    moves |= GenSlidingMoves(neighbors, bInd, 8,
+     [&](const int x){ return x < uBarrier; }
     );
 
     // lower lines moves
-    moves |= _genMovesOnLine(neighbors, bInd,
-                             [](const int x){ return x - 8;},
+    moves |= GenSlidingMoves(neighbors, bInd, -8,
                              [&](const int x){ return x > dBarrier; }
     );
 
     // right line moves
-    moves |= _genMovesOnLine(neighbors, bInd,
-                             [](const int x){ return x + 1;},
+    moves |= GenSlidingMoves(neighbors, bInd, 1,
                              [&](const int x){ return x < rBarrier; }
     );
 
     // left line moves
-    moves |= _genMovesOnLine(neighbors, bInd,
-                             [](const int x){ return x - 1;},
+    moves |= GenSlidingMoves(neighbors, bInd, -1,
                              [&](const int x){ return x > lBarrier; }
     );
 
     return moves;
-}
-
-constexpr uint64_t RookMap::_genRMask(const int boardIndex) {
-    const int lBarrier = (boardIndex / 8) * 8;
-    const int barrier = lBarrier + 7;
-
-    return GenMask(barrier, boardIndex, 1, std::less{});
-}
-
-constexpr uint64_t RookMap::_genLMask(const int boardIndex) {
-    const int barrier = (boardIndex / 8) * 8;
-
-    return GenMask(barrier, boardIndex, -1, std::greater{});
-}
-
-constexpr uint64_t RookMap::_genUMask(const int boardIndex) {
-    return GenMask(56, boardIndex, 8, std::less{});
-}
-
-constexpr uint64_t RookMap::_genDMask(const int boardIndex) {
-    return GenMask(7, boardIndex, -8, std::greater{});
 }
 
 constexpr std::tuple<std::array<uint64_t, RookMap::MaxRookPossibleNeighbors>, size_t> RookMap::_genPossibleNeighbors(
@@ -124,10 +92,6 @@ constexpr std::tuple<std::array<uint64_t, RookMap::MaxRookPossibleNeighbors>, si
     return {ret, usedFields};
 }
 
-constexpr uint64_t RookMap::_genModuloMask(const size_t modSize) {
-    return (minMsbPossible << modSize) - 1;
-}
-
 constexpr size_t RookMap::_neighborLayoutPossibleCountOnField(const int x, const int y) {
     const int lCount = std::max(1, x);
     const int dCount = std::max(1, y);
@@ -148,46 +112,9 @@ RookMap::RookMap() {
 }
 
 void RookMap::FindHashParameters() {
-    std::mutex guard{};
-
-    #pragma omp parallel for
-    for(int i = 0; i < Board::BoardFields; ++i) {
-        if (aHashValues[i] != 0 && bHashValues[i] != 0) continue;
-
-        const int bInd = ConvertToReversedPos(i);
-        std::mt19937_64 gen64{};
-        gen64.seed(std::chrono::steady_clock::now().time_since_epoch().count());
-
-        // Possible neighbors generation.
-        const auto [possibilities, posSize] = _genPossibleNeighbors(bInd, layer1[i]);
-
-        guard.lock();
-        std::cout << "Starting hash parameters search on index: " << bInd << std::endl;
-        guard.unlock();
-
-        bool wasColision = true;
-        while(wasColision) {
-            wasColision = false;
-
-            layer1[i].setHashCoefs(gen64(), gen64());
-            layer1[i].clear();
-
-            for (size_t j = 0; j < posSize; ++j) {
-                if (layer1[i][possibilities[j]] == 1) {
-                    wasColision = true;
-                    break;
-                }
-
-                layer1[i][possibilities[j]] = 1;
-            }
-        }
-
-        const auto [a, b] = layer1[i].getCoefs();
-        guard.lock();
-        std::cout << "Finished hashing on mapIndex: " << i << " with acquired parameteres 'a': "
-                << a << " 'b': " << b<< std::endl;
-        guard.unlock();
-    }
+    movesHashMap::FindHashParameters(aHashValues, bHashValues, layer1,
+        [](const int bInd, const movesHashMap& record) { return _genPossibleNeighbors(bInd, record); }
+    );
 }
 
 uint64_t RookMap::GetMoves(const int msbInd, const uint64_t fullBoard, const uint64_t allyBoard) const {
@@ -205,8 +132,10 @@ uint64_t RookMap::GetMoves(const int msbInd, const uint64_t fullBoard, const uin
 
 void RookMap::_initMaps() {
     MapInitializer(aHashValues, bHashValues, layer1,
-        [](const int x, const int y) { return _neighborLayoutPossibleCountOnField(x, y); },
-        [](const int bInd) { return _initMasks(bInd); }
+        [](const int x, const int y) constexpr
+            { return _neighborLayoutPossibleCountOnField(x, y); },
+        [](const int bInd) constexpr
+            { return _initMasks(bInd); }
     );
 }
 
@@ -214,10 +143,20 @@ constexpr std::array<uint64_t, movesHashMap::MasksCount> RookMap::_initMasks(con
     std::array<uint64_t, movesHashMap::MasksCount> ret{};
 
     // Mask generation.
-    ret[dMask] = _genDMask(bInd);
-    ret[lMask] = _genLMask(bInd);
-    ret[rMask] = _genRMask(bInd);
-    ret[uMask] = _genUMask(bInd);
+    const int lBarrier = (bInd / 8) * 8;
+    const int rBarrier = lBarrier + 7;
+
+    // Lower vertical line
+    ret[dMask] = GenMask(7, bInd, -8, std::greater{});
+
+    // Left Horizontal line
+    ret[lMask] = GenMask(lBarrier, bInd, -1, std::greater{});
+
+    // Right horizontal line
+    ret[rMask] = GenMask(rBarrier, bInd, 1, std::less{});
+
+    // Upper vertical line
+    ret[uMask] = GenMask(56, bInd, 8, std::less{});
 
     return ret;
 }

@@ -106,4 +106,37 @@ void MapInitializer(const uint64_t* aHash, const uint64_t* bHash, movesHashMap* 
     }
 }
 
+template<class boundryCheckFunc>
+constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd,
+    const int offset, boundryCheckFunc boundryCheck)
+{
+    uint64_t ret = 0;
+    int actPos = bInd;
+
+    while (boundryCheck(actPos += offset)) {
+        const uint64_t curMove = 1LLU << actPos;
+        ret |= curMove;
+
+        if ((curMove & neighbors) != 0) break;
+    }
+
+    return ret;
+}
+
+template<class moveGeneartor, class neighborGenerator>
+constexpr void MoveInitializer(movesHashMap* maps, moveGeneartor mGen, neighborGenerator nGen) {
+    for(int i = 0; i < Board::BoardFields; ++i) {
+        const int bInd = ConvertToReversedPos(i);
+
+        // Possible neighbors generation.
+        const auto [possibilities, posSize] = nGen(bInd, maps[i]);
+
+        for (size_t j = 0; j < posSize; ++j) {
+            const uint64_t moves = mGen(possibilities[j], bInd);
+
+            maps[i][possibilities[j]] = moves;
+        }
+    }
+}
+
 #endif //MOVEGENERATION_H

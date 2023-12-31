@@ -54,5 +54,5 @@ void ChessHashingTest3() {
 void ChessHashingTest4() {
     BishopMap map{};
 
-    map.Tester();
+    map.FindHashParameters();
 }

@@ -32,20 +32,11 @@ public:
     // ------------------------------
 private:
 
-    template<class incFunc, class boundryCheckFunc>
-    [[nodiscard]] constexpr static uint64_t _genMovesOnLine(uint64_t neighbors, int bInd,
-        incFunc inc, boundryCheckFunc boundryCheck);
-
     constexpr void _initMoves();
     void _initMaps();
     [[nodiscard]] constexpr static std::array<uint64_t, movesHashMap::MasksCount> _initMasks(int bInd);
     [[nodiscard]] constexpr static uint64_t _genMoves(uint64_t neighbors, int bInd);
-    [[nodiscard]] constexpr static uint64_t _genRMask(int boardIndex);
-    [[nodiscard]] constexpr static uint64_t _genLMask(int boardIndex);
-    [[nodiscard]] constexpr static uint64_t _genUMask(int boardIndex);
-    [[nodiscard]] constexpr static uint64_t _genDMask(int boardIndex);
     [[nodiscard]] constexpr static std::tuple<std::array<uint64_t, MaxRookPossibleNeighbors>, size_t> _genPossibleNeighbors(int bInd, const movesHashMap& record);
-    [[nodiscard]] static constexpr uint64_t _genModuloMask(size_t modSize);
     [[nodiscard]] static constexpr size_t _neighborLayoutPossibleCountOnField(int x, int y);
 
     // ------------------------------
@@ -67,7 +58,7 @@ private:
         3393641422875280979LLU,
         5471342235767773913LLU,
         15250091735978237630LLU,
-        0,
+        12442485387656305543LLU,
         0,
         0,
         9676328163961630310LLU,
@@ -134,7 +125,7 @@ private:
         17312422767356678212LLU,
         17307815045900276771LLU,
         16356769246725350830LLU,
-        0,
+        16198993108558860794LLU,
         0,
         0,
         13570260835205647813LLU,
@@ -201,21 +192,5 @@ private:
 
     movesHashMap layer1[Board::BoardFields];
 };
-
-template<class incFunc, class boundryCheckFunc>
-constexpr uint64_t RookMap::_genMovesOnLine(const uint64_t neighbors, const int bInd, incFunc inc,
-    boundryCheckFunc boundryCheck) {
-    uint64_t ret = 0;
-    int actPos = bInd;
-
-    while (boundryCheck(actPos = inc(actPos))) {
-        const uint64_t curMove = 1LLU << actPos;
-        ret |= curMove;
-
-        if ((curMove & neighbors) != 0) break;
-    }
-
-    return ret;
-}
 
 #endif //ROOKMAP_H

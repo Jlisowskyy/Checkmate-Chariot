@@ -8,7 +8,11 @@
 #include <cinttypes>
 #include <array>
 #include <tuple>
-#include <cstdlib>
+#include <mutex>
+#include <random>
+
+#include "EngineTypeDefs.h"
+#include "BitOperations.h"
 
 class movesHashMap {
     // ------------------------------
@@ -67,6 +71,50 @@ public:
 
     ~movesHashMap() {
         delete[] _map;
+    }
+
+    template<class neighborGenerator>
+    static void FindHashParameters(const uint64_t* aHash, const uint64_t* bHash, movesHashMap* maps, neighborGenerator nGen) {
+        std::mutex guard{};
+
+        #pragma omp parallel for
+        for(int i = 0; i < Board::BoardFields; ++i) {
+            if (aHash[i] != 0 && aHash[i] != 0) continue;
+
+            const int bInd = ConvertToReversedPos(i);
+            std::mt19937_64 gen64{};
+            gen64.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+
+            // Possible neighbors generation.
+            const auto [possibilities, posSize] = nGen(bInd, maps[i]);
+
+            guard.lock();
+            std::cout << "Starting hash parameters search on index: " << bInd << std::endl;
+            guard.unlock();
+
+            bool wasColision = true;
+            while(wasColision) {
+                wasColision = false;
+
+                maps[i].setHashCoefs(gen64(), gen64());
+                maps[i].clear();
+
+                for (size_t j = 0; j < posSize; ++j) {
+                    if (maps[i][possibilities[j]] == 1) {
+                        wasColision = true;
+                        break;
+                    }
+
+                    maps[i][possibilities[j]] = 1;
+                }
+            }
+
+            const auto [a, b] = maps[i].getCoefs();
+            guard.lock();
+            std::cout << "Finished hashing on mapIndex: " << i << " with acquired parameteres 'a': "
+                    << a << " 'b': " << b<< std::endl;
+            guard.unlock();
+        }
     }
 
     // ------------------------------
