@@ -12,7 +12,7 @@
 #include <iostream>
 #include <cerrno>
 
-#include "compilationConstants.h"
+#include "../compilationConstants.h"
 
 class Engine;
 

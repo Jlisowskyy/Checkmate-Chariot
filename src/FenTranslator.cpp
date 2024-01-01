@@ -2,8 +2,8 @@
 // Created by Jlisowskyy on 12/27/23.
 //
 
-#include "../include/FenTranslator.h"
-#include "../include/Logger.h"
+#include "../include/Interface/FenTranslator.h"
+#include "../include/Interface/Logger.h"
 
 Board FenTranslator::Translate(const std::string& fenPos) {
     Board workBoard{};

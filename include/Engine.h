@@ -5,10 +5,10 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "UCIOptions.h"
+#include "Interface/UCIOptions.h"
 #include "EngineTypeDefs.h"
-#include "FenTranslator.h"
-#include "Logger.h"
+#include "Interface/FenTranslator.h"
+#include "Interface/Logger.h"
 
 class Engine {
     // --------------------------------------

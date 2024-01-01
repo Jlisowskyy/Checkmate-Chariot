@@ -7,9 +7,9 @@
 
 #include <array>
 
-#include "BitOperations.h"
-#include "movesHashMap.h"
-#include "EngineTypeDefs.h"
+#include "../BitOperations.h"
+#include "../movesHashMap.h"
+#include "../EngineTypeDefs.h"
 
 [[nodiscard]] constexpr std::array<uint64_t, Board::BoardFields> GenStaticMoves(const int maxMovesCount,
     const int *movesCords, const int *rowCords)
@@ -109,7 +109,9 @@ template<class comparisonMethod>
 }
 
 template<class sizeGenerator, class maskGenerator>
-constexpr void MapInitializer(const uint64_t* aHash, const uint64_t* bHash, movesHashMap* maps, sizeGenerator sGen, maskGenerator mGen) {
+constexpr void MapInitializer(const uint64_t* aHash, const uint64_t* bHash,
+    std::array<movesHashMap, Board::BoardFields>& maps, sizeGenerator sGen, maskGenerator mGen)
+{
     for (int y = 0; y < 8; ++y) {
         for (int x = 0; x < 8; ++x) {
             const int bInd = y*8 + x;
@@ -147,7 +149,7 @@ constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd,
 }
 
 template<class moveGeneartor, class neighborGenerator>
-constexpr void MoveInitializer(movesHashMap* maps, moveGeneartor mGen, neighborGenerator nGen) {
+constexpr void MoveInitializer(std::array<movesHashMap, Board::BoardFields>& maps, moveGeneartor mGen, neighborGenerator nGen) {
     for(int i = 0; i < Board::BoardFields; ++i) {
         const int bInd = ConvertToReversedPos(i);
 

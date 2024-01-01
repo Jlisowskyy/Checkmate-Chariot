@@ -21,26 +21,23 @@ class movesHashMap {
 public:
     static constexpr size_t MasksCount = 4;
 
-    movesHashMap() = default;
+    constexpr movesHashMap() = default;
+    constexpr ~movesHashMap() = default;
 
-    movesHashMap(const std::array<uint64_t, MasksCount>& nMasks, uint64_t a, uint64_t b, uint64_t modMask, uint64_t primeNum, size_t mapSize):
-        masks{nMasks}, _a{a}, _b{b}, _moduloMask{modMask}, _primeNumber{primeNum}, _mapSize{mapSize}
-    {
-        _map = new uint64_t[_mapSize] { 0LLU };
-    }
+    constexpr movesHashMap(const std::array<uint64_t, MasksCount>& nMasks, uint64_t a, uint64_t b, uint64_t modMask, uint64_t primeNum, size_t mapSize):
+        masks{nMasks}, _a{a}, _b{b}, _moduloMask{modMask}, _primeNumber{primeNum}, _mapSize{mapSize}, _map{ 0 }
+    {}
 
     movesHashMap& operator=(const movesHashMap& other){
         if (this == &other) return *this;
 
-        delete _map;
         _a = other._a;
         _b = other._b;
         _moduloMask = other._moduloMask;
         _mapSize = other._mapSize;
         _primeNumber = other._primeNumber;
         masks = other.masks;
-
-        _map = new uint64_t[_mapSize];
+        _map = other._map;
 
         return *this;
     }
@@ -64,29 +61,36 @@ public:
 
     [[nodiscard]] std::tuple<uint64_t, uint64_t> getCoefs() const { return {_a, _b}; }
 
-    void clear() const{
+    void clear() {
         for (size_t i = 0; i < _mapSize; ++i)
             _map[i] = 0;
     }
 
-    ~movesHashMap() {
-        delete[] _map;
-    }
-
     template<class neighborGenerator>
-    static void FindHashParameters(uint64_t* aHash, uint64_t* bHash, movesHashMap* maps, neighborGenerator nGen) {
+    static void FindHashParameters(const uint64_t* aHash, const uint64_t* bHash, const movesHashMap* maps, neighborGenerator nGen) {
+        uint64_t myAHash[Board::BoardFields]{};
+        uint64_t myBHash[Board::BoardFields]{};
+        movesHashMap myMaps[Board::BoardFields]{};
         std::mutex guard{};
+
+        for (size_t i = 0; i < Board::BoardFields; ++i) {
+            myAHash[i] = aHash[i];
+            myBHash[i] = bHash[i];
+            myMaps[i] = maps[i];
+        }
+
+        IntegrityTest(nGen, maps);
 
         #pragma omp parallel for
         for(int i = 0; i < Board::BoardFields; ++i) {
-            if (aHash[i] != 0 && aHash[i] != 0) continue;
+            if (myAHash[i] != 0 && myBHash[i] != 0) continue;
 
             const int bInd = ConvertToReversedPos(i);
             std::mt19937_64 gen64{};
             gen64.seed(std::chrono::steady_clock::now().time_since_epoch().count());
 
             // Possible neighbors generation.
-            const auto [possibilities, posSize] = nGen(bInd, maps[i]);
+            const auto [possibilities, posSize] = nGen(bInd, myMaps[i]);
 
             guard.lock();
             std::cout << "Starting hash parameters search on index: " << bInd << std::endl;
@@ -96,33 +100,33 @@ public:
             while(wasColision) {
                 wasColision = false;
 
-                maps[i].setHashCoefs(gen64(), gen64());
-                maps[i].clear();
+                myMaps[i].setHashCoefs(gen64(), gen64());
+                myMaps[i].clear();
 
                 for (size_t j = 0; j < posSize; ++j) {
-                    if (maps[i][possibilities[j]] == 1) {
+                    if (myMaps[i][possibilities[j]] == 1) {
                         wasColision = true;
                         break;
                     }
 
-                    maps[i][possibilities[j]] = 1;
+                    myMaps[i][possibilities[j]] = 1;
                 }
             }
 
-            const auto [a, b] = maps[i].getCoefs();
+            const auto [a, b] = myMaps[i].getCoefs();
             guard.lock();
-            aHash[i] = a;
-            bHash[i] = b;
+            myAHash[i] = a;
+            myBHash[i] = b;
 
             std::cout << "aHashValue map:\n{\n";
-            for (int z = 0; z < Board::BoardFields; ++z) {
-                std::cout << "\t" << aHash[z] << "LLU,\n";
+            for (const auto el : myAHash) {
+                std::cout << "\t" << el << "LLU,\n";
             }
             std::cout << "};\n";
 
             std::cout << "bHashValue map:\n{\n";
-            for (int z = 0; z < Board::BoardFields; ++z) {
-                std::cout << "\t" << bHash[z] << "LLU,\n";
+            for (const auto el : myBHash)  {
+                std::cout << "\t" << el << "LLU,\n";
             }
             std::cout << "};\n";
 
@@ -140,7 +144,7 @@ private:
     uint64_t _moduloMask{};
     uint64_t _primeNumber{};
 
-    uint64_t* _map{};
+    std::array<uint64_t, 256> _map{};
     size_t _mapSize{};
 };
 

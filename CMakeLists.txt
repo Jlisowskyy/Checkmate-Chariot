@@ -10,27 +10,26 @@ add_executable(ChessEngine main.cpp
         src/SearchThreadCordination.cpp
         include/SearchThreadCordination.h
         src/UCITranslator.cpp
-        include/UCIOptions.h
+        include/Interface/UCIOptions.h
         src/Engine.cpp
         include/Engine.h
         include/EngineTypeDefs.h
         src/FenTranslator.cpp
-        include/FenTranslator.h
+        include/Interface/FenTranslator.h
         src/Logger.cpp
-        include/Logger.h
+        include/Interface/Logger.h
         src/EngineTypeDefs.cpp
         src/RookMap.cpp
-        include/RookMap.h
+        include/MoveGeneration/RookMap.h
         src/BishopMap.cpp
-        include/BishopMap.h
-        include/KnightMap.h
+        include/MoveGeneration/BishopMap.h
+        include/MoveGeneration/KnightMap.h
         include/BitOperations.h
         include/movesHashMap.h
-        include/KingMap.h
-        include/MoveGeneration.h
-        include/QueenMap.h
-        src/PawnMap.cpp
-        include/PawnMap.h
+        include/MoveGeneration/KingMap.h
+        include/MoveGeneration/MoveGeneration.h
+        include/MoveGeneration/QueenMap.h
+        include/MoveGeneration/PawnMap.h
         src/Evaluator.cpp
         include/Evaluator.h
         src/SearchingMachine.cpp
@@ -39,6 +38,7 @@ add_executable(ChessEngine main.cpp
         include/ChessMechanics.h
         src/EngineTests.cpp
         include/EngineTests.h
+        include/Interface/UCITranslator.h
 )
 
 find_package(OpenMP)

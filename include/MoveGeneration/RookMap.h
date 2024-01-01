@@ -7,8 +7,8 @@
 
 #include <array>
 
-#include "movesHashMap.h"
-#include "EngineTypeDefs.h"
+#include "../movesHashMap.h"
+#include "../EngineTypeDefs.h"
 
 class RookMap {
     static constexpr size_t MaxRookPossibleNeighbors = 144;
@@ -18,22 +18,22 @@ public:
     // Class creation and initialization
     // ---------------------------------------
 
-    RookMap();
-    void FindHashParameters();
+    RookMap() = delete;
+    static void FindHashParameters();
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] uint64_t GetMoves(int msbInd, uint64_t fullBoard, uint64_t allyBoard) const;
+    [[nodiscard]] static constexpr uint64_t GetMoves(int msbInd, uint64_t fullBoard);
 
     // ------------------------------
     // private methods
     // ------------------------------
 private:
 
-    constexpr void _initMoves();
-    void _initMaps();
+    static constexpr void _initMoves(std::array<movesHashMap, Board::BoardFields>& maps);
+    static constexpr void _initMaps(std::array<movesHashMap, Board::BoardFields>& maps);
     [[nodiscard]] constexpr static std::array<uint64_t, movesHashMap::MasksCount> _initMasks(int bInd);
     [[nodiscard]] constexpr static uint64_t _genMoves(uint64_t neighbors, int bInd);
     [[nodiscard]] constexpr static std::tuple<std::array<uint64_t, MaxRookPossibleNeighbors>, size_t> _genPossibleNeighbors(int bInd, const movesHashMap& record);
@@ -54,7 +54,7 @@ private:
     // Class fields
     // ------------------------------
 
-    inline static uint64_t aHashValues[Board::BoardFields] = {
+    static constexpr uint64_t aHashValues[Board::BoardFields] = {
         3393641422875280979LLU,
         5471342235767773913LLU,
         15250091735978237630LLU,
@@ -121,7 +121,7 @@ private:
         4954199076915290639LLU,
     };
 
-    inline static uint64_t bHashValues[Board::BoardFields] = {
+    static constexpr uint64_t bHashValues[Board::BoardFields] = {
         17312422767356678212LLU,
         17307815045900276771LLU,
         16356769246725350830LLU,
@@ -190,7 +190,16 @@ private:
 
     static constexpr const char* names[] = { "lMask", "rMask", "uMask", "dMask" };
 
-    movesHashMap layer1[Board::BoardFields];
+    static constexpr std::array<movesHashMap, Board::BoardFields> layer1 = []() constexpr
+    {
+        std::array<movesHashMap, Board::BoardFields> maps;
+
+        _initMaps(maps);
+        _initMoves(maps);
+
+        return maps;
+    }();
+
 };
 
 #endif //ROOKMAP_H

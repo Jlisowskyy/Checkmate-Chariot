@@ -2,24 +2,15 @@
 // Created by Jlisowskyy on 12/28/23.
 //
 
-#include "../include/BishopMap.h"
-
-BishopMap::BishopMap() {
-    _initMaps();
-    IntegrityTest(
-        [](const int bInd, const movesHashMap& map){ return _genPossibleNeighbors(bInd, map); },
-        layer1
-    );
-    _initMoves();
-}
+#include "../include/MoveGeneration/BishopMap.h"
 
 void BishopMap::FindHashParameters() {
-    movesHashMap::FindHashParameters(aHashValues, bHashValues, layer1,
+    movesHashMap::FindHashParameters(aHashValues, bHashValues, layer1.data(),
                                      [](const int bInd, const movesHashMap& record) { return _genPossibleNeighbors(bInd, record); }
     );
 }
 
-uint64_t BishopMap::GetMoves(const int msbInd, const uint64_t fullBoard, const uint64_t allyBoard) const {
+constexpr uint64_t BishopMap::GetMoves(const int msbInd, const uint64_t fullBoard) {
     const movesHashMap& rec = layer1[msbInd];
 
     const uint64_t NWPart = ExtractLsbBit(fullBoard & rec.masks[nwMask]);
@@ -29,11 +20,11 @@ uint64_t BishopMap::GetMoves(const int msbInd, const uint64_t fullBoard, const u
     const uint64_t closestNeighbors = NWPart | NEPart | SWPart | SEPart;
     const uint64_t moves = layer1[msbInd][closestNeighbors];
 
-    return ClearAFromIntersectingBits(moves, allyBoard);
+    return moves;
 }
 
-void BishopMap::_initMaps() {
-    MapInitializer(aHashValues, bHashValues, layer1,
+constexpr void BishopMap::_initMaps(std::array<movesHashMap, Board::BoardFields>& maps) {
+    MapInitializer(aHashValues, bHashValues, maps,
                    [](const int x, const int y) { return _neighborLayoutPossibleCountOnField(x, y); },
                    [](const int bInd) { return _initMasks(bInd); }
     );
@@ -82,8 +73,8 @@ constexpr std::tuple<std::array<uint64_t, BishopMap::MaxBishopPossibleNeighbors>
     return {ret, usedFields};
 }
 
-constexpr void BishopMap::_initMoves() {
-    MoveInitializer(layer1,
+constexpr void BishopMap::_initMoves(std::array<movesHashMap, Board::BoardFields>& maps) {
+    MoveInitializer(maps,
                     [](const uint64_t neighbors, const int bInd) constexpr
                     { return _genMoves(neighbors, bInd); },
                     [](const int bInd, const movesHashMap& record) constexpr

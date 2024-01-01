@@ -2,16 +2,13 @@
 // Created by Jlisowskyy on 12/28/23.
 //
 
-#include <mutex>
-#include <random>
 #include <chrono>
 
-#include "../include/RookMap.h"
+#include "../include/MoveGeneration/RookMap.h"
+#include "../include/MoveGeneration/MoveGeneration.h"
 
-#include "../include/MoveGeneration.h"
-
-constexpr void RookMap::_initMoves() {
-    MoveInitializer(layer1,
+constexpr void RookMap::_initMoves(std::array<movesHashMap, Board::BoardFields>& maps) {
+    MoveInitializer(maps,
         [](const uint64_t neighbors, const int bInd) constexpr
                         { return _genMoves(neighbors, bInd); },
         [](const int bInd, const movesHashMap& record) constexpr
@@ -101,23 +98,13 @@ constexpr size_t RookMap::_neighborLayoutPossibleCountOnField(const int x, const
     return lCount * rCount * dCount * uCount;
 }
 
-
-RookMap::RookMap() {
-    _initMaps();
-    IntegrityTest(
-        [](const int bInd, const movesHashMap& map){ return _genPossibleNeighbors(bInd, map); },
-        layer1
-        );
-    _initMoves();
-}
-
 void RookMap::FindHashParameters() {
-    movesHashMap::FindHashParameters(aHashValues, bHashValues, layer1,
+    movesHashMap::FindHashParameters(aHashValues, bHashValues, layer1.data(),
         [](const int bInd, const movesHashMap& record) { return _genPossibleNeighbors(bInd, record); }
     );
 }
 
-uint64_t RookMap::GetMoves(const int msbInd, const uint64_t fullBoard, const uint64_t allyBoard) const {
+constexpr uint64_t RookMap::GetMoves(const int msbInd, const uint64_t fullBoard) {
     const movesHashMap& rec = layer1[msbInd];
 
     const uint64_t uPart = ExtractLsbBit(fullBoard & rec.masks[uMask]);
@@ -127,11 +114,11 @@ uint64_t RookMap::GetMoves(const int msbInd, const uint64_t fullBoard, const uin
     const uint64_t closestNeighbors = uPart | dPart | lPart | rPart;
     const uint64_t moves = layer1[msbInd][closestNeighbors];
 
-    return ClearAFromIntersectingBits(moves, allyBoard);
+    return moves;
 }
 
-void RookMap::_initMaps() {
-    MapInitializer(aHashValues, bHashValues, layer1,
+constexpr void RookMap::_initMaps(std::array<movesHashMap, Board::BoardFields>& maps) {
+    MapInitializer(aHashValues, bHashValues, maps,
         [](const int x, const int y) constexpr
             { return _neighborLayoutPossibleCountOnField(x, y); },
         [](const int bInd) constexpr

@@ -5,7 +5,7 @@
 #ifndef UCITRANSLATOR_H
 #define UCITRANSLATOR_H
 
-#include "Engine.h"
+#include "../Engine.h"
 
 class UCITranslator {
     // --------------------------------------

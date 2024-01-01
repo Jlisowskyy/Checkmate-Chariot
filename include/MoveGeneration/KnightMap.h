@@ -7,8 +7,7 @@
 
 #include <array>
 
-#include "EngineTypeDefs.h"
-#include "BitOperations.h"
+#include "../EngineTypeDefs.h"
 #include "MoveGeneration.h"
 
 class KnightMap {
@@ -22,10 +21,8 @@ public:
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static uint64_t GetMoves(const int msbInd, const uint64_t, const uint64_t allyMap) {
-        const uint64_t moves = movesMap[msbInd];
-
-        return ClearAFromIntersectingBits(moves, allyMap);
+    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd) {
+        return movesMap[msbInd];
     }
 
     // ------------------------------

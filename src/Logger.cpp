@@ -2,7 +2,7 @@
 // Created by Jlisowskyy on 12/28/23.
 //
 
-#include "../include/Logger.h"
+#include "../include/Interface/Logger.h"
 
 void Logger::Log(const std::string& logMessage) {
     logGuard.lock();

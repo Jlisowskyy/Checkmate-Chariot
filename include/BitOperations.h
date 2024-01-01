@@ -47,7 +47,7 @@ constexpr uint64_t ExtractMsbBit(const uint64_t x) {
 }
 
 constexpr uint64_t ExtractLsbBit(const uint64_t x) {
-    return ExtractMsbBitBuiltin(x);
+    return ExtractLsbOwn1(x);
 }
 
 constexpr uint64_t ClearAFromIntersectingBits(const uint64_t a, const uint64_t b) {

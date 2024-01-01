@@ -5,27 +5,26 @@
 #ifndef BISHOPMAP_H
 #define BISHOPMAP_H
 
-#include "movesHashMap.h"
-#include "EngineTypeDefs.h"
+#include "../movesHashMap.h"
+#include "../EngineTypeDefs.h"
 #include "MoveGeneration.h"
 
 class BishopMap {
     static constexpr size_t MaxBishopPossibleNeighbors = 108;
-
 public:
     // ---------------------------------------
     // Class creation and initialization
     // ---------------------------------------
 
-    BishopMap();
+    BishopMap() = delete;
 
-    void FindHashParameters();
+    static void FindHashParameters();
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    void Tester() const {
+    static void Tester() {
         auto [pos, size] = _genPossibleNeighbors(63, layer1[0]);
 
         for (size_t i = 0; i < size; ++i){
@@ -34,18 +33,18 @@ public:
         }
     }
 
-    [[nodiscard]] uint64_t GetMoves(int msbInd, uint64_t fullBoard, uint64_t allyBoard) const;
+    [[nodiscard]] static constexpr uint64_t GetMoves(int msbInd, uint64_t fullBoard);
 
     // ------------------------------
     // Class private methods
     // ------------------------------
 
-    static constexpr std::tuple<std::array<uint64_t, MaxBishopPossibleNeighbors>, size_t> _genPossibleNeighbors(int bInd, const movesHashMap& record);
-    constexpr void _initMoves();
-    [[nodiscard]] constexpr static uint64_t _genMoves(uint64_t neighbors, int bInd);
+    [[nodiscard]] static constexpr std::tuple<std::array<uint64_t, MaxBishopPossibleNeighbors>, size_t> _genPossibleNeighbors(int bInd, const movesHashMap& record);
+    static constexpr void _initMoves(std::array<movesHashMap, Board::BoardFields>& maps);
+    [[nodiscard]] static constexpr uint64_t _genMoves(uint64_t neighbors, int bInd);
     [[nodiscard]] static constexpr size_t _neighborLayoutPossibleCountOnField(int x, int y);
     [[nodiscard]] static constexpr std::array<uint64_t, movesHashMap::MasksCount> _initMasks(int bInd);
-    void _initMaps();
+    static constexpr void _initMaps(std::array<movesHashMap, Board::BoardFields>& maps);
 
     // ------------------------------
     // Class inner types
@@ -65,7 +64,7 @@ private:
 
     inline static const char* names[] = { "nwMask", "neMask", "swMask", "seMask" };
 
-    inline static uint64_t aHashValues[Board::BoardFields] = {
+    static constexpr uint64_t aHashValues[Board::BoardFields] = {
         7277981665153169073LLU,
         4817405075091174023LLU,
         10354607012174535240LLU,
@@ -132,7 +131,7 @@ private:
         12847281603932373635LLU,
     };
 
-    inline static uint64_t bHashValues[Board::BoardFields] = {
+    static constexpr uint64_t bHashValues[Board::BoardFields] = {
         16533625891010514269LLU,
         12137389797463701647LLU,
         10620236037258921160LLU,
@@ -199,9 +198,16 @@ private:
         9635513767646835776LLU,
     };
 
-    movesHashMap layer1[Board::BoardFields];
+    static constexpr std::array<movesHashMap, Board::BoardFields> layer1 = []() constexpr
+    {
+        std::array<movesHashMap, Board::BoardFields> maps;
+
+        _initMaps(maps);
+        _initMoves(maps);
+
+        return maps;
+    }();
+
 };
-
-
 
 #endif //BISHOPMAP_H

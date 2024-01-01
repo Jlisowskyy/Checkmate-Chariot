@@ -8,7 +8,7 @@
 #include <string>
 #include <format>
 
-#include "EngineTypeDefs.h"
+#include "../EngineTypeDefs.h"
 
 struct FenTranslator {
     // ------------------------------

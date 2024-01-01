@@ -5,7 +5,6 @@
 #ifndef PAWNMAP_H
 #define PAWNMAP_H
 
-#include <iostream>
 #include <cstdint>
 
 #include "MoveGeneration.h"

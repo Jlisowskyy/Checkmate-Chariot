@@ -9,8 +9,7 @@
 #include <array>
 #include <cstdint>
 
-#include "EngineTypeDefs.h"
-#include "BitOperations.h"
+#include "../EngineTypeDefs.h"
 #include "MoveGeneration.h"
 
 /*              NOTES:
@@ -33,10 +32,8 @@ public:
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t, const uint64_t allyMap) {
-        const uint64_t moves = movesMap[msbInd];
-
-        return ClearAFromIntersectingBits(moves, allyMap);
+    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd) {
+        return movesMap[msbInd];
     }
 
     // ------------------------------

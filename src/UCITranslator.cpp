@@ -2,7 +2,7 @@
 // Created by Jlisowskyy on 12/26/23.
 //
 
-#include "../include/UCITranslator.h"
+#include "../include/Interface/UCITranslator.h"
 
 void UCITranslator::BeginCommandTranslation() const {
     auto lastCommand = UCICommand::InvalidCommand;

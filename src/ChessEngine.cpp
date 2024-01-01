@@ -4,13 +4,13 @@
 
 #include "../include/ChessEngine.h"
 
-#include "../include/BishopMap.h"
-#include "../include/UCITranslator.h"
+#include "../include/MoveGeneration/BishopMap.h"
+#include "../include/Interface/UCITranslator.h"
 #include "../include/Engine.h"
-#include "../include/KingMap.h"
-#include "../include/KnightMap.h"
-#include "../include/PawnMap.h"
-#include "../include/RookMap.h"
+#include "../include/MoveGeneration/KingMap.h"
+#include "../include/MoveGeneration/KnightMap.h"
+#include "../include/MoveGeneration/PawnMap.h"
+#include "../include/MoveGeneration/RookMap.h"
 
 void ChessEngineMainEntry() {
     Engine engine{};
@@ -23,8 +23,7 @@ void ChessEngineMainEntry() {
 void ChessHashingTest1() {
     static constexpr const char* rookTest = "R7/7R/8/8/8/3R4/8/8 w - -";
 
-    RookMap rMap{};
-    rMap.FindHashParameters();
+    RookMap::FindHashParameters();
 
     // Engine engine{};
     // engine.SetFenPosition(rookTest);
@@ -35,7 +34,7 @@ void ChessHashingTest1() {
 void ChessHashingTest2() {
     for (int i = 0; i < 64; ++i) {
         std::cout << "Moves on position: " << ConvertToReversedPos(i) << std::endl;
-        DisplayMask(KingMap::GetMoves(i, 0, 0));
+        DisplayMask(KingMap::GetMoves(i));
     }
 
 }
@@ -43,14 +42,12 @@ void ChessHashingTest2() {
 void ChessHashingTest3() {
     for (int i = 0; i < 64; ++i) {
         std::cout << "Moves on position: " << ConvertToReversedPos(i) << std::endl;
-        DisplayMask(KnightMap::GetMoves(i, 0, 0));
+        DisplayMask(KnightMap::GetMoves(i));
     }
 }
 
 void ChessHashingTest4() {
-    BishopMap map{};
-
-    map.FindHashParameters();
+    BishopMap::FindHashParameters();
 }
 
 void ChessHashingTest5() {
