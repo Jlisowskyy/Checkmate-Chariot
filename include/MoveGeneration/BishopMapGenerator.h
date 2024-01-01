@@ -5,10 +5,10 @@
 #ifndef BISHOPMAPGENERATOR_H
 #define BISHOPMAPGENERATOR_H
 
+#include "MoveGeneration.h"
 #include "../BitOperations.h"
 #include "../EngineTypeDefs.h"
 #include "../movesHashMap.h"
-#include "MoveGeneration.h"
 
 class BishopMapGenerator {
     static constexpr size_t MaxBishopPossibleNeighbors = 108;

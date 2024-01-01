@@ -7,9 +7,11 @@
 
 #include "BitOperations.h"
 #include "EngineTypeDefs.h"
+#include "MoveGeneration/BishopMap.h"
 #include "MoveGeneration/KingMap.h"
 #include "MoveGeneration/KnightMap.h"
 #include "MoveGeneration/PawnMap.h"
+#include "MoveGeneration/QueenMap.h"
 #include "MoveGeneration/RookMap.h"
 
 /*              General optimizations TODO:
@@ -43,7 +45,7 @@ public:
         return map;
     }
 
-    [[nodiscard]] uint64_t GetBlockedMap(const Color col, const uint64_t enemyMap, const uint64_t allyMap, const uint64_t fullMap) {
+    [[nodiscard]] uint64_t GetBlockedFieldMap(const Color col, const uint64_t enemyMap, const uint64_t fullMap) const {
         uint64_t blockedMap = 0;
 
         // Pawns attacks generation.
@@ -53,24 +55,50 @@ public:
                 ? PawnMap::GetWhiteAttacks(pawnsMap, enemyMap)
                 : PawnMap::GetBlackAttacks(pawnsMap, enemyMap);
 
-        // Knight attacks generation.
-        uint64_t knightMap = board.boards[col*6 + knights];
-        while (knightMap != 0) {
-            const int knightPos = ExtractMsbPos(knightMap);
-            knightMap ^= (minMsbPossible << knightPos);
-
-            blockedMap |= KnightMap::GetMoves(knightPos);
-        }
-
         // King attacks generation.
         blockedMap |= KingMap::GetMoves(ExtractMsbPos(board.boards[col*6 + king]));
 
-        uint64_t rookMap = board.boards[col*6 + rooks];
-        while (rookMap != 0) {
-            const int rookPos = ExtractMsbPos(rookMap);
-            rookMap ^= (minMsbPossible << rookPos);
+        // Knight attacks generation.
+        blockedMap |= _blockIterativeGenerator(board.boards[col*6 + knights],
+            [&](const int pos) { return KnightMap::GetMoves(pos); }
+        );
 
-            // blockedMap |= RookMap::GetMoves(rookPos, fullMap);
+        // Rook attacks generation.
+        blockedMap |= _blockIterativeGenerator(board.boards[col*6 + rooks],
+            [&](const int pos) { return RookMap::GetMoves(pos, fullMap); }
+        );
+
+        // Bishop attacks generation.
+        blockedMap |= _blockIterativeGenerator(board.boards[col*6 + bishops],
+            [&](const int pos) { return BishopMap::GetMoves(pos, fullMap); }
+        );
+
+        // Queen attacks generation.
+        blockedMap |= _blockIterativeGenerator(board.boards[col*6 + queens],
+            [&](const int pos) { return QueenMap::GetMoves(pos, fullMap); }
+        );
+
+        return blockedMap;
+    }
+
+    [[nodiscard]] uint64_t GetBlockedFigsMap(const Color col, const uint64_t enemyMap, const uint64_t allyMap, const uint64_t fullMap) const {
+
+        return 0;
+    }
+    // ------------------------------
+    // private methods
+    // ------------------------------
+private:
+
+    template<class moveGenerator>
+    [[nodiscard]] static uint64_t _blockIterativeGenerator(uint64_t board, moveGenerator mGen) {
+        uint64_t blockedMap = 0;
+
+        while (board != 0) {
+            const int figPos = ExtractMsbPos(board);
+            board ^= (minMsbPossible << figPos);
+
+            blockedMap |= mGen(figPos);
         }
 
         return blockedMap;
@@ -79,7 +107,7 @@ public:
     // ------------------------------
     // Class fields
     // ------------------------------
-private:
+
     Board& board;
 };
 
