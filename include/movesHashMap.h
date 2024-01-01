@@ -28,7 +28,7 @@ public:
         masks{nMasks}, _a{a}, _b{b}, _moduloMask{modMask}, _primeNumber{primeNum}, _mapSize{mapSize}, _map{ 0 }
     {}
 
-    movesHashMap& operator=(const movesHashMap& other){
+    constexpr movesHashMap& operator=(const movesHashMap& other){
         if (this == &other) return *this;
 
         _a = other._a;
@@ -57,13 +57,31 @@ public:
     constexpr uint64_t& operator[](const uint64_t neighbors) {
         return _map[getHash(neighbors)];
     }
-    void setHashCoefs(const uint64_t a, const uint64_t b) { _a = a; _b = b; }
+    constexpr void setHashCoefs(const uint64_t a, const uint64_t b) { _a = a; _b = b; }
 
-    [[nodiscard]] std::tuple<uint64_t, uint64_t> getCoefs() const { return {_a, _b}; }
+    [[nodiscard]] constexpr std::tuple<uint64_t, uint64_t> getCoefs() const { return {_a, _b}; }
 
-    void clear() {
+    constexpr void clear() {
         for (size_t i = 0; i < _mapSize; ++i)
             _map[i] = 0;
+    }
+
+    template<class neighborGenerator>
+    static void IntegrityTest(neighborGenerator func, movesHashMap* maps) {
+        for (int i = 0; i < Board::BoardFields; ++i) {
+            const int bInd = ConvertToReversedPos(i);
+            const auto [possibilities, posSize] = func(bInd, maps[i]);
+
+            maps[i].clear();
+            for (size_t j = 0; j < posSize; ++j) {
+                if (maps[i][possibilities[j]] == 1) {
+                    std::cerr << "[ ERROR ] Integrity failed on index: " << i << std::endl;
+                    break;
+                }
+
+                maps[i][possibilities[j]] = 1;
+            }
+        }
     }
 
     template<class neighborGenerator>
@@ -79,7 +97,7 @@ public:
             myMaps[i] = maps[i];
         }
 
-        IntegrityTest(nGen, maps);
+        IntegrityTest(nGen, myMaps);
 
         #pragma omp parallel for
         for(int i = 0; i < Board::BoardFields; ++i) {

@@ -19,9 +19,7 @@ add_executable(ChessEngine main.cpp
         src/Logger.cpp
         include/Interface/Logger.h
         src/EngineTypeDefs.cpp
-        src/RookMap.cpp
         include/MoveGeneration/RookMap.h
-        src/BishopMap.cpp
         include/MoveGeneration/BishopMap.h
         include/MoveGeneration/KnightMap.h
         include/BitOperations.h
@@ -39,6 +37,8 @@ add_executable(ChessEngine main.cpp
         src/EngineTests.cpp
         include/EngineTests.h
         include/Interface/UCITranslator.h
+        include/MoveGeneration/RookMapGenerator.h
+        include/MoveGeneration/BishopMapGenerator.h
 )
 
 find_package(OpenMP)
@@ -46,5 +46,5 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(ChessEngine PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-target_compile_options(ChessEngine  PUBLIC -O3;-march=native;-fopenmp)
-#target_compile_options(ChessEngine PUBLIC -fopenmp;-g)
+#target_compile_options(ChessEngine  PUBLIC -O3;-march=native;-fopenmp)
+target_compile_options(ChessEngine PUBLIC -fopenmp;-g)

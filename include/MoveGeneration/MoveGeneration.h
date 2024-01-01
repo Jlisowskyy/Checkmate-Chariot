@@ -57,24 +57,6 @@ inline void DisplayMasks(const uint64_t* masks, const char** names, const size_t
     }
 }
 
-template<class neighborGenerator>
-void IntegrityTest(neighborGenerator func, movesHashMap* maps) {
-    for (int i = 0; i < Board::BoardFields; ++i) {
-        const int bInd = ConvertToReversedPos(i);
-        const auto [possibilities, posSize] = func(bInd, maps[i]);
-
-        maps[i].clear();
-        for (size_t j = 0; j < posSize; ++j) {
-            if (maps[i][possibilities[j]] == 1) {
-                std::cerr << "[ ERROR ] Integrity failed on index: " << i << std::endl;
-                break;
-            }
-
-            maps[i][possibilities[j]] = 1;
-        }
-    }
-}
-
 template<class comparisonMethod>
 [[nodiscard]] constexpr uint64_t GenMask(const int barrier, int boardIndex, const int offset, comparisonMethod comp) {
     uint64_t mask = 0;

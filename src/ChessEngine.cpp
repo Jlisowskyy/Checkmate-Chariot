@@ -23,7 +23,7 @@ void ChessEngineMainEntry() {
 void ChessHashingTest1() {
     static constexpr const char* rookTest = "R7/7R/8/8/8/3R4/8/8 w - -";
 
-    RookMap::FindHashParameters();
+    RookMapGenerator::FindHashParameters();
 
     // Engine engine{};
     // engine.SetFenPosition(rookTest);
@@ -47,7 +47,7 @@ void ChessHashingTest3() {
 }
 
 void ChessHashingTest4() {
-    BishopMap::FindHashParameters();
+    BishopMapGenerator::FindHashParameters();
 }
 
 void ChessHashingTest5() {
