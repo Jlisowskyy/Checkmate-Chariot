@@ -54,7 +54,7 @@ private:
     // Class fields
     // ------------------------------
 
-    static constexpr uint64_t aHashValues[Board::BoardFields] = {
+    inline static uint64_t aHashValues[Board::BoardFields] = {
         3393641422875280979LLU,
         5471342235767773913LLU,
         15250091735978237630LLU,
@@ -121,7 +121,7 @@ private:
         4954199076915290639LLU,
     };
 
-    static constexpr uint64_t bHashValues[Board::BoardFields] = {
+    inline static uint64_t bHashValues[Board::BoardFields] = {
         17312422767356678212LLU,
         17307815045900276771LLU,
         16356769246725350830LLU,

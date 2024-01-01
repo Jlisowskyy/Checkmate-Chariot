@@ -16,15 +16,13 @@ class KnightMap {
     // Class creation and initialization
     // ---------------------------------------
 public:
-    constexpr KnightMap(){
-        movesMap = GenStaticMoves(maxMovesCount, movesCords, rowCords);
-    }
+    KnightMap() = delete;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] uint64_t GetMoves(const int msbInd, const uint64_t, const uint64_t allyMap) const{
+    [[nodiscard]] static uint64_t GetMoves(const int msbInd, const uint64_t, const uint64_t allyMap) {
         const uint64_t moves = movesMap[msbInd];
 
         return ClearAFromIntersectingBits(moves, allyMap);
@@ -34,8 +32,6 @@ public:
     // Class fields
     // ------------------------------
 
-    std::array<uint64_t, Board::BoardFields> movesMap{};
-
     static constexpr size_t maxMovesCount = 8;
 
     // Describes knight possible moves cordinates.
@@ -44,6 +40,8 @@ public:
     // Describes accordingly y positions after the move relatively to knight's y position.
     // Used to omit errors during generation.
     static constexpr int rowCords[] = { 1, 2, 2, 1, -1, -2, -2, -1 };
+
+    static constexpr std::array<uint64_t, Board::BoardFields> movesMap = GenStaticMoves(maxMovesCount, movesCords, rowCords);
 };
 
 #endif //KNIGHTMAP_H

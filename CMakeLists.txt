@@ -28,6 +28,17 @@ add_executable(ChessEngine main.cpp
         include/movesHashMap.h
         include/KingMap.h
         include/MoveGeneration.h
+        include/QueenMap.h
+        src/PawnMap.cpp
+        include/PawnMap.h
+        src/Evaluator.cpp
+        include/Evaluator.h
+        src/SearchingMachine.cpp
+        include/SearchingMachine.h
+        src/ChessMechanics.cpp
+        include/ChessMechanics.h
+        src/EngineTests.cpp
+        include/EngineTests.h
 )
 
 find_package(OpenMP)
@@ -36,4 +47,4 @@ if(OpenMP_CXX_FOUND)
 endif()
 
 target_compile_options(ChessEngine  PUBLIC -O3;-march=native;-fopenmp)
-#target_compile_options(ChessEngine PUBLIC -fopenmp)
+#target_compile_options(ChessEngine PUBLIC -fopenmp;-g)

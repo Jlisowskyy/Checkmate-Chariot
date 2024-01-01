@@ -6,9 +6,9 @@
 #define MOVEGENERATION_H
 
 #include <array>
-#include <cmath>
 
 #include "BitOperations.h"
+#include "movesHashMap.h"
 #include "EngineTypeDefs.h"
 
 [[nodiscard]] constexpr std::array<uint64_t, Board::BoardFields> GenStaticMoves(const int maxMovesCount,
@@ -85,18 +85,41 @@ template<class comparisonMethod>
     return mask;
 }
 
+[[nodiscard]] constexpr uint64_t GenMask(const int startInd, const int boarderIndex, const int offset) {
+    uint64_t ret = 0;
+    for (int i = startInd; i < boarderIndex; i += offset) ret |= (1LLU << i);
+    return ret;
+}
+
+[[nodiscard]] constexpr size_t MyCeil(const double x) {
+    return (static_cast<double>(static_cast<size_t>(x)) == x)
+    ? static_cast<size_t>(x)
+    : static_cast<size_t>(x) + ((x > 0) ? 1 : 0);
+}
+
+[[nodiscard]] constexpr size_t GetSize(const size_t x) {
+    size_t size = 0;
+
+    for (size_t i = 0; i < sizeof(size_t)*8; ++i) {
+        if (const size_t mask = 1LLU << i; (mask & x) != 0)
+            size = i;
+    }
+
+    return x == (1 << size) ? size : size + 1;
+}
+
 template<class sizeGenerator, class maskGenerator>
-void MapInitializer(const uint64_t* aHash, const uint64_t* bHash, movesHashMap* maps, sizeGenerator sGen, maskGenerator mGen) {
+constexpr void MapInitializer(const uint64_t* aHash, const uint64_t* bHash, movesHashMap* maps, sizeGenerator sGen, maskGenerator mGen) {
     for (int y = 0; y < 8; ++y) {
         for (int x = 0; x < 8; ++x) {
             const int bInd = y*8 + x;
             const int mapInd = ConvertToReversedPos(bInd);
 
             const size_t minimalSize = sGen(x, y);
-            const size_t min2Pow = std::ceil(std::log2(static_cast<double>(minimalSize)));
+            const size_t min2Pow = GetSize(minimalSize);
             const size_t mapSize = 1 << min2Pow; // 2^min2Pow
             const uint64_t moduloMask = mapSize - 1; // Mask all ones
-            const uint64_t primeNumber = PrimeNumberMap.at(mapSize);
+            const uint64_t primeNumber = PrimeNumberMap[min2Pow];
             const uint64_t a = aHash[mapInd];
             const uint64_t b = bHash[mapInd];
             const auto masks = mGen(bInd);

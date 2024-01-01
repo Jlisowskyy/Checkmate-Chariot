@@ -74,7 +74,7 @@ public:
     }
 
     template<class neighborGenerator>
-    static void FindHashParameters(const uint64_t* aHash, const uint64_t* bHash, movesHashMap* maps, neighborGenerator nGen) {
+    static void FindHashParameters(uint64_t* aHash, uint64_t* bHash, movesHashMap* maps, neighborGenerator nGen) {
         std::mutex guard{};
 
         #pragma omp parallel for
@@ -111,8 +111,21 @@ public:
 
             const auto [a, b] = maps[i].getCoefs();
             guard.lock();
-            std::cout << "Finished hashing on mapIndex: " << i << " with acquired parameteres 'a': "
-                    << a << " 'b': " << b<< std::endl;
+            aHash[i] = a;
+            bHash[i] = b;
+
+            std::cout << "aHashValue map:\n{\n";
+            for (int z = 0; z < Board::BoardFields; ++z) {
+                std::cout << "\t" << aHash[z] << "LLU,\n";
+            }
+            std::cout << "};\n";
+
+            std::cout << "bHashValue map:\n{\n";
+            for (int z = 0; z < Board::BoardFields; ++z) {
+                std::cout << "\t" << bHash[z] << "LLU,\n";
+            }
+            std::cout << "};\n";
+
             guard.unlock();
         }
     }
