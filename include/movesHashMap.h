@@ -5,16 +5,25 @@
 #ifndef HASHMAP_H
 #define HASHMAP_H
 
-#include <cinttypes>
 #include <array>
-#include <tuple>
 #include <mutex>
 #include <random>
+#include <format>
 
 #include "EngineTypeDefs.h"
 #include "BitOperations.h"
 
-class movesHashMap {
+/*          Important notes:
+ *  Used HashFuncT class should have:
+ *  -
+ *
+ *
+ */
+
+template<
+    class HashFuncT,
+    size_t mapAllocSize = 256
+> class movesHashMap {
     // ------------------------------
     // Class creation
     // ------------------------------
@@ -24,130 +33,103 @@ public:
     constexpr movesHashMap() = default;
     constexpr ~movesHashMap() = default;
 
-    constexpr movesHashMap(const std::array<uint64_t, MasksCount>& nMasks, uint64_t a, uint64_t b, uint64_t modMask, uint64_t primeNum, size_t mapSize):
-        masks{nMasks}, _a{a}, _b{b}, _moduloMask{modMask}, _primeNumber{primeNum}, _mapSize{mapSize}, _map{ 0 }
+    constexpr movesHashMap(const std::array<uint64_t, MasksCount>& nMasks, const typename HashFuncT::params& p ):
+        masks(nMasks), HFunc(p), _map{ 0 }
     {}
 
-    constexpr movesHashMap& operator=(const movesHashMap& other){
-        if (this == &other) return *this;
-
-        _a = other._a;
-        _b = other._b;
-        _moduloMask = other._moduloMask;
-        _mapSize = other._mapSize;
-        _primeNumber = other._primeNumber;
-        masks = other.masks;
-        _map = other._map;
-
-        return *this;
-    }
+    constexpr movesHashMap(const movesHashMap&) = default;
+    constexpr movesHashMap(movesHashMap&&) = default;
+    constexpr movesHashMap& operator=(const movesHashMap&) = default;
+    constexpr movesHashMap& operator=(movesHashMap&&) = default;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] constexpr uint64_t getHash(const uint64_t neighbors) const {
-        return ((_a * neighbors + _b) % _primeNumber) & _moduloMask;
-    }
-
     constexpr const uint64_t& operator[](const uint64_t neighbors) const {
-        return _map[getHash(neighbors)];
+        return _map[HFunc(neighbors)];
     }
 
     constexpr uint64_t& operator[](const uint64_t neighbors) {
-        return _map[getHash(neighbors)];
+        return _map[HFunc(neighbors)];
     }
-    constexpr void setHashCoefs(const uint64_t a, const uint64_t b) { _a = a; _b = b; }
-
-    [[nodiscard]] constexpr std::tuple<uint64_t, uint64_t> getCoefs() const { return {_a, _b}; }
 
     constexpr void clear() {
-        for (size_t i = 0; i < _mapSize; ++i)
-            _map[i] = 0;
+        _map.fill(0);
     }
 
     template<class neighborGenerator>
-    static void IntegrityTest(neighborGenerator func, movesHashMap* maps) {
-        for (int i = 0; i < Board::BoardFields; ++i) {
-            const int bInd = ConvertToReversedPos(i);
-            const auto [possibilities, posSize] = func(bInd, maps[i]);
+    static std::pair<bool, size_t> IntegrityTest(neighborGenerator func, movesHashMap& map, const int boardIndex) {
+        const auto [possibilities, posSize] = func(boardIndex, map);
 
-            maps[i].clear();
-            for (size_t j = 0; j < posSize; ++j) {
-                if (maps[i][possibilities[j]] == 1) {
-                    std::cerr << "[ ERROR ] Integrity failed on index: " << i << std::endl;
-                    break;
-                }
+        size_t maxSize {};
+        bool collisionDetected {false};
 
-                maps[i][possibilities[j]] = 1;
+        map.clear();
+        for (size_t i = 0; i < posSize; ++i) {
+            if (map[possibilities[i]] == 1) {
+                std::cerr << "[ ERROR ] Integrity failed on index: " << i << std::endl;
+                collisionDetected = true;
+                break;
             }
+
+            map[possibilities[i]] = 1;
+            if (const size_t ind = map.HFunc(possibilities[i]); ind > maxSize) maxSize = ind;
         }
+
+        return { collisionDetected, maxSize*sizeof(uint64_t) };
     }
 
     template<class neighborGenerator>
-    static void FindHashParameters(const uint64_t* aHash, const uint64_t* bHash, const movesHashMap* maps, neighborGenerator nGen) {
-        uint64_t myAHash[Board::BoardFields]{};
-        uint64_t myBHash[Board::BoardFields]{};
-        movesHashMap myMaps[Board::BoardFields]{};
+    static void FindHashParameters(const typename HashFuncT::params* const params, neighborGenerator nGen) {
+        movesHashMap maps[Board::BoardFields]{};
         std::mutex guard{};
+        size_t fullSize{};
+        size_t correctMaps{};
 
-        for (size_t i = 0; i < Board::BoardFields; ++i) {
-            myAHash[i] = aHash[i];
-            myBHash[i] = bHash[i];
-            myMaps[i] = maps[i];
-        }
-
-        IntegrityTest(nGen, myMaps);
+        for (size_t i = 0; i < Board::BoardFields; ++i)
+            maps[i] = movesHashMap(params[i]);
 
         #pragma omp parallel for
         for(int i = 0; i < Board::BoardFields; ++i) {
-            if (myAHash[i] != 0 && myBHash[i] != 0) continue;
-
             const int bInd = ConvertToReversedPos(i);
-            std::mt19937_64 gen64{};
-            gen64.seed(std::chrono::steady_clock::now().time_since_epoch().count());
 
             // Possible neighbors generation.
-            const auto [possibilities, posSize] = nGen(bInd, myMaps[i]);
+            const auto [possibilities, posSize] = nGen(bInd, maps[i]);
+
+            static auto getNeighbors = [&](const int x, const movesHashMap& y) -> std::pair<const auto&, size_t> {
+                return { possibilities, posSize };
+            };
+
+            auto [result, size] = IntegrityTest(getNeighbors, maps[i], bInd);
+
+            if (result) {
+                const size_t roundedToCacheLine = std::ceil(static_cast<double>(size) / 64) * 64;
+                fullSize += roundedToCacheLine;
+                ++correctMaps;
+                continue;
+            };
 
             guard.lock();
-            std::cout << "Starting hash parameters search on index: " << bInd << std::endl;
+            std::cout << std::format("Starting hash function parameters serach on index: {} and field: {}\n",
+                bInd, fieldStrMap.at(static_cast<Field>(1LLU << bInd)));
             guard.unlock();
 
-            bool wasColision = true;
-            while(wasColision) {
-                wasColision = false;
+            bool wasCollision;
+            size_t nSize;
+            do {
+                maps[i].HFunc.RollParameters();
+                const auto [rehashResult, rehashedSize] = IntegrityTest(getNeighbors, maps[i], bInd);
 
-                myMaps[i].setHashCoefs(gen64(), gen64());
-                myMaps[i].clear();
+                wasCollision = rehashResult;
+                nSize = rehashedSize;
+            }while(wasCollision);
+            fullSize += nSize;
 
-                for (size_t j = 0; j < posSize; ++j) {
-                    if (myMaps[i][possibilities[j]] == 1) {
-                        wasColision = true;
-                        break;
-                    }
-
-                    myMaps[i][possibilities[j]] = 1;
-                }
-            }
-
-            const auto [a, b] = myMaps[i].getCoefs();
             guard.lock();
-            myAHash[i] = a;
-            myBHash[i] = b;
-
-            std::cout << "aHashValue map:\n{\n";
-            for (const auto el : myAHash) {
-                std::cout << "\t" << el << "LLU,\n";
-            }
-            std::cout << "};\n";
-
-            std::cout << "bHashValue map:\n{\n";
-            for (const auto el : myBHash)  {
-                std::cout << "\t" << el << "LLU,\n";
-            }
-            std::cout << "};\n";
-
+            std::cout << "Actual rehashing result:\n{\n";
+            for (const auto& map : maps) std::cout << '\t' << map.HFunc.PrintParameters(std::cout) << ",\n";
+            std::cout << "};\n" << std::format("Current corect maps: {},\nWith size: {} bytes\n", correctMaps, fullSize);
             guard.unlock();
         }
     }
@@ -157,12 +139,12 @@ public:
     // ------------------------------
 
     std::array<uint64_t, MasksCount> masks{};
-private:
-    uint64_t _a{}, _b{};
-    uint64_t _moduloMask{};
-    uint64_t _primeNumber{};
+    uint64_t fullMask{};
+    HashFuncT HFunc{};
 
-    std::array<uint64_t, 256> _map{};
+private:
+
+    std::array<uint64_t, mapAllocSize> _map{};
     size_t _mapSize{};
 };
 
