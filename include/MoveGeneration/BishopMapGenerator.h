@@ -8,15 +8,17 @@
 #include "MoveGeneration.h"
 #include "../BitOperations.h"
 #include "../EngineTypeDefs.h"
-#include "../movesHashMap.h"
 
 class BishopMapGenerator {
-    static constexpr size_t MaxBishopPossibleNeighbors = 108;
+    static constexpr size_t MaxPossibleNeighborsWoutOverlap = 108;
+    static constexpr size_t DirectedMaskCount = 4;
+
+public:
+    using MasksT = std::array<uint64_t, DirectedMaskCount>;
 
     // ---------------------------------------
     // Class creation and initialization
     // ---------------------------------------
-public:
 
     BishopMapGenerator() = delete;
 
@@ -24,26 +26,10 @@ public:
     // Class interaction
     // ------------------------------
 
-    template<class MapT>
-    [[nodiscard]] static constexpr MapT GetMap() {
-        MapT maps{};
-
-        _initMaps(maps);
-        _initMoves(maps);
-
-        return maps;
-    }
-
-
-    // ------------------------------
-    // Class private methods
-    // ------------------------------
-private:
-
-    [[nodiscard]] static constexpr std::tuple<std::array<uint64_t, MaxBishopPossibleNeighbors>, size_t>
-            _genPossibleNeighbors(const int bInd, const movesHashMap& record)
+    [[nodiscard]] static constexpr std::tuple<std::array<uint64_t, MaxPossibleNeighborsWoutOverlap>, size_t>
+            GenPossibleNeighborsWoutOverlap(const int bInd, const MasksT& masks)
     {
-        std::array<uint64_t, MaxBishopPossibleNeighbors> ret{};
+        std::array<uint64_t, MaxPossibleNeighborsWoutOverlap> ret{};
         size_t usedFields = 0;
 
         const int x = bInd % 8;
@@ -57,22 +43,22 @@ private:
         const uint64_t bPos = 1LLU << bInd;
         for (int nw = bInd; nw <= NWBorder; nw += 7) {
             const uint64_t nwPos = minMsbPossible << nw;
-            if (nwPos != bPos && (record.masks[nwMask] & nwPos) == 0)
+            if (nwPos != bPos && (masks[nwMask] & nwPos) == 0)
                 continue;
 
             for (int ne = bInd; ne <= NEBorder; ne +=9) {
                 const uint64_t nePos = minMsbPossible << ne;
-                if (nePos != bPos && (record.masks[neMask] & nePos) == 0)
+                if (nePos != bPos && (masks[neMask] & nePos) == 0)
                     continue;
 
                 for (int sw = bInd; sw >= SWBorder; sw-=9) {
                     const uint64_t swPos = minMsbPossible << sw;
-                    if (swPos != bPos && (record.masks[swMask] & swPos) == 0)
+                    if (swPos != bPos && (masks[swMask] & swPos) == 0)
                         continue;
 
                     for (int se = bInd; se >= SEBorder; se-=7) {
                         const uint64_t sePos = minMsbPossible << se;
-                        if (sePos != bPos && (record.masks[seMask] & sePos) == 0)
+                        if (sePos != bPos && (masks[seMask] & sePos) == 0)
                             continue;
 
                         const uint64_t neighbor = (nwPos | nePos | swPos | sePos) ^ bPos;
@@ -85,17 +71,7 @@ private:
         return {ret, usedFields};
     }
 
-    template<class MapT>
-    static constexpr void _initMoves(MapT& maps){
-        MoveInitializer(maps,
-                        [](const uint64_t neighbors, const int bInd) constexpr
-                        { return _genMoves(neighbors, bInd); },
-                        [](const int bInd, const movesHashMap& record) constexpr
-                        { return _genPossibleNeighbors(bInd, record); }
-        );
-    }
-
-    [[nodiscard]] static constexpr uint64_t _genMoves(const uint64_t neighbors, const int bInd){
+    [[nodiscard]] static constexpr uint64_t GenMoves(const uint64_t neighborsWoutOverlap, const int bInd){
         const int y = bInd / 8;
         const int x = bInd % 8;
 
@@ -107,29 +83,29 @@ private:
         uint64_t moves = 0;
 
         // NW direction moves
-        moves |= GenSlidingMoves(neighbors, bInd, 7,
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, 7,
                                  [&](const int b) { return b <= NWBorder; }
         );
 
         // NE direction moves
-        moves |= GenSlidingMoves(neighbors, bInd, 9,
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, 9,
                                  [&](const int b) { return b <= NEBorder; }
         );
 
         // SW direction moves
-        moves |= GenSlidingMoves(neighbors, bInd, -9,
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, -9,
                                  [&](const int b) { return b >= SWBorder; }
         );
 
         // SW direction moves
-        moves |= GenSlidingMoves(neighbors, bInd, -7,
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, -7,
                                  [&](const int b) { return b >= SEBorder; }
         );
 
         return moves;
     }
 
-    [[nodiscard]] static constexpr size_t _neighborLayoutPossibleCountOnField(int x, int y){
+    [[nodiscard]] static constexpr size_t PossibleNeighborWoutOverlapCountOnField(const int x, const int y){
         const size_t nwCount = std::max(1, std::min(x, 7-y));
         const size_t neCount = std::max(1, std::min(7-x, 7-y));
         const size_t swCount = std::max(1, std::min(x, y));
@@ -139,8 +115,8 @@ private:
     }
 
 
-    [[nodiscard]] static constexpr std::array<uint64_t, movesHashMap::MasksCount> _initMasks(const int bInd){
-        std::array<uint64_t, movesHashMap::MasksCount> ret{};
+    [[nodiscard]] static constexpr MasksT InitMasks(const int bInd){
+        std::array<uint64_t, DirectedMaskCount> ret{};
         const int x = bInd % 8;
         const int y = bInd / 8;
 
@@ -164,19 +140,17 @@ private:
         return ret;
     }
 
-    template<class MapT>
-    static constexpr void _initMaps(MapT& maps){
-        MapInitializer(maps,
-                       [](const int x, const int y) { return _neighborLayoutPossibleCountOnField(x, y); },
-                       [](const int bInd) { return _initMasks(bInd); }
-        );
+    static constexpr uint64_t StripBlockingNeighbors(const uint64_t fullBoard, const MasksT& masks) {
+        const uint64_t NWPart = ExtractLsbBit(fullBoard & masks[nwMask]);
+        const uint64_t NEPart = ExtractLsbBit(fullBoard & masks[neMask]);
+        const uint64_t SWPart = ExtractMsbBit(fullBoard & masks[swMask]);
+        const uint64_t SEPart = ExtractMsbBit(fullBoard & masks[seMask]);
+        return NWPart | NEPart | SWPart | SEPart;
     }
-
 
     // ------------------------------
     // Class inner types
     // ------------------------------
-public:
 
     enum maskInd {
         nwMask,

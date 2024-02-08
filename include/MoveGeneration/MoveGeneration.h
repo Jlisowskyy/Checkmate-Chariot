@@ -6,9 +6,9 @@
 #define MOVEGENERATION_H
 
 #include <array>
+#include <bit>
 
 #include "../BitOperations.h"
-#include "../movesHashMap.h"
 #include "../EngineTypeDefs.h"
 
 [[nodiscard]] constexpr std::array<uint64_t, Board::BoardFields> GenStaticMoves(const int maxMovesCount,
@@ -79,43 +79,13 @@ template<class comparisonMethod>
     : static_cast<size_t>(x) + ((x > 0) ? 1 : 0);
 }
 
-[[nodiscard]] constexpr size_t GetSize(const size_t x) {
-    size_t size = 0;
-
-    for (size_t i = 0; i < sizeof(size_t)*8; ++i) {
-        if (const size_t mask = 1LLU << i; (mask & x) != 0)
-            size = i;
-    }
-
-    return x == (1 << size) ? size : size + 1;
+[[nodiscard]] constexpr size_t GetRoundedSizePow(const size_t x) {
+    return std::countr_zero(std::bit_ceil(x));
 }
 
-template<class sizeGenerator, class maskGenerator>
-constexpr void MapInitializer(const uint64_t* aHash, const uint64_t* bHash,
-    std::array<movesHashMap, Board::BoardFields>& maps, sizeGenerator sGen, maskGenerator mGen)
-{
-    for (int y = 0; y < 8; ++y) {
-        for (int x = 0; x < 8; ++x) {
-            const int bInd = y*8 + x;
-            const int mapInd = ConvertToReversedPos(bInd);
-
-            const size_t minimalSize = sGen(x, y);
-            const size_t min2Pow = GetSize(minimalSize);
-            const size_t mapSize = 1 << min2Pow; // 2^min2Pow
-            const uint64_t moduloMask = mapSize - 1; // Mask all ones
-            const uint64_t primeNumber = PrimeNumberMap[min2Pow];
-            const uint64_t a = aHash[mapInd];
-            const uint64_t b = bHash[mapInd];
-            const auto masks = mGen(bInd);
-
-            maps[mapInd] = movesHashMap{masks, a, b, moduloMask, primeNumber, mapSize};
-        }
-    }
-}
-
-template<class boundryCheckFunc>
+template<class BoundryCheckFuncT>
 constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd,
-    const int offset, boundryCheckFunc boundryCheck)
+    const int offset, BoundryCheckFuncT boundryCheck)
 {
     uint64_t ret = 0;
     int actPos = bInd;
@@ -130,19 +100,15 @@ constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd,
     return ret;
 }
 
-template<class moveGeneartor, class neighborGenerator>
-constexpr void MoveInitializer(std::array<movesHashMap, Board::BoardFields>& maps, moveGeneartor mGen, neighborGenerator nGen) {
-    for(int i = 0; i < Board::BoardFields; ++i) {
-        const int bInd = ConvertToReversedPos(i);
+template<class MoveGeneratorT, class NeighborGeneratorT, class NeigborStripT, class MapT>
+constexpr void MoveInitializer(MapT& map, MoveGeneratorT mGen, NeighborGeneratorT nGen, NeigborStripT nStrip, const int bInd) {
+    const auto [possibilities, posSize] = nGen(bInd, map.masks);
 
-        // Possible neighbors generation.
-        const auto [possibilities, posSize] = nGen(bInd, maps[i]);
+    for (size_t j = 0; j < posSize; ++j) {
+        const uint64_t strippedNeighbors = nStrip(possibilities[j], map.masks);
+        const uint64_t moves = mGen(strippedNeighbors, bInd);
 
-        for (size_t j = 0; j < posSize; ++j) {
-            const uint64_t moves = mGen(possibilities[j], bInd);
-
-            maps[i][possibilities[j]] = moves;
-        }
+        map[possibilities[j]] = moves;
     }
 }
 

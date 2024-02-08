@@ -41,7 +41,7 @@ public:
         ChangeSize(size);
     }
 
-    explicit constexpr Fast2PowHashFunction(const params& p) {
+    constexpr Fast2PowHashFunction(const params& p) {
         SetParameters(p);
     }
 
@@ -81,8 +81,8 @@ public:
         _mask = (nSize << 32) - 1;
     }
 
-    std::ostream& PrintParameters(std::ostream& out) const {
-        return out << std::format("{{{}, {}, {}}}", _a, _b, _getRealSize());
+    friend std::ostream& operator<<(std::ostream& out, const Fast2PowHashFunction& f) {
+        return out << std::format("{{{}, {}, {}}}", f._a, f._b, f._getRealSize());
     }
 
     constexpr size_t operator()(const size_t x) const {
@@ -152,7 +152,7 @@ public:
         RollParameters();
     }
 
-    explicit constexpr BaseHashFunction(const params& p) {
+    constexpr BaseHashFunction(const params& p) {
         SetParameters(p);
     }
 
@@ -204,8 +204,8 @@ public:
         return {_a, _b, _prime, _getSize(_sizeMod)};
     }
 
-    std::ostream& PrintParameters(std::ostream& out) const {
-        return out << std::format("{{{}, {}, {}, {}}}", _a, _b, _prime, _getSize(_sizeMod));
+    friend std::ostream& operator<<(std::ostream& out, const BaseHashFunction& f) {
+        return out << std::format("{{{}, {}, {}, {}}}", f._a, f._b, f._prime, _getSize(f._sizeMod));
     }
 
     constexpr size_t operator()(const uint64_t val) const {

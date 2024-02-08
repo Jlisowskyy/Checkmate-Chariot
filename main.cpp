@@ -1,7 +1,9 @@
 #include <cstdlib>
+
 #include "include/ChessEngine.h"
 
 int main() {
-    ChessHashingTest4();
+    BishopHashingTest();
+
     return EXIT_SUCCESS;
 }

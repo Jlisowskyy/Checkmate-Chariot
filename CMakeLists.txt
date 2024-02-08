@@ -40,8 +40,8 @@ add_executable(ChessEngine main.cpp
         include/MoveGeneration/RookMapGenerator.h
         include/MoveGeneration/BishopMapGenerator.h
         include/MapTypes/SimpleBishopMap.h
-        include/MapTypes/MapScheme.h
         include/MapTypes/HashFunctions.h
+        include/MapTypes/SimpleRookMap.h
 )
 
 find_package(OpenMP)

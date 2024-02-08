@@ -6,10 +6,9 @@
 #define CHESS_ENGINE_H
 
 void ChessEngineMainEntry();
-void ChessHashingTest1();
-void ChessHashingTest2();
-void ChessHashingTest3();
-void ChessHashingTest4();
-void ChessHashingTest5();
+void BishopSimpleMapParamsGen();
+void RookSimpleMapParamsGen();
+void BishopHashingTest();
+void RookHashingTest();
 
 #endif //CHESS_ENGINE_H

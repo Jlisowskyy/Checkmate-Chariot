@@ -18,7 +18,7 @@
  *  - size_t operator()(uint64_t) - which calculates value of hash function for given uint64_t key
  *  - copy constructor
  *  - void RollParameters() - rolls internal state of the function randomly, allows searching for optimal results\
- *  - std::ostream& PrintParameters(std::ostream& out) const - prints internal state of the function
+ *  - friend std::ostream& operator<<(std::ostream& out, const funcT& f) const - prints internal state of the function
  *    allows logging results to file or even stdout.
  *
  */
@@ -57,54 +57,58 @@ public:
         return _map[HFunc(neighbors)];
     }
 
+    constexpr void InitFullMask() {
+        fullMask = masks[0] | masks[1] | masks[2] | masks[3];
+    }
+
     constexpr void clear() {
         _map.fill(0);
     }
 
-    template<class neighborGenerator>
-    static std::pair<bool, size_t> IntegrityTest(neighborGenerator func, movesHashMap& map, const int boardIndex) {
-        const auto [possibilities, posSize] = func(boardIndex, map);
+    template<class neighborGenerator, bool ShouldSignal = false>
+    std::pair<bool, size_t> IntegrityTest(neighborGenerator func, const int boardIndex) {
+        const auto [possibilities, posSize] = func(boardIndex, masks);
 
         size_t maxSize {};
         bool collisionDetected {false};
 
-        map.clear();
+        clear();
         for (size_t i = 0; i < posSize; ++i) {
-            if (map[possibilities[i]] == 1) {
-                std::cerr << "[ ERROR ] Integrity failed on index: " << i << std::endl;
+            if ((*this)[possibilities[i]] == 1) {
+                if constexpr (ShouldSignal) std::cerr << "[ ERROR ] Integrity failed on index: " << i << std::endl;
                 collisionDetected = true;
                 break;
             }
 
-            map[possibilities[i]] = 1;
-            if (const size_t ind = map.HFunc(possibilities[i]); ind > maxSize) maxSize = ind;
+            (*this)[possibilities[i]] = 1;
+            if (const size_t ind = HFunc(possibilities[i]); ind > maxSize) maxSize = ind;
         }
 
-        return { collisionDetected, maxSize*sizeof(uint64_t) };
+        return { !collisionDetected, maxSize*sizeof(uint64_t) };
     }
 
-    template<class neighborGenerator>
-    static void FindHashParameters(const HashFuncT* const funcs, neighborGenerator nGen) {
+    template<class NeighborGeneratorT, class MaskInitT>
+    static void FindHashParameters(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit) {
         movesHashMap maps[Board::BoardFields]{};
         std::mutex guard{};
         size_t fullSize{};
         size_t correctMaps{};
 
-        for (size_t i = 0; i < Board::BoardFields; ++i)
-            maps[i] = movesHashMap(funcs[i]);
-
         #pragma omp parallel for
         for(int i = 0; i < Board::BoardFields; ++i) {
             const int bInd = ConvertToReversedPos(i);
 
-            // Possible neighbors generation.
-            const auto [possibilities, posSize] = nGen(bInd, maps[i]);
+            // Preparing temp map to perform calculations
+            maps[i] = movesHashMap(mInit(bInd), funcs[i]);
 
-            static auto getNeighbors = [&](const int x, const movesHashMap& y){
+            // Possible neighbors generation.
+            const auto [possibilities, posSize] = nGen(bInd, maps[i].masks);
+
+            static auto getNeighbors = [&](const int x, const std::array<uint64_t, 4>& m){
                 return std::make_pair(possibilities, posSize);
             };
 
-            auto [result, size] = IntegrityTest(getNeighbors, maps[i], bInd);
+            auto [result, size] = maps[i].IntegrityTest(getNeighbors, bInd);
 
             if (result) {
                 const size_t roundedToCacheLine = std::ceil(static_cast<double>(size) / 64) * 64;
@@ -122,16 +126,16 @@ public:
             size_t nSize;
             do {
                 maps[i].HFunc.RollParameters();
-                const auto [rehashResult, rehashedSize] = IntegrityTest(getNeighbors, maps[i], bInd);
+                const auto [rehashResult, rehashedSize] =  maps[i].IntegrityTest(getNeighbors, bInd);
 
-                wasCollision = rehashResult;
+                wasCollision = !rehashResult;
                 nSize = rehashedSize;
             }while(wasCollision);
             fullSize += nSize;
 
             guard.lock();
             std::cout << "Actual rehashing result:\n{\n";
-            for (const auto& map : maps) std::cout << '\t' << map.HFunc.PrintParameters(std::cout) << ",\n";
+            for (const auto& map : maps) std::cout << '\t' << map.HFunc << ",\n";
             std::cout << "};\n" << std::format("Current correct maps: {},\nWith size: {} bytes\n", correctMaps, fullSize);
             guard.unlock();
         }
@@ -148,7 +152,6 @@ public:
 private:
 
     std::array<uint64_t, mapAllocSize> _map{};
-    size_t _mapSize{};
 };
 
 #endif //HASHMAP_H
