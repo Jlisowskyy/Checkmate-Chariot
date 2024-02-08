@@ -13,19 +13,15 @@
 
 #include "../BitOperations.h"
 
-template<
-    class KeyT,
-    size_t (*HashableAccessor)(const KeyT& item) = [](const KeyT& item) constexpr { return static_cast<size_t>(item); }
->class Fast2PowHashFunction {
+class Fast2PowHashFunction {
     /*                  Description
-     *  Hash function otpimised to be used with sizes, that are the power of 2.
+     *  Hash function optimised to be used with sizes, that are the power of 2.
      *  Returns only 32-bit values and operates on bigger 64-bit integers.
-     *  Thus this class is not portable at all.
+     *  Thus, this class is not portable at all.
      *
      *  Works accordingly to this formula:
      *      w = integer that size = 2^w
      *  h(v) = ((ax + b) & (2^(32+w)-1) ) >> 32 = ((ax + b) % 2^(32+w) ) / 2^32
-     *
      */
 
     // ------------------------------
@@ -77,7 +73,7 @@ public:
         ChangeSize(size);
     }
 
-    constexpr [[nodiscard]] params GetParams() const {
+    [[nodiscard]] constexpr params GetParams() const {
         return {_a, _b, _mask};
     }
 
@@ -98,7 +94,7 @@ public:
     // ------------------------------
 private:
 
-    constexpr uint64_t _getRealSize() const {
+    [[nodiscard]] constexpr uint64_t _getRealSize() const {
         return (_mask + 1) >> 32;
     }
 
@@ -112,22 +108,20 @@ private:
 };
 
 template<
-    class KeyT,
-    bool OptimizeSecondModulo = false,
-    size_t (*HashableAccessor)(const KeyT& item) = [](const KeyT& item) constexpr { return static_cast<size_t>(item); }
+        bool OptimizeSecondModulo = false
 >class BaseHashFunction {
 
     /*               Description
      *
-     *  Works accordinly to formula:
+     *  Works accordingly to formula:
      *  h(v) = ((a*b + b) mod prime) mod size
      *
      *  Note: formula enforces usage of 2 modulo operations
      *
-     *  When optimze flag is enabled, size is expected to be power of 2,
+     *  When optimize flag is enabled, size is expected to be power of 2,
      *  otherwise behavior is undefined.
      *
-     *  Updated fomrula:
+     *  Updated formula:
      *
      *  h(v) = ((a*b + b) mod prime) & sizeMask
      */
@@ -146,7 +140,7 @@ public:
     explicit BaseHashFunction(const size_t size):
         _sizeMod{_initSizeMod(size)}
     {
-        RollParameteres();
+        RollParameters();
 
         const int msbBit = ExtractMsbPos(size);
         _prime = primePer2Power[msbBit/8];
@@ -155,7 +149,7 @@ public:
     explicit BaseHashFunction(const size_t size, const size_t prime):
         _prime{prime}, _sizeMod{_initSizeMod(size)}
     {
-        RollParameteres();
+        RollParameters();
     }
 
     explicit constexpr BaseHashFunction(const params& p) {
@@ -173,7 +167,7 @@ public:
     // Class interaction
     // ------------------------------
 
-    void RollParameteres() {
+    void RollParameters() {
         if constexpr (sizeof(size_t) == 8) {
             static std::mt19937_64 randEngine_64{
                 static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
@@ -193,7 +187,7 @@ public:
         }
     }
 
-    constexpr [[nodiscard]] size_t GetMaxVal() const {
+    [[nodiscard]] constexpr size_t GetMaxVal() const {
         return _prime-1;
     }
 
@@ -206,7 +200,7 @@ public:
         _sizeMod = _initSizeMod(size);
     }
 
-    constexpr [[nodiscard]] params GetParams() const {
+    [[nodiscard]] constexpr params GetParams() const {
         return {_a, _b, _prime, _getSize(_sizeMod)};
     }
 
@@ -214,13 +208,11 @@ public:
         return out << std::format("{{{}, {}, {}, {}}}", _a, _b, _prime, _getSize(_sizeMod));
     }
 
-    constexpr size_t operator()(const KeyT& val) const {
-        const size_t hashable = HashableAccessor(val);
-
+    constexpr size_t operator()(const uint64_t val) const {
         if constexpr (OptimizeSecondModulo)
-            return ((_a*hashable + _b) % _prime) & _sizeMod;
+            return ((_a*val + _b) % _prime) & _sizeMod;
         else
-            return ((_a*hashable + _b) % _prime) % _sizeMod;
+            return ((_a*val + _b) % _prime) % _sizeMod;
     }
 
     // ------------------------------

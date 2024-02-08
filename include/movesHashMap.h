@@ -14,9 +14,12 @@
 #include "BitOperations.h"
 
 /*          Important notes:
- *  Used HashFuncT class should have:
- *  -
- *
+ *  Used HashFuncT class must have defined:
+ *  - size_t operator()(uint64_t) - which calculates value of hash function for given uint64_t key
+ *  - copy constructor
+ *  - void RollParameters() - rolls internal state of the function randomly, allows searching for optimal results\
+ *  - std::ostream& PrintParameters(std::ostream& out) const - prints internal state of the function
+ *    allows logging results to file or even stdout.
  *
  */
 
@@ -33,8 +36,8 @@ public:
     constexpr movesHashMap() = default;
     constexpr ~movesHashMap() = default;
 
-    constexpr movesHashMap(const std::array<uint64_t, MasksCount>& nMasks, const typename HashFuncT::params& p ):
-        masks(nMasks), HFunc(p), _map{ 0 }
+    constexpr movesHashMap(const std::array<uint64_t, MasksCount>& nMasks, const HashFuncT& func ):
+        masks(nMasks), HFunc(func), _map{ 0 }
     {}
 
     constexpr movesHashMap(const movesHashMap&) = default;
@@ -81,14 +84,14 @@ public:
     }
 
     template<class neighborGenerator>
-    static void FindHashParameters(const typename HashFuncT::params* const params, neighborGenerator nGen) {
+    static void FindHashParameters(const HashFuncT* const funcs, neighborGenerator nGen) {
         movesHashMap maps[Board::BoardFields]{};
         std::mutex guard{};
         size_t fullSize{};
         size_t correctMaps{};
 
         for (size_t i = 0; i < Board::BoardFields; ++i)
-            maps[i] = movesHashMap(params[i]);
+            maps[i] = movesHashMap(funcs[i]);
 
         #pragma omp parallel for
         for(int i = 0; i < Board::BoardFields; ++i) {
@@ -97,8 +100,8 @@ public:
             // Possible neighbors generation.
             const auto [possibilities, posSize] = nGen(bInd, maps[i]);
 
-            static auto getNeighbors = [&](const int x, const movesHashMap& y) -> std::pair<const auto&, size_t> {
-                return { possibilities, posSize };
+            static auto getNeighbors = [&](const int x, const movesHashMap& y){
+                return std::make_pair(possibilities, posSize);
             };
 
             auto [result, size] = IntegrityTest(getNeighbors, maps[i], bInd);
@@ -111,7 +114,7 @@ public:
             };
 
             guard.lock();
-            std::cout << std::format("Starting hash function parameters serach on index: {} and field: {}\n",
+            std::cout << std::format("Starting hash function parameters search on index: {} and field: {}\n",
                 bInd, fieldStrMap.at(static_cast<Field>(1LLU << bInd)));
             guard.unlock();
 
@@ -129,7 +132,7 @@ public:
             guard.lock();
             std::cout << "Actual rehashing result:\n{\n";
             for (const auto& map : maps) std::cout << '\t' << map.HFunc.PrintParameters(std::cout) << ",\n";
-            std::cout << "};\n" << std::format("Current corect maps: {},\nWith size: {} bytes\n", correctMaps, fullSize);
+            std::cout << "};\n" << std::format("Current correct maps: {},\nWith size: {} bytes\n", correctMaps, fullSize);
             guard.unlock();
         }
     }

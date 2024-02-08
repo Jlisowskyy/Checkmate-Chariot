@@ -38,7 +38,8 @@ public:
         // const uint64_t closestNeighbors = NWPart | NEPart | SWPart | SEPart;
         // const uint64_t moves = layer1[msbInd][closestNeighbors];
 
-        return layer1.GetMoves(msbInd, fullBoard);
+        // return layer1.GetMoves(msbInd, fullBoard);
+        return  0;
     }
 
     // ------------------------------

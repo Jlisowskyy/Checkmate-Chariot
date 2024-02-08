@@ -7,11 +7,9 @@
 
 #include <cinttypes>
 
-struct MapScheme {
-    virtual uint64_t GetMoves(int msbInd, uint64_t fullBoard);
-};
+// struct MapScheme {
+//     virtual uint64_t GetMoves(int msbInd, uint64_t fullBoard);
+// };
 
-inline uint64_t MapScheme::GetMoves(const int msbInd, const uint64_t fullBoard) {
-}
 
 #endif //MAPSCHEME_H
