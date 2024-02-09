@@ -94,12 +94,13 @@ public:
         size_t fullSize{};
         size_t correctMaps{};
 
+        for (int i = 0; i < Board::BoardFields; ++i)
+            // Preparing temp map to perform calculations
+            maps[i] = movesHashMap(mInit(ConvertToReversedPos(i)), funcs[i]);
+
         #pragma omp parallel for
         for(int i = 0; i < Board::BoardFields; ++i) {
             const int bInd = ConvertToReversedPos(i);
-
-            // Preparing temp map to perform calculations
-            maps[i] = movesHashMap(mInit(bInd), funcs[i]);
 
             // Possible neighbors generation.
             const auto [possibilities, posSize] = nGen(bInd, maps[i].masks);

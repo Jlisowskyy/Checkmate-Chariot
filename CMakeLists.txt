@@ -44,7 +44,7 @@ add_executable(ChessEngine main.cpp
         include/MapTypes/SimpleRookMap.h
         include/MapTypes/ModuloFreeBishopMap.h
         include/MapTypes/ModuloFreeRookMap.h
-        include/TestsAndDebugging/MapPerformanceTest.h
+        include/TestsAndDebugging/MapPerformanceTester.h
         include/TestsAndDebugging/MapCorrectnessTest.h
         include/MapTypes/ModuloFreeNoOffsetRookMap.h
         include/MapTypes/ModuloFreeNoOffsetBishopMap.h
