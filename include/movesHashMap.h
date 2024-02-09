@@ -97,21 +97,25 @@ public:
         size_t correctMaps{};
 
         // Preparing temp map to perform calculations
+
         for (int i = 0; i < Board::BoardFields; ++i)
             maps[i] = movesHashMap(mInit(ConvertToReversedPos(i)), funcs[i]);
-        
+
+        #pragma omp parallel for
         for(int i = 0; i < Board::BoardFields; ++i) {
             const int bInd = ConvertToReversedPos(i);
 
             // Possible neighbors generation.
             const auto [possibilities, posSize] = nGen(bInd, maps[i].masks);
 
-            static auto getNeighbors = [&](const int x, const std::array<uint64_t, 4>& m){
+            auto getNeighbors = [&](const int unused1, const std::array<uint64_t, 4>& unused2){
                 return std::make_pair(std::ref(possibilities), posSize);
             };
 
+            // First inital check for correctnes
             auto [result, size] = maps[i].IntegrityTest(getNeighbors, bInd);
 
+            // If map is correct go to the next one
             if (result) {
                 guard.lock();
                 fullSize += size;
@@ -122,11 +126,13 @@ public:
                 continue;
             };
 
+            // Anounce thread start
             guard.lock();
             std::cout << std::format("Starting hash function parameters search on index: {} and field: {}\n",
                 i, fieldStrMap.at(static_cast<Field>(1LLU << bInd)));
             guard.unlock();
 
+            // Main Thread job - parameter searching loop
             bool wasCollision;
             size_t nSize;
             do {
@@ -141,11 +147,12 @@ public:
             }while(wasCollision);
 
             guard.lock();
-
+            // Saving results
             finishedMaps[i] = true;
             fullSize += nSize;
             ++correctMaps;
 
+            // Printing actual parameters
             std::cout << "Actual rehashing result:\n{\n";
             for (int j = 0; j < Board::BoardFields; ++j) std::cout << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
             std::cout << "};\n" << std::format("Current correct maps: {},\nWith size: {} bytes\n", correctMaps, fullSize);
@@ -153,10 +160,29 @@ public:
             guard.unlock();
         }
 
-
+        // Print final looking table
         std::cout << "Final parameters:\n{\n";
         for (int j = 0; j < Board::BoardFields; ++j) std::cout << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
         std::cout << "};\n" << std::format("With size: {} bytes\n", fullSize);
+    }
+
+    template<class NeighborGeneratorT, class MaskInitT>
+    static void FindCollidingIndices(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit) {
+        std::cout << "Collision detected on indices:\n\t{";
+        size_t invalidIndices{};
+
+        for (int i = 0; i < Board::BoardFields; ++i) {
+            const int bInd = ConvertToReversedPos(i);
+
+            auto map = movesHashMap(mInit(bInd), funcs[i]);
+            auto [result, _] = map.IntegrityTest(nGen, bInd);
+
+            if (result == false) {
+                std::cout << i << ", ";
+                ++invalidIndices;
+            }
+        }
+        std::cout << std::format("}}\nNumber of invalid indices: {}\n", invalidIndices);
     }
 
     // ------------------------------

@@ -35,6 +35,11 @@ public:
     }
 
     static void ParameterSearch() {
+        _underlyingMapT::FindCollidingIndices(
+            funcs,
+            [](const int ind, const RookMapGenerator::MasksT& m) { return RookMapGenerator::GenPossibleNeighborsWoutOverlap(ind, m); },
+            [](const int bInd) { return RookMapGenerator::InitMasks(bInd); }
+        );
         _underlyingMapT::FindHashParameters(
             funcs,
             [](const int ind, const RookMapGenerator::MasksT& m) { return RookMapGenerator::GenPossibleNeighborsWoutOverlap(ind, m); },

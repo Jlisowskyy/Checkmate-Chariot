@@ -35,6 +35,11 @@ public:
     }
 
     static void ParameterSearch() {
+        _underlyingMapT::FindCollidingIndices(
+            funcs,
+            [](const int ind, const BishopMapGenerator::MasksT& m) { return BishopMapGenerator::GenPossibleNeighborsWoutOverlap(ind, m); },
+            [](const int bInd) { return BishopMapGenerator::InitMasks(bInd); }
+        );
         _underlyingMapT::FindHashParameters(
             funcs,
             [](const int ind, const BishopMapGenerator::MasksT& m) { return BishopMapGenerator::GenPossibleNeighborsWoutOverlap(ind, m); },
@@ -76,16 +81,16 @@ private:
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 16)),
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 16)),
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 64)),
-        _hashFuncT(std::make_tuple(1LLU, 1LLU, 128)),
-        _hashFuncT(std::make_tuple(1LLU, 1LLU, 128)),
+        _hashFuncT(std::make_tuple(1LLU, 1LLU, 256)),
+        _hashFuncT(std::make_tuple(1LLU, 1LLU, 256)),
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 64)),
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 16)),
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 16)),
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 16)),
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 16)),
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 64)),
-        _hashFuncT(std::make_tuple(1LLU, 1LLU, 128)),
-        _hashFuncT(std::make_tuple(1LLU, 1LLU, 128)),
+        _hashFuncT(std::make_tuple(1LLU, 1LLU, 256)),
+        _hashFuncT(std::make_tuple(1LLU, 1LLU, 256)),
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 64)),
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 16)),
         _hashFuncT(std::make_tuple(1LLU, 1LLU, 16)),
