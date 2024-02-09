@@ -9,6 +9,7 @@
 #include <mutex>
 #include <random>
 #include <format>
+#include <vector>
 
 #include "EngineTypeDefs.h"
 #include "BitOperations.h"
@@ -90,6 +91,7 @@ public:
     template<class NeighborGeneratorT, class MaskInitT>
     static void FindHashParameters(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit) {
         movesHashMap maps[Board::BoardFields]{};
+        std::vector finishedMaps(Board::BoardFields, false);
         std::mutex guard{};
         size_t fullSize{};
         size_t correctMaps{};
@@ -117,6 +119,7 @@ public:
                 guard.lock();
                 fullSize += roundedToCacheLine;
                 ++correctMaps;
+                finishedMaps[i] = true;
                 guard.unlock();
 
                 continue;
@@ -139,15 +142,21 @@ public:
 
             guard.lock();
 
+            finishedMaps[i] = true;
             fullSize += nSize;
-            correctMaps++;
+            ++correctMaps;
 
             std::cout << "Actual rehashing result:\n{\n";
-            for (const auto& map : maps) std::cout << '\t' << map.HFunc << ",\n";
+            for (int j = 0; j < Board::BoardFields; ++j) std::cout << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
             std::cout << "};\n" << std::format("Current correct maps: {},\nWith size: {} bytes\n", correctMaps, fullSize);
 
             guard.unlock();
         }
+
+
+        std::cout << "Final parameters:\n{\n";
+        for (int j = 0; j < Board::BoardFields; ++j) std::cout << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
+        std::cout << "};\n" << std::format("With size: {} bytes\n", fullSize);
     }
 
     // ------------------------------
