@@ -85,7 +85,7 @@ public:
             if (const size_t ind = HFunc(possibilities[i]); ind > maxSize) maxSize = ind;
         }
 
-        return { !collisionDetected, maxSize*sizeof(uint64_t) };
+        return { collisionDetected == false, maxSize*sizeof(uint64_t) };
     }
 
     template<class NeighborGeneratorT, class MaskInitT>
@@ -96,11 +96,10 @@ public:
         size_t fullSize{};
         size_t correctMaps{};
 
+        // Preparing temp map to perform calculations
         for (int i = 0; i < Board::BoardFields; ++i)
-            // Preparing temp map to perform calculations
             maps[i] = movesHashMap(mInit(ConvertToReversedPos(i)), funcs[i]);
-
-        #pragma omp parallel for
+        
         for(int i = 0; i < Board::BoardFields; ++i) {
             const int bInd = ConvertToReversedPos(i);
 
@@ -114,10 +113,8 @@ public:
             auto [result, size] = maps[i].IntegrityTest(getNeighbors, bInd);
 
             if (result) {
-                const size_t roundedToCacheLine = std::ceil(static_cast<double>(size) / 64) * 64;
-
                 guard.lock();
-                fullSize += roundedToCacheLine;
+                fullSize += size;
                 ++correctMaps;
                 finishedMaps[i] = true;
                 guard.unlock();
@@ -127,13 +124,16 @@ public:
 
             guard.lock();
             std::cout << std::format("Starting hash function parameters search on index: {} and field: {}\n",
-                bInd, fieldStrMap.at(static_cast<Field>(1LLU << bInd)));
+                i, fieldStrMap.at(static_cast<Field>(1LLU << bInd)));
             guard.unlock();
 
             bool wasCollision;
             size_t nSize;
             do {
+                guard.lock();
                 maps[i].HFunc.RollParameters();
+                guard.unlock();
+
                 const auto [rehashResult, rehashedSize] =  maps[i].IntegrityTest(getNeighbors, bInd);
 
                 wasCollision = !rehashResult;
