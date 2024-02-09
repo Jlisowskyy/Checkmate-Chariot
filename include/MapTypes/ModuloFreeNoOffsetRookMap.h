@@ -11,7 +11,7 @@
 #include "../MoveGeneration/RookMapGenerator.h"
 
 class ModuloFreeNoOffsetRookMap {
-    using _hashFuncT = Fast2PowHashFunctionNoOffset;
+    using _hashFuncT = Fast2PowHashFunctionNoOffset<>;
     using _underlyingMapT = movesHashMap<_hashFuncT>;
 public:
     constexpr ModuloFreeNoOffsetRookMap() {
@@ -53,7 +53,7 @@ public:
 
 private:
 
-    static constexpr BaseHashFunction<true> funcs[Board::BoardFields] {
+    static constexpr _hashFuncT funcs[Board::BoardFields] {
         _hashFuncT(std::make_tuple(1LLU, 64)),
         _hashFuncT(std::make_tuple(1LLU, 64)),
         _hashFuncT(std::make_tuple(1LLU, 128)),

@@ -53,7 +53,7 @@ public:
 
 private:
 
-    static constexpr BaseHashFunction<true> funcs[Board::BoardFields] {
+    static constexpr _hashFuncT funcs[Board::BoardFields] {
 		_hashFuncT(std::make_tuple(2540615534426442431LLU, 18161687812890534152LLU, 11, 8)),
 		_hashFuncT(std::make_tuple(11237402613493751323LLU, 8003405968917746827LLU, 11, 8)),
 		_hashFuncT(std::make_tuple(9510716373887163911LLU, 3524171947865153647LLU, 17, 16)),

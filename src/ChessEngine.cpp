@@ -10,6 +10,8 @@
 #include "../include/MoveGeneration/KingMap.h"
 #include "../include/MoveGeneration/BishopMapGenerator.h"
 #include "../include/MoveGeneration/RookMap.h"
+#include "../include/MapTypes/ModuloFreeNoOffsetBishopMap.h"
+#include "../include/MapTypes/ModuloFreeBishopMap.h"
 
 void ChessEngineMainEntry() {
     Engine engine{};
@@ -64,7 +66,7 @@ void RookSimpleMapParamsGen() {
 }
 
 void BishopHashingTest() {
-    SimpleBishopMap::ParameterSearch();
+    ModuloFreeBishopMap::ParameterSearch();
 }
 
 void RookHashingTest() {

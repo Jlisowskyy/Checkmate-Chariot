@@ -11,7 +11,7 @@
 #include "../MoveGeneration/BishopMapGenerator.h"
 
 class ModuloFreeBishopMapNoOffset {
-    using _hashFuncT = Fast2PowHashFunction;
+    using _hashFuncT = Fast2PowHashFunctionNoOffset<>;
     using _underlyingMapT = movesHashMap<_hashFuncT>;
 public:
     constexpr ModuloFreeBishopMapNoOffset() {
@@ -53,7 +53,7 @@ public:
 
 private:
 
-    static constexpr BaseHashFunction<true> funcs[Board::BoardFields] {
+    static constexpr _hashFuncT funcs[Board::BoardFields] {
         _hashFuncT(std::make_tuple(1LLU, 8)),
         _hashFuncT(std::make_tuple(1LLU, 8)),
         _hashFuncT(std::make_tuple(1LLU, 16)),
