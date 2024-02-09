@@ -81,7 +81,7 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& out, const Fast2PowHashFunction& f) {
-        return out << std::format("{{{}, {}, {}}}", f._a, f._b, f._getRealSize());
+        return out << std::format("_hashFuncT(std::make_tuple({}LLU, {}LLU, {}))", f._a, f._b, f._getRealSize());
     }
 
     constexpr size_t operator()(const size_t x) const {
@@ -172,7 +172,7 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& out, const Fast2PowHashFunctionNoOffset& f) {
-        return out << std::format("{{{}, {}}}", f._a, f._getRealSize());
+        return out << std::format("_hashFuncT(std::make_tuple({}LLU, {}))", f._a, f._getRealSize());
     }
 
     constexpr size_t operator()(const size_t x) const {
@@ -284,7 +284,7 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& out, const BaseHashFunction& f) {
-        return out << std::format("{{{}, {}, {}, {}}}", f._a, f._b, f._prime, _getSize(f._sizeMod));
+        return out << std::format("_hashFuncT(std::make_tuple({}LLU, {}LLU, {}, {}))", f._a, f._b, f._prime, _getSize(f._sizeMod));
     }
 
     constexpr size_t operator()(const uint64_t val) const {
