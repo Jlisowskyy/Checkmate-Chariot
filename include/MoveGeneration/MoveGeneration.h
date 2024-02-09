@@ -100,7 +100,11 @@ constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd,
     return ret;
 }
 
-template<class MoveGeneratorT, class NeighborGeneratorT, class NeigborStripT, class MapT>
+template<
+    class MoveGeneratorT,
+    class NeighborGeneratorT,
+    class NeigborStripT,
+    class MapT>
 constexpr void MoveInitializer(MapT& map, MoveGeneratorT mGen, NeighborGeneratorT nGen, NeigborStripT nStrip, const int bInd) {
     const auto [possibilities, posSize] = nGen(bInd, map.masks);
 

@@ -68,5 +68,5 @@ void BishopHashingTest() {
 }
 
 void RookHashingTest() {
-
+    SimpleRookMap::ParameterSearch();
 }

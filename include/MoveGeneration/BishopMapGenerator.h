@@ -61,7 +61,7 @@ public:
                         if (sePos != bPos && (masks[seMask] & sePos) == 0)
                             continue;
 
-                        const uint64_t neighbor = (nwPos | nePos | swPos | sePos) ^ bPos;
+                        const uint64_t neighbor = (nwPos | nePos | swPos | sePos) & ~bPos;
                         ret[usedFields++] = neighbor;
                     }
                 }

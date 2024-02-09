@@ -115,7 +115,7 @@ public:
                         if (dPos != bPos && (masks[dMask] & dPos) == 0)
                             continue;
 
-                        const uint64_t neighbor = (dPos | uPos | rPos | lPos) ^ bPos;
+                        const uint64_t neighbor = (dPos | uPos | rPos | lPos) & ~bPos;
                         ret[usedFields++] = neighbor;
                     }
                 }

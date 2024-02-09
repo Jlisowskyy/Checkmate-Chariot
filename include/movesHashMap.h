@@ -105,15 +105,19 @@ public:
             const auto [possibilities, posSize] = nGen(bInd, maps[i].masks);
 
             static auto getNeighbors = [&](const int x, const std::array<uint64_t, 4>& m){
-                return std::make_pair(possibilities, posSize);
+                return std::make_pair(std::ref(possibilities), posSize);
             };
 
             auto [result, size] = maps[i].IntegrityTest(getNeighbors, bInd);
 
             if (result) {
                 const size_t roundedToCacheLine = std::ceil(static_cast<double>(size) / 64) * 64;
+
+                guard.lock();
                 fullSize += roundedToCacheLine;
                 ++correctMaps;
+                guard.unlock();
+
                 continue;
             };
 
@@ -131,12 +135,16 @@ public:
                 wasCollision = !rehashResult;
                 nSize = rehashedSize;
             }while(wasCollision);
-            fullSize += nSize;
 
             guard.lock();
+
+            fullSize += nSize;
+            correctMaps++;
+
             std::cout << "Actual rehashing result:\n{\n";
             for (const auto& map : maps) std::cout << '\t' << map.HFunc << ",\n";
             std::cout << "};\n" << std::format("Current correct maps: {},\nWith size: {} bytes\n", correctMaps, fullSize);
+
             guard.unlock();
         }
     }

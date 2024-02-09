@@ -7,12 +7,11 @@
 
 #include <random>
 #include <chrono>
-#include <cinttypes>
-#include <ostream>
 #include <format>
 
 #include "../BitOperations.h"
 
+template<class RandomGeneratorT = std::mt19937_64>
 class Fast2PowHashFunction {
     /*                  Description
      *  Hash function optimised to be used with sizes, that are the power of 2.
@@ -57,7 +56,7 @@ public:
     // ------------------------------
 
     void RollParameters() {
-        static std::mt19937_64 randEngine_64{
+        static RandomGeneratorT randEngine_64{
             static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
         };
 
@@ -107,8 +106,99 @@ private:
     uint64_t _mask;
 };
 
+template<class RandomGeneratorT = std::mt19937_64>
+class Fast2PowHashFunctionNoOffset {
+    /*                  Description
+     *  Modified variant of previous function, assuming offset b = 0
+     *
+     *  Modified formula:
+     *      w = integer that size = 2^w
+     *  h(v) = (ax  & (2^(32+w)-1) ) >> 32 = (ax % 2^(32+w) ) / 2^32
+     */
+
+    // ------------------------------
+    // Class creation
+    // ------------------------------
+public:
+
+    // [a, b, size]
+    using params = std::tuple<uint64_t, uint64_t>;
+
+    // Note: expects setParameters to be invoked before usage
+    explicit constexpr Fast2PowHashFunctionNoOffset() = default;
+
+    // IMPORTANT size < 2^32
+    explicit Fast2PowHashFunctionNoOffset(const uint64_t size){
+        RollParameters();
+        ChangeSize(size);
+    }
+
+    constexpr Fast2PowHashFunctionNoOffset(const params& p) {
+        SetParameters(p);
+    }
+
+    constexpr Fast2PowHashFunctionNoOffset(const Fast2PowHashFunctionNoOffset&) = default;
+    constexpr Fast2PowHashFunctionNoOffset(Fast2PowHashFunctionNoOffset&&) = default;
+    constexpr Fast2PowHashFunctionNoOffset& operator=(const Fast2PowHashFunctionNoOffset&) = default;
+    constexpr Fast2PowHashFunctionNoOffset& operator=(Fast2PowHashFunctionNoOffset&&) = default;
+
+    constexpr ~Fast2PowHashFunctionNoOffset() = default;
+
+    // ------------------------------
+    // Class interaction
+    // ------------------------------
+
+    void RollParameters() {
+        static RandomGeneratorT randEngine_64{
+            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
+        };
+
+        _a = randEngine_64();
+    }
+
+    constexpr void SetParameters(const params& p) {
+        const auto [a, size] = p;
+
+        _a = a;
+        ChangeSize(size);
+    }
+
+    [[nodiscard]] constexpr params GetParams() const {
+        return {_a, _mask};
+    }
+
+    constexpr void ChangeSize(const size_t nSize) {
+        _mask = (nSize << 32) - 1;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const Fast2PowHashFunctionNoOffset& f) {
+        return out << std::format("{{{}, {}}}", f._a, f._getRealSize());
+    }
+
+    constexpr size_t operator()(const size_t x) const {
+        return (_a*x & _mask) >> 32;
+    }
+
+    // ------------------------------
+    // private methods
+    // ------------------------------
+private:
+
+    [[nodiscard]] constexpr uint64_t _getRealSize() const {
+        return (_mask + 1) >> 32;
+    }
+
+    // ------------------------------
+    // Class fields
+    // ------------------------------
+
+    uint64_t _a;
+    uint64_t _mask;
+};
+
 template<
-        bool OptimizeSecondModulo = false
+        bool OptimizeSecondModulo = false,
+        class RandomGeneratorT = std::mt19937_64
 >class BaseHashFunction {
 
     /*               Description
@@ -168,23 +258,12 @@ public:
     // ------------------------------
 
     void RollParameters() {
-        if constexpr (sizeof(size_t) == 8) {
-            static std::mt19937_64 randEngine_64{
-                static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
-            };
+        static RandomGeneratorT randEngine_64{
+            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
+        };
 
-            _a = randEngine_64();
-            _b = randEngine_64();
-        }
-
-        if constexpr (sizeof(size_t) == 4) {
-            static std::mt19937 randEngine_32{
-                static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
-            };
-
-            _a = randEngine_32();
-            _b = randEngine_32();
-        }
+        _a = randEngine_64();
+        _b = randEngine_64();
     }
 
     [[nodiscard]] constexpr size_t GetMaxVal() const {
