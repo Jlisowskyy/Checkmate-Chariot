@@ -10,5 +10,6 @@ void BishopSimpleMapParamsGen();
 void RookSimpleMapParamsGen();
 void BishopHashingTest();
 void RookHashingTest();
+void MapHashTest();
 
 #endif //CHESS_ENGINE_H

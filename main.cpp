@@ -3,7 +3,7 @@
 #include "include/ChessEngine.h"
 
 int main() {
-    BishopHashingTest();
+    MapHashTest();
 
     return EXIT_SUCCESS;
 }

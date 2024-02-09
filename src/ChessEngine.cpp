@@ -12,6 +12,9 @@
 #include "../include/MoveGeneration/RookMap.h"
 #include "../include/MapTypes/ModuloFreeNoOffsetBishopMap.h"
 #include "../include/MapTypes/ModuloFreeBishopMap.h"
+#include "../include/TestsAndDebugging/MapCorrectnessTest.h"
+#include "../include/TestsAndDebugging/MapPerformanceTest.h"
+
 
 void ChessEngineMainEntry() {
     Engine engine{};
@@ -66,9 +69,14 @@ void RookSimpleMapParamsGen() {
 }
 
 void BishopHashingTest() {
-    ModuloFreeBishopMap::ParameterSearch();
+    ModuloFreeBishopMapNoOffset::ParameterSearch();
 }
 
 void RookHashingTest() {
     SimpleRookMap::ParameterSearch();
 }
+
+void MapHashTest() {
+    MapPerformanceTester::PerformanceTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf1", SimpleBishopMap());
+}
+

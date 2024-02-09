@@ -44,10 +44,10 @@ add_executable(ChessEngine main.cpp
         include/MapTypes/SimpleRookMap.h
         include/MapTypes/ModuloFreeBishopMap.h
         include/MapTypes/ModuloFreeRookMap.h
-        include/TestsAndDebugging/MapPerformanceTester.h
-        include/TestsAndDebugging/MapCorrectnessTest.h
+        include/TestsAndDebugging/MapPerformanceTest.h
         include/MapTypes/ModuloFreeNoOffsetRookMap.h
         include/MapTypes/ModuloFreeNoOffsetBishopMap.h
+        include/TestsAndDebugging/MapCorrectnessTest.h
 )
 
 find_package(OpenMP)

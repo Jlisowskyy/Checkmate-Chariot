@@ -15,12 +15,12 @@ template<class RandomGeneratorT = std::mt19937_64>
 class Fast2PowHashFunction {
     /*                  Description
      *  Hash function optimised to be used with sizes, that are the power of 2.
-     *  Returns only 32-bit values and operates on bigger 64-bit integers.
+     *  Returns only 64-bit values and operates on bigger 128-bit integers.
      *  Thus, this class is not portable at all.
      *
      *  Works accordingly to this formula:
      *      w = integer that size = 2^w
-     *  h(v) = ((ax + b) & (2^(32+w)-1) ) >> 32 = ((ax + b) % 2^(32+w) ) / 2^32
+     *  h(v) = ((ax + b) & (2^(64+w)-1) ) >> 64 = ((ax + b) % 2^(64+w) ) / 2^64
      */
 
     // ------------------------------
@@ -29,13 +29,13 @@ class Fast2PowHashFunction {
 public:
 
     // [a, b, size]
-    using params = std::tuple<uint64_t, uint64_t, uint64_t>;
+    using params = std::tuple<__uint128_t, __uint128_t, __uint128_t>;
 
     // Note: expects setParameters to be invoked before usage
     explicit constexpr Fast2PowHashFunction() = default;
 
-    // IMPORTANT size < 2^32
-    explicit Fast2PowHashFunction(const uint64_t size){
+    // IMPORTANT size < 2^64
+    explicit Fast2PowHashFunction(const __uint128_t size){
         RollParameters();
         ChangeSize(size);
     }
@@ -60,8 +60,8 @@ public:
             static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
         };
 
-        _a = randEngine_64();
-        _b = randEngine_64();
+        _a = randEngine_64() | static_cast<__uint128_t>(randEngine_64()) << 64;
+        _b = randEngine_64() | static_cast<__uint128_t>(randEngine_64()) << 64;
     }
 
     constexpr void SetParameters(const params& p) {
@@ -76,16 +76,16 @@ public:
         return {_a, _b, _mask};
     }
 
-    constexpr void ChangeSize(const size_t nSize) {
-        _mask = (nSize << 32) - 1;
+    constexpr void ChangeSize(const __uint128_t nSize) {
+        _mask = (nSize << 64) - 1;
     }
 
     friend std::ostream& operator<<(std::ostream& out, const Fast2PowHashFunction& f) {
-        return out << std::format("_hashFuncT(std::make_tuple({}LLU, {}LLU, {}))", f._a, f._b, f._getRealSize());
+        return out << std::format("_hashFuncT(std::make_tuple({}_uint128_t, {}_uint128_t, {}))", f._a, f._b, f._getRealSize());
     }
 
     constexpr size_t operator()(const size_t x) const {
-        return ((_a*x + _b) & _mask) >> 32;
+        return ((_a*x + _b) & _mask) >> 64;
     }
 
     // ------------------------------
@@ -94,16 +94,16 @@ public:
 private:
 
     [[nodiscard]] constexpr uint64_t _getRealSize() const {
-        return (_mask + 1) >> 32;
+        return (_mask + 1) >> 64;
     }
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
-    uint64_t _a;
-    uint64_t _b;
-    uint64_t _mask;
+    __uint128_t _a;
+    __uint128_t _b;
+    __uint128_t _mask;
 };
 
 template<class RandomGeneratorT = std::mt19937_64>
@@ -122,13 +122,13 @@ class Fast2PowHashFunctionNoOffset {
 public:
 
     // [a, b, size]
-    using params = std::tuple<uint64_t, uint64_t>;
+    using params = std::tuple<__uint128_t, __uint128_t>;
 
     // Note: expects setParameters to be invoked before usage
     explicit constexpr Fast2PowHashFunctionNoOffset() = default;
 
     // IMPORTANT size < 2^32
-    explicit Fast2PowHashFunctionNoOffset(const uint64_t size){
+    explicit Fast2PowHashFunctionNoOffset(const __uint128_t size){
         RollParameters();
         ChangeSize(size);
     }
@@ -153,7 +153,7 @@ public:
             static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
         };
 
-        _a = randEngine_64();
+        _a = randEngine_64() | static_cast<__uint128_t>(randEngine_64()) << 64;
     }
 
     constexpr void SetParameters(const params& p) {
@@ -167,16 +167,16 @@ public:
         return {_a, _mask};
     }
 
-    constexpr void ChangeSize(const size_t nSize) {
-        _mask = (nSize << 32) - 1;
+    constexpr void ChangeSize(const __uint128_t nSize) {
+        _mask = (nSize << 64) - 1;
     }
 
     friend std::ostream& operator<<(std::ostream& out, const Fast2PowHashFunctionNoOffset& f) {
-        return out << std::format("_hashFuncT(std::make_tuple({}LLU, {}))", f._a, f._getRealSize());
+        return out << std::format("_hashFuncT(std::make_tuple({}_uint128_t, {}))", f._a, f._getRealSize());
     }
 
     constexpr size_t operator()(const size_t x) const {
-        return (_a*x & _mask) >> 32;
+        return (_a*x & _mask) >> 64;
     }
 
     // ------------------------------
@@ -185,15 +185,15 @@ public:
 private:
 
     [[nodiscard]] constexpr uint64_t _getRealSize() const {
-        return (_mask + 1) >> 32;
+        return (_mask + 1) >> 64;
     }
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
-    uint64_t _a;
-    uint64_t _mask;
+    __uint128_t _a;
+    __uint128_t _mask;
 };
 
 template<
