@@ -74,4 +74,39 @@ constexpr __uint128_t operator""_uint128_t(const char* x)
     return y;
 }
 
+/*          IMPORTANT NOTES:
+ *  Function assumes that containerPos is already set to 1
+ *  and container[0] is 0 value, which will induce all others.
+ *  Use GenerateBitPermutation() wrapper instead.
+ */
+
+template<class IndexableT>
+constexpr void GenerateBitPermutationsRecursion(const uint64_t number, const int bitPos, IndexableT& container, size_t& containerPos) {
+    if (bitPos == -1 || number == 0) return;
+    uint64_t nextBit;
+
+    for (int i = bitPos; i >= 0; --i)
+        if (const uint64_t bitMap = 1LLU << i; (bitMap & number) != 0) {
+            GenerateBitPermutationsRecursion(number ^ bitMap, i - 1, container, containerPos);
+            nextBit = bitMap;
+            break;
+        }
+
+    const size_t rangeEnd = containerPos;
+    for(size_t i = 0; i < rangeEnd; ++i) {
+        container[rangeEnd + i] = container[i] | nextBit;
+    }
+
+    containerPos *= 2;
+}
+
+template<class IndexableT>
+constexpr size_t GenerateBitPermutations(const uint64_t number, IndexableT& container) {
+    container[0] = 0;
+    size_t index = 1;
+
+    GenerateBitPermutationsRecursion(number, 63, container, index);
+    return index;
+}
+
 #endif //BITOPERATIONS_H

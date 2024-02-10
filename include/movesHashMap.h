@@ -66,8 +66,12 @@ public:
         _map.fill(0);
     }
 
-    template<class neighborGenerator, bool ShouldSignal = false>
-    std::pair<bool, size_t> IntegrityTest(neighborGenerator func, const int boardIndex) {
+    template<
+        class NeighborGeneratorT,
+        uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr,
+        bool ShouldSignal = false
+    >
+    std::pair<bool, size_t> IntegrityTest(NeighborGeneratorT func, const int boardIndex) {
         const auto [possibilities, posSize] = func(boardIndex, masks);
 
         size_t maxSize {};
@@ -75,21 +79,31 @@ public:
 
         clear();
         for (size_t i = 0; i < posSize; ++i) {
-            if ((*this)[possibilities[i]] == 1) {
+            uint64_t record;
+
+            if constexpr (stripFunction)
+                record = stripFunction(possibilities[i], masks);
+            else
+                record = possibilities[i];
+
+            if (const uint64_t oldRecord = (*this)[possibilities[i]]; oldRecord != 0 && oldRecord != record) {
                 if constexpr (ShouldSignal) std::cerr << "[ ERROR ] Integrity failed on index: " << i << std::endl;
                 collisionDetected = true;
                 break;
             }
 
-            (*this)[possibilities[i]] = 1;
+            (*this)[possibilities[i]] = record;
             if (const size_t ind = HFunc(possibilities[i]); ind > maxSize) maxSize = ind;
         }
 
         return { collisionDetected == false, maxSize*sizeof(uint64_t) };
     }
 
-    template<class NeighborGeneratorT, class MaskInitT>
-    static void FindHashParameters(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit) {
+    template<
+        class NeighborGeneratorT,
+        class MaskInitT,
+        uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr
+    >static void FindHashParameters(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit) {
         movesHashMap maps[Board::BoardFields]{};
         std::vector finishedMaps(Board::BoardFields, false);
         std::mutex guard{};
@@ -113,7 +127,7 @@ public:
             };
 
             // First inital check for correctnes
-            auto [result, size] = maps[i].IntegrityTest(getNeighbors, bInd);
+            auto [result, size] = maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
 
             // If map is correct go to the next one
             if (result) {
@@ -140,7 +154,8 @@ public:
                 maps[i].HFunc.RollParameters();
                 guard.unlock();
 
-                const auto [rehashResult, rehashedSize] =  maps[i].IntegrityTest(getNeighbors, bInd);
+                const auto [rehashResult, rehashedSize] =
+                    maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
 
                 wasCollision = !rehashResult;
                 nSize = rehashedSize;
@@ -166,8 +181,11 @@ public:
         std::cout << "};\n" << std::format("With size: {} bytes\n", fullSize);
     }
 
-    template<class NeighborGeneratorT, class MaskInitT>
-    static void FindCollidingIndices(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit) {
+    template<
+        class NeighborGeneratorT,
+        class MaskInitT,
+        uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr
+    >static void FindCollidingIndices(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit) {
         std::cout << "Collision detected on indices:\n\t{";
         size_t invalidIndices{};
 

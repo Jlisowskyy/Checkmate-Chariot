@@ -11,7 +11,13 @@
 
 class BishopMapGenerator {
     static constexpr size_t MaxPossibleNeighborsWoutOverlap = 108;
+    static constexpr size_t MaxPossibleNeighborsWithOverlap = 512;
     static constexpr size_t DirectedMaskCount = 4;
+
+    static constexpr int NWMove = 7;
+    static constexpr int NEMove = 9;
+    static constexpr int SWMove = -9;
+    static constexpr int SEMove = -7;
 
 public:
     using MasksT = std::array<uint64_t, DirectedMaskCount>;
@@ -35,28 +41,28 @@ public:
         const int x = bInd % 8;
         const int y = bInd / 8;
 
-        const int NWBorder = bInd + 7*std::min(x, 7-y);
-        const int NEBorder = bInd + 9*std::min(7-x, 7-y) ;
-        const int SWBorder = bInd - 9*std::min(x, y);
-        const int SEBorder = bInd - 7*std::min(7-x, y);
+        const int NWBorder = bInd + NWMove*std::min(x, 7-y);
+        const int NEBorder = bInd + NEMove*std::min(7-x, 7-y) ;
+        const int SWBorder = bInd + SWMove*std::min(x, y);
+        const int SEBorder = bInd + SEMove*std::min(7-x, y);
 
         const uint64_t bPos = 1LLU << bInd;
-        for (int nw = bInd; nw <= NWBorder; nw += 7) {
+        for (int nw = bInd; nw <= NWBorder; nw += NWMove) {
             const uint64_t nwPos = minMsbPossible << nw;
             if (nwPos != bPos && (masks[nwMask] & nwPos) == 0)
                 continue;
 
-            for (int ne = bInd; ne <= NEBorder; ne +=9) {
+            for (int ne = bInd; ne <= NEBorder; ne += NEMove) {
                 const uint64_t nePos = minMsbPossible << ne;
                 if (nePos != bPos && (masks[neMask] & nePos) == 0)
                     continue;
 
-                for (int sw = bInd; sw >= SWBorder; sw-=9) {
+                for (int sw = bInd; sw >= SWBorder; sw += SWMove) {
                     const uint64_t swPos = minMsbPossible << sw;
                     if (swPos != bPos && (masks[swMask] & swPos) == 0)
                         continue;
 
-                    for (int se = bInd; se >= SEBorder; se-=7) {
+                    for (int se = bInd; se >= SEBorder; se += SEMove) {
                         const uint64_t sePos = minMsbPossible << se;
                         if (sePos != bPos && (masks[seMask] & sePos) == 0)
                             continue;
@@ -70,6 +76,19 @@ public:
 
         return {ret, usedFields};
     }
+
+    [[nodiscard]] static constexpr std::tuple<std::array<uint64_t, MaxPossibleNeighborsWithOverlap>, size_t>
+            GenPossibleNeighborsWithOverlap(const MasksT& masks)
+    {
+        std::array<uint64_t, MaxPossibleNeighborsWithOverlap> ret{};
+        const uint64_t fullMask = masks[neMask] | masks[nwMask] | masks[seMask] | masks[swMask];
+
+        size_t usedFields = GenerateBitPermutations(fullMask, ret);
+
+        return {ret, usedFields };
+    }
+
+
 
     [[nodiscard]] static constexpr uint64_t GenMoves(const uint64_t neighborsWoutOverlap, const int bInd){
         const int y = bInd / 8;

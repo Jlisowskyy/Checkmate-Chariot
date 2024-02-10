@@ -14,6 +14,7 @@
 #include "../include/MapTypes/ModuloFreeBishopMap.h"
 #include "../include/TestsAndDebugging/MapCorrectnessTest.h"
 #include "../include/TestsAndDebugging/MapPerformanceTest.h"
+#include "../include/MapTypes/FancyMagicBishopMap.h"
 
 void ChessEngineMainEntry() {
     Engine engine{};
@@ -68,7 +69,7 @@ void RookSimpleMapParamsGen() {
 }
 
 void BishopHashingTest() {
-    ModuloFreeBishopMapNoOffset::ParameterSearch();
+    FancyMagicBishopMap::ParameterSearch();
 }
 
 void RookHashingTest() {
