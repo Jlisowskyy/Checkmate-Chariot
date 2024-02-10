@@ -49,6 +49,8 @@ add_executable(ChessEngine main.cpp
         include/MapTypes/ModuloFreeNoOffsetBishopMap.h
         include/TestsAndDebugging/MapCorrectnessTest.h
         include/MapTypes/FancyMagicBishopMap.h
+        include/MapTypes/FancyMagicRookMap.h
+        include/MoveGeneration/SparseRandomGenerator.h
 )
 
 find_package(OpenMP)

@@ -84,6 +84,8 @@ void MapHashTest() {
     MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf1", ModuloFreeBishopMap());
     std::cout << "----------------------------ModuloFreeBishopMapNoOffset----------------------------\n";
     MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf1", ModuloFreeBishopMapNoOffset());
+    std::cout << "----------------------------FancyMagicBishopMap----------------------------\n";
+    MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf1", FancyMagicBishopMap());
 
     std::cout << "\n\n\n________________________________TEST 2______________________________________\n";
     std::cout << "----------------------------SimpleBishopMap----------------------------\n";
@@ -92,6 +94,8 @@ void MapHashTest() {
     MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf2", ModuloFreeBishopMap());
     std::cout << "----------------------------ModuloFreeBishopMapNoOffset----------------------------\n";
     MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf2", ModuloFreeBishopMapNoOffset());
+    std::cout << "----------------------------FancyMagicBishopMap----------------------------\n";
+    MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf2", FancyMagicBishopMap());
 }
 
 void MapCorrectnessTest() {

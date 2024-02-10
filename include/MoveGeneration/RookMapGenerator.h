@@ -12,7 +12,8 @@
 #include "MoveGeneration.h"
 
 class RookMapGenerator {
-    static constexpr size_t MaxRookPossibleNeighbors = 144;
+    static constexpr size_t MaxRookPossibleNeighborsWoutOverlap = 144;
+    static constexpr size_t MaxRookPossibleNeighborsWithOverlap = 4096;
     static constexpr size_t DirectedMaskCount = 4;
 
 public:
@@ -82,10 +83,10 @@ public:
         return moves;
     }
 
-    [[nodiscard]] constexpr static std::tuple<std::array<uint64_t, MaxRookPossibleNeighbors>, size_t>
+    [[nodiscard]] constexpr static std::tuple<std::array<uint64_t, MaxRookPossibleNeighborsWoutOverlap>, size_t>
         GenPossibleNeighborsWoutOverlap(const int bInd, const MasksT& masks)
     {
-        std::array<uint64_t, MaxRookPossibleNeighbors> ret{};
+        std::array<uint64_t, MaxRookPossibleNeighborsWoutOverlap> ret{};
         size_t usedFields = 0;
 
         const int lBarrier = ((bInd >> 3) << 3) - 1;
@@ -121,6 +122,17 @@ public:
                 }
             }
         }
+
+        return {ret, usedFields};
+    }
+
+    [[nodiscard]] constexpr static std::tuple<std::array<uint64_t, MaxRookPossibleNeighborsWoutOverlap>, size_t>
+        GenPossibleNeighborsWithOverlap(const MasksT& masks)
+    {
+        std::array<uint64_t, MaxRookPossibleNeighborsWoutOverlap> ret{};
+        const uint64_t fullMask = masks[uMask] | masks[dMask] | masks[rMask] | masks[lMask];
+
+        size_t usedFields = GenerateBitPermutations(fullMask, ret);
 
         return {ret, usedFields};
     }
