@@ -15,7 +15,6 @@
 #include "../include/TestsAndDebugging/MapCorrectnessTest.h"
 #include "../include/TestsAndDebugging/MapPerformanceTest.h"
 
-
 void ChessEngineMainEntry() {
     Engine engine{};
     const UCITranslator translator{engine};
@@ -77,6 +76,39 @@ void RookHashingTest() {
 }
 
 void MapHashTest() {
-    MapPerformanceTester::PerformanceTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf1", SimpleBishopMap());
+    std::cout << "________________________________TEST 1______________________________________\n";
+    std::cout << "----------------------------SimpleBishopMap----------------------------\n";
+    MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf1", SimpleBishopMap());
+    std::cout << "----------------------------ModuloFreeBishopMap----------------------------\n";
+    MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf1", ModuloFreeBishopMap());
+    std::cout << "----------------------------ModuloFreeBishopMapNoOffset----------------------------\n";
+    MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf1", ModuloFreeBishopMapNoOffset());
+
+    std::cout << "\n\n\n________________________________TEST 2______________________________________\n";
+    std::cout << "----------------------------SimpleBishopMap----------------------------\n";
+    MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf2", SimpleBishopMap());
+    std::cout << "----------------------------ModuloFreeBishopMap----------------------------\n";
+    MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf2", ModuloFreeBishopMap());
+    std::cout << "----------------------------ModuloFreeBishopMapNoOffset----------------------------\n";
+    MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf2", ModuloFreeBishopMapNoOffset());
 }
+
+void MapCorrectnessTest() {
+    std::cout << "________________________________TEST 1______________________________________\n";
+    std::cout << "----------------------------SimpleBishopMap----------------------------\n";
+    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr1", SimpleBishopMap());
+    std::cout << "----------------------------ModuloFreeBishopMap----------------------------\n";
+    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr1", ModuloFreeBishopMap());
+    std::cout << "----------------------------ModuloFreeBishopMapNoOffset----------------------------\n";
+    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr1", ModuloFreeBishopMapNoOffset());
+
+    std::cout << "\n\n\n________________________________TEST 2______________________________________\n";
+    std::cout << "----------------------------SimpleBishopMap----------------------------\n";
+    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr2", SimpleBishopMap());
+    std::cout << "----------------------------ModuloFreeBishopMap----------------------------\n";
+    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr2", ModuloFreeBishopMap());
+    std::cout << "----------------------------ModuloFreeBishopMapNoOffset----------------------------\n";
+    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr2", ModuloFreeBishopMapNoOffset());
+}
+
 

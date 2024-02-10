@@ -44,7 +44,7 @@ constexpr uint64_t ExtractLsbOwn1(const uint64_t x) {
 }
 
 constexpr uint64_t ExtractMsbBit(const uint64_t x) {
-    return ExtractMsbBitBuiltin(x);
+    return x == 0 ? 0 : ExtractMsbBitBuiltin(x);
 }
 
 constexpr uint64_t ExtractLsbBit(const uint64_t x) {

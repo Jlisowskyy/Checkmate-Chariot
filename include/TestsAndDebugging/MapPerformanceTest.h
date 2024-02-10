@@ -9,7 +9,6 @@
 #include <fstream>
 #include <format>
 #include <iostream>
-#include <cinttypes>
 #include <vector>
 #include <chrono>
 
@@ -19,7 +18,7 @@
  *  All files containing maps used to test must follow this scheme:
  *  - uint64_t - containing number of records - 8 bytes
  *  - records should be saved in such manner that:
- *      - uint64_t - full map without rooks or bishops - 8 bytes
+ *      - uint64_t - full map - 8 bytes
  *      - uint64_t - map containing only rooks or bishops - 8 bytes
  */
 
@@ -44,14 +43,14 @@ public:
     // ------------------------------
 
     template<class MapT>
-    static void PerformanceTest(const std::string& filename, const MapT& map) noexcept(false) {
+    static double PerformTest(const std::string& filename, const MapT& map) noexcept(false) {
         auto [recordCount, fullMaps, figureMaps] = _readTestFile(filename);
         uint64_t mapReads{};
         uint64_t trulyNotRandomNumber{}; // was unsure about optimisations done when there was no use of read value
 
         const auto timeStart = std::chrono::steady_clock::now();
 
-        for (size_t i = 0; i << recordCount; ++i) {
+        for (size_t i = 0; i < recordCount; ++i) {
             const uint64_t fullMap = fullMaps[i];
             uint64_t figureMap = figureMaps[i];
 
@@ -72,6 +71,8 @@ public:
 
         std::cout << std::format("During the test there was {} reads in total.\nAll done in {}ms.\nWhich outputs {} reads per ms\n", mapReads, timeSpentMs, readPerMs)
         << std::format("Aquired test number: {}\n", trulyNotRandomNumber);
+
+        return readPerMs;
     }
 
     // ------------------------------
@@ -80,7 +81,7 @@ public:
 private:
 
     static RecordsPack _readTestFile(std::string filename) {
-        std::fstream stream(filename, std::fstream::binary | std::fstream::in);
+        std::ifstream stream(filename, std::ios::binary | std::ios::in);
 
         if (!stream)
             throw std::runtime_error(std::format("[ ERROR ] Failed when opening file: {}!\n", filename));
@@ -90,15 +91,19 @@ private:
         std::vector<uint64_t> figureMaps{};
 
         // file size read
-        stream >> recordCount;
+        stream.read(reinterpret_cast<char *>(&recordCount), sizeof(uint64_t));
 
         fullMaps.resize(recordCount);
         figureMaps.resize(recordCount);
 
+        if (!stream) {
+            throw std::runtime_error(std::format("[ ERROR ] Failed when opening file: {}!\n", filename));
+        }
+
         // records read
         for(size_t i = 0; i < recordCount; ++i) {
-            stream >> fullMaps[i];
-            stream >> figureMaps[i];
+            stream.read(reinterpret_cast<char *>(&fullMaps[i]), sizeof(uint64_t));
+            stream.read(reinterpret_cast<char *>(&figureMaps[i]), sizeof(uint64_t));
 
             if (!stream)
                 throw std::runtime_error(std::format("[ ERROR ] Encountered ill-formed record inside the test. Test no {} (0-based).", i));
