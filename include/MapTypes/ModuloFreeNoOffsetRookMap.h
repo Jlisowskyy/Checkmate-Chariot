@@ -9,9 +9,10 @@
 #include "../movesHashMap.h"
 #include "HashFunctions.h"
 #include "../MoveGeneration/RookMapGenerator.h"
+#include "../MoveGeneration/SparseRandomGenerator.h"
 
 class ModuloFreeNoOffsetRookMap {
-    using _hashFuncT = Fast2PowHashFunctionNoOffset<>;
+    using _hashFuncT = Fast2PowHashFunctionNoOffset<SparseRandomGenerator<>>;
     using _underlyingMapT = movesHashMap<_hashFuncT>;
 public:
     constexpr ModuloFreeNoOffsetRookMap() {

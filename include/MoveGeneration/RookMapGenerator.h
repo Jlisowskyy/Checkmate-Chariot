@@ -12,8 +12,10 @@
 #include "MoveGeneration.h"
 
 class RookMapGenerator {
+public:
     static constexpr size_t MaxRookPossibleNeighborsWoutOverlap = 144;
     static constexpr size_t MaxRookPossibleNeighborsWithOverlap = 4096;
+private:
     static constexpr size_t DirectedMaskCount = 4;
 
 public:
@@ -126,10 +128,10 @@ public:
         return {ret, usedFields};
     }
 
-    [[nodiscard]] constexpr static std::tuple<std::array<uint64_t, MaxRookPossibleNeighborsWoutOverlap>, size_t>
+    [[nodiscard]] constexpr static std::tuple<std::array<uint64_t, MaxRookPossibleNeighborsWithOverlap>, size_t>
         GenPossibleNeighborsWithOverlap(const MasksT& masks)
     {
-        std::array<uint64_t, MaxRookPossibleNeighborsWoutOverlap> ret{};
+        std::array<uint64_t, MaxRookPossibleNeighborsWithOverlap> ret{};
         const uint64_t fullMask = masks[uMask] | masks[dMask] | masks[rMask] | masks[lMask];
 
         size_t usedFields = GenerateBitPermutations(fullMask, ret);

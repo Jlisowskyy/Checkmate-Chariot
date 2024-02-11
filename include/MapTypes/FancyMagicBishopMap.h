@@ -13,7 +13,7 @@
 
 class FancyMagicBishopMap {
     using _hashFuncT = FancyMagicHashFunction<SparseRandomGenerator<>>;
-    using _underlyingMapT = movesHashMap<_hashFuncT, 512>;
+    using _underlyingMapT = movesHashMap<_hashFuncT, BishopMapGenerator::MaxPossibleNeighborsWithOverlap>;
 public:
     constexpr FancyMagicBishopMap() {
         for (int i = 0; i < Board::BoardFields; ++i) {

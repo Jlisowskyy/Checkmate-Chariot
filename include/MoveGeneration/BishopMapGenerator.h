@@ -10,8 +10,10 @@
 #include "../EngineTypeDefs.h"
 
 class BishopMapGenerator {
+public:
     static constexpr size_t MaxPossibleNeighborsWoutOverlap = 108;
     static constexpr size_t MaxPossibleNeighborsWithOverlap = 512;
+private:
     static constexpr size_t DirectedMaskCount = 4;
 
     static constexpr int NWMove = 7;

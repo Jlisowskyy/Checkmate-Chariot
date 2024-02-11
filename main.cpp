@@ -4,7 +4,7 @@
 
 int main() {
     // MapHashTest()
-    RookHashingTest();
+    MapCorrectnessTest();
 
     return EXIT_SUCCESS;
 }
