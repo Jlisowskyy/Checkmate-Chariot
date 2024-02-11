@@ -11,23 +11,30 @@
 
 class Logger {
 public:
-    static void Log(const std::string& logMessage);
-    static void LogError(const std::string& logMessage);
-    static bool ChangeLogStream(const std::string& FileName);
 
+    Logger() = default;
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
+
+    void Log(const std::string& logMessage);
+    std::ostream& StartLogging();
+    std::ostream& StartErrLogging();
+    void LogError(const std::string& logMessage);
+    bool ChangeLogStream(const std::string& FileName);
+    void ChangeLogStream(std::ostream& stream);
+    void CloseFStream();
 
     // ------------------------------
     // class fields
     // ------------------------------
 private:
-    Logger() = default;
 
-    inline static std::mutex logGuard{};
-    inline static std::ofstream loggingFstream{};
-    inline static std::ostream* errLoggingStream = &std::cerr;
-    inline static std::ostream* loggingStream = &std::cout;
+    std::mutex logGuard{};
+    std::ofstream loggingFstream{};
+    std::ostream* errLoggingStream = &std::cerr;
+    std::ostream* loggingStream = &std::cout;
 };
+
+inline static Logger GlobalLogger{};
 
 #endif //LOGGER_H

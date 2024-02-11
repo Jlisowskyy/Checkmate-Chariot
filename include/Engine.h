@@ -57,7 +57,7 @@ private:
     }
 
     static void _changeDebugState(Engine& eng, std::string& nPath) {
-        Logger::ChangeLogStream(nPath);
+        GlobalLogger.ChangeLogStream(nPath);
     }
 
     // ------------------------------

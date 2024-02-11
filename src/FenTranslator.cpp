@@ -21,8 +21,8 @@ Board FenTranslator::Translate(const std::string& fenPos) {
         _processElPassant(workBoard, pos, fenPos);
     }
     catch (const std::exception& exc) {
-        Logger::LogError(exc.what());
-        Logger::LogError("[ INFO ] Loading default layout...");
+        GlobalLogger.LogError(exc.what());
+        GlobalLogger.LogError("[ INFO ] Loading default layout...");
         workBoard = StartBoard;
     }
 

@@ -77,9 +77,9 @@ void BishopHashingTest() {
 
 void RookHashingTest() {
     SimpleRookMap::ParameterSearch();
-    ModuloFreeRookMap::ParameterSearch();
-    ModuloFreeNoOffsetRookMap::ParameterSearch();
-    FancyMagicRookMap::ParameterSearch();
+    // ModuloFreeRookMap::ParameterSearch();
+    // ModuloFreeNoOffsetRookMap::ParameterSearch();
+    // FancyMagicRookMap::ParameterSearch();
 }
 
 void MapHashTest() {

@@ -3,7 +3,8 @@
 #include "include/ChessEngine.h"
 
 int main() {
-    MapHashTest();
+    // MapHashTest()
+    RookHashingTest();
 
     return EXIT_SUCCESS;
 }

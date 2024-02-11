@@ -13,6 +13,9 @@
 
 #include "EngineTypeDefs.h"
 #include "BitOperations.h"
+#include "Interface/Logger.h"
+
+static inline Logger ParameterSearchLogger{};
 
 /*          Important notes:
  *  Used HashFuncT class must have defined:
@@ -86,7 +89,8 @@ public:
                 record = possibilities[i];
 
             if (const uint64_t oldRecord = (*this)[possibilities[i]]; oldRecord != EmptyField && oldRecord != record) {
-                if constexpr (ShouldSignal) std::cerr << "[ ERROR ] Integrity failed on index: " << i << std::endl;
+                if constexpr (ShouldSignal) ParameterSearchLogger.LogError(std::format("[ ERROR ] Integrity failed on index: {}", i));
+
                 collisionDetected = true;
                 break;
             }
@@ -139,8 +143,8 @@ public:
 
             // Anounce thread start
             guard.lock();
-            std::cout << std::format("Starting hash function parameters search on index: {} and field: {}\n",
-                i, fieldStrMap.at(static_cast<Field>(1LLU << bInd)));
+            ParameterSearchLogger.Log(std::format("Starting hash function parameters search on index: {} and field: {}\n",
+                i, fieldStrMap.at(static_cast<Field>(1LLU << bInd))));
             guard.unlock();
 
             // Main Thread job - parameter searching loop
@@ -165,17 +169,17 @@ public:
             ++correctMaps;
 
             // Printing actual parameters
-            std::cout << "Actual rehashing result:\n{\n";
-            for (int j = 0; j < Board::BoardFields; ++j) std::cout << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
-            std::cout << "};\n" << std::format("Current correct maps: {},\nWith size: {} bytes\n", correctMaps, fullSize);
+            ParameterSearchLogger.Log("Actual rehashing result:\n{");
+            for (int j = 0; j < Board::BoardFields; ++j) ParameterSearchLogger.StartLogging() << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
+            ParameterSearchLogger.Log(std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps, fullSize));
 
             guard.unlock();
         }
 
         // Print final looking table
-        std::cout << "Final parameters:\n{\n";
-        for (int j = 0; j < Board::BoardFields; ++j) std::cout << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
-        std::cout << "};\n" << std::format("With size: {} bytes\n", fullSize);
+        ParameterSearchLogger.Log("Actual rehashing result:\n{");
+        for (int j = 0; j < Board::BoardFields; ++j) ParameterSearchLogger.StartLogging() << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
+        ParameterSearchLogger.Log(std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps, fullSize));
     }
 
     template<
@@ -183,21 +187,21 @@ public:
         class MaskInitT,
         uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr
     >static void FindCollidingIndices(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit) {
-        std::cout << "Collision detected on indices:\n\t{";
+        ParameterSearchLogger.StartLogging() << "Collision detected on indices:\n\t{ ";
         size_t invalidIndices{};
 
         for (int i = 0; i < Board::BoardFields; ++i) {
             const int bInd = ConvertToReversedPos(i);
 
             auto map = movesHashMap(mInit(bInd), funcs[i]);
-            auto [result, _] = map.IntegrityTest(nGen, bInd);
+            auto [result, _] = map.template IntegrityTest<NeighborGeneratorT, stripFunction>(nGen, bInd);
 
             if (result == false) {
-                std::cout << i << ", ";
+                ParameterSearchLogger.StartLogging() << std::format("{}, ", i);
                 ++invalidIndices;
             }
         }
-        std::cout << std::format("}}\nNumber of invalid indices: {}\n", invalidIndices);
+        ParameterSearchLogger.Log(std::format("}}\nNumber of invalid indices: {}\n", invalidIndices));
     }
 
     // ------------------------------
