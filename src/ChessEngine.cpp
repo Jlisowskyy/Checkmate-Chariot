@@ -15,6 +15,9 @@
 #include "../include/TestsAndDebugging/MapCorrectnessTest.h"
 #include "../include/TestsAndDebugging/MapPerformanceTest.h"
 #include "../include/MapTypes/FancyMagicBishopMap.h"
+#include "../include/MapTypes/FancyMagicRookMap.h"
+#include "../include/MapTypes/ModuloFreeNoOffsetRookMap.h"
+#include "../include/MapTypes/ModuloFreeRookMap.h"
 
 void ChessEngineMainEntry() {
     Engine engine{};
@@ -74,6 +77,9 @@ void BishopHashingTest() {
 
 void RookHashingTest() {
     SimpleRookMap::ParameterSearch();
+    ModuloFreeRookMap::ParameterSearch();
+    ModuloFreeNoOffsetRookMap::ParameterSearch();
+    FancyMagicRookMap::ParameterSearch();
 }
 
 void MapHashTest() {
@@ -100,20 +106,27 @@ void MapHashTest() {
 
 void MapCorrectnessTest() {
     std::cout << "________________________________TEST 1______________________________________\n";
-    std::cout << "----------------------------SimpleBishopMap----------------------------\n";
-    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr1", SimpleBishopMap());
-    std::cout << "----------------------------ModuloFreeBishopMap----------------------------\n";
-    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr1", ModuloFreeBishopMap());
-    std::cout << "----------------------------ModuloFreeBishopMapNoOffset----------------------------\n";
-    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr1", ModuloFreeBishopMapNoOffset());
+    // std::cout << "----------------------------SimpleBishopMap----------------------------\n";
+    // MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr1", SimpleBishopMap());
+    // std::cout << "----------------------------ModuloFreeBishopMap----------------------------\n";
+    // MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr1", ModuloFreeBishopMap());
+    // std::cout << "----------------------------ModuloFreeBishopMapNoOffset----------------------------\n";
+    // MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr1", ModuloFreeBishopMapNoOffset());
+    std::cout << "----------------------------FancyMagicBishopMap----------------------------\n";
+    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr1", FancyMagicBishopMap());
 
     std::cout << "\n\n\n________________________________TEST 2______________________________________\n";
-    std::cout << "----------------------------SimpleBishopMap----------------------------\n";
-    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr2", SimpleBishopMap());
-    std::cout << "----------------------------ModuloFreeBishopMap----------------------------\n";
-    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr2", ModuloFreeBishopMap());
-    std::cout << "----------------------------ModuloFreeBishopMapNoOffset----------------------------\n";
-    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr2", ModuloFreeBishopMapNoOffset());
+    // std::cout << "----------------------------SimpleBishopMap----------------------------\n";
+    // MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr2", SimpleBishopMap());
+    // std::cout << "----------------------------ModuloFreeBishopMap----------------------------\n";
+    // MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr2", ModuloFreeBishopMap());
+    // std::cout << "----------------------------ModuloFreeBishopMapNoOffset----------------------------\n";
+    // MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr2", ModuloFreeBishopMapNoOffset());
+    std::cout << "----------------------------FancyMagicBishopMap----------------------------\n";
+    MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr2", FancyMagicBishopMap());
+
+    // DisplayMask(BishopMapGenerator::StripBlockingNeighbors(0, BishopMapGenerator::InitMasks(61)));
+    // DisplayMask(BishopMapGenerator::GenMoves(0, 61));
 }
 
 

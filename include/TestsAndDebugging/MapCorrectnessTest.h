@@ -67,7 +67,6 @@ public:
                     lastErrorMoveCorrectOne = correctMoves[i][figNum];
                     lastErrorMap = fullMap;
                     lastFigPos = maxMsbPossible >> msbPos;
-
                 }
 
                 ++figNum;

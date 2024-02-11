@@ -63,15 +63,14 @@ public:
     }
 
     constexpr void clear() {
-        _map.fill(0);
+        _map.fill(EmptyField);
     }
 
     template<
         class NeighborGeneratorT,
         uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr,
         bool ShouldSignal = false
-    >
-    std::pair<bool, size_t> IntegrityTest(NeighborGeneratorT func, const int boardIndex) {
+    >std::pair<bool, size_t> IntegrityTest(NeighborGeneratorT func, const int boardIndex) {
         const auto [possibilities, posSize] = func(boardIndex, masks);
 
         size_t maxSize {};
@@ -86,7 +85,7 @@ public:
             else
                 record = possibilities[i];
 
-            if (const uint64_t oldRecord = (*this)[possibilities[i]]; oldRecord != 0 && oldRecord != record) {
+            if (const uint64_t oldRecord = (*this)[possibilities[i]]; oldRecord != EmptyField && oldRecord != record) {
                 if constexpr (ShouldSignal) std::cerr << "[ ERROR ] Integrity failed on index: " << i << std::endl;
                 collisionDetected = true;
                 break;
@@ -111,7 +110,6 @@ public:
         size_t correctMaps{};
 
         // Preparing temp map to perform calculations
-
         for (int i = 0; i < Board::BoardFields; ++i)
             maps[i] = movesHashMap(mInit(ConvertToReversedPos(i)), funcs[i]);
 
@@ -121,7 +119,6 @@ public:
 
             // Possible neighbors generation.
             const auto [possibilities, posSize] = nGen(bInd, maps[i].masks);
-
             auto getNeighbors = [&](const int unused1, const std::array<uint64_t, 4>& unused2){
                 return std::make_pair(std::ref(possibilities), posSize);
             };
@@ -161,8 +158,8 @@ public:
                 nSize = rehashedSize;
             }while(wasCollision);
 
-            guard.lock();
             // Saving results
+            guard.lock();
             finishedMaps[i] = true;
             fullSize += nSize;
             ++correctMaps;
@@ -212,6 +209,7 @@ public:
     HashFuncT HFunc{};
 
 private:
+    static constexpr uint64_t EmptyField = ~0ULL;
 
     std::array<uint64_t, mapAllocSize> _map{};
 };
