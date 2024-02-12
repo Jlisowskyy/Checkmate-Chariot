@@ -9,33 +9,35 @@
 #include <unordered_map>
 #include <iostream>
 
-enum Color {
+enum Color: int {
     WHITE,
     BLACK,
 };
 
+int SwapColor(int col);
+
 enum ColorlessDescriptors: size_t {
-    pawns,
-    knights,
-    bishops,
-    rooks,
-    queens,
-    king,
+    pawnsIndex,
+    knightsIndex,
+    bishopsIndex,
+    rooksIndex,
+    queensIndex,
+    kingIndex,
 };
 
 enum Descriptors: size_t {
-    wPawns,
-    wKnights,
-    wBishops,
-    wRooks,
-    wQueens,
-    wKing,
-    bPawns,
-    bKnights,
-    bBishops,
-    bRooks,
-    bQueens,
-    bKing,
+    wPawnsIndex,
+    wKnightsIndex,
+    wBishopsIndex,
+    wRooksIndex,
+    wQueensIndex,
+    wKingIndex,
+    bPawnsIndex,
+    bKnightsIndex,
+    bBishopsIndex,
+    bRooksIndex,
+    bQueensIndex,
+    bKingIndex,
 };
 
 enum Field : uint64_t {
@@ -121,7 +123,7 @@ struct Board {
     // ------------------------------
 
     void ChangePlayingColor() {
-        movColor = (movColor + 1) & 1;
+        movColor = SwapColor(movColor);
     }
 
     friend std::ostream& operator<<(std::ostream& out, const Board& bd);
@@ -138,39 +140,39 @@ struct Board {
 
     bool Castlings[CastlingCount] = { false, false, false, false };
     Field elPassantField = INVALID;
-    unsigned int movColor = WHITE;
-    uint8_t kingPositions[KingPosCount] = { 0 };
+    int movColor = WHITE;
+    uint8_t kingMSBPositions[KingPosCount] = { 0 };
     uint64_t boards[BoardsCount] = { 0 };
 };
 
 inline const std::unordered_map<size_t, Descriptors> figToDescMap{
-        {'P', wPawns},
-        {'N', wKnights},
-        {'B', wBishops},
-        {'R', wRooks},
-        {'Q', wQueens},
-        {'K', wKing},
-        {'p', bPawns},
-        {'n', bKnights},
-        {'b', bBishops},
-        {'r', bRooks},
-        {'q', bQueens},
-        {'k', bKing}
+        {'P', wPawnsIndex},
+        {'N', wKnightsIndex},
+        {'B', wBishopsIndex},
+        {'R', wRooksIndex},
+        {'Q', wQueensIndex},
+        {'K', wKingIndex},
+        {'p', bPawnsIndex},
+        {'n', bKnightsIndex},
+        {'b', bBishopsIndex},
+        {'r', bRooksIndex},
+        {'q', bQueensIndex},
+        {'k', bKingIndex}
 };
 
 inline const std::unordered_map<size_t, char> descToFigMap{
-        {wPawns, 'P'},
-        {wKnights, 'N'},
-        {wBishops, 'B'},
-        {wRooks, 'R'},
-        {wQueens, 'Q'},
-        {wKing, 'K'},
-        {bPawns, 'p'},
-        {bKnights, 'n'},
-        {bBishops, 'b'},
-        {bRooks, 'r'},
-        {bQueens, 'q'},
-        {bKing, 'k'}
+        {wPawnsIndex, 'P'},
+        {wKnightsIndex, 'N'},
+        {wBishopsIndex, 'B'},
+        {wRooksIndex, 'R'},
+        {wQueensIndex, 'Q'},
+        {wKingIndex, 'K'},
+        {bPawnsIndex, 'p'},
+        {bKnightsIndex, 'n'},
+        {bBishopsIndex, 'b'},
+        {bRooksIndex, 'r'},
+        {bQueensIndex, 'q'},
+        {bKingIndex, 'k'}
 };
 
 inline const std::unordered_map<Field, std::string> fieldStrMap{

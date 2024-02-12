@@ -48,6 +48,10 @@ std::ostream& operator<<(std::ostream& out, const Board& bd) {
     return out;
 }
 
+int SwapColor(const int col) {
+    return 1 - col;
+}
+
 void DisplayMask(const uint64_t mask) {
     for (int y = 56; y >= 0; y-=8) {
         for (int x = 0; x < 8; ++x) {

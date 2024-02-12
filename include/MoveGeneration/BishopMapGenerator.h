@@ -13,14 +13,13 @@ class BishopMapGenerator {
 public:
     static constexpr size_t MaxPossibleNeighborsWoutOverlap = 108;
     static constexpr size_t MaxPossibleNeighborsWithOverlap = 512;
+
+    static constexpr int NWOffset = 7;
+    static constexpr int NEOffset = 9;
+    static constexpr int SWOffset = -9;
+    static constexpr int SEOffset = -7;
 private:
     static constexpr size_t DirectedMaskCount = 4;
-
-    static constexpr int NWMove = 7;
-    static constexpr int NEMove = 9;
-    static constexpr int SWMove = -9;
-    static constexpr int SEMove = -7;
-
 public:
     using MasksT = std::array<uint64_t, DirectedMaskCount>;
 
@@ -43,28 +42,28 @@ public:
         const int x = bInd % 8;
         const int y = bInd / 8;
 
-        const int NWBorder = bInd + NWMove*std::min(x, 7-y);
-        const int NEBorder = bInd + NEMove*std::min(7-x, 7-y) ;
-        const int SWBorder = bInd + SWMove*std::min(x, y);
-        const int SEBorder = bInd + SEMove*std::min(7-x, y);
+        const int NWBorder = bInd + NWOffset*std::min(x, 7-y);
+        const int NEBorder = bInd + NEOffset*std::min(7-x, 7-y) ;
+        const int SWBorder = bInd + SWOffset*std::min(x, y);
+        const int SEBorder = bInd + SEOffset*std::min(7-x, y);
 
         const uint64_t bPos = 1LLU << bInd;
-        for (int nw = bInd; nw <= NWBorder; nw += NWMove) {
+        for (int nw = bInd; nw <= NWBorder; nw += NWOffset) {
             const uint64_t nwPos = minMsbPossible << nw;
             if (nwPos != bPos && (masks[nwMask] & nwPos) == 0)
                 continue;
 
-            for (int ne = bInd; ne <= NEBorder; ne += NEMove) {
+            for (int ne = bInd; ne <= NEBorder; ne += NEOffset) {
                 const uint64_t nePos = minMsbPossible << ne;
                 if (nePos != bPos && (masks[neMask] & nePos) == 0)
                     continue;
 
-                for (int sw = bInd; sw >= SWBorder; sw += SWMove) {
+                for (int sw = bInd; sw >= SWBorder; sw += SWOffset) {
                     const uint64_t swPos = minMsbPossible << sw;
                     if (swPos != bPos && (masks[swMask] & swPos) == 0)
                         continue;
 
-                    for (int se = bInd; se >= SEBorder; se += SEMove) {
+                    for (int se = bInd; se >= SEBorder; se += SEOffset) {
                         const uint64_t sePos = minMsbPossible << se;
                         if (sePos != bPos && (masks[seMask] & sePos) == 0)
                             continue;
@@ -104,22 +103,22 @@ public:
         uint64_t moves = 0;
 
         // NW direction moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, 7,
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd,  NWOffset,
                                  [&](const int b) { return b <= NWBorder; }
         );
 
         // NE direction moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, 9,
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, NEOffset,
                                  [&](const int b) { return b <= NEBorder; }
         );
 
         // SW direction moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, -9,
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, SWOffset,
                                  [&](const int b) { return b >= SWBorder; }
         );
 
-        // SW direction moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, -7,
+        // SE direction moves
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, SEOffset,
                                  [&](const int b) { return b >= SEBorder; }
         );
 
@@ -141,22 +140,22 @@ public:
         const int x = bInd % 8;
         const int y = bInd / 8;
 
-        const int NEBorder = bInd + 9*std::max(0, std::min(7-x, 7-y) - 1);
-        const int NWBorder = bInd + 7*std::max(0, std::min(x, 7-y) - 1);
-        const int SEBorder = bInd - 7*std::max(0, std::min(7-x, y) - 1);
-        const int SWBorder = bInd - 9*std::max(0, std::min(x, y) - 1);
+        const int NEBorder = bInd + NEOffset*std::max(0, std::min(7-x, 7-y) - 1);
+        const int NWBorder = bInd + NWOffset*std::max(0, std::min(x, 7-y) - 1);
+        const int SEBorder = bInd + SEOffset*std::max(0, std::min(7-x, y) - 1);
+        const int SWBorder = bInd + SWOffset*std::max(0, std::min(x, y) - 1);
 
         // neMask generation
-        ret[neMask] = GenMask(NEBorder, bInd, 9, std::less_equal{});
+        ret[neMask] = GenMask(NEBorder, bInd, NEOffset, std::less_equal{});
 
         // nwMask generation
-        ret[nwMask] = GenMask(NWBorder, bInd, 7, std::less_equal{});
+        ret[nwMask] = GenMask(NWBorder, bInd, NWOffset, std::less_equal{});
 
         // seMask generation
-        ret[seMask] = GenMask(SEBorder, bInd, -7, std::greater_equal{});
+        ret[seMask] = GenMask(SEBorder, bInd, SEOffset, std::greater_equal{});
 
         // swMask generation
-        ret[swMask] = GenMask(SWBorder, bInd, -9, std::greater_equal{});
+        ret[swMask] = GenMask(SWBorder, bInd, SWOffset, std::greater_equal{});
 
         return ret;
     }
