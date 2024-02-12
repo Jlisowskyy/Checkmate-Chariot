@@ -23,9 +23,46 @@
 
 class KingMap {
     // ------------------------------
-    // Class creation
+    // Class inner types
     // ------------------------------
 public:
+
+    struct PinningMasks {
+        PinningMasks() = default;
+        PinningMasks(const PinningMasks&) = default;
+        ~PinningMasks() = default;
+
+        constexpr PinningMasks(const int bInd) {
+            constexpr int northBarrier = 64;
+            constexpr int southBarrier = -1;
+
+            const int westBarrier = ((bInd / 8) * 8) - 1;
+            const int eastBarrier = westBarrier + 9;
+
+            masks[NorthMask] = GenMask(northBarrier, bInd, 8, std::less{});
+            masks[SouthMask] = GenMask(southBarrier, bInd, -8, std::greater{});
+            // masks[EastMask] = GenMask(eastBarrier, )
+        }
+
+        static constexpr size_t PinningMasksCount = 8;
+        std::array<uint64_t, PinningMasksCount> masks{};
+
+        enum PinnigMaskssNames{
+            NorthMask,
+            SouthMask,
+            WestMask,
+            EastMask,
+            NorthWestMask,
+            SouthEastMask,
+            NorthEastMask,
+            SouthWestMask,
+        };
+    };
+
+    // ------------------------------
+    // Class creation
+    // ------------------------------
+
      KingMap() = delete;
 
     // ------------------------------
@@ -39,6 +76,8 @@ public:
     // ------------------------------
     // Class Fields
     // ------------------------------
+
+    // static constexpr std::array<PinningMasks, Board::BoardFields> pinMasks =
 private:
 
     static constexpr size_t maxMovesCount = 8;

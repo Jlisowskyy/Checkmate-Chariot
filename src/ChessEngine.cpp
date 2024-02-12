@@ -6,10 +6,8 @@
 
 #include "../include/Interface/UCITranslator.h"
 #include "../include/Engine.h"
-#include "../include/MoveGeneration/BishopMap.h"
 #include "../include/MoveGeneration/KingMap.h"
 #include "../include/MoveGeneration/BishopMapGenerator.h"
-#include "../include/MoveGeneration/RookMap.h"
 #include "../include/MapTypes/ModuloFreeNoOffsetBishopMap.h"
 #include "../include/MapTypes/ModuloFreeBishopMap.h"
 #include "../include/TestsAndDebugging/MapCorrectnessTest.h"
@@ -18,6 +16,8 @@
 #include "../include/MapTypes/FancyMagicRookMap.h"
 #include "../include/MapTypes/ModuloFreeNoOffsetRookMap.h"
 #include "../include/MapTypes/ModuloFreeRookMap.h"
+#include "../include/MapTypes/SimpleBishopMap.h"
+#include "../include/MapTypes/SimpleRookMap.h"
 
 void ChessEngineMainEntry() {
     Engine engine{};

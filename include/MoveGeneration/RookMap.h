@@ -5,14 +5,14 @@
 #ifndef ROOKMAP_H
 #define ROOKMAP_H
 
-#include "../MapTypes/SimpleRookMap.h"
+#include "../MapTypes/FancyMagicRookMap.h"
 
 class RookMap {
     // -------------------------------
     // Underlying map definition
     // -------------------------------
 
-    using _underlyingMap = SimpleRookMap;
+    using _underlyingMap = FancyMagicRookMap;
 
 public:
     // ---------------------------------------

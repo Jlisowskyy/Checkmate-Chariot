@@ -38,8 +38,9 @@
     return movesRet;
 }
 
-template<class neighborCountingFunc>
-[[nodiscard]] constexpr size_t CalculateTotalOfPossibleHashMapElements(neighborCountingFunc func) {
+template<
+    class NeighborCountingFuncT
+>[[nodiscard]] constexpr size_t CalculateTotalOfPossibleHashMapElements(NeighborCountingFuncT func) {
     size_t sum{};
     for (int x = 0; x < 8; ++x) {
         for (int y = 0; y < 8; ++y) {
@@ -57,8 +58,9 @@ inline void DisplayMasks(const uint64_t* masks, const char** names, const size_t
     }
 }
 
-template<class comparisonMethod>
-[[nodiscard]] constexpr uint64_t GenMask(const int barrier, int boardIndex, const int offset, comparisonMethod comp) {
+template<
+    class ComparisonMethodT
+>[[nodiscard]] constexpr uint64_t GenMask(const int barrier, int boardIndex, const int offset, ComparisonMethodT comp) {
     uint64_t mask = 0;
 
     while(comp(boardIndex += offset, barrier))
@@ -83,8 +85,9 @@ template<class comparisonMethod>
     return std::countr_zero(std::bit_ceil(x));
 }
 
-template<class BoundryCheckFuncT>
-constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd,
+template<
+    class BoundryCheckFuncT
+>constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd,
     const int offset, BoundryCheckFuncT boundryCheck)
 {
     uint64_t ret = 0;
@@ -104,8 +107,8 @@ template<
     class MoveGeneratorT,
     class NeighborGeneratorT,
     class NeigborStripT,
-    class MapT>
-constexpr void MoveInitializer(MapT& map, MoveGeneratorT mGen, NeighborGeneratorT nGen, NeigborStripT nStrip, const int bInd) {
+    class MapT
+>constexpr void MoveInitializer(MapT& map, MoveGeneratorT mGen, NeighborGeneratorT nGen, NeigborStripT nStrip, const int bInd) {
     const auto [possibilities, posSize] = nGen(bInd, map.masks);
 
     for (size_t j = 0; j < posSize; ++j) {

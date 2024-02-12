@@ -3,8 +3,8 @@
 #include "include/ChessEngine.h"
 
 int main() {
-    // MapHashTest()
-    MapCorrectnessTest();
+    BishopHashingTest();
+    // MapCorrectnessTest();
 
     return EXIT_SUCCESS;
 }

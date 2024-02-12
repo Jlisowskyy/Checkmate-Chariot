@@ -113,6 +113,36 @@ enum CastlingPossibilities: size_t {
     BlackQueenSide,
 };
 
+void DisplayMask(uint64_t mask);
+
+struct Board {
+    // ------------------------------
+    // class interaction
+    // ------------------------------
+
+    void ChangePlayingColor() {
+        movColor = (movColor + 1) & 1;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const Board& bd);
+
+    // ------------------------------
+    // Class fields
+    // ------------------------------
+
+    static constexpr size_t BoardsCount = 12;
+    static constexpr size_t CastlingCount = 4;
+    static constexpr size_t BoardFields = 64;
+    static constexpr size_t BoardsPerCol = 6;
+    static constexpr size_t KingPosCount = 2;
+
+    bool Castlings[CastlingCount] = { false, false, false, false };
+    Field elPassantField = INVALID;
+    unsigned int movColor = WHITE;
+    uint8_t kingPositions[KingPosCount] = { 0 };
+    uint64_t boards[BoardsCount] = { 0 };
+};
+
 inline const std::unordered_map<size_t, Descriptors> figToDescMap{
         {'P', wPawns},
         {'N', wKnights},
@@ -289,32 +319,5 @@ inline const uint64_t PrimeNumberMap[] = {
     257,
 };
 
-void DisplayMask(uint64_t mask);
-
-
-struct Board {
-    // ------------------------------
-    // class interaction
-    // ------------------------------
-
-    void ChangePlayingColor() {
-        movColor = (movColor + 1) & 1;
-    }
-
-    friend std::ostream& operator<<(std::ostream& out, const Board& bd);
-
-    // ------------------------------
-    // Class fields
-    // ------------------------------
-
-    inline static constexpr size_t BoardsCount = 12;
-    inline static constexpr size_t CastlingCount = 4;
-    inline static constexpr size_t BoardFields = 64;
-
-    bool Castlings[CastlingCount] = { false, false, false, false };
-    Field elPassantField = INVALID;
-    unsigned int movColor = WHITE;
-    uint64_t boards[BoardsCount] = { 0 };
-};
 
 #endif //ENGINETYPEDEFS_H

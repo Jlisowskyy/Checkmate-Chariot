@@ -21,15 +21,15 @@ public:
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr uint64_t GetBlackAttacks(const uint64_t pawnBit, const uint64_t enemyMap) {
-        const uint64_t leftAttack = ((RightMask ^ pawnBit) >> 9) & enemyMap;
-        const uint64_t rightAttack = ((LeftMask ^ pawnBit) >> 7) & enemyMap;
+    [[nodiscard]] static constexpr uint64_t GetBlackAttackFields(const uint64_t pawnBit) {
+        const uint64_t leftAttack = (RightMask ^ pawnBit) >> 9;
+        const uint64_t rightAttack = (LeftMask ^ pawnBit) >> 7;
         return leftAttack | rightAttack;
     }
 
     // Returns all moves excepts ElPassantOnes
     [[nodiscard]] static constexpr uint64_t GetBlackMoves(const uint64_t pawnBit, const uint64_t enemyMap, const uint64_t fullMap) {
-        const uint64_t attackMoves = GetBlackAttacks(pawnBit, enemyMap);
+        const uint64_t attackMoves = GetBlackAttackFields(pawnBit) & enemyMap;
         const uint64_t frontMove = (pawnBit >> 8) ^ fullMap;
 
         const uint64_t isOnStartField = pawnBit & StartBlackPawnMask;
@@ -39,16 +39,15 @@ public:
         return attackMoves | frontMove | frontDoubleMove;
     }
 
-    [[nodiscard]] static constexpr uint64_t GetWhiteAttacks(const uint64_t pawnBit, const uint64_t enemyMap) {
-        const uint64_t leftAttack = ((LeftMask ^ pawnBit) << 7) & enemyMap;
-        const uint64_t rightAttack = ((RightMask ^ pawnBit) << 9) & enemyMap;
-
+    [[nodiscard]] static constexpr uint64_t GetWhiteAttackFields(const uint64_t pawnBit) {
+        const uint64_t leftAttack = (LeftMask ^ pawnBit) << 7;
+        const uint64_t rightAttack = (RightMask ^ pawnBit) << 9;
         return leftAttack | rightAttack;
     }
 
     // Returns all moves excepts ElPassantOnes
     [[nodiscard]] static constexpr uint64_t GetWhiteMoves(const uint64_t pawnBit, const uint64_t enemyMap, const uint64_t fullMap) {
-        const uint64_t attackMoves = GetWhiteAttacks(pawnBit, enemyMap);
+        const uint64_t attackMoves = GetWhiteAttackFields(pawnBit) & enemyMap;
         const uint64_t frontMove = (pawnBit << 8) ^ fullMap;
 
         const uint64_t isOnStartField = pawnBit & StartWhitePawnMask;

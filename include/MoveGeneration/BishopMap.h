@@ -5,14 +5,14 @@
 #ifndef BISHOPMAP_H
 #define BISHOPMAP_H
 
-#include "../MapTypes/SimpleBishopMap.h"
+#include "../MapTypes/FancyMagicBishopMap.h"
 
 class BishopMap {
     // -------------------------------
     // Underlying map definition
     // -------------------------------
 
-    using _underlyingMap = SimpleBishopMap;
+    using _underlyingMap = FancyMagicBishopMap;
 
     // ---------------------------------------
     // Class creation and initialization

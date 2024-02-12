@@ -33,9 +33,7 @@ add_executable(ChessEngine main.cpp
         src/SearchingMachine.cpp
         include/SearchingMachine.h
         src/ChessMechanics.cpp
-        include/ChessMechanics.h
-        src/EngineTests.cpp
-        include/EngineTests.h
+        include/MoveGeneration/ChessMechanics.h
         include/Interface/UCITranslator.h
         include/MoveGeneration/RookMapGenerator.h
         include/MoveGeneration/BishopMapGenerator.h
@@ -51,6 +49,7 @@ add_executable(ChessEngine main.cpp
         include/MapTypes/FancyMagicBishopMap.h
         include/MapTypes/FancyMagicRookMap.h
         include/MoveGeneration/SparseRandomGenerator.h
+        include/TestsAndDebugging/MoveGenerationTests.h
 )
 
 find_package(OpenMP)
@@ -59,5 +58,5 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(ChessEngine PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-target_compile_options(ChessEngine  PUBLIC -O3;-march=native;-fopenmp)
-#target_compile_options(ChessEngine PUBLIC -fopenmp;-g)
+#target_compile_options(ChessEngine  PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=133554432)
+target_compile_options(ChessEngine PUBLIC -fconstexpr-ops-limit=133554432;-g;)
