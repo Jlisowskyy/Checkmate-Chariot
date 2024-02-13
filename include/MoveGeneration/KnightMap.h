@@ -21,7 +21,7 @@ public:
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd) {
+    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, [[maybe_unused]] const uint64_t _) {
         return movesMap[msbInd];
     }
 

@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <iostream>
+#include <array>
 
 enum Color: int {
     WHITE,
@@ -108,6 +109,11 @@ enum Field : uint64_t {
     H8 = 1LLU << 63
 };
 
+enum CastlingIndexes: size_t {
+    KingCastlingIndex,
+    QueenCastlingIndex,
+};
+
 enum CastlingPossibilities: size_t {
     WhiteKingSide,
     WhiteQueenSide,
@@ -137,8 +143,33 @@ struct Board {
     static constexpr size_t BoardFields = 64;
     static constexpr size_t BoardsPerCol = 6;
     static constexpr size_t KingPosCount = 2;
+    static constexpr size_t CastlingsPerColor = 2;
 
-    bool Castlings[CastlingCount] = { false, false, false, false };
+    static constexpr std::array<uint8_t, KingPosCount> DefaultKingPos { 4, 60 };
+    static constexpr std::array<uint64_t, CastlingCount> CastlingNewKingPos { 6, 2, 62, 58 };
+
+    static constexpr std::array<uint64_t, CastlingCount> CastlingsRookMaps {
+        1LLU << 7,
+        1LLU,
+        1LLU << 63,
+        1LLU << 56
+    };
+
+    static constexpr std::array<uint64_t, CastlingCount> CastlingNewRookMaps {
+        1LLU << 5,
+        1LLU << 3,
+        1LLU << 61,
+        1LLU << 59
+    };
+
+    static constexpr std::array<uint64_t, CastlingCount> CastlingSensitiveFields {
+        1LLU << 6 | 1LLU << 5,
+        1LLU << 2 | 1LLU << 3,
+        1LLU << 61 | 1LLU << 62,
+        1LLU << 58 | 1LLU << 59
+    };
+
+    std::array<bool, CastlingCount> Castlings{ false, false, false, false };
     Field elPassantField = INVALID;
     int movColor = WHITE;
     uint8_t kingMSBPositions[KingPosCount] = { 0 };
