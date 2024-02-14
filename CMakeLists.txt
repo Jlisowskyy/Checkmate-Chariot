@@ -27,7 +27,7 @@ add_executable(ChessEngine main.cpp
         include/MoveGeneration/KingMap.h
         include/MoveGeneration/MoveGeneration.h
         include/MoveGeneration/QueenMap.h
-        include/MoveGeneration/PawnMap.h
+        include/MoveGeneration/WhitePawnMap.h
         src/Evaluator.cpp
         include/Evaluator.h
         src/SearchingMachine.cpp
@@ -51,6 +51,7 @@ add_executable(ChessEngine main.cpp
         include/MoveGeneration/SparseRandomGenerator.h
         include/TestsAndDebugging/MoveGenerationTests.h
         include/MoveGeneration/PinningMask.h
+        include/MoveGeneration/BlackPawnMap.h
 )
 
 find_package(OpenMP)

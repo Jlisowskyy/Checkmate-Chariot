@@ -65,6 +65,9 @@ struct PinningMasks {
 // ------------------------------
 
     static constexpr size_t PinningMasksCount = 8;
+    static constexpr size_t PinningMaskPerLinesType = 4;
+    static constexpr size_t BishopLines = 0;
+    static constexpr size_t RookLines = 4;
     std::array<uint64_t, PinningMasksCount> masks{};
     uint64_t fullMask{};
     uint64_t rookMask{};

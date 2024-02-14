@@ -5,7 +5,6 @@
 #ifndef CHESSMECHANICS_H
 #define CHESSMECHANICS_H
 
-#include <exception>
 #include <array>
 
 #include "../BitOperations.h"
@@ -13,7 +12,9 @@
 #include "BishopMap.h"
 #include "KingMap.h"
 #include "KnightMap.h"
-#include "PawnMap.h"
+#include "WhitePawnMap.h"
+#include "BlackPawnMap.h"
+#include "QueenMap.h"
 #include "RookMap.h"
 
 /*              General optimizations TODO:
@@ -77,8 +78,8 @@ struct ChessMechanics {
         // Pawns attacks generation.
         const uint64_t pawnsMap = board.boards[col*Board::BoardsPerCol + pawnsIndex];
         const uint64_t pawnBlockedMap = col == WHITE
-                ? PawnMap::GetWhiteAttackFields(pawnsMap)
-                : PawnMap::GetBlackAttackFields(pawnsMap);
+                ? WhitePawnMap::GetAttackFields(pawnsMap)
+                : BlackPawnMap::GetAttackFields(pawnsMap);
         const uint8_t wasCheckedByPawnFlag = (pawnBlockedMap & enemyKingMap) >> enemyKingShift; // = 1 or 0 depending whether hits or not
         checksCount += wasCheckedByPawnFlag;
         chT = simpleFigCheck * wasCheckedByPawnFlag;
@@ -182,6 +183,7 @@ struct ChessMechanics {
     // ------------------------------
 private:
 
+    // Todo: el passnt, pawn upgrades, pawn moves
     template<
         class ActionT
     >void _noCheckIterativeTraversal(ActionT action, const int depth,
@@ -189,6 +191,30 @@ private:
     {
         const uint64_t pinnedFigsMap = GetPinnedFigsMapWoutCheck(board.movColor, fullMap);
         const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
+        const uint64_t allyMap = GetColMap(board.movColor);
+
+        _processFigMoves<ActionT, RookMap, true>(action, depth,
+            board.boards[Board::BoardsPerCol*board.movColor + rooksIndex], enemyMap, allyMap,  pinnedFigsMap);
+
+        _processFigMoves<ActionT, BishopMap>(action, depth,
+            board.boards[Board::BoardsPerCol*board.movColor + bishopsIndex], enemyMap, allyMap,  pinnedFigsMap);
+
+        _processFigMoves<ActionT, QueenMap>(action, depth,
+            board.boards[Board::BoardsPerCol*board.movColor + queensIndex], enemyMap, allyMap,  pinnedFigsMap);
+
+        _processFigMoves<ActionT, KnightMap>(action, depth,
+            board.boards[Board::BoardsPerCol*board.movColor + knightsIndex], enemyMap, allyMap,  pinnedFigsMap);
+
+        if (board.movColor == WHITE)
+            _processPawnMoves<ActionT, WhitePawnMap>(action, depth,
+                board.boards[Board::BoardsPerCol*board.movColor + pawnsIndex], enemyMap, allyMap, pinnedFigsMap);
+        else
+            _processPawnMoves<ActionT, BlackPawnMap>(action, depth,
+                board.boards[Board::BoardsPerCol*board.movColor + pawnsIndex], enemyMap, allyMap, pinnedFigsMap);
+
+        _processPlainKingMoves(action, depth, blockedFigMap, allyMap);
+
+        _processKingCastlings(action, depth, blockedFigMap, fullMap);
     }
 
     template<
@@ -196,7 +222,36 @@ private:
     >void _singleCheckIterativeTraversal(ActionT action, const int depth, const uint64_t fullMap,
         const uint64_t blockedFigMap, const uint8_t checkType)
     {
+        const auto [pinnedFigsMap, allowedTilesMap] = GetPinnedFigsMapWithCheck(board.movColor, fullMap);
+        const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
+        const uint64_t allyMap = GetColMap(board.movColor);
 
+        _processFigMoves<ActionT, RookMap, true, false, false, true>(action, depth,
+            board.boards[Board::BoardsPerCol*board.movColor + rooksIndex],
+            enemyMap, allyMap,  pinnedFigsMap, allowedTilesMap);
+
+        _processFigMoves<ActionT, BishopMap, false, false, false, true>(action, depth,
+            board.boards[Board::BoardsPerCol*board.movColor + bishopsIndex],
+            enemyMap, allyMap,  pinnedFigsMap, allowedTilesMap);
+
+        _processFigMoves<ActionT, QueenMap, false, false, false, true>(action, depth,
+            board.boards[Board::BoardsPerCol*board.movColor + queensIndex],
+            enemyMap, allyMap,  pinnedFigsMap, allowedTilesMap);
+
+        _processFigMoves<ActionT, KnightMap, false, false, false, true>(action, depth,
+            board.boards[Board::BoardsPerCol*board.movColor + knightsIndex],
+            enemyMap, allyMap,  pinnedFigsMap, allowedTilesMap);
+
+        if (board.movColor == WHITE)
+            _processPawnMoves<ActionT, WhitePawnMap, true>(action, depth,
+                board.boards[Board::BoardsPerCol*board.movColor + pawnsIndex],
+                enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
+        else
+            _processPawnMoves<ActionT, BlackPawnMap, true>(action, depth,
+                board.boards[Board::BoardsPerCol*board.movColor + pawnsIndex],
+                enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
+
+        _processPlainKingMoves(action, depth, blockedFigMap, allyMap);
     }
 
     template<
@@ -207,44 +262,237 @@ private:
         _processPlainKingMoves(action, depth, blockedFigMap, allyMap);
     }
 
-    // TODO: Compare with simple if searching loop
+
     template<
         class ActionT,
-        class MapT
-    >void _processUnpinnedFigMovesWoutCheck(ActionT action, const int depth, uint64_t& figMap,
-        const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap) {
+        class MapT,
+        bool isCheck = false
+    >void _processPawnMoves(ActionT action, const int depth, uint64_t& figMap,
+        const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap, [[maybe_unused]] const uint64_t allowedMoveFillter = 0)
+    {
+        const uint64_t promotingPawns = figMap & MapT::PromotingMask;
+        const uint64_t nonPromotingPawns = figMap ^ promotingPawns;
+
+        _processFigMoves<ActionT, MapT, false, false, true, isCheck>(action, depth, figMap, enemyMap,
+            allyMap,  pinnedFigMap, nonPromotingPawns, allowedMoveFillter);
+
+        _processFigMoves<ActionT, MapT, false, true, true, isCheck>(action, depth, figMap, enemyMap,
+            allyMap,  pinnedFigMap, promotingPawns, allowedMoveFillter);
+    }
+
+    // TODO: Compare with simple if searching loop
+    // TODO: propagate checkForCastling?
+    template<
+        class ActionT,
+        class MapT,
+        bool checkForCastling = false,
+        bool promotePawns = false,
+        bool selectFigures = false,
+        bool isCheck = false
+    >void _processFigMoves(ActionT action, const int depth, uint64_t& figMap,
+        const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
+        [[maybe_unused]] const uint64_t figureSelector = 0, [[maybe_unused]] const uint64_t allowedMovesSelector = 0)
+    {
         const uint64_t fullMap = enemyMap | allyMap;
         uint64_t pinnedOnes = pinnedFigMap & figMap;
         uint64_t unpinnedOnes = figMap ^ pinnedOnes;
 
+        if constexpr (selectFigures) {
+            pinnedOnes &= figureSelector;
+            unpinnedOnes &= figureSelector;
+        }
+
         std::array<uint64_t, 5> mapsBackup{};
         for(size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[board.movColor*Board::BoardsPerCol + i];
 
+        // procesing unpinned moves
         while(unpinnedOnes) {
+            // processing moves
             const uint8_t figPos = ExtractMsbPos(unpinnedOnes);
             const uint64_t figBoard = maxMsbPossible >> figPos;
-            const uint64_t figMoves = MapT::GetMoves(figPos, fullMap) & ~allyMap;
+            const uint64_t figMoves = [&]() constexpr{
+                if constexpr (!isCheck)
+                    return MapT::GetMoves(figPos, fullMap) & ~allyMap;
+                if constexpr (isCheck)
+                    return MapT::GetMoves(figPos, fullMap) & ~allyMap & allowedMovesSelector;
+            }();
 
-            uint64_t attackMoves = figMoves & enemyMap;
-            uint64_t nonAttackingMoves = figMoves ^ attackMoves;
-
-            while (nonAttackingMoves) {
-                const uint8_t movePos = ExtractMsbPos(unpinnedOnes);
-                const uint64_t moveBoard = maxMsbPossible >> movePos;
-
-                figMap ^= figBoard;
-                figMap |= moveBoard;
-
-                
-
-                nonAttackingMoves ^= moveBoard;
+            // Performing checks for castlings
+            // TODO: test in future performance affections
+            ssize_t castlingIndex = -1;
+            if constexpr (checkForCastling) {
+                for (size_t i = 0; i < Board::CastlingsPerColor; ++i)
+                    if (const size_t index = board.movColor*Board::CastlingsPerColor + i;
+                        board.Castlings[index] && (Board::CastlingsRookMaps[index] & figBoard) != 0)
+                    {
+                        board.Castlings[index] = false;
+                        castlingIndex = reinterpret_cast<size_t>(index);
+                    }
             }
 
+            // preparing moves
+            const uint64_t attackMoves = figMoves & enemyMap;
+            const uint64_t nonAttackingMoves = figMoves ^ attackMoves;
+            figMap ^= figBoard;
+
+            // processing move consequneces
+            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves);
+            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves);
+
+            // cleaning up
+            figMap |= figBoard;
+            if constexpr (checkForCastling)
+                if (castlingIndex != -1)
+                    board.Castlings[castlingIndex] = true;
 
             unpinnedOnes ^= figBoard;
         }
+
+        // if check is detected pinned figure stays in place
+        if constexpr (isCheck) return;
+
+        // procesing pinned moves
+        while(pinnedOnes) {
+            // processing moves
+            const uint8_t figPos = ExtractMsbPos(pinnedOnes);
+            const uint64_t figBoard = maxMsbPossible >> figPos;
+            const uint64_t allowedTiles = _generateAllowedTilesForPrecisedPinnedFig(figBoard, fullMap);
+            const uint64_t figMoves = MapT::GetMoves(figPos, fullMap) & ~allyMap & allowedTiles;
+
+            // preparing moves
+            const uint64_t attackMoves = figMoves & enemyMap;
+            const uint64_t nonAttackingMoves = figMoves ^ attackMoves;
+            figMap ^= figBoard;
+
+            // processing move consequences
+            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves);
+            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves); // TODO: There is exactly one move
+
+            figMap |= figBoard;
+            pinnedOnes ^= figBoard;
+        }
     }
 
+    // TODO: pretty fking stupid but ok could be optimised after tests:
+    [[nodiscard]] uint64_t _generateAllowedTilesForPrecisedPinnedFig(const uint64_t figBoard, const uint64_t fullMap) const {
+        constexpr size_t bishopRange = PinningMasks::BishopLines + PinningMasks::PinningMaskPerLinesType;
+        for (size_t i = PinningMasks::BishopLines; i < bishopRange; ++i)
+            if (const uint64_t mask = KingMap::pinMasks[board.kingMSBPositions[board.movColor]].masks[i]; (figBoard & mask) != 0) {
+                return BishopMap::GetMoves(board.kingMSBPositions[board.movColor], fullMap ^ figBoard) & mask;
+            }
+
+        constexpr size_t rookRange = PinningMasks::RookLines + PinningMasks::PinningMaskPerLinesType;
+        for (size_t i = PinningMasks::RookLines; i < rookRange; ++i)
+            if (const uint64_t mask = KingMap::pinMasks[board.kingMSBPositions[board.movColor]].masks[i]; (figBoard & mask) != 0) {
+                return RookMap::GetMoves(board.kingMSBPositions[board.movColor], fullMap ^ figBoard) & mask;
+            }
+
+#ifndef NDEBUG
+        throw std::runtime_error("Fatal error occured during allowed tiles generation!\n");
+#endif
+
+        return 0;
+    }
+
+    // TODO: improve readability of code below
+    template<
+        class ActionT,
+        bool promotePawns
+    >void _processNonAttackingMoves(ActionT action, const int depth, uint64_t& figMap, uint64_t nonAttackingMoves) {
+        while (nonAttackingMoves) {
+            // extracting moves
+            const uint8_t movePos = ExtractMsbPos(nonAttackingMoves);
+            const uint64_t moveBoard = maxMsbPossible >> movePos;
+
+            // TODO: could be shortened with lambda but dont like them sry
+            if constexpr (!promotePawns)
+                // simple figure case
+            {
+                // applying moves
+                figMap |= moveBoard;
+
+                // performing core actions
+                action();
+                IterativeBoardTraversal(action, depth-1);
+                board.ChangePlayingColor();
+
+                // cleaning up
+                figMap ^= moveBoard;
+            }
+            if constexpr (promotePawns)
+                // upgrading pawn case
+            {
+                const size_t colIndex = board.movColor*Board::BoardsPerCol;
+                for (size_t i = knightsIndex; i < kingIndex; ++i) {
+
+                    // applying moves
+                    board.boards[colIndex + i] |= moveBoard;
+
+                    // performing core actions
+                    action();
+                    IterativeBoardTraversal(action, depth-1);
+                    board.ChangePlayingColor();
+
+                    // cleaning up
+                    board.boards[colIndex + i] ^= moveBoard;
+                }
+            }
+
+            nonAttackingMoves ^= moveBoard;
+        }
+    }
+
+    template<
+        class ActionT,
+        bool promotePawns
+    >void _processAttackingMoves(ActionT action, const int depth, uint64_t& figMap,
+        uint64_t attackingMoves, const std::array<uint64_t, 5>& backup) {
+        while (attackingMoves) {
+            // extracting moves
+            const uint8_t movePos = ExtractMsbPos(attackingMoves);
+            const uint64_t moveBoard = maxMsbPossible >> movePos;
+
+            for(size_t i = 0; i < 5; ++i) board.boards[board.movColor*Board::BoardsPerCol + i] ^= moveBoard;
+
+            if constexpr (!promotePawns)
+                // simple figure case
+            {
+                // applying moves
+                figMap |= moveBoard;
+
+                // performing core actions
+                action();
+                IterativeBoardTraversal(action, depth-1);
+                board.ChangePlayingColor();
+
+                // cleaning up
+                figMap ^= moveBoard;
+            }
+            if constexpr (promotePawns)
+                // upgrading pawn case
+            {
+                const size_t colIndex = board.movColor*Board::BoardsPerCol;
+                for (size_t i = knightsIndex; i < kingIndex; ++i) {
+
+                    // applying moves
+                    board.boards[colIndex + i] |= moveBoard;
+
+                    // performing core actions
+                    action();
+                    IterativeBoardTraversal(action, depth-1);
+                    board.ChangePlayingColor();
+
+                    // cleaning up
+                    board.boards[colIndex + i] ^= moveBoard;
+                }
+            }
+
+            for(size_t i = 0; i < 5; ++i) board.boards[board.movColor*Board::BoardsPerCol + i] = backup[i];
+            attackingMoves ^= moveBoard;
+        }
+    }
+
+    // TODO: test copying all old castlings
     template<
        class ActionT
     >void _processPlainKingMoves(ActionT action, const int depth, const uint64_t blockedFigMap, const uint64_t allyMap)
@@ -288,7 +536,7 @@ private:
         class ActionT
     >void _processKingCastlings(ActionT action, const int depth, const uint64_t blockedFigMap, const uint64_t fullMap) {
         for(size_t i = 0; i < Board::CastlingsPerColor; ++i)
-            if (const size_t castlingIndex = board.Castlings[board.movColor*Board::CastlingsPerColor + i];
+            if (const size_t castlingIndex = board.movColor*Board::CastlingsPerColor + i;
                 board.Castlings[castlingIndex] && (Board::CastlingSensitiveFields[castlingIndex] & blockedFigMap) == 0)
             {
                 // processing mvoe and performing cleanup
@@ -394,7 +642,5 @@ private:
 
     Board& board;
 };
-
-
 
 #endif //CHESSMECHANICS_H
