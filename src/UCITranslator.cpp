@@ -2,6 +2,8 @@
 // Created by Jlisowskyy on 12/26/23.
 //
 
+#include <cstring>
+
 #include "../include/Interface/UCITranslator.h"
 
 void UCITranslator::BeginCommandTranslation() const {
@@ -55,8 +57,16 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str) con
     size_t pos = _genNextWord(str, workStr, 0);
     if (pos == 0) return UCICommand::InvalidCommand;
 
-    if (workStr == "perft")
-        engine.GoPerft();
+    if (workStr == "perft") {
+        std::string depthStr{};
+        _genNextWord(str, depthStr, pos);
+
+        int depth;
+        try { depth = std::stoi(depthStr); }
+        catch (const std::exception& exc){ return UCICommand::InvalidCommand; }
+
+        engine.GoPerft(depth);
+    }
     else if (workStr == "infinite")
         engine.GoInfinite();
     else if (workStr == "depth") {

@@ -60,7 +60,7 @@ struct FenTranslator {
     // class fields
     // ------------------------------
 
-    inline static constexpr Board StartBoard = {
+    static constexpr Board StartBoard = {
         .Castlings = { true, true, true, true },
         .elPassantField = INVALID,
         .movColor = WHITE,

@@ -3,6 +3,8 @@
 //
 
 #include "../include/Interface/FenTranslator.h"
+
+#include "../include/BitOperations.h"
 #include "../include/Interface/Logger.h"
 
 Board FenTranslator::Translate(const std::string& fenPos) {
@@ -165,6 +167,11 @@ void FenTranslator::_addFigure(const std::string& pos, char fig, Board& bd) {
         );
 
     bd.boards[figToDescMap.at(fig)] |= field;
+
+    if (fig == 'K')
+        bd.kingMSBPositions[WHITE] = ExtractMsbPos(field);
+    else if (fig == 'k')
+        bd.kingMSBPositions[BLACK] = ExtractMsbPos(field);
 }
 
 size_t FenTranslator::_skipBlanks(size_t pos, const std::string& fenPos) {

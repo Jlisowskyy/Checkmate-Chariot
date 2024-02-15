@@ -17,10 +17,11 @@
 #include "QueenMap.h"
 #include "RookMap.h"
 
+
 /*              General optimizations TODO:
- *      - test all msb and lsb extractions
- *      - add and test AVX support
- *      - test other ideas for hashing
+ *     - test all msb and lsb extractions
+ *     - add and test AVX support
+ *     - test other ideas for hashing
  *
  */
 
@@ -64,49 +65,50 @@ struct ChessMechanics {
     // Todo: test later wheter accumulation of blocked maps is faster?
     // Todo: AVX applied here?
     // [blockedFigMap, checksCount, checkType]
-    [[nodiscard]] std::tuple<uint64_t, uint8_t, uint8_t> GetBlockedFieldMap(const int col, const uint64_t fullMap) const {
+    [[nodiscard]] std::tuple<uint64_t, uint8_t, uint8_t> GetBlockedFieldMap(const uint64_t fullMap) const {
         uint8_t checksCount{};
         uint8_t chT{};
 
-        const size_t allyFigInd = col*Board::BoardsPerCol;
-        const uint64_t enemyKingMap = board.boards[SwapColor(col)*Board::BoardsPerCol + kingIndex];
-        const int enemyKingShift = ConvertToReversedPos(board.kingMSBPositions[SwapColor(col)]);
+        const int enemyCol = SwapColor(board.movColor);
+        const size_t enemyFigInd = enemyCol*Board::BoardsPerCol;
+        const int allyKingShift = ConvertToReversedPos(board.kingMSBPositions[board.movColor]);
+        const uint64_t allyKingMap = 1LLU << allyKingShift;
 
         // King attacks generation.
-        const uint64_t kingBlockedMap = KingMap::GetMoves(board.kingMSBPositions[col]);
+        const uint64_t kingBlockedMap = KingMap::GetMoves(board.kingMSBPositions[enemyCol]);
 
         // Pawns attacks generation.
-        const uint64_t pawnsMap = board.boards[col*Board::BoardsPerCol + pawnsIndex];
-        const uint64_t pawnBlockedMap = col == WHITE
+        const uint64_t pawnsMap = board.boards[enemyFigInd + pawnsIndex];
+        const uint64_t pawnBlockedMap = enemyCol == WHITE
                 ? WhitePawnMap::GetAttackFields(pawnsMap)
                 : BlackPawnMap::GetAttackFields(pawnsMap);
-        const uint8_t wasCheckedByPawnFlag = (pawnBlockedMap & enemyKingMap) >> enemyKingShift; // = 1 or 0 depending whether hits or not
+        const uint8_t wasCheckedByPawnFlag = (pawnBlockedMap & allyKingMap) >> allyKingShift; // = 1 or 0 depending whether hits or not
         checksCount += wasCheckedByPawnFlag;
-        chT = simpleFigCheck * wasCheckedByPawnFlag;
+        chT = simpleFigCheck*wasCheckedByPawnFlag;
 
         // Knight attacks generation.
-        const uint64_t knighBlockedMap = _blockIterativeGenerator(board.boards[allyFigInd + knightsIndex],
-            [&](const int pos) { return KnightMap::GetMoves(pos, 0); }
+        const uint64_t knighBlockedMap = _blockIterativeGenerator(board.boards[enemyFigInd + knightsIndex],
+            [=](const int pos) { return KnightMap::GetMoves(pos, 0); }
         );
-        const uint8_t wasCheckedByKnightFlag = (knighBlockedMap & enemyKingMap) >> enemyKingShift; // = 1 or 0 depending whether hits or not
+        const uint8_t wasCheckedByKnightFlag = (knighBlockedMap & allyKingMap) >> allyKingShift; // = 1 or 0 depending whether hits or not
         checksCount += wasCheckedByKnightFlag;
-        chT = simpleFigCheck * wasCheckedByKnightFlag;
+        chT = simpleFigCheck*wasCheckedByKnightFlag;
 
         // Rook attacks generation.
-        const uint64_t rookBlockedMap = _blockIterativeGenerator(board.boards[allyFigInd + rooksIndex] | board.boards[allyFigInd + queensIndex],
-            [&](const int pos) { return RookMap::GetMoves(pos, fullMap); }
+        const uint64_t rookBlockedMap = _blockIterativeGenerator(board.boards[enemyFigInd + rooksIndex] | board.boards[enemyFigInd + queensIndex],
+            [=](const int pos) { return RookMap::GetMoves(pos, fullMap); }
         );
-        const uint8_t wasCheckedByRookFlag = (rookBlockedMap & enemyKingMap) >> enemyKingShift; // = 1 or 0 depending whether hits or not
+        const uint8_t wasCheckedByRookFlag = (rookBlockedMap & allyKingMap) >> allyKingShift; // = 1 or 0 depending whether hits or not
         checksCount += wasCheckedByRookFlag;
-        chT = slidingFigCheck * wasCheckedByRookFlag;
+        chT = slidingFigCheck*wasCheckedByRookFlag;
 
         // Bishop attacks generation.
-        const uint64_t bishopBlockedMap = _blockIterativeGenerator(board.boards[allyFigInd + bishopsIndex] | board.boards[allyFigInd + queensIndex],
-            [&](const int pos) { return BishopMap::GetMoves(pos, fullMap); }
+        const uint64_t bishopBlockedMap = _blockIterativeGenerator(board.boards[enemyFigInd + bishopsIndex] | board.boards[enemyFigInd + queensIndex],
+            [=](const int pos) { return BishopMap::GetMoves(pos, fullMap); }
         );
-        const uint8_t wasCheckedByBishopFlag = (bishopBlockedMap & enemyKingMap) >> enemyKingShift; // = 1 or 0 depending whether hits or not
+        const uint8_t wasCheckedByBishopFlag = (bishopBlockedMap & allyKingMap) >> allyKingShift; // = 1 or 0 depending whether hits or not
         checksCount += wasCheckedByBishopFlag;
-        chT = slidingFigCheck * wasCheckedByBishopFlag;
+        chT = slidingFigCheck*wasCheckedByBishopFlag;
 
         const uint64_t blockedMap = kingBlockedMap | pawnBlockedMap | knighBlockedMap | rookBlockedMap | bishopBlockedMap;
         return { blockedMap, checksCount, chT };
@@ -115,8 +117,8 @@ struct ChessMechanics {
     // TODO: here pinned figs could be processed first to get some slight speed up
     // should only be used when no check is on board
     [[nodiscard]] uint64_t GetPinnedFigsMapWoutCheck(const int col, const uint64_t fullMap) const {
-        const size_t enemyCord = SwapColor(col) * Board::BoardsPerCol;
-        const size_t allyCord = col * Board::BoardsPerCol;
+        const size_t enemyCord = SwapColor(col)*Board::BoardsPerCol;
+        const size_t allyCord = col*Board::BoardsPerCol;
         const int allyKingShift = ConvertToReversedPos(board.kingMSBPositions[col]);
 
         const uint64_t rookLinesOnKing = KingMap::pinMasks[board.kingMSBPositions[col]].rookMask;
@@ -133,8 +135,8 @@ struct ChessMechanics {
     // Todo: check wheter interrupting search when checking figure is found boosts up performance here
     // returns [ pinnedFigMap, allowedTilesMap ]
     [[nodiscard]] std::pair<uint64_t, uint64_t> GetPinnedFigsMapWithCheck(const int col, const uint64_t fullMap) const {
-        const size_t enemyCord = SwapColor(col) * Board::BoardsPerCol;
-        const size_t allyCord = col * Board::BoardsPerCol;
+        const size_t enemyCord = SwapColor(col)*Board::BoardsPerCol;
+        const size_t allyCord = col*Board::BoardsPerCol;
         const int allyKingShift = ConvertToReversedPos(board.kingMSBPositions[col]);
 
         // Rook lines search
@@ -156,10 +158,10 @@ struct ChessMechanics {
     template<
         class ActionT
     >void IterativeBoardTraversal(ActionT action, int depth) {
-        if (depth == -1) return;
+        if (depth == 0) return;
 
         const uint64_t fullMap = GetFullMap();
-        const auto [ blockedFigMap, checksCount, checkType ] = GetBlockedFieldMap(board.movColor, fullMap);
+        const auto [ blockedFigMap, checksCount, checkType ] = GetBlockedFieldMap(fullMap);
 
         switch (checksCount) {
             case 0:
@@ -196,14 +198,22 @@ private:
         _processFigMoves<ActionT, RookMap, true>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + rooksIndex], enemyMap, allyMap,  pinnedFigsMap);
 
+        std::cout << "Board after rooks:\n" << board;
+
         _processFigMoves<ActionT, BishopMap>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + bishopsIndex], enemyMap, allyMap,  pinnedFigsMap);
+
+        std::cout << "Board after bishops:\n" << board;
 
         _processFigMoves<ActionT, QueenMap>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + queensIndex], enemyMap, allyMap,  pinnedFigsMap);
 
+        std::cout << "Board after quens:\n" << board;
+
         _processFigMoves<ActionT, KnightMap>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + knightsIndex], enemyMap, allyMap,  pinnedFigsMap);
+
+        std::cout << "knights after bishops:\n" << board;
 
         if (board.movColor == WHITE)
             _processPawnMoves<ActionT, WhitePawnMap>(action, depth,
@@ -212,9 +222,15 @@ private:
             _processPawnMoves<ActionT, BlackPawnMap>(action, depth,
                 board.boards[Board::BoardsPerCol*board.movColor + pawnsIndex], enemyMap, allyMap, pinnedFigsMap);
 
-        _processPlainKingMoves(action, depth, blockedFigMap, allyMap);
+        std::cout << "Board after pawns:\n" << board;
+
+
+        _processPlainKingMoves(action, depth, blockedFigMap, allyMap, enemyMap);
 
         _processKingCastlings(action, depth, blockedFigMap, fullMap);
+
+        std::cout << "Board after king:\n" << board;
+
     }
 
     template<
@@ -251,7 +267,7 @@ private:
                 board.boards[Board::BoardsPerCol*board.movColor + pawnsIndex],
                 enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
 
-        _processPlainKingMoves(action, depth, blockedFigMap, allyMap);
+        _processPlainKingMoves(action, depth, blockedFigMap, allyMap, enemyMap);
     }
 
     template<
@@ -259,9 +275,9 @@ private:
     >void _doubleCheckIterativeTraversal(ActionT action, const int depth, const uint64_t blockedFigMap)
     {
         const uint64_t allyMap = GetColMap(board.movColor);
-        _processPlainKingMoves(action, depth, blockedFigMap, allyMap);
+        const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
+        _processPlainKingMoves(action, depth, blockedFigMap, allyMap, enemyMap);
     }
-
 
     template<
         class ActionT,
@@ -302,8 +318,9 @@ private:
             unpinnedOnes &= figureSelector;
         }
 
+        // to restore destroyed figures during attack moves
         std::array<uint64_t, 5> mapsBackup{};
-        for(size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[board.movColor*Board::BoardsPerCol + i];
+        for(size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[SwapColor(board.movColor)*Board::BoardsPerCol + i];
 
         // procesing unpinned moves
         while(unpinnedOnes) {
@@ -319,7 +336,7 @@ private:
 
             // Performing checks for castlings
             // TODO: test in future performance affections
-            ssize_t castlingIndex = -1;
+            [[maybe_unused]] ssize_t castlingIndex = -1;
             if constexpr (checkForCastling) {
                 for (size_t i = 0; i < Board::CastlingsPerColor; ++i)
                     if (const size_t index = board.movColor*Board::CastlingsPerColor + i;
@@ -337,7 +354,7 @@ private:
 
             // processing move consequneces
             _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves);
-            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves);
+            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup);
 
             // cleaning up
             figMap |= figBoard;
@@ -366,7 +383,7 @@ private:
 
             // processing move consequences
             _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves);
-            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves); // TODO: There is exactly one move
+            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup); // TODO: There is exactly one move
 
             figMap |= figBoard;
             pinnedOnes ^= figBoard;
@@ -412,7 +429,7 @@ private:
                 figMap |= moveBoard;
 
                 // performing core actions
-                action();
+                action(board, depth);
                 IterativeBoardTraversal(action, depth-1);
                 board.ChangePlayingColor();
 
@@ -429,7 +446,7 @@ private:
                     board.boards[colIndex + i] |= moveBoard;
 
                     // performing core actions
-                    action();
+                    action(board, depth);
                     IterativeBoardTraversal(action, depth-1);
                     board.ChangePlayingColor();
 
@@ -451,8 +468,9 @@ private:
             // extracting moves
             const uint8_t movePos = ExtractMsbPos(attackingMoves);
             const uint64_t moveBoard = maxMsbPossible >> movePos;
+            const size_t enemyColInd = SwapColor(board.movColor)*Board::BoardsPerCol;
 
-            for(size_t i = 0; i < 5; ++i) board.boards[board.movColor*Board::BoardsPerCol + i] ^= moveBoard;
+            for(size_t i = 0; i < 5; ++i) board.boards[enemyColInd + i] ^= moveBoard;
 
             if constexpr (!promotePawns)
                 // simple figure case
@@ -461,7 +479,7 @@ private:
                 figMap |= moveBoard;
 
                 // performing core actions
-                action();
+                action(board, depth);
                 IterativeBoardTraversal(action, depth-1);
                 board.ChangePlayingColor();
 
@@ -478,7 +496,7 @@ private:
                     board.boards[colIndex + i] |= moveBoard;
 
                     // performing core actions
-                    action();
+                    action(board, depth);
                     IterativeBoardTraversal(action, depth-1);
                     board.ChangePlayingColor();
 
@@ -487,7 +505,7 @@ private:
                 }
             }
 
-            for(size_t i = 0; i < 5; ++i) board.boards[board.movColor*Board::BoardsPerCol + i] = backup[i];
+            for(size_t i = 0; i < 5; ++i) board.boards[enemyColInd + i] = backup[i];
             attackingMoves ^= moveBoard;
         }
     }
@@ -495,9 +513,12 @@ private:
     // TODO: test copying all old castlings
     template<
        class ActionT
-    >void _processPlainKingMoves(ActionT action, const int depth, const uint64_t blockedFigMap, const uint64_t allyMap)
+    >void _processPlainKingMoves(ActionT action, const int depth, const uint64_t blockedFigMap,
+        const uint64_t allyMap, const uint64_t enemyMap)
     {
-        uint64_t kingMoves = KingMap::GetMoves(board.kingMSBPositions[board.movColor]) & ~blockedFigMap & ~allyMap;
+        const uint64_t kingMoves = KingMap::GetMoves(board.kingMSBPositions[board.movColor]) & ~blockedFigMap & ~allyMap;
+        uint64_t attackingMoves = kingMoves & enemyMap;
+        uint64_t nonAttackingMoves = kingMoves ^ attackingMoves;
 
         // saving old parameters
         const uint8_t oldKingPos = board.kingMSBPositions[board.movColor];
@@ -507,9 +528,9 @@ private:
         board.Castlings[2*board.movColor + KingCastlingIndex] = false;
         board.Castlings[2*board.movColor + QueenCastlingIndex] = false;
 
-        while(kingMoves) {
+        while(nonAttackingMoves) {
             // extracting new king position data
-            const uint8_t newPos = ExtractMsbPos(kingMoves);
+            const uint8_t newPos = ExtractMsbPos(nonAttackingMoves);
             const uint64_t newKingBoard = maxMsbPossible >> newPos;
 
             // preparing board changes
@@ -518,11 +539,35 @@ private:
             board.ChangePlayingColor();
 
             // performing core actions
-            action();
+            action(board, depth);
             IterativeBoardTraversal(action, depth-1);
             board.ChangePlayingColor();
 
-            kingMoves ^= newKingBoard;
+            nonAttackingMoves ^= newKingBoard;
+        }
+
+        std::array<uint64_t, 5> mapsBackup{};
+        for(size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[board.movColor*Board::BoardsPerCol + i];
+        while(attackingMoves) {
+            // extracting new king position data
+            const uint8_t newPos = ExtractMsbPos(attackingMoves);
+            const uint64_t newKingBoard = maxMsbPossible >> newPos;
+
+            // preparing board changes
+            for(size_t i = 0; i < 5; ++i) board.boards[board.movColor*Board::BoardsPerCol + i] ^= newKingBoard;
+            board.kingMSBPositions[board.movColor] = newPos;
+            board.boards[board.movColor*Board::BoardsPerCol + kingIndex] = newKingBoard;
+            board.ChangePlayingColor();
+
+            // performing core actions
+            action(board, depth);
+            IterativeBoardTraversal(action, depth-1);
+
+            // cleaning up
+            board.ChangePlayingColor();
+            for(size_t i = 0; i < 5; ++i) board.boards[board.movColor*Board::BoardsPerCol + i] = mapsBackup[i];
+
+            attackingMoves ^= newKingBoard;
         }
 
         // reverting changes
@@ -548,7 +593,7 @@ private:
                 board.ChangePlayingColor();
 
                 // processiong main actions
-                action();
+                action(board, depth);
                 IterativeBoardTraversal(action, depth-1);
                 board.ChangePlayingColor();
 
@@ -570,7 +615,7 @@ private:
 
         while (board != 0) {
             const int figPos = ExtractMsbPos(board);
-            board ^= (minMsbPossible << figPos);
+            board ^= (maxMsbPossible >> figPos);
 
             blockedMap |= mGen(figPos);
         }
@@ -591,7 +636,7 @@ private:
             const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
             const uint64_t secondAttackedFig = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & fullMap & suspectedLines;
 
-            const uint64_t pinnedFigFlag = ((secondAttackedFig & board.boards[allyCord + kingIndex]) >> allyKingShift) * attackedFig; // 0 or attackedFig
+            const uint64_t pinnedFigFlag = ((secondAttackedFig & board.boards[allyCord + kingIndex]) >> allyKingShift)*attackedFig; // 0 or attackedFig
             pinnedFigMap |= pinnedFigFlag;
 
             suspectedFigs ^= (maxMsbPossible >> msbPos);
@@ -621,7 +666,7 @@ private:
             const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
             const uint64_t secondAttackedFig = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & fullMap & suspectedLines;
 
-            const uint64_t pinnedFigFlag = ((secondAttackedFig & board.boards[allyCord + kingIndex]) >> allyKingShift) * attackedFig; // 0 or attackedFig
+            const uint64_t pinnedFigFlag = ((secondAttackedFig & board.boards[allyCord + kingIndex]) >> allyKingShift)*attackedFig; // 0 or attackedFig
             pinnedFigMap |= pinnedFigFlag;
 
             suspectedFigs ^= (maxMsbPossible >> msbPos);

@@ -9,6 +9,7 @@
 #include "EngineTypeDefs.h"
 #include "Interface/FenTranslator.h"
 #include "Interface/Logger.h"
+#include "MoveGeneration/ChessMechanics.h"
 
 class Engine {
     // --------------------------------------
@@ -29,10 +30,23 @@ public:
     static const EngineInfo& GetEngineInfo() { return engineInfo; }
     void RestartEngine() { std::cout << "ucinewgame result! " << std::endl; }
     void StopSearch() { std::cout << "stop search resullt! " << std::endl; }
-    void GoPerft() { std::cout << "go perft result! " << std::endl; }
     void GoDepth(lli depth) { std::cout << "go depth resutl: " << depth << std::endl; }
     void GoMovetime(lli time) { std::cout << "go movetime resutl: " << time << std::endl; }
     void GoInfinite() { std::cout << "go infinite result! " << std::endl; }
+
+    void GoPerft(const int depth) {
+        ChessMechanics game(board);
+        uint64_t totalSum{};
+
+        game.IterativeBoardTraversal(
+            [&]([[maybe_unused]] Board& bd, const int dp) {
+                if (dp == 1) ++ totalSum;
+            },
+            depth
+        );
+
+        std::cout << std::format("Calculated moves: {}\n", totalSum);
+    }
 
     void SetFenPosition(const std::string& fenStr) {
         board = FenTranslator::Translate(fenStr);
@@ -81,7 +95,7 @@ private:
 
     inline static const EngineInfo engineInfo = {
         .author = "Jakub Lisowski, Warsaw University of Technology",
-        .name = "ChessEngine development version 0.01",
+        .name = "ChessEngine development version 0.02",
         .options = std::map<std::string, const Option*>({
             std::make_pair("Threads", &Threads),
             std::make_pair("Debug Log File", &DebugLogFile),

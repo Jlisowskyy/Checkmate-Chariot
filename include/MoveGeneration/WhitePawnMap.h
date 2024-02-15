@@ -21,8 +21,8 @@ public:
     // ------------------------------
 
     [[nodiscard]] static constexpr uint64_t GetAttackFields(const uint64_t pawnBits) {
-        const uint64_t leftAttack = (LeftMask ^ pawnBits) << 7;
-        const uint64_t rightAttack = (RightMask ^ pawnBits) << 9;
+        const uint64_t leftAttack = (LeftMask & pawnBits) << 7;
+        const uint64_t rightAttack = (RightMask & pawnBits) << 9;
         return leftAttack | rightAttack;
     }
 
@@ -32,7 +32,7 @@ public:
         const uint64_t attackMoves = GetAttackFields(pawnBit);
         const uint64_t frontMove = (pawnBit << 8) ^ fullMap;
 
-        const uint64_t isOnStartField = pawnBit & StartWhitePawnMask;
+        const uint64_t isOnStartField = pawnBit & StartMask;
         const uint64_t isNotBlockedOnFirstMove = fullMap >> 8;
         const uint64_t frontDoubleMove = ((isOnStartField & isNotBlockedOnFirstMove) << 16) ^ fullMap;
 
@@ -48,13 +48,13 @@ public:
 private:
 
     // Mask with ones only on 'Ax" line
-    static constexpr uint64_t LeftMask = GenMask(0,57, 8);
+    static constexpr uint64_t LeftMask = ~GenMask(0,57, 8);
 
     // Mask with ones only on "Hx" line
-    static constexpr uint64_t RightMask = GenMask(7, 64, 8);
+    static constexpr uint64_t RightMask = ~GenMask(7, 64, 8);
 
     // Mask with ones only on "x2" line
-    static constexpr uint64_t StartWhitePawnMask = GenMask(8, 16, 1);
+    static constexpr uint64_t StartMask = GenMask(8, 16, 1);
 };
 
 

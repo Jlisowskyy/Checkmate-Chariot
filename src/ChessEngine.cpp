@@ -20,11 +20,13 @@
 #include "../include/MapTypes/SimpleRookMap.h"
 
 void ChessEngineMainEntry() {
-    Engine engine{};
-    const UCITranslator translator{engine};
+    // Engine engine{};
+    // const UCITranslator translator{engine};
+    //
+    // engine.Initialize();
+    // translator.BeginCommandTranslation();
 
-    engine.Initialize();
-    translator.BeginCommandTranslation();
+    DisplayMask(WhitePawnMap::GetMoves(ConvertToReversedPos(8), 0));
 }
 
 void BishopSimpleMapParamsGen() {
