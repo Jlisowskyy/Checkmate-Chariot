@@ -22,7 +22,7 @@ public:
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullMap)
+    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullMap, [[maybe_unused]] const uint64_t _ = 0)
     {
         return BishopMap::GetMoves(msbInd, fullMap) | RookMap::GetMoves(msbInd, fullMap);
     }

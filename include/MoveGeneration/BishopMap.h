@@ -26,7 +26,7 @@ public:
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullBoard) {
+    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullBoard, [[maybe_unused]] const uint64_t _ = 0) {
         return _map.GetMoves(msbInd, fullBoard);
     }
 

@@ -88,7 +88,7 @@ struct ChessMechanics {
 
         // Knight attacks generation.
         const uint64_t knighBlockedMap = _blockIterativeGenerator(board.boards[enemyFigInd + knightsIndex],
-            [=](const int pos) { return KnightMap::GetMoves(pos, 0); }
+            [=](const int pos) { return KnightMap::GetMoves(pos); }
         );
         const uint8_t wasCheckedByKnightFlag = (knighBlockedMap & allyKingMap) >> allyKingShift; // = 1 or 0 depending whether hits or not
         checksCount += wasCheckedByKnightFlag;
@@ -198,22 +198,14 @@ private:
         _processFigMoves<ActionT, RookMap, true>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + rooksIndex], enemyMap, allyMap,  pinnedFigsMap);
 
-        std::cout << "Board after rooks:\n" << board;
-
         _processFigMoves<ActionT, BishopMap>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + bishopsIndex], enemyMap, allyMap,  pinnedFigsMap);
-
-        std::cout << "Board after bishops:\n" << board;
 
         _processFigMoves<ActionT, QueenMap>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + queensIndex], enemyMap, allyMap,  pinnedFigsMap);
 
-        std::cout << "Board after quens:\n" << board;
-
         _processFigMoves<ActionT, KnightMap>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + knightsIndex], enemyMap, allyMap,  pinnedFigsMap);
-
-        std::cout << "knights after bishops:\n" << board;
 
         if (board.movColor == WHITE)
             _processPawnMoves<ActionT, WhitePawnMap>(action, depth,
@@ -222,14 +214,9 @@ private:
             _processPawnMoves<ActionT, BlackPawnMap>(action, depth,
                 board.boards[Board::BoardsPerCol*board.movColor + pawnsIndex], enemyMap, allyMap, pinnedFigsMap);
 
-        std::cout << "Board after pawns:\n" << board;
-
-
         _processPlainKingMoves(action, depth, blockedFigMap, allyMap, enemyMap);
 
         _processKingCastlings(action, depth, blockedFigMap, fullMap);
-
-        std::cout << "Board after king:\n" << board;
 
     }
 
@@ -329,9 +316,9 @@ private:
             const uint64_t figBoard = maxMsbPossible >> figPos;
             const uint64_t figMoves = [&]() constexpr{
                 if constexpr (!isCheck)
-                    return MapT::GetMoves(figPos, fullMap) & ~allyMap;
+                    return MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap;
                 if constexpr (isCheck)
-                    return MapT::GetMoves(figPos, fullMap) & ~allyMap & allowedMovesSelector;
+                    return MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap & allowedMovesSelector;
             }();
 
             // Performing checks for castlings
@@ -374,7 +361,7 @@ private:
             const uint8_t figPos = ExtractMsbPos(pinnedOnes);
             const uint64_t figBoard = maxMsbPossible >> figPos;
             const uint64_t allowedTiles = _generateAllowedTilesForPrecisedPinnedFig(figBoard, fullMap);
-            const uint64_t figMoves = MapT::GetMoves(figPos, fullMap) & ~allyMap & allowedTiles;
+            const uint64_t figMoves = MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap & allowedTiles;
 
             // preparing moves
             const uint64_t attackMoves = figMoves & enemyMap;
@@ -517,6 +504,7 @@ private:
         const uint64_t allyMap, const uint64_t enemyMap)
     {
         const uint64_t kingMoves = KingMap::GetMoves(board.kingMSBPositions[board.movColor]) & ~blockedFigMap & ~allyMap;
+
         uint64_t attackingMoves = kingMoves & enemyMap;
         uint64_t nonAttackingMoves = kingMoves ^ attackingMoves;
 
@@ -582,7 +570,8 @@ private:
     >void _processKingCastlings(ActionT action, const int depth, const uint64_t blockedFigMap, const uint64_t fullMap) {
         for(size_t i = 0; i < Board::CastlingsPerColor; ++i)
             if (const size_t castlingIndex = board.movColor*Board::CastlingsPerColor + i;
-                board.Castlings[castlingIndex] && (Board::CastlingSensitiveFields[castlingIndex] & blockedFigMap) == 0)
+                board.Castlings[castlingIndex] && (Board::CastlingSensitiveFields[castlingIndex] & blockedFigMap) == 0
+                && (Board::CastlingSensitiveFields[castlingIndex] & fullMap) == 0)
             {
                 // processing mvoe and performing cleanup
                 board.Castlings[castlingIndex] = false;

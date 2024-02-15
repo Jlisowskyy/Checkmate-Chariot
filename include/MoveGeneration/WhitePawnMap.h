@@ -27,14 +27,14 @@ public:
     }
 
     // Returns all moves excepts ElPassantOnes
-    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbPos, const uint64_t fullMap) {
+    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbPos, const uint64_t fullMap, const uint64_t enemyMap) {
         const uint64_t pawnBit = maxMsbPossible >> msbPos;
-        const uint64_t attackMoves = GetAttackFields(pawnBit);
-        const uint64_t frontMove = (pawnBit << 8) ^ fullMap;
+        const uint64_t attackMoves = GetAttackFields(pawnBit) & enemyMap;
+        const uint64_t frontMove = (pawnBit << 8) & ~fullMap;
 
         const uint64_t isOnStartField = pawnBit & StartMask;
-        const uint64_t isNotBlockedOnFirstMove = fullMap >> 8;
-        const uint64_t frontDoubleMove = ((isOnStartField & isNotBlockedOnFirstMove) << 16) ^ fullMap;
+        const uint64_t isNotBlockedOnFirstMove = (~fullMap) >> 8;
+        const uint64_t frontDoubleMove = (isOnStartField & isNotBlockedOnFirstMove) << 16;
 
         return attackMoves | frontMove | frontDoubleMove;
     }
