@@ -64,8 +64,27 @@ void DisplayMask(const uint64_t mask) {
     }
 }
 
+std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board& oldBoard, const Board& newBoard) {
+    const size_t movingColInd = oldBoard.movColor*Board::BoardsPerCol;
+
+    for (size_t i = 0; i < 6; ++i) {
+        if (oldBoard.boards[movingColInd + i] != newBoard.boards[movingColInd + i]) {
+            const uint64_t newPos = newBoard.boards[movingColInd + i] & ~oldBoard.boards[movingColInd + i];
+            const uint64_t oldPos = ~newBoard.boards[movingColInd + i] & oldBoard.boards[movingColInd + i];
+            const MoveTypes mType = (newPos == 0 ? PromotingMove : NormalMove);
+
+            return { oldPos, newPos, mType };
+        }
+    }
+#ifndef NDEBUG
+    throw std::runtime_error("[ ERROR ] Move made not detected, malfunction found!");
+#else
+    return { 0, 0, NormalMove };
+#endif
+}
+
 std::string GetShortAlgebraicMoveEncoding(const Board& bd, const uint64_t oldMap, const uint64_t newMap,
-    MoveTypes mType) {
+                                          MoveTypes mType) {
     static constexpr std::string FigTypeMap[] = { "", "n", "b", "r", "q" };
 
     std::string figType = FigTypeMap[0];

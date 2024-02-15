@@ -182,6 +182,7 @@ struct Board {
 };
 
 void DisplayMask(uint64_t mask);
+std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board& oldBoard, const Board& newBoard);
 std::string GetShortAlgebraicMoveEncoding(const Board& bd, uint64_t oldMap, uint64_t newMap, MoveTypes mType);
 
 inline const std::unordered_map<size_t, Descriptors> figToDescMap{

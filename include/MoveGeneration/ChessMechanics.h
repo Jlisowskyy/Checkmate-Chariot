@@ -158,15 +158,11 @@ struct ChessMechanics {
     /*                  Important notes:
      *
      *  ActionT must follow this scheme:
-     *  void Action(Board& board, const int depth, const uint64_t oldFigMap, const uint64_t newFigMap, MoveType mType)
+     *  void Action(Board& board)
      *  Where:
      *      - board - represents actual state of the board, in current iteration,
-     *      - depth - holds information about depth of actual iteration,
-     *      - oldFigMap - hold map containing single bit, which represents old figure position,
-     *      - newFigMap - same as former one, but represents current position of moved figure
-     *      - mType - information about made move - TODO: should be more specific
      *
-     *  Iteration follow DFS scheme.
+     *  Iteration follow DFS scheme, and action is only invoked on leafs.
      * 
      */
     
@@ -174,11 +170,9 @@ struct ChessMechanics {
         class ActionT
     >void IterativeBoardTraversal(ActionT action, int depth) {
         if (depth == 0) {
-            // std::cout << board;
+            action(board);
             return;
         }
-
-        // if (depth == 1) std::cout << board;
 
         const uint64_t fullMap = GetFullMap();
         const auto [ blockedFigMap, checksCount, checkType ] = GetBlockedFieldMap(fullMap);
@@ -205,7 +199,7 @@ struct ChessMechanics {
     // ------------------------------
 private:
 
-    // Todo: el passnt, pawn upgrades, pawn moves
+    // Todo: el passnt
     template<
         class ActionT
     >void _noCheckIterativeTraversal(ActionT action, const int depth,
@@ -244,6 +238,7 @@ private:
     >void _singleCheckIterativeTraversal(ActionT action, const int depth, const uint64_t fullMap,
         const uint64_t blockedFigMap, const uint8_t checkType)
     {
+        // TODO: IMPLEMENT CHECKTYPE !!! THERE ARE MASSIVE UNIMPLEMENTED IDEAS
         const auto [pinnedFigsMap, allowedTilesMap] = GetPinnedFigsMapWithCheck(board.movColor, fullMap);
         const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
         const uint64_t allyMap = GetColMap(board.movColor);
@@ -359,8 +354,8 @@ private:
             figMap ^= figBoard;
 
             // processing move consequneces
-            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves, figBoard);
-            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup, figBoard);
+            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves);
+            if (attackMoves) _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup);
 
             // cleaning up
             figMap |= figBoard;
@@ -388,8 +383,8 @@ private:
             figMap ^= figBoard;
 
             // processing move consequences
-            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves, figBoard);
-            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup, figBoard); // TODO: There is exactly one move possible
+            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves);
+            if (attackMoves) _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup); // TODO: There is exactly one move possible
 
             figMap |= figBoard;
             pinnedOnes ^= figBoard;
@@ -421,8 +416,7 @@ private:
     template<
         class ActionT,
         bool promotePawns
-    >void _processNonAttackingMoves(ActionT action, const int depth, uint64_t& figMap,
-        uint64_t nonAttackingMoves, const uint64_t oldPos)
+    >void _processNonAttackingMoves(ActionT action, const int depth, uint64_t& figMap, uint64_t nonAttackingMoves)
     {
         while (nonAttackingMoves) {
             // extracting moves
@@ -438,7 +432,6 @@ private:
 
                 // performing core actions
                 board.ChangePlayingColor();
-                action(board, depth-1, oldPos, moveBoard, NormalMove);
                 IterativeBoardTraversal(action, depth-1);
                 board.ChangePlayingColor();
 
@@ -456,7 +449,6 @@ private:
 
                     // performing core actions
                     board.ChangePlayingColor();
-                    action(board, depth-1, oldPos, moveBoard, PromotingMove);
                     IterativeBoardTraversal(action, depth-1);
                     board.ChangePlayingColor();
 
@@ -473,7 +465,7 @@ private:
         class ActionT,
         bool promotePawns
     >void _processAttackingMoves(ActionT action, const int depth, uint64_t& figMap,
-        uint64_t attackingMoves, const std::array<uint64_t, 5>& backup, const uint64_t oldPos)
+        uint64_t attackingMoves, const std::array<uint64_t, 5>& backup)
     {
         while (attackingMoves) {
             // extracting moves
@@ -492,7 +484,6 @@ private:
 
                 // performing core actions
                 board.ChangePlayingColor();
-                action(board, depth-1, oldPos, moveBoard, NormalMove);
                 IterativeBoardTraversal(action, depth-1);
                 board.ChangePlayingColor();
 
@@ -510,7 +501,6 @@ private:
 
                     // performing core actions
                     board.ChangePlayingColor();
-                    action(board, depth-1, oldPos, moveBoard, PromotingMove);
                     IterativeBoardTraversal(action, depth-1);
                     board.ChangePlayingColor();
 
@@ -559,12 +549,13 @@ private:
 
             // performing core actions
             board.ChangePlayingColor();
-            action(board, depth-1, maxMsbPossible >> oldKingPos, newKingBoard, NormalMove);
             IterativeBoardTraversal(action, depth-1);
             board.ChangePlayingColor();
 
             nonAttackingMoves ^= newKingBoard;
         }
+
+        if (!attackingMoves) return;
 
         // processing slightly more complicated attacking moves
         std::array<uint64_t, 5> mapsBackup{};
@@ -581,7 +572,6 @@ private:
 
             // performing core actions
             board.ChangePlayingColor();
-            action(board, depth-1, maxMsbPossible >> oldKingPos, newKingBoard, NormalMove);
             IterativeBoardTraversal(action, depth-1);
 
             // cleaning up
@@ -615,7 +605,6 @@ private:
 
                 // processiong main actions
                 board.ChangePlayingColor();
-                action(board, depth-1, maxMsbPossible >> Board::DefaultKingPos[board.movColor], maxMsbPossible >> Board::CastlingNewKingPos[castlingIndex], NormalMove);
                 IterativeBoardTraversal(action, depth-1);
                 board.ChangePlayingColor();
 
