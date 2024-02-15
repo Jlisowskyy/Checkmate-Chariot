@@ -10,6 +10,13 @@
 #include <iostream>
 #include <array>
 
+#include "BitOperations.h"
+
+enum MoveTypes {
+    NormalMove,
+    PromotingMove
+};
+
 enum Color: int {
     WHITE,
     BLACK,
@@ -121,8 +128,6 @@ enum CastlingPossibilities: size_t {
     BlackQueenSide,
 };
 
-void DisplayMask(uint64_t mask);
-
 struct Board {
     // ------------------------------
     // class interaction
@@ -175,6 +180,9 @@ struct Board {
     uint8_t kingMSBPositions[KingPosCount] = { 0 };
     uint64_t boards[BoardsCount] = { 0 };
 };
+
+void DisplayMask(uint64_t mask);
+std::string GetShortAlgebraicMoveEncoding(const Board& bd, uint64_t oldMap, uint64_t newMap, MoveTypes mType);
 
 inline const std::unordered_map<size_t, Descriptors> figToDescMap{
         {'P', wPawnsIndex},
@@ -339,18 +347,5 @@ inline const std::unordered_map<std::string, Field> strFieldMap{
         {"g8", G8},
         {"h8", H8}
 };
-
-inline const uint64_t PrimeNumberMap[] = {
-    1,
-    3,
-    5,
-    11,
-    17,
-    37,
-    67,
-    131,
-    257,
-};
-
 
 #endif //ENGINETYPEDEFS_H

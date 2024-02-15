@@ -60,5 +60,5 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(ChessEngine PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-#target_compile_options(ChessEngine  PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=133554432)
-target_compile_options(ChessEngine PUBLIC -fconstexpr-ops-limit=133554432;-g;)
+target_compile_options(ChessEngine  PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=133554432)
+#target_compile_options(ChessEngine PUBLIC -fconstexpr-ops-limit=133554432;-g;)

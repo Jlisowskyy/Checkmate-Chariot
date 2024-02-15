@@ -155,10 +155,30 @@ struct ChessMechanics {
         return { figsPinnedByRookMoves | figsPinnedByBishopMoves, allowedTileRook | allowedTileBishop };
     }
 
+    /*                  Important notes:
+     *
+     *  ActionT must follow this scheme:
+     *  void Action(Board& board, const int depth, const uint64_t oldFigMap, const uint64_t newFigMap, MoveType mType)
+     *  Where:
+     *      - board - represents actual state of the board, in current iteration,
+     *      - depth - holds information about depth of actual iteration,
+     *      - oldFigMap - hold map containing single bit, which represents old figure position,
+     *      - newFigMap - same as former one, but represents current position of moved figure
+     *      - mType - information about made move - TODO: should be more specific
+     *
+     *  Iteration follow DFS scheme.
+     * 
+     */
+    
     template<
         class ActionT
     >void IterativeBoardTraversal(ActionT action, int depth) {
-        if (depth == 0) return;
+        if (depth == 0) {
+            // std::cout << board;
+            return;
+        }
+
+        // if (depth == 1) std::cout << board;
 
         const uint64_t fullMap = GetFullMap();
         const auto [ blockedFigMap, checksCount, checkType ] = GetBlockedFieldMap(fullMap);
@@ -217,7 +237,6 @@ private:
         _processPlainKingMoves(action, depth, blockedFigMap, allyMap, enemyMap);
 
         _processKingCastlings(action, depth, blockedFigMap, fullMap);
-
     }
 
     template<
@@ -340,8 +359,8 @@ private:
             figMap ^= figBoard;
 
             // processing move consequneces
-            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves);
-            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup);
+            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves, figBoard);
+            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup, figBoard);
 
             // cleaning up
             figMap |= figBoard;
@@ -369,8 +388,8 @@ private:
             figMap ^= figBoard;
 
             // processing move consequences
-            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves);
-            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup); // TODO: There is exactly one move
+            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves, figBoard);
+            _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup, figBoard); // TODO: There is exactly one move possible
 
             figMap |= figBoard;
             pinnedOnes ^= figBoard;
@@ -402,7 +421,9 @@ private:
     template<
         class ActionT,
         bool promotePawns
-    >void _processNonAttackingMoves(ActionT action, const int depth, uint64_t& figMap, uint64_t nonAttackingMoves) {
+    >void _processNonAttackingMoves(ActionT action, const int depth, uint64_t& figMap,
+        uint64_t nonAttackingMoves, const uint64_t oldPos)
+    {
         while (nonAttackingMoves) {
             // extracting moves
             const uint8_t movePos = ExtractMsbPos(nonAttackingMoves);
@@ -416,7 +437,8 @@ private:
                 figMap |= moveBoard;
 
                 // performing core actions
-                action(board, depth);
+                board.ChangePlayingColor();
+                action(board, depth-1, oldPos, moveBoard, NormalMove);
                 IterativeBoardTraversal(action, depth-1);
                 board.ChangePlayingColor();
 
@@ -433,7 +455,8 @@ private:
                     board.boards[colIndex + i] |= moveBoard;
 
                     // performing core actions
-                    action(board, depth);
+                    board.ChangePlayingColor();
+                    action(board, depth-1, oldPos, moveBoard, PromotingMove);
                     IterativeBoardTraversal(action, depth-1);
                     board.ChangePlayingColor();
 
@@ -450,14 +473,16 @@ private:
         class ActionT,
         bool promotePawns
     >void _processAttackingMoves(ActionT action, const int depth, uint64_t& figMap,
-        uint64_t attackingMoves, const std::array<uint64_t, 5>& backup) {
+        uint64_t attackingMoves, const std::array<uint64_t, 5>& backup, const uint64_t oldPos)
+    {
         while (attackingMoves) {
             // extracting moves
             const uint8_t movePos = ExtractMsbPos(attackingMoves);
             const uint64_t moveBoard = maxMsbPossible >> movePos;
             const size_t enemyColInd = SwapColor(board.movColor)*Board::BoardsPerCol;
 
-            for(size_t i = 0; i < 5; ++i) board.boards[enemyColInd + i] ^= moveBoard;
+            // removing enemy pieces
+            for(size_t i = 0; i < 5; ++i) board.boards[enemyColInd + i] &= ~moveBoard;
 
             if constexpr (!promotePawns)
                 // simple figure case
@@ -466,7 +491,8 @@ private:
                 figMap |= moveBoard;
 
                 // performing core actions
-                action(board, depth);
+                board.ChangePlayingColor();
+                action(board, depth-1, oldPos, moveBoard, NormalMove);
                 IterativeBoardTraversal(action, depth-1);
                 board.ChangePlayingColor();
 
@@ -483,7 +509,8 @@ private:
                     board.boards[colIndex + i] |= moveBoard;
 
                     // performing core actions
-                    action(board, depth);
+                    board.ChangePlayingColor();
+                    action(board, depth-1, oldPos, moveBoard, PromotingMove);
                     IterativeBoardTraversal(action, depth-1);
                     board.ChangePlayingColor();
 
@@ -503,8 +530,12 @@ private:
     >void _processPlainKingMoves(ActionT action, const int depth, const uint64_t blockedFigMap,
         const uint64_t allyMap, const uint64_t enemyMap)
     {
-        const uint64_t kingMoves = KingMap::GetMoves(board.kingMSBPositions[board.movColor]) & ~blockedFigMap & ~allyMap;
+        static constexpr size_t CastlingPerColor = 2;
 
+        // generating moves
+        const uint64_t kingMoves = KingMap::GetMoves(board.kingMSBPositions[board.movColor]) & ~blockedFigMap & ~allyMap;
+        const size_t movingColorIndex = board.movColor*Board::BoardsPerCol;
+        const size_t enemyColorIndex = SwapColor(board.movColor)*Board::BoardsPerCol;
         uint64_t attackingMoves = kingMoves & enemyMap;
         uint64_t nonAttackingMoves = kingMoves ^ attackingMoves;
 
@@ -513,9 +544,10 @@ private:
         const auto oldCastlings = board.Castlings;
 
         // prohibiting castlings
-        board.Castlings[2*board.movColor + KingCastlingIndex] = false;
-        board.Castlings[2*board.movColor + QueenCastlingIndex] = false;
+        board.Castlings[CastlingPerColor*board.movColor + KingCastlingIndex] = false;
+        board.Castlings[CastlingPerColor*board.movColor + QueenCastlingIndex] = false;
 
+        // processing simple non attacking moves
         while(nonAttackingMoves) {
             // extracting new king position data
             const uint8_t newPos = ExtractMsbPos(nonAttackingMoves);
@@ -523,37 +555,38 @@ private:
 
             // preparing board changes
             board.kingMSBPositions[board.movColor] = newPos;
-            board.boards[board.movColor*Board::BoardsPerCol + kingIndex] = newKingBoard;
-            board.ChangePlayingColor();
+            board.boards[movingColorIndex + kingIndex] = newKingBoard;
 
             // performing core actions
-            action(board, depth);
+            board.ChangePlayingColor();
+            action(board, depth-1, maxMsbPossible >> oldKingPos, newKingBoard, NormalMove);
             IterativeBoardTraversal(action, depth-1);
             board.ChangePlayingColor();
 
             nonAttackingMoves ^= newKingBoard;
         }
 
+        // processing slightly more complicated attacking moves
         std::array<uint64_t, 5> mapsBackup{};
-        for(size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[board.movColor*Board::BoardsPerCol + i];
+        for(size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[enemyColorIndex + i];
         while(attackingMoves) {
             // extracting new king position data
             const uint8_t newPos = ExtractMsbPos(attackingMoves);
             const uint64_t newKingBoard = maxMsbPossible >> newPos;
 
             // preparing board changes
-            for(size_t i = 0; i < 5; ++i) board.boards[board.movColor*Board::BoardsPerCol + i] ^= newKingBoard;
+            for(size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] &= ~newKingBoard;
             board.kingMSBPositions[board.movColor] = newPos;
-            board.boards[board.movColor*Board::BoardsPerCol + kingIndex] = newKingBoard;
-            board.ChangePlayingColor();
+            board.boards[movingColorIndex + kingIndex] = newKingBoard;
 
             // performing core actions
-            action(board, depth);
+            board.ChangePlayingColor();
+            action(board, depth-1, maxMsbPossible >> oldKingPos, newKingBoard, NormalMove);
             IterativeBoardTraversal(action, depth-1);
 
             // cleaning up
             board.ChangePlayingColor();
-            for(size_t i = 0; i < 5; ++i) board.boards[board.movColor*Board::BoardsPerCol + i] = mapsBackup[i];
+            for(size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] = mapsBackup[i];
 
             attackingMoves ^= newKingBoard;
         }
@@ -579,10 +612,10 @@ private:
                 board.boards[board.movColor*Board::BoardsPerCol + kingIndex] = maxMsbPossible >> Board::CastlingNewKingPos[castlingIndex];
                 board.boards[board.movColor*Board::BoardsPerCol + rooksIndex] ^= Board::CastlingsRookMaps[castlingIndex];
                 board.boards[board.movColor*Board::BoardsPerCol + rooksIndex] |= Board::CastlingNewRookMaps[castlingIndex];
-                board.ChangePlayingColor();
 
                 // processiong main actions
-                action(board, depth);
+                board.ChangePlayingColor();
+                action(board, depth-1, maxMsbPossible >> Board::DefaultKingPos[board.movColor], maxMsbPossible >> Board::CastlingNewKingPos[castlingIndex], NormalMove);
                 IterativeBoardTraversal(action, depth-1);
                 board.ChangePlayingColor();
 
@@ -663,12 +696,6 @@ private:
 
         return { pinnedFigMap, allowedTilesFigMap };
     }
-
-    // ------------------------------
-    // inner class types
-    // ------------------------------
-
-
 
     // ------------------------------
     // Class fields

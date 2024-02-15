@@ -63,3 +63,22 @@ void DisplayMask(const uint64_t mask) {
         if (y != 0) std::cout << std::string(7 + 3 * 8, '-') << std::endl;
     }
 }
+
+std::string GetShortAlgebraicMoveEncoding(const Board& bd, const uint64_t oldMap, const uint64_t newMap,
+    MoveTypes mType) {
+    static constexpr std::string FigTypeMap[] = { "", "n", "b", "r", "q" };
+
+    std::string figType = FigTypeMap[0];
+    if (mType == PromotingMove) {
+        const size_t searchIndex = SwapColor(bd.movColor)*Board::BoardsPerCol;
+
+        for (size_t i = 1; i < 5; ++i)
+            if ((bd.boards[searchIndex + i] & newMap) != 0) {
+                figType = FigTypeMap[i];
+                break;
+            }
+
+    }
+
+    return fieldStrMap.at((Field)oldMap) + fieldStrMap.at((Field)newMap) + figType;
+}

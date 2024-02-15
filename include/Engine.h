@@ -5,6 +5,8 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include <chrono>
+
 #include "Interface/UCIOptions.h"
 #include "EngineTypeDefs.h"
 #include "Interface/FenTranslator.h"
@@ -38,14 +40,30 @@ public:
         ChessMechanics game(board);
         uint64_t totalSum{};
 
+        const auto t1 = std::chrono::steady_clock::now();
         game.IterativeBoardTraversal(
-            [&]([[maybe_unused]] Board& bd, const int dp) {
-                if (dp == 1) ++ totalSum;
-            },
-            depth
-        );
+            [&]([[maybe_unused]] const Board& board, [[maybe_unused]] const int unused3, const uint64_t oldBoard,
+                const uint64_t newBoard, const MoveTypes mType)
+            {
+                const auto moveStr = GetShortAlgebraicMoveEncoding(board, oldBoard, newBoard, mType);
 
-        std::cout << std::format("Calculated moves: {}\n", totalSum);
+                uint64_t localSum{};
+                game.IterativeBoardTraversal(
+                    [&]([[maybe_unused]] Board& unused5, const int dp, [[maybe_unused]] const uint64_t unused0,
+                        [[maybe_unused]] const uint64_t unused1, [[maybe_unused]] const MoveTypes unused2) {
+                        if (dp == 0) ++localSum;
+                    },
+                    depth-1
+                );
+
+                totalSum += localSum;
+                GlobalLogger.StartLogging() << std::format("{}: {}\n", moveStr, localSum);
+            },
+            1
+        );
+        const auto t2 = std::chrono::steady_clock::now();
+
+        std::cout << std::format("Calculated moves: {} in time: {}ms\n", totalSum, (t2-t1).count()*1e-6);
     }
 
     void SetFenPosition(const std::string& fenStr) {
