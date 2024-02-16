@@ -40,7 +40,7 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string& buffer
             return _stopResponse();
         if (workStr == "quit" || workStr == "exit")
             return UCICommand::quitCommand;
-        if (workStr == "display")
+        if (workStr == "display" || workStr == "d")
             return _displayResponse();
     }
 

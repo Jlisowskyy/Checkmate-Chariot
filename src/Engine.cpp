@@ -6,21 +6,22 @@
 #include "../include/MoveGeneration/ChessMechanics.h"
 
 void Engine::Initialize() {
-    board = FenTranslator::Translate(startingPosition);
+    _board = FenTranslator::GetDefault();
+    _startingBoard = _board;
 }
 
-void Engine::writeBoard() const { std::cout << board; }
+void Engine::writeBoard() const { std::cout << _board; }
 
 std::map<std::string, uint64_t> Engine::GetPerft(const int depth) {
-    ChessMechanics game(board);
-    const Board startingBoard = board;
+    ChessMechanics game(_board);
+    const Board startingBoard = _board;
     std::map<std::string, uint64_t> moveMap{};
 
     game.IterativeBoardTraversal(
         [&](const Board& bd)
         {
             auto [oldBoard, newBoard, mType] = FindMove(startingBoard, bd);
-            const auto moveStr = GetShortAlgebraicMoveEncoding(board, oldBoard, newBoard, mType);
+            const auto moveStr = GetShortAlgebraicMoveEncoding(_board, oldBoard, newBoard, mType);
 
             uint64_t localSum{};
             game.IterativeBoardTraversal(
@@ -53,7 +54,12 @@ void Engine::GoPerft(const int depth) {
 }
 
 void Engine::SetFenPosition(const std::string& fenStr) {
-    board = FenTranslator::Translate(fenStr);
+    _board = FenTranslator::Translate(fenStr);
+    _startingBoard = _board;
 }
 
 const EngineInfo& Engine::GetEngineInfo() { return engineInfo; }
+
+void Engine::_changeDebugState(Engine& eng, std::string& nPath) {
+    GlobalLogger.ChangeLogStream(nPath);
+}

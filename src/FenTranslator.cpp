@@ -7,6 +7,8 @@
 #include "../include/BitOperations.h"
 #include "../include/Interface/Logger.h"
 
+const Board& FenTranslator::GetDefault() { return StartBoard; }
+
 Board FenTranslator::Translate(const std::string& fenPos) {
     Board workBoard{};
 
