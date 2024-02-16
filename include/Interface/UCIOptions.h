@@ -196,11 +196,11 @@ public:
     // ------------------------------
 private:
      [[nodiscard]] bool _isValidOption(const std::string& str) const {
-         for (auto& value: predefinedVals) {
-             if (str == value) return true;
-         }
-
-         return false;
+         return std::any_of(
+             predefinedVals.begin(),
+             predefinedVals.end(),
+             [=](const std::string& value) { return str == value; }
+            );
      }
 
     // ------------------------------

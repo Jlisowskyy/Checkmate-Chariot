@@ -4,6 +4,8 @@
 
 #include "../include/Interface/Logger.h"
 
+Logger GlobalLogger{};
+
 void Logger::Log(const std::string& logMessage) {
     logGuard.lock();
     (*loggingStream) << logMessage << std::endl;

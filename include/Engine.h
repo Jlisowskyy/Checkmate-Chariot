@@ -6,70 +6,40 @@
 #define ENGINE_H
 
 #include <chrono>
+#include <map>
 
 #include "Interface/UCIOptions.h"
 #include "EngineTypeDefs.h"
 #include "Interface/FenTranslator.h"
 #include "Interface/Logger.h"
-#include "MoveGeneration/ChessMechanics.h"
 
 class Engine {
     // --------------------------------------
     // Type creation and initialization
     // --------------------------------------
 public:
-    Engine() {}
+    Engine() = default;
 
-    void Initialize() {
-        board = FenTranslator::Translate(startingPosition);
-    }
+    void Initialize();
 
     // ------------------------------
     // Type interaction
     // ------------------------------
 
-    void writeBoard() const { std::cout << board; }
-    static const EngineInfo& GetEngineInfo() { return engineInfo; }
+
+    // Implemented function
+    void writeBoard() const;
+    std::map<std::string, uint64_t> GetPerft(int depth);
+    void GoPerft(int depth);
+    void SetFenPosition(const std::string& fenStr);
+    static const EngineInfo& GetEngineInfo();
+
+    // TODO: next goals:
     void RestartEngine() { std::cout << "ucinewgame result! " << std::endl; }
     void StopSearch() { std::cout << "stop search resullt! " << std::endl; }
     void GoDepth(lli depth) { std::cout << "go depth resutl: " << depth << std::endl; }
     void GoMovetime(lli time) { std::cout << "go movetime resutl: " << time << std::endl; }
     void GoInfinite() { std::cout << "go infinite result! " << std::endl; }
-
-    void GoPerft(const int depth) {
-        ChessMechanics game(board);
-        uint64_t totalSum{};
-        Board startingBoard = board;
-
-        const auto t1 = std::chrono::steady_clock::now();
-        game.IterativeBoardTraversal(
-            [&](const Board& bd)
-            {
-                auto [oldBoard, newBoard, mType] = FindMove(startingBoard, bd);
-                const auto moveStr = GetShortAlgebraicMoveEncoding(board, oldBoard, newBoard, mType);
-
-                uint64_t localSum{};
-                game.IterativeBoardTraversal(
-                    [&]([[maybe_unused]] Board& unused) {
-                        ++localSum;
-                    },
-                    depth-1
-                );
-
-                totalSum += localSum;
-                GlobalLogger.StartLogging() << std::format("{}: {}\n", moveStr, localSum);
-            },
-            1
-        );
-        const auto t2 = std::chrono::steady_clock::now();
-
-        GlobalLogger.StartLogging() << std::format("Calculated moves: {} in time: {}ms\n", totalSum, (t2-t1).count()*1e-6);
-    }
-
-    void SetFenPosition(const std::string& fenStr) {
-        board = FenTranslator::Translate(fenStr);
-    }
-
     bool ApplyMoves(const std::vector<std::string>& UCIMoves) {
         std::cout << "Received moves: ";
         for(auto& move : UCIMoves)
@@ -84,7 +54,7 @@ public:
     // ------------------------------
 private:
 
-    static void _changeThreadCount(Engine& eng, lli tCount) {
+    static void _changeThreadCount(Engine& eng, const lli tCount) {
         std::cout << "New thread count: " << tCount << '\n';
     }
 

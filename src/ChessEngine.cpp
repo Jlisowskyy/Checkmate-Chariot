@@ -21,7 +21,7 @@
 
 void ChessEngineMainEntry() {
     Engine engine{};
-    const UCITranslator translator{engine};
+    UCITranslator translator{engine};
 
     engine.Initialize();
     translator.BeginCommandTranslation();

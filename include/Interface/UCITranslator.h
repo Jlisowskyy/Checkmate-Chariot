@@ -35,38 +35,28 @@ public:
     // Clas interaction
     // ------------------------------
 
-    void BeginCommandTranslation() const;
+    void BeginCommandTranslation();
 
     // ------------------------------
     // private methods
     // ------------------------------
 private:
 
-    [[nodiscard]] UCICommand _cleanMessage(const std::string& buffer) const;
+    [[nodiscard]] UCICommand _cleanMessage(const std::string& buffer);
     UCICommand _stopResponse() const;
     [[nodiscard]] UCICommand _goResponse(const std::string& str) const;
-    [[nodiscard]] UCICommand _positionResponse(const std::string& str) const;
+    [[nodiscard]] UCICommand _positionResponse(const std::string& str);
     UCICommand _ucinewgameResponse() const;
     [[nodiscard]] UCICommand _setoptionResponse(const std::string& str) const;
     static UCICommand _uciResponse();
     UCICommand static _isReadyResponse();
     UCICommand _displayResponse() const;
 
-    static size_t _genNextWord(const std::string& str, std::string& wordOut, size_t pos)
-        // Parses passed string 'str' splitting string into words one by one startring by given position pos.
-        // returns position after the end of parsed word.
-        // If returned position is equal to 0, then no word was detected.
-    ;
-
-    static lli _parseTolli(const std::string& str);
-    static size_t _trimLeft(const std::string& str);
-    static size_t _trimRight(const std::string& str);
-    static std::string _getTrimmed(const std::string& str);
-
     // ------------------------------
     // private fields
     // ------------------------------
 
+    std::string _fenPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     Engine& engine;
 };
 

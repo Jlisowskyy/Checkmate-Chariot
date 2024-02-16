@@ -5,4 +5,64 @@
 #ifndef MOVEGENERATIONTESTS_H
 #define MOVEGENERATIONTESTS_H
 
+#ifdef __unix__
+
+#include <string>
+#include <map>
+#include <utility>
+
+class MoveGenerationTester {
+    // ------------------------------
+    // Class creation
+    // ------------------------------
+public:
+    MoveGenerationTester() = default;
+    MoveGenerationTester(std::string comparedEnginePath): _enginePath(std::move(comparedEnginePath)) {}
+    ~MoveGenerationTester() = default;
+
+    // ------------------------------
+    // Class interaction
+    // ------------------------------
+
+    std::pair<std::string, int> PerformSingleShallowTest(const std::string& fenPosition, int depth, bool writeOnOut = false) const;
+
+    // ------------------------------
+    // Private class methods
+    // ------------------------------
+private:
+    static constexpr size_t WritePipe = 1;
+    static constexpr size_t ReadPipe = 0;
+    static constexpr size_t buffSize = 4096;
+
+    [[nodiscard]] std::map<std::string, uint64_t> _generateCorrectMoveCounts(const std::string& fenPosition, int depth) const;
+    static size_t _chessSubstrEnd(const std::string& str);
+    static void _processLine(std::map<std::string, uint64_t>& out, const std::string& line);
+    static std::map<std::string, uint64_t> _getCorrectMovesMap(int readFileDesc);
+    static void _startUpPerft(const std::string& fenPosition, int depth,  int writeFileDesc);
+    void _spawnEngine(const int*  inPipeFileDesc, const int* outPipeFileDesc) const;
+
+    // ------------------------------
+    // Class fields
+    // ------------------------------
+public:
+
+    static constexpr const char* DefaultPath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/correctnesGen/stockfish";
+private:
+    const std::string _enginePath = DefaultPath;
+};
+
+#else // __unix__
+
+#include "../Interface/Logger.h"
+
+struct MoveGenerationTester {
+    MoveGenerationTester( [[maybe_unused]] const std::string& unused) {}
+
+    void PerformSingleTest(const std::string& fenPosition, const int depth) const {
+        GlobalLogger.StartErrLogging() << "[ ERROR ] Tests supported only under unix compatible platforms!\n";
+    }
+};
+
+#endif // __unix__
+
 #endif //MOVEGENERATIONTESTS_H

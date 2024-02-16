@@ -35,6 +35,6 @@ private:
     std::ostream* loggingStream = &std::cout;
 };
 
-inline static Logger GlobalLogger{};
+extern Logger GlobalLogger;
 
 #endif //LOGGER_H
