@@ -39,11 +39,16 @@ public:
         return attackMoves | frontMove | frontDoubleMove;
     }
 
+    [[nodiscard]] static constexpr uint64_t GetElPassantSuspectedFields(const uint64_t elPassantField) {
+
+    }
+
     // ------------------------------
     // Class fields
     // ------------------------------
 
     static constexpr uint64_t PromotingMask = GenMask(8, 16, 1);
+    static constexpr uint64_t ElPassantMask = GenMask(32, 40, 1);
 
 private:
 

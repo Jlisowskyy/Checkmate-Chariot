@@ -199,11 +199,21 @@ private:
         const uint64_t promotingPawns = figMap & MapT::PromotingMask;
         const uint64_t nonPromotingPawns = figMap ^ promotingPawns;
 
-        _processFigMoves<ActionT, MapT, false, false, true, isCheck>(action, depth, figMap, enemyMap,
+        _processFigMoves<ActionT, MapT, false, false, true, isCheck, MapT::ElPassantMask>(action, depth, figMap, enemyMap,
             allyMap,  pinnedFigMap, nonPromotingPawns, allowedMoveFillter);
 
-        _processFigMoves<ActionT, MapT, false, true, true, isCheck>(action, depth, figMap, enemyMap,
+        _processFigMoves<ActionT, MapT, false, true, true, isCheck, MapT::ElPassantMask>(action, depth, figMap, enemyMap,
             allyMap,  pinnedFigMap, promotingPawns, allowedMoveFillter);
+    }
+
+    template<
+        class ActionT,
+        class MapT,
+        bool isCheck = false
+    >void _processElPassantMoves(ActionT action, const int depth, uint64_t& figMap) {
+        if (board.elPassantField == INVALID) return;
+
+
     }
 
     // TODO: Compare with simple if searching loop
@@ -214,7 +224,8 @@ private:
         bool checkForCastling = false,
         bool promotePawns = false,
         bool selectFigures = false,
-        bool isCheck = false
+        bool isCheck = false,
+        uint64_t elPassantLine = 0LLU
     >void _processFigMoves(ActionT action, const int depth, uint64_t& figMap,
         const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
         [[maybe_unused]] const uint64_t figureSelector = 0, [[maybe_unused]] const uint64_t allowedMovesSelector = 0)
@@ -231,6 +242,10 @@ private:
         // to restore destroyed figures during attack moves
         std::array<uint64_t, 5> mapsBackup{};
         for(size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[SwapColor(board.movColor)*Board::BoardsPerCol + i];
+
+        // saving results of previous el passant field, used only when figure is not a pawn
+        const Field oldElpassant = board.elPassantField;
+        board.elPassantField = INVALID;
 
         // procesing unpinned moves
         while(unpinnedOnes) {
@@ -263,7 +278,7 @@ private:
             figMap ^= figBoard;
 
             // processing move consequneces
-            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves);
+            _processNonAttackingMoves<ActionT, promotePawns, elPassantLine>(action, depth, figMap, nonAttackingMoves);
             if (attackMoves) _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup);
 
             // cleaning up
@@ -276,7 +291,11 @@ private:
         }
 
         // if check is detected pinned figure stays in place
-        if constexpr (isCheck) return;
+        if constexpr (isCheck) {
+            // previous el passant state should be restored
+            board.elPassantField = oldElpassant;
+            return;
+        }
 
         // procesing pinned moves
         while(pinnedOnes) {
@@ -292,12 +311,15 @@ private:
             figMap ^= figBoard;
 
             // processing move consequences
-            _processNonAttackingMoves<ActionT, promotePawns>(action, depth, figMap, nonAttackingMoves);
+            _processNonAttackingMoves<ActionT, promotePawns, elPassantLine>(action, depth, figMap, nonAttackingMoves);
             if (attackMoves) _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup); // TODO: There is exactly one move possible
 
             figMap |= figBoard;
             pinnedOnes ^= figBoard;
         }
+
+        // previous el passant state should be restored
+        board.elPassantField = oldElpassant;
     }
 
     [[nodiscard]] uint64_t _generateAllowedTilesForPrecisedPinnedFig(uint64_t figBoard, uint64_t fullMap) const;
@@ -305,7 +327,8 @@ private:
     // TODO: improve readability of code below
     template<
         class ActionT,
-        bool promotePawns
+        bool promotePawns,
+        uint64_t elPassantLine = 0LLU
     >void _processNonAttackingMoves(ActionT action, const int depth, uint64_t& figMap, uint64_t nonAttackingMoves)
     {
         while (nonAttackingMoves) {
@@ -317,6 +340,12 @@ private:
             if constexpr (!promotePawns)
                 // simple figure case
             {
+                // if el passant line is passed when figure moved to these line flag will turned on
+                if constexpr (elPassantLine != 0LLU) {
+                    if ((elPassantLine & moveBoard) != 0)
+                        board.elPassantField = static_cast<Field>(moveBoard);
+                }
+
                 // applying moves
                 figMap |= moveBoard;
 
@@ -324,6 +353,11 @@ private:
                 board.ChangePlayingColor();
                 IterativeBoardTraversal(action, depth-1);
                 board.ChangePlayingColor();
+
+                // reverting flag changes
+                if constexpr (elPassantLine != 0LLU) {
+                    board.elPassantField = INVALID;
+                }
 
                 // cleaning up
                 figMap ^= moveBoard;
@@ -422,10 +456,14 @@ private:
         // saving old parameters
         const uint8_t oldKingPos = board.kingMSBPositions[board.movColor];
         const auto oldCastlings = board.Castlings;
+        const Field oldElPassant = board.elPassantField;
 
         // prohibiting castlings
         board.Castlings[CastlingPerColor*board.movColor + KingCastlingIndex] = false;
         board.Castlings[CastlingPerColor*board.movColor + QueenCastlingIndex] = false;
+
+        //prohibiting elPassant
+        board.elPassantField = INVALID;
 
         // processing simple non attacking moves
         while(nonAttackingMoves) {
@@ -436,6 +474,7 @@ private:
             // preparing board changes
             board.kingMSBPositions[board.movColor] = newPos;
             board.boards[movingColorIndex + kingIndex] = newKingBoard;
+
 
             // performing core actions
             board.ChangePlayingColor();
@@ -475,6 +514,7 @@ private:
         board.Castlings = oldCastlings;
         board.kingMSBPositions[board.movColor] = oldKingPos;
         board.boards[board.movColor*Board::BoardsPerCol + kingIndex] = maxMsbPossible >> oldKingPos;
+        board.elPassantField = oldElPassant;
     }
 
     // TODO: simplify ifs??
@@ -492,6 +532,8 @@ private:
                 board.boards[board.movColor*Board::BoardsPerCol + kingIndex] = maxMsbPossible >> Board::CastlingNewKingPos[castlingIndex];
                 board.boards[board.movColor*Board::BoardsPerCol + rooksIndex] ^= Board::CastlingsRookMaps[castlingIndex];
                 board.boards[board.movColor*Board::BoardsPerCol + rooksIndex] |= Board::CastlingNewRookMaps[castlingIndex];
+                const Field oldElPassant = board.elPassantField;
+                board.elPassantField = INVALID;
 
                 // processiong main actions
                 board.ChangePlayingColor();
@@ -504,6 +546,7 @@ private:
                 board.boards[board.movColor*Board::BoardsPerCol + kingIndex] = maxMsbPossible >> Board::DefaultKingPos[board.movColor];
                 board.boards[board.movColor*Board::BoardsPerCol + rooksIndex] |= Board::CastlingsRookMaps[castlingIndex];
                 board.boards[board.movColor*Board::BoardsPerCol + rooksIndex] ^= Board::CastlingNewRookMaps[castlingIndex];
+                board.elPassantField = oldElPassant;
             }
     }
 
