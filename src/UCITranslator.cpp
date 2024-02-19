@@ -76,7 +76,18 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str) con
         catch (const std::exception& exc){ return UCICommand::InvalidCommand; }
 
         const MoveGenerationTester tester;
-        tester.PerformSingleShallowTest(_fenPosition, depth, true);
+        [[maybe_unused]] tester.PerformSingleShallowTest(_fenPosition, depth, _appliedMoves, true);
+    }
+    else if (workStr == "deepDebug") {
+        std::string depthStr{};
+        ParseTools::ExtractNextWord(str, depthStr, pos);
+
+        int depth;
+        try { depth = std::stoi(depthStr); }
+        catch (const std::exception& exc){ return UCICommand::InvalidCommand; }
+
+        const MoveGenerationTester tester;
+        tester.PerformDeepTest(_fenPosition, depth, _appliedMoves);
     }
     else if (workStr == "infinite")
         engine.GoInfinite();
@@ -127,6 +138,8 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string& st
 
         if (!engine.ApplyMoves(movesVect))
             return UCICommand::InvalidCommand;
+
+        _appliedMoves = movesVect;
     }
 
     return UCICommand::positionCommand;

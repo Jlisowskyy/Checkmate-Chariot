@@ -7,6 +7,19 @@
 
 #include "../Engine.h"
 
+/*
+ *                  ADDITIONAL NOTES
+ *
+ *  In addition to standard UCI commands, these are implemented:
+ *  - go perft "depth" - Simple PERFT test.
+ *  - go debug "depth" - debugging tool reporting first occured error in comparison to any engine
+ *                       which implements "go perft command" - default target engine is stockfish
+ *  - go deepDebug "depth" - debugging tool, which is used to possibly identify invalid move chains which produces
+ *                       buggy result.
+ *
+ *  Where "depth" is integer value indicating layers of traversed move tree.
+ */
+
 class UCITranslator {
     // --------------------------------------
     // Type creation and initialization
@@ -56,6 +69,7 @@ private:
     // private fields
     // ------------------------------
 
+    std::vector<std::string> _appliedMoves{};
     std::string _fenPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     Engine& engine;
 };

@@ -207,7 +207,7 @@ private:
         _processFigMoves<ActionT, MapT, false, true, true, isCheck>(action, depth, figMap, enemyMap,
             allyMap,  pinnedFigMap, promotingPawns, allowedMoveFillter);
 
-        _processElPassantMoves<ActionT, MapT, isCheck>(action, depth, figMap);
+        // _processElPassantMoves<ActionT, MapT, isCheck>(action, depth, figMap);
     }
 
     // TODO: Consider different soluition?

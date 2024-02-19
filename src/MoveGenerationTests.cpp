@@ -17,12 +17,13 @@
 #include "../include/Interface/Logger.h"
 
 std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const std::string& fenPosition,
-    const int depth, const bool writeOnOut) const {
+    const int depth, const std::vector<std::string>& moves, const bool writeOnOut) const {
     Engine eng{};
     eng.SetFenPosition(fenPosition);
     eng.Initialize();
+    eng.ApplyMoves(moves);
 
-    const auto externalEngineMoves = _generateCorrectMoveCounts(fenPosition, depth);
+    const auto externalEngineMoves = _generateCorrectMoveCounts(fenPosition, depth, moves);
     const auto internalEngineMoves = eng.GetPerft(depth);
 
     for (const auto& [move, count] : externalEngineMoves) {
@@ -65,8 +66,42 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const
     return { "", -1 };
 }
 
+void MoveGenerationTester::PerformDeepTest(const std::string& fenPosition,
+    const int depth, const std::vector<std::string>& moves) const
+{
+    std::string invalidMoveChain;
+    _deepTestRecu(fenPosition, depth, moves, invalidMoveChain);
+
+    if (invalidMoveChain.empty())
+        GlobalLogger.StartLogging() << "[  OK  ] No errors occured!\n";
+    else
+        GlobalLogger.StartLogging() << std::format("[ ERROR ] Found invalind moves chain:\n\t{}\n",
+                                                   invalidMoveChain + " NULL");
+}
+
+void MoveGenerationTester::_deepTestRecu(const std::string& fenPosition, const int depth,
+    const std::vector<std::string>& moves, std::string& chainOut) const
+{
+    if (depth == 0 ) return;
+
+    // Performing calculation on actual layer
+    auto [move, errDep] = PerformSingleShallowTest(fenPosition, depth, moves);
+
+    // skipping deeper search when moves does not differ
+    if (errDep == -1) return;
+
+    // otherwise adding move to the chain
+    chainOut += move + " ==> ";
+
+    // if error occured on actual layer stop adding moves to the chain
+    if (errDep == 0) return;
+
+    // otherwise add other moves
+    _deepTestRecu(fenPosition, depth-1, moves, chainOut);
+}
+
 std::map<std::string, uint64_t> MoveGenerationTester::_generateCorrectMoveCounts(const std::string& fenPosition,
-                                                                                 const int depth) const {
+                                                                                 const int depth, const std::vector<std::string>& moves) const {
     // preparing pipes. 1 - input, 0 - output
     int inPipeFileDesc[2];
     int outPipeFileDesc[2];
@@ -84,7 +119,7 @@ std::map<std::string, uint64_t> MoveGenerationTester::_generateCorrectMoveCounts
     close(outPipeFileDesc[ReadPipe]);
     close(inPipeFileDesc[WritePipe]);
 
-    _startUpPerft(fenPosition, depth, outPipeFileDesc[WritePipe]);
+    _startUpPerft(fenPosition, depth, moves, outPipeFileDesc[WritePipe]);
     auto moveMap = _getCorrectMovesMap(inPipeFileDesc[ReadPipe]);
 
     waitpid(proc, nullptr, 0);
@@ -185,13 +220,22 @@ std::map<std::string, uint64_t> MoveGenerationTester::_getCorrectMovesMap(const 
     return moveMap;
 }
 
-void MoveGenerationTester::_startUpPerft(const std::string& fenPosition, const int depth, const int writeFileDesc) {
+void MoveGenerationTester::_startUpPerft(const std::string& fenPosition, const int depth, const std::vector<std::string>& moves, const int writeFileDesc) {
     static constexpr const char* quitCommand = "quit\n";
     const std::string fenCommand = std::format("position fen {}\n", fenPosition);
     const std::string perftCommand = std::format("go perft {}\n", depth);
 
     write(writeFileDesc, fenCommand.c_str(), fenCommand.size());
     write(writeFileDesc, perftCommand.c_str(), perftCommand.size());
+
+    if (!moves.empty()) {
+        std::string moveString = "position startpos moves ";
+        for (const auto& move: moves)
+            moveString += move + ' ';
+
+        write(writeFileDesc, moveString.c_str(), moveString.size());
+    }
+
     write(writeFileDesc, quitCommand, strlen(quitCommand));
 }
 

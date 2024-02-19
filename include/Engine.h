@@ -42,8 +42,8 @@ public:
         for (auto& move : UCIMoves) {
             const auto [oldPos, newPos] = ExtractPositionsFromEncoding(move);
 
-            DisplayMask(oldPos);
-            DisplayMask(newPos);
+            // DisplayMask(oldPos);
+            // DisplayMask(newPos);
 
             if (oldPos == 0 || newPos == 0) return false;
             if (!_applyMove(workBoard, move, oldPos, newPos)) return false;
