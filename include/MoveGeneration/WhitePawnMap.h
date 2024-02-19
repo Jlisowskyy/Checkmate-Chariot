@@ -40,13 +40,16 @@ public:
     }
 
     [[nodiscard]] static constexpr uint64_t GetElPassantSuspectedFields(const uint64_t elPassantField) {
-
+        const uint64_t leftField = (LeftMask & elPassantField) >> 1;
+        const uint64_t righField = (RightMask & elPassantField) << 1;
+        return leftField | righField;
     }
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
+    static constexpr int ElPassantShift = -8;
     static constexpr uint64_t PromotingMask = GenMask(48, 56, 1);
     static constexpr uint64_t ElPassantMask = GenMask(24, 32, 1);
 private:

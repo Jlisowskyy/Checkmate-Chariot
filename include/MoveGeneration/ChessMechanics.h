@@ -108,6 +108,8 @@ struct ChessMechanics {
     // ------------------------------
 private:
 
+    [[nodiscard]] uint64_t _generateAllowedTilesForPrecisedPinnedFig(uint64_t figBoard, uint64_t fullMap) const;
+
     // Todo: el passnt
     template<
         class ActionT
@@ -202,17 +204,67 @@ private:
         _processFigMoves<ActionT, MapT, false, false, true, isCheck, MapT::ElPassantMask>(action, depth, figMap, enemyMap,
             allyMap,  pinnedFigMap, nonPromotingPawns, allowedMoveFillter);
 
-        _processFigMoves<ActionT, MapT, false, true, true, isCheck, MapT::ElPassantMask>(action, depth, figMap, enemyMap,
+        _processFigMoves<ActionT, MapT, false, true, true, isCheck>(action, depth, figMap, enemyMap,
             allyMap,  pinnedFigMap, promotingPawns, allowedMoveFillter);
+
+        _processElPassantMoves<ActionT, MapT, isCheck>(action, depth, figMap);
     }
 
+    // TODO: Consider different soluition?
+    // TODO: IMPORTANT: WHATT HAPPENS WHEN EL PASSANT PAWN CHECKS KING?
     template<
         class ActionT,
         class MapT,
         bool isCheck = false
-    >void _processElPassantMoves(ActionT action, const int depth, uint64_t& figMap) {
+    >void _processElPassantMoves(ActionT action, const int depth, const uint64_t fullMap,
+        const uint64_t pinnedFigMap, uint64_t& figMap)
+    {
         if (board.elPassantField == INVALID) return;
 
+        // calculation preparation
+        const uint64_t suspectedFields = MapT::GetElPassantSuspectedFields(board.elPassantField);
+        const size_t enemyCord = SwapColor(board.movColor)*Board::BoardsPerCol;
+        const uint64_t enemyRookFigs = board.boards[enemyCord + queensIndex] | board.boards[enemyCord + rooksIndex];
+        uint64_t possiblePawnsToMove = figMap & suspectedFields;
+
+        while(possiblePawnsToMove) {
+            const uint64_t pawnMap = ExtractMsbPos(possiblePawnsToMove);
+
+            // checking wheteher move would affect horizontal line attacks on king
+            const uint64_t processedPawns = pawnMap | board.elPassantField;
+            const uint64_t cleanedFromPawnsMap = fullMap ^ processedPawns;
+            if (const uint64_t kingHorizontalLine =
+                    RookMap::GetMoves(board.kingMSBPositions[board.movColor], cleanedFromPawnsMap) & MapT::ElPassantMask;
+                    (kingHorizontalLine & enemyRookFigs) != 0) return;
+
+            const uint64_t moveMap = board.elPassantField << MapT::ElPassantShift;
+
+            // checking wheter moving some pawns would undercover king on some line -
+            if ((processedPawns & pinnedFigMap) != 0) {
+                if ((pawnMap & pinnedFigMap) != 0 && (_generateAllowedTilesForPrecisedPinnedFig(pawnMap, fullMap) & moveMap) == 0) continue;
+                if ((_generateAllowedTilesForPrecisedPinnedFig(board.elPassantField, fullMap) & moveMap) == 0) continue;
+            }
+
+            // applying changes on board
+            Field oldElPassantField = board.elPassantField;
+            figMap ^= pawnMap;
+            figMap |= moveMap;
+            board.boards[enemyCord + pawnsIndex] ^= board.elPassantField;
+            board.elPassantField = INVALID;
+            board.ChangePlayingColor();
+
+            // starting deeper search
+            IterativeBoardTraversal(action, depth-1);
+
+            // reverting changes on board
+            board.ChangePlayingColor();
+            board.elPassantField = oldElPassantField;
+            board.boards[enemyCord + pawnsIndex] |= oldElPassantField;
+            figMap ^= moveMap;
+            figMap |= pawnMap;
+
+            possiblePawnsToMove ^= pawnMap;
+        }
 
     }
 
@@ -321,8 +373,6 @@ private:
         // previous el passant state should be restored
         board.elPassantField = oldElpassant;
     }
-
-    [[nodiscard]] uint64_t _generateAllowedTilesForPrecisedPinnedFig(uint64_t figBoard, uint64_t fullMap) const;
 
     // TODO: improve readability of code below
     template<
