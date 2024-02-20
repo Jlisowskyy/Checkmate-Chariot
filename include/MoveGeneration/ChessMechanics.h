@@ -153,7 +153,7 @@ private:
         const auto [pinnedFigsMap, allowedTilesMap] = GetPinnedFigsMapWithCheck(board.movColor, fullMap);
         const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
         const uint64_t allyMap = GetColMap(board.movColor);
-        
+
         _processFigMoves<ActionT, RookMap, true, false, false, true>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + rooksIndex],
             enemyMap, allyMap,  pinnedFigsMap, allowedTilesMap);
