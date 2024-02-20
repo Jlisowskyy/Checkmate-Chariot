@@ -81,6 +81,12 @@ void Engine::RestartEngine() {
     _board = _startingBoard;
 }
 
+Board Engine::GetUnderlyingBoardCopy() const {
+    return _board;
+}
+
+std::string Engine::GetFenTranslation() const { return FenTranslator::Translate(_board); }
+
 bool Engine::_applyMove(Board& board, const std::string& move, const uint64_t oldPos, const uint64_t newPos) {
     const size_t movingColorIndex = board.movColor*Board::BoardsPerCol;
     size_t movedFigIndex = 6;

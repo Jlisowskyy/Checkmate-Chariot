@@ -14,11 +14,13 @@
 
 
 class Engine {
-    // --------------------------------------
+// --------------------------------------
     // Type creation and initialization
     // --------------------------------------
 public:
     Engine() = default;
+    Engine(const Board& bd): _board(bd), _startingBoard(bd) {}
+    ~Engine() = default;
 
     void Initialize();
 
@@ -35,6 +37,8 @@ public:
     static const EngineInfo& GetEngineInfo();
     bool ApplyMoves(const std::vector<std::string>& UCIMoves);
     void RestartEngine();
+    [[nodiscard]] Board GetUnderlyingBoardCopy() const;
+    [[nodiscard]] std::string GetFenTranslation() const;
 
     // TODO: next goals:
     void StopSearch() { std::cout << "stop search resullt! " << std::endl; }
@@ -42,7 +46,7 @@ public:
     void GoMovetime(lli time) { std::cout << "go movetime resutl: " << time << std::endl; }
     void GoInfinite() { std::cout << "go infinite result! " << std::endl; }
 
-    // ------------------------------
+// ------------------------------
     // private methods
     // ------------------------------
 private:
@@ -60,7 +64,6 @@ private:
 
     Board _board{};
     Board _startingBoard{};
-
 
     // ------------------------------
     // Engine options

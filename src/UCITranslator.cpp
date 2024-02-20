@@ -5,6 +5,7 @@
 #include "../include/Interface/UCITranslator.h"
 #include "../include/ParseTools.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
+#include "../include/Interface/Logger.h"
 
 void UCITranslator::BeginCommandTranslation() {
     auto lastCommand = UCICommand::InvalidCommand;
@@ -15,7 +16,7 @@ void UCITranslator::BeginCommandTranslation() {
         lastCommand = _cleanMessage(recordBuffer);
 
         if (lastCommand == UCICommand::InvalidCommand)
-            std::cout << "ERR\n";
+            GlobalLogger.StartErrLogging() << "[ ERROR ] Error uccured during translation or execution.\n Refer to UCI protocl manual to get more detailed information.\n";
     }
 }
 
@@ -42,13 +43,15 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string& buffer
             return UCICommand::quitCommand;
         if (workStr == "display" || workStr == "d")
             return _displayResponse();
+        if (workStr == "fen")
+            return _displayFen();
     }
 
     return UCICommand::InvalidCommand;
 }
 
 UCITranslator::UCICommand UCITranslator::_stopResponse() const {
-    engine.StopSearch();
+    _engine.StopSearch();
     return  UCICommand::stopCommand;
 }
 
@@ -65,7 +68,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str) con
         try { depth = std::stoi(depthStr); }
         catch (const std::exception& exc){ return UCICommand::InvalidCommand; }
 
-        engine.GoPerft(depth);
+        _engine.GoPerft(depth);
     }
     else if (workStr == "debug") {
         std::string depthStr{};
@@ -90,14 +93,14 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str) con
         tester.PerformDeepTest(_fenPosition, depth, _appliedMoves);
     }
     else if (workStr == "infinite")
-        engine.GoInfinite();
+        _engine.GoInfinite();
     else if (workStr == "depth") {
         pos = ParseTools::ExtractNextWord(str, workStr, pos);
         if (pos == 0) return UCICommand::InvalidCommand;
         const lli arg = ParseTools::ParseTolli(workStr);
         if (arg <= 0) return UCICommand::InvalidCommand;
 
-        engine.GoMovetime(arg);
+        _engine.GoMovetime(arg);
     }
     else if (workStr == "movetime"){
         pos = ParseTools::ExtractNextWord(str, workStr, pos);
@@ -105,7 +108,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str) con
         const lli arg = ParseTools::ParseTolli(workStr);
         if (arg <= 0) return UCICommand::InvalidCommand;
 
-        engine.GoMovetime(arg);
+        _engine.GoMovetime(arg);
     }
 
     return UCICommand::goCommand;
@@ -123,7 +126,7 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string& st
                                         ParseTools::GetTrimmed(str.substr(pos)) :
                                         ParseTools::GetTrimmed(str.substr(pos, movesCord - pos));
 
-        engine.SetFenPosition(_fenPosition);
+        _engine.SetFenPosition(_fenPosition);
     }
     else if (workStr != "startpos")
         return UCICommand::InvalidCommand;
@@ -136,7 +139,7 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string& st
             movesVect.push_back(workStr);
         }
 
-        if (!engine.ApplyMoves(movesVect))
+        if (!_engine.ApplyMoves(movesVect))
             return UCICommand::InvalidCommand;
 
         _appliedMoves = movesVect;
@@ -146,7 +149,7 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string& st
 }
 
 UCITranslator::UCICommand UCITranslator::_ucinewgameResponse() {
-    engine.RestartEngine();
+    _engine.RestartEngine();
     _appliedMoves.clear();
     return UCICommand::ucinewgameCommand;
 }
@@ -168,31 +171,35 @@ UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string& s
     if (!Engine::GetEngineInfo().options.contains(optionName))
         return UCICommand::InvalidCommand;
 
-
     // argument option
     std::string arg = workStr != "value" ? std::string() : ParseTools::GetTrimmed(str.substr(pos));
-    if (Engine::GetEngineInfo().options.at(optionName)->TryChangeValue(arg, engine))
+    if (Engine::GetEngineInfo().options.at(optionName)->TryChangeValue(arg, _engine))
         return UCICommand::setoptionCommand;
     return UCICommand::InvalidCommand;
 }
 
 UCITranslator::UCICommand UCITranslator::_uciResponse() {
-    std::cout << "id name " << Engine::GetEngineInfo().name << '\n';
-    std::cout << "id author " << Engine::GetEngineInfo().author << '\n';
+    GlobalLogger.StartLogging() << "id name " << Engine::GetEngineInfo().name << '\n';
+    GlobalLogger.StartLogging() << "id author " << Engine::GetEngineInfo().author << '\n';
 
     for(const auto& opt: Engine::GetEngineInfo().options) {
-        std::cout << *opt.second;
+        GlobalLogger.StartLogging() << *opt.second;
     }
-    std::cout << "uciok" << std::endl;
+    GlobalLogger.StartLogging() << "uciok" << std::endl;
     return UCICommand::uciCommand;
 }
 
 UCITranslator::UCICommand UCITranslator::_isReadyResponse() {
-    std::cout << "readyok" << std::endl;
+    GlobalLogger.StartLogging() << "readyok" << std::endl;
     return UCICommand::isreadyCommand;
 }
 
 UCITranslator::UCICommand UCITranslator::_displayResponse() const {
-    engine.writeBoard();
+    _engine.writeBoard();
+    return UCICommand::displayCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_displayFen() const {
+    GlobalLogger.StartLogging() << "Acquired fen translation:\n" << _engine.GetFenTranslation() << '\n';
     return UCICommand::displayCommand;
 }

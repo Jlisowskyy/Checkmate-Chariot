@@ -35,6 +35,87 @@ Board FenTranslator::Translate(const std::string& fenPos) {
     return workBoard;
 }
 
+std::string FenTranslator::Translate(const Board& board) {
+    std::string fenPos{};
+    _extractFiguresEncoding(board, fenPos);
+    fenPos += ' ';
+    fenPos += _extractCastling(board);
+    fenPos += ' ';
+    fenPos += fieldStrMap.at(board.elPassantField);
+
+    // skpping moves counters - not supported
+    fenPos += " - - ";
+
+    return fenPos;
+}
+
+void FenTranslator::_extractFiguresEncoding(const Board& bd, std::string& fenPos) {
+    int inSeries{};
+
+    for(ssize_t y = 7; y >= 0; --y) {
+        for(ssize_t x = 0; x < 8; ++x) {
+            const int bInd = static_cast<int>(y * 8 + x);
+
+            // reading figure from the board
+            const auto [res, fig, col] = _extractSingleEncoding(bd, bInd);
+            if (res == empty) {
+                ++inSeries;
+                continue;
+            }
+
+            // eventually adding empty figure FEN offset
+            if (inSeries) fenPos += static_cast<char>('0' + inSeries);
+            inSeries = 0;
+
+            fenPos += col == WHITE ? static_cast<char>(std::toupper(fig)) : fig;
+        }
+
+        // eventually adding empty figure FEN offset
+        if (inSeries) fenPos += static_cast<char>('0' + inSeries);
+        inSeries = 0;
+
+        // skipping last slash
+        if (y != 0) fenPos += '/';
+    }
+}
+
+std::tuple<FenTranslator::FieldOccup, char, Color> FenTranslator::_extractSingleEncoding(const Board& bd,
+    const int bInd) {
+    const uint64_t map = 1LLU << bInd;
+
+    for (size_t i = 0; i < Board::BoardsCount; ++i) {
+        if ((map & bd.boards[i]) != 0) {
+            Color col = i >= Board::BoardsPerCol ? BLACK : WHITE;
+            char fig;
+
+            switch (i%Board::BoardsPerCol) {
+                case pawnsIndex:
+                    fig = 'p';
+                    break;
+                case knightsIndex:
+                    fig = 'n';
+                    break;
+                case bishopsIndex:
+                    fig = 'b';
+                    break;
+                case rooksIndex:
+                    fig = 'r';
+                    break;
+                case queensIndex:
+                    fig = 'q';
+                    break;
+                case kingIndex:
+                    fig = 'k';
+                    break;
+            }
+
+            return { occupied, fig, col };
+        }
+    }
+
+    return { empty, {}, {}};
+}
+
 size_t FenTranslator::_processElPassant(Board& bd, const size_t pos, const std::string& fenPos) {
     if (pos >= fenPos.length())
         throw std::runtime_error("[ ERROR ] Fen position has invalid castling specified!\n");

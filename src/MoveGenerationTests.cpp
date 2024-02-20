@@ -20,7 +20,6 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const
     const int depth, const std::vector<std::string>& moves, const bool writeOnOut) const {
     Engine eng{};
     eng.SetFenPosition(fenPosition);
-    eng.Initialize();
     eng.ApplyMoves(moves);
 
     const auto externalEngineMoves = _generateCorrectMoveCounts(fenPosition, depth, moves);
@@ -85,10 +84,27 @@ void MoveGenerationTester::PerformDeepTest(const std::string& fenPosition,
     }
 }
 
-void MoveGenerationTester::_deepTestRecu(const std::string& fenPosition, const int depth,
-    std::vector<std::string>& moves, std::string& chainOut) const
+void MoveGenerationTester::PerformFullTest(const std::string& fenPosition, const int depth,
+    const std::vector<std::string>& moves) const
 {
-    if (depth == 0 ) return;
+    Engine eng{};
+    eng.SetFenPosition(fenPosition);
+    eng.ApplyMoves(moves);
+
+    auto board = eng.GetUnderlyingBoardCopy();
+    ChessMechanics mech{board};
+    mech.IterativeBoardTraversal(
+        [&](Board& bd) {
+
+        },
+        depth-1
+    );
+}
+
+void MoveGenerationTester::_deepTestRecu(const std::string& fenPosition, const int depth,
+                                         std::vector<std::string>& moves, std::string& chainOut) const
+{
+    if (depth == 0) return;
 
     // Performing calculation on actual layer
     auto [move, errDep] = PerformSingleShallowTest(fenPosition, depth, moves, true);

@@ -21,9 +21,34 @@ struct FenTranslator {
         // Function simply translates position from FEN notation into inner representation.
     ;
 
+    static std::string Translate(const Board& board);
+
+    // ------------------------------
+    // Inner types
+    // ------------------------------
+private:
+
+    enum FieldOccup {
+        empty,
+        occupied
+    };
+
     // ------------------------------
     // private methods
     // ------------------------------
+
+    static std::string _extractCastling(const Board& bd) {
+        std::string str{};
+
+
+    }
+
+    static void _extractFiguresEncoding(const Board& bd, std::string& fenPos);
+
+    static std::tuple<FieldOccup, char, Color> _extractSingleEncoding(const Board& bd, int bInd)
+        // extracts
+
+    ;
 
     static size_t _processElPassant(Board& bd, size_t pos, const std::string& fenPos)
         // Function reads from fenPos ElPassant field specifying substring
@@ -61,9 +86,16 @@ struct FenTranslator {
     // class fields
     // ------------------------------
 
-    static constexpr const char* StartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    static constexpr char CastlingNames[] {
+        'K',
+        'Q',
+        'k',
+        'q',
+    };
 
-private:
+public:
+
+    static constexpr const char* StartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     static constexpr Board StartBoard = {
         .Castlings = { true, true, true, true },

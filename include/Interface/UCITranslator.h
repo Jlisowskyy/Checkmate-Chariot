@@ -25,7 +25,7 @@ class UCITranslator {
     // Type creation and initialization
     // --------------------------------------
 public:
-    UCITranslator(Engine& engine) : engine(engine) {}
+    UCITranslator(Engine& engine) : _engine(engine) {}
 
     // ------------------------------
     // internal types
@@ -64,6 +64,7 @@ private:
     static UCICommand _uciResponse();
     UCICommand static _isReadyResponse();
     UCICommand _displayResponse() const;
+    UCICommand _displayFen() const;
 
     // ------------------------------
     // private fields
@@ -71,7 +72,7 @@ private:
 
     std::vector<std::string> _appliedMoves{};
     std::string _fenPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    Engine& engine;
+    Engine& _engine;
 };
 
 #endif //UCITRANSLATOR_H
