@@ -39,14 +39,26 @@ std::string FenTranslator::Translate(const Board& board) {
     std::string fenPos{};
     _extractFiguresEncoding(board, fenPos);
     fenPos += ' ';
+    fenPos += board.movColor == WHITE ? 'w' : 'b';
+    fenPos += ' ';
     fenPos += _extractCastling(board);
     fenPos += ' ';
-    fenPos += fieldStrMap.at(board.elPassantField);
+    fenPos += board.elPassantField == INVALID ? "-" : fieldStrMap.at(board.elPassantField);
 
     // skpping moves counters - not supported
-    fenPos += " - - ";
+    fenPos += " 0 1";
 
     return fenPos;
+}
+
+std::string FenTranslator::_extractCastling(const Board& bd) {
+    std::string str{};
+    for (size_t i = 0; i < Board::CastlingCount; ++i)
+        if (bd.Castlings[i])
+            str += CastlingNames[i];
+
+    if (str.empty()) str = "-";
+    return str;
 }
 
 void FenTranslator::_extractFiguresEncoding(const Board& bd, std::string& fenPos) {

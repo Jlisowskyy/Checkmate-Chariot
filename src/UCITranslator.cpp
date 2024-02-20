@@ -92,6 +92,17 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str) con
         const MoveGenerationTester tester;
         tester.PerformDeepTest(_fenPosition, depth, _appliedMoves);
     }
+    else if (workStr == "fullDebug") {
+        std::string depthStr{};
+        ParseTools::ExtractNextWord(str, depthStr, pos);
+
+        int depth;
+        try { depth = std::stoi(depthStr); }
+        catch (const std::exception& exc){ return UCICommand::InvalidCommand; }
+
+        const MoveGenerationTester tester;
+        tester.PerformFullTest(_fenPosition, depth, _appliedMoves);
+    }
     else if (workStr == "infinite")
         _engine.GoInfinite();
     else if (workStr == "depth") {

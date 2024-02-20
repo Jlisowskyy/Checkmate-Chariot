@@ -16,6 +16,9 @@
  *                       which implements "go perft command" - default target engine is stockfish
  *  - go deepDebug "depth" - debugging tool, which is used to possibly identify invalid move chains which produces
  *                       buggy result.
+ *  - go fullDebug "depth" - traverses whole tree and invokes simple debug test on each leaf parent to check
+ *                       move correctnes on lowest level possible. Insanly slow - use only for lower search. Could be optimised.
+ *  - fen - simply displays fen encoding of current map
  *
  *  Where "depth" is integer value indicating layers of traversed move tree.
  */

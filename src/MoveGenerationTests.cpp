@@ -87,6 +87,7 @@ void MoveGenerationTester::PerformDeepTest(const std::string& fenPosition,
 void MoveGenerationTester::PerformFullTest(const std::string& fenPosition, const int depth,
     const std::vector<std::string>& moves) const
 {
+    bool shouldEnd = false;
     Engine eng{};
     eng.SetFenPosition(fenPosition);
     eng.ApplyMoves(moves);
@@ -94,11 +95,23 @@ void MoveGenerationTester::PerformFullTest(const std::string& fenPosition, const
     auto board = eng.GetUnderlyingBoardCopy();
     ChessMechanics mech{board};
     mech.IterativeBoardTraversal(
-        [&](Board& bd) {
+        [&](const Board& bd) {
+            if (shouldEnd) return;
 
+            const auto fenEncoding = FenTranslator::Translate(bd);
+            const auto [move, dep] = PerformSingleShallowTest(fenEncoding, 1, std::vector<std::string>{});
+
+            if (dep != -1) {
+                shouldEnd = true;
+                GlobalLogger.StartLogging() << std::format("[ ERROR ] Invalid position found: {}\n And move: {}\n", fenEncoding, move);
+            }
         },
         depth-1
     );
+
+    if (shouldEnd == false) {
+        GlobalLogger.StartLogging() << "[  OK  ] No invalid positions found!\n";
+    }
 }
 
 void MoveGenerationTester::_deepTestRecu(const std::string& fenPosition, const int depth,
@@ -237,7 +250,7 @@ std::map<std::string, uint64_t> MoveGenerationTester::_getCorrectMovesMap(const 
     while((size = read(readFileDesc, buf, buffSize)) > 0){
         ssize_t pos{};
 
-        while((pos = ParseTools::ExtractNextLine(pos, size, buf, lineBuff)) < size) {
+        while((pos = static_cast<ssize_t>(ParseTools::ExtractNextLine(pos, size, buf, lineBuff))) < size) {
             _processLine(moveMap, lineBuff);
             lineBuff.clear();
         }

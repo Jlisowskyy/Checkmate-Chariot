@@ -37,17 +37,14 @@ private:
     // private methods
     // ------------------------------
 
-    static std::string _extractCastling(const Board& bd) {
-        std::string str{};
+    static std::string _extractCastling(const Board& bd);
 
-
-    }
-
-    static void _extractFiguresEncoding(const Board& bd, std::string& fenPos);
+    static void _extractFiguresEncoding(const Board& bd, std::string& fenPos)
+        // pastes occupancy of whole board straght to passed string buffer
+    ;
 
     static std::tuple<FieldOccup, char, Color> _extractSingleEncoding(const Board& bd, int bInd)
-        // extracts
-
+        // extracts information of occupancy on pased board indexed field
     ;
 
     static size_t _processElPassant(Board& bd, size_t pos, const std::string& fenPos)
