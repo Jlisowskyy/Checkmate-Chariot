@@ -61,7 +61,7 @@ struct ChessMechanics {
 
     // returns [ pinnedFigMap, allowedTilesMap ]
     [[nodiscard]] std::pair<uint64_t, uint64_t> GetPinnedFigsMapWithCheck(int col, uint64_t fullMap) const;
-
+    [[nodiscard]] uint64_t GetAllowedTilesWhenCheckedByNonSliding(int col) const;
     [[nodiscard]] std::vector<Board> GetPossibleMoveSlow();
 
     /*                  Important notes:
@@ -149,26 +149,38 @@ private:
     >void _singleCheckIterativeTraversal(ActionT action, const int depth, const uint64_t fullMap,
         const uint64_t blockedFigMap, const uint8_t checkType)
     {
-        // TODO: IMPLEMENT CHECKTYPE !!! THERE ARE MASSIVE UNIMPLEMENTED IDEAS
-        const auto [pinnedFigsMap, allowedTilesMap] = GetPinnedFigsMapWithCheck(board.movColor, fullMap);
+        static constexpr uint64_t UNUSED = 0;
+
+        // simplifying figure search by distinguishing check types
+        const auto [pinnedFigsMap, allowedTilesMap] = [&]() -> std::pair<uint64_t, uint64_t> {
+            if (checkType == slidingFigCheck)
+                return GetPinnedFigsMapWithCheck(board.movColor, fullMap);
+
+            auto pinned = GetPinnedFigsMapWoutCheck(board.movColor, fullMap);
+            return { pinned, GetAllowedTilesWhenCheckedByNonSliding(board.movColor, fullMap)};
+        }();
+
+        // helping variable preparation
         const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
         const uint64_t allyMap = GetColMap(board.movColor);
 
+
+        // Specific figure processing
         _processFigMoves<ActionT, RookMap, true, false, false, true>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + rooksIndex],
-            enemyMap, allyMap,  pinnedFigsMap, allowedTilesMap);
+            enemyMap, allyMap,  pinnedFigsMap, UNUSED, allowedTilesMap);
 
         _processFigMoves<ActionT, BishopMap, false, false, false, true>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + bishopsIndex],
-            enemyMap, allyMap,  pinnedFigsMap, allowedTilesMap);
+            enemyMap, allyMap,  pinnedFigsMap, UNUSED,  allowedTilesMap);
 
         _processFigMoves<ActionT, QueenMap, false, false, false, true>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + queensIndex],
-            enemyMap, allyMap,  pinnedFigsMap, allowedTilesMap);
+            enemyMap, allyMap,  pinnedFigsMap, UNUSED, allowedTilesMap);
 
         _processFigMoves<ActionT, KnightMap, false, false, false, true>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + knightsIndex],
-            enemyMap, allyMap,  pinnedFigsMap, allowedTilesMap);
+            enemyMap, allyMap,  pinnedFigsMap, UNUSED, allowedTilesMap);
 
         if (board.movColor == WHITE)
             _processPawnMoves<ActionT, WhitePawnMap, true>(action, depth,
