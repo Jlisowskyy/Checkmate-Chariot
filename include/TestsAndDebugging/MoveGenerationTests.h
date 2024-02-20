@@ -41,7 +41,7 @@ private:
     static constexpr size_t ReadPipe = 0;
     static constexpr size_t buffSize = 4096;
 
-    void _deepTestRecu(const std::string& fenPosition, int depth, const std::vector<std::string>& moves, std::string& chainOut) const;
+    void _deepTestRecu(const std::string& fenPosition, int depth, std::vector<std::string>& moves, std::string& chainOut) const;
     [[nodiscard]] std::map<std::string, uint64_t> _generateCorrectMoveCounts(const std::string& fenPosition,
         int depth, const std::vector<std::string>& moves) const;
     static size_t _chessSubstrEnd(const std::string& str);

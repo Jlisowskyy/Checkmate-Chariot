@@ -30,9 +30,8 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const
 
         // first case : move not detected
         if (!internalEngineMoves.contains(move)) {
-
             if (writeOnOut)
-                GlobalLogger.StartLogging() << std::format("[ ERROR ] Engine didnt detect move: {} on first depth!\n", move);
+                GlobalLogger.StartLogging() << std::format("[ ERROR ] Internal Engine didnt detect move: {} on first depth!\n", move);
             return { move, 0 };
         }
 
@@ -70,7 +69,8 @@ void MoveGenerationTester::PerformDeepTest(const std::string& fenPosition,
     const int depth, const std::vector<std::string>& moves) const
 {
     std::string invalidMoveChain;
-    _deepTestRecu(fenPosition, depth, moves, invalidMoveChain);
+    std::vector<std::string> innerMoves = moves;
+    _deepTestRecu(fenPosition, depth, innerMoves, invalidMoveChain);
 
     if (invalidMoveChain.empty())
         GlobalLogger.StartLogging() << "[  OK  ] No errors occured!\n";
@@ -80,18 +80,19 @@ void MoveGenerationTester::PerformDeepTest(const std::string& fenPosition,
 }
 
 void MoveGenerationTester::_deepTestRecu(const std::string& fenPosition, const int depth,
-    const std::vector<std::string>& moves, std::string& chainOut) const
+    std::vector<std::string>& moves, std::string& chainOut) const
 {
     if (depth == 0 ) return;
 
     // Performing calculation on actual layer
-    auto [move, errDep] = PerformSingleShallowTest(fenPosition, depth, moves);
+    auto [move, errDep] = PerformSingleShallowTest(fenPosition, depth, moves, true);
 
     // skipping deeper search when moves does not differ
     if (errDep == -1) return;
 
     // otherwise adding move to the chain
     chainOut += move + " ==> ";
+    moves.push_back(move);
 
     // if error occured on actual layer stop adding moves to the chain
     if (errDep == 0) return;
@@ -105,8 +106,15 @@ std::map<std::string, uint64_t> MoveGenerationTester::_generateCorrectMoveCounts
     // preparing pipes. 1 - input, 0 - output
     int inPipeFileDesc[2];
     int outPipeFileDesc[2];
-    pipe(inPipeFileDesc);
-    pipe(outPipeFileDesc);
+
+    if (pipe(inPipeFileDesc)) {
+        perror("inPipeFileDesc init failed!");
+        exit(EXIT_FAILURE);
+    }
+    if (pipe(outPipeFileDesc)) {
+        perror("outPipeFileDesc init failed!");
+        exit(EXIT_FAILURE);
+    }
 
     // fork branching
     const pid_t proc = fork();
@@ -165,13 +173,14 @@ void MoveGenerationTester::_processLine(std::map<std::string, uint64_t>& out, co
     std::string wordBuffer{};
 
     // extracting position encoding
-    while ((pos = ParseTools::ExtractNextWord(trimmed, wordBuffer, pos)) != 0)
+    while ((pos = ParseTools::ExtractNextWord(trimmed, wordBuffer, pos)) != 0) {
         if (_chessSubstrEnd(wordBuffer) > 0) {
             positionEncoding = wordBuffer.substr(0, _chessSubstrEnd(wordBuffer));
             wordBuffer.clear();
             break;
         }
-        else wordBuffer.clear();
+        wordBuffer.clear();
+    }
 
     if (pos == 0) return;
 
@@ -221,29 +230,42 @@ std::map<std::string, uint64_t> MoveGenerationTester::_getCorrectMovesMap(const 
 }
 
 void MoveGenerationTester::_startUpPerft(const std::string& fenPosition, const int depth, const std::vector<std::string>& moves, const int writeFileDesc) {
-    static constexpr const char* quitCommand = "quit\n";
+    static constexpr auto quitCommand = "quit\n";
     const std::string fenCommand = std::format("position fen {}\n", fenPosition);
     const std::string perftCommand = std::format("go perft {}\n", depth);
 
     write(writeFileDesc, fenCommand.c_str(), fenCommand.size());
-    write(writeFileDesc, perftCommand.c_str(), perftCommand.size());
 
+    // applying moves to the external engine
     if (!moves.empty()) {
         std::string moveString = "position startpos moves ";
         for (const auto& move: moves)
             moveString += move + ' ';
 
+        moveString += '\n';
         write(writeFileDesc, moveString.c_str(), moveString.size());
     }
 
+    write(writeFileDesc, perftCommand.c_str(), perftCommand.size());
     write(writeFileDesc, quitCommand, strlen(quitCommand));
 }
 
 void MoveGenerationTester::_spawnEngine(const int* const inPipeFileDesc, const int* const outPipeFileDesc) const {
     // connecting with pipes
-    dup2(outPipeFileDesc[ReadPipe], STDIN_FILENO);
-    dup2(inPipeFileDesc[WritePipe], STDOUT_FILENO);
-    dup2(inPipeFileDesc[WritePipe], STDERR_FILENO);
+    if (dup2(outPipeFileDesc[ReadPipe], STDIN_FILENO) == -1) {
+        perror("Not able to comunicate with other engine!");
+        exit(EXIT_FAILURE);
+    }
+
+    if (dup2(inPipeFileDesc[WritePipe], STDOUT_FILENO) == -1){
+        perror("Not able to comunicate with other engine!");
+        exit(EXIT_FAILURE);
+    };
+
+    if (dup2(inPipeFileDesc[WritePipe], STDERR_FILENO) == -1){
+        perror("Not able to comunicate with other engine!");
+        exit(EXIT_FAILURE);
+    };
 
     // enforces closing the program when parent dies
     prctl(PR_SET_PDEATHSIG, SIGTERM);
