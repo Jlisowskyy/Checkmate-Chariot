@@ -153,7 +153,7 @@ private:
         const auto [pinnedFigsMap, allowedTilesMap] = GetPinnedFigsMapWithCheck(board.movColor, fullMap);
         const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
         const uint64_t allyMap = GetColMap(board.movColor);
-
+        
         _processFigMoves<ActionT, RookMap, true, false, false, true>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + rooksIndex],
             enemyMap, allyMap,  pinnedFigsMap, allowedTilesMap);
@@ -282,6 +282,8 @@ private:
         const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
         [[maybe_unused]] const uint64_t figureSelector = 0, [[maybe_unused]] const uint64_t allowedMovesSelector = 0)
     {
+        static constexpr size_t invalidCastlingIndex = 99;
+
         const uint64_t fullMap = enemyMap | allyMap;
         uint64_t pinnedOnes = pinnedFigMap & figMap;
         uint64_t unpinnedOnes = figMap ^ pinnedOnes;
@@ -313,14 +315,14 @@ private:
 
             // Performing checks for castlings
             // TODO: test in future performance affections
-            [[maybe_unused]] ssize_t castlingIndex = -1;
+            [[maybe_unused]] size_t castlingIndex = invalidCastlingIndex;
             if constexpr (checkForCastling) {
                 for (size_t i = 0; i < Board::CastlingsPerColor; ++i)
                     if (const size_t index = board.movColor*Board::CastlingsPerColor + i;
                         board.Castlings[index] && (Board::CastlingsRookMaps[index] & figBoard) != 0)
                     {
                         board.Castlings[index] = false;
-                        castlingIndex = reinterpret_cast<size_t>(index);
+                        castlingIndex = index;
                     }
             }
 
@@ -336,7 +338,7 @@ private:
             // cleaning up
             figMap |= figBoard;
             if constexpr (checkForCastling)
-                if (castlingIndex != -1)
+                if (castlingIndex != invalidCastlingIndex)
                     board.Castlings[castlingIndex] = true;
 
             unpinnedOnes ^= figBoard;
@@ -350,12 +352,13 @@ private:
         }
 
         // procesing pinned moves
+        // Note: corner Rook possibly applicable to castling cannot be pinned
         while(pinnedOnes) {
             // processing moves
             const uint8_t figPos = ExtractMsbPos(pinnedOnes);
             const uint64_t figBoard = maxMsbPossible >> figPos;
             const uint64_t allowedTiles = _generateAllowedTilesForPrecisedPinnedFig(figBoard, fullMap);
-            const uint64_t figMoves = MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap & allowedTiles;
+            const uint64_t figMoves = MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap & allowedTiles; // TODO: ischeck applid here?
 
             // preparing moves
             const uint64_t attackMoves = figMoves & enemyMap;
@@ -496,10 +499,12 @@ private:
     {
         static constexpr size_t CastlingPerColor = 2;
 
-        // generating moves
-        const uint64_t kingMoves = KingMap::GetMoves(board.kingMSBPositions[board.movColor]) & ~blockedFigMap & ~allyMap;
+        // simple helping variables
         const size_t movingColorIndex = board.movColor*Board::BoardsPerCol;
         const size_t enemyColorIndex = SwapColor(board.movColor)*Board::BoardsPerCol;
+
+        // generating moves
+        const uint64_t kingMoves = KingMap::GetMoves(board.kingMSBPositions[board.movColor]) & ~blockedFigMap & ~allyMap;
         uint64_t attackingMoves = kingMoves & enemyMap;
         uint64_t nonAttackingMoves = kingMoves ^ attackingMoves;
 
@@ -525,7 +530,6 @@ private:
             board.kingMSBPositions[board.movColor] = newPos;
             board.boards[movingColorIndex + kingIndex] = newKingBoard;
 
-
             // performing core actions
             board.ChangePlayingColor();
             IterativeBoardTraversal(action, depth-1);
@@ -534,30 +538,32 @@ private:
             nonAttackingMoves ^= newKingBoard;
         }
 
-        if (!attackingMoves) return;
+        if (attackingMoves)
+            // possibly prevents some slowing memory copying operation
+        {
+            // processing slightly more complicated attacking moves
+            std::array<uint64_t, 5> mapsBackup{};
+            for(size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[enemyColorIndex + i];
+            while(attackingMoves) {
+                // extracting new king position data
+                const uint8_t newPos = ExtractMsbPos(attackingMoves);
+                const uint64_t newKingBoard = maxMsbPossible >> newPos;
 
-        // processing slightly more complicated attacking moves
-        std::array<uint64_t, 5> mapsBackup{};
-        for(size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[enemyColorIndex + i];
-        while(attackingMoves) {
-            // extracting new king position data
-            const uint8_t newPos = ExtractMsbPos(attackingMoves);
-            const uint64_t newKingBoard = maxMsbPossible >> newPos;
+                // preparing board changes
+                for(size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] &= ~newKingBoard;
+                board.kingMSBPositions[board.movColor] = newPos;
+                board.boards[movingColorIndex + kingIndex] = newKingBoard;
 
-            // preparing board changes
-            for(size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] &= ~newKingBoard;
-            board.kingMSBPositions[board.movColor] = newPos;
-            board.boards[movingColorIndex + kingIndex] = newKingBoard;
+                // performing core actions
+                board.ChangePlayingColor();
+                IterativeBoardTraversal(action, depth-1);
 
-            // performing core actions
-            board.ChangePlayingColor();
-            IterativeBoardTraversal(action, depth-1);
+                // cleaning up
+                board.ChangePlayingColor();
+                for(size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] = mapsBackup[i];
 
-            // cleaning up
-            board.ChangePlayingColor();
-            for(size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] = mapsBackup[i];
-
-            attackingMoves ^= newKingBoard;
+                attackingMoves ^= newKingBoard;
+            }
         }
 
         // reverting changes
@@ -628,9 +634,9 @@ private:
             const int msbPos = ExtractMsbPos(suspectedFigs);
             const uint64_t attackedFig = MoveMapT::GetMoves(msbPos, fullMap) & fullMap & suspectedLines;
             const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
-            const uint64_t secondAttackedFig = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & fullMap & suspectedLines;
+            const uint64_t isKingAttacked = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & mapWoutAttackedFig & board.boards[allyCord + kingIndex];
 
-            const uint64_t pinnedFigFlag = ((secondAttackedFig & board.boards[allyCord + kingIndex]) >> allyKingShift)*attackedFig; // 0 or attackedFig
+            const uint64_t pinnedFigFlag = (isKingAttacked >> allyKingShift)*attackedFig; // 0 or attackedFig
             pinnedFigMap |= pinnedFigFlag;
 
             suspectedFigs ^= (maxMsbPossible >> msbPos);
@@ -651,17 +657,19 @@ private:
         while(suspectedFigs != 0) {
             const int msbPos = ExtractMsbPos(suspectedFigs);
             const uint64_t suspectedFigAttackFields = MoveMapT::GetMoves(msbPos, fullMap);
-            const uint64_t attackedFig = suspectedFigAttackFields & fullMap & suspectedLines;
 
-            if (attackedFig == board.boards[allyCord + kingIndex]) {
-                allowedTilesFigMap |= suspectedFigAttackFields | (maxMsbPossible >> msbPos);
+            if (const uint64_t attackedFig = suspectedFigAttackFields & fullMap & suspectedLines;
+                attackedFig == board.boards[allyCord + kingIndex]) {
+                allowedTilesFigMap |= (suspectedFigAttackFields | (maxMsbPossible >> msbPos)) & suspectedLines;
             }
+            else {
+                const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
+                const uint64_t isKingAttacked = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & mapWoutAttackedFig &
+                    board.boards[allyCord + kingIndex];
+                const uint64_t pinnedFigFlag = (isKingAttacked >> allyKingShift)*attackedFig;
 
-            const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
-            const uint64_t secondAttackedFig = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & fullMap & suspectedLines;
-
-            const uint64_t pinnedFigFlag = ((secondAttackedFig & board.boards[allyCord + kingIndex]) >> allyKingShift)*attackedFig; // 0 or attackedFig
-            pinnedFigMap |= pinnedFigFlag;
+                pinnedFigMap |= pinnedFigFlag;
+            }
 
             suspectedFigs ^= (maxMsbPossible >> msbPos);
         }

@@ -11,10 +11,7 @@
 #include "Interface/UCIOptions.h"
 #include "EngineTypeDefs.h"
 #include "Interface/FenTranslator.h"
-#include "Interface/Logger.h"
-#include "MoveGeneration/BlackPawnMap.h"
-#include "MoveGeneration/ChessMechanics.h"
-#include "MoveGeneration/WhitePawnMap.h"
+
 
 class Engine {
     // --------------------------------------
@@ -78,7 +75,7 @@ private:
 
     inline static const EngineInfo engineInfo = {
         .author = "Jakub Lisowski, Warsaw University of Technology",
-        .name = "ChessEngine development version 0.02",
+        .name = "ChessEngine development version 0.03",
         .options = std::map<std::string, const Option*>({
             std::make_pair("Threads", &Threads),
             std::make_pair("Debug Log File", &DebugLogFile),

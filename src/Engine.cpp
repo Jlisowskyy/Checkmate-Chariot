@@ -4,6 +4,9 @@
 
 #include "../include/Engine.h"
 #include "../include/MoveGeneration/ChessMechanics.h"
+#include "../include/Interface/Logger.h"
+#include "../include/MoveGeneration/BlackPawnMap.h"
+#include "../include/MoveGeneration/WhitePawnMap.h"
 
 void Engine::Initialize() {
     _board = FenTranslator::GetDefault();

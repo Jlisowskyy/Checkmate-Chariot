@@ -23,6 +23,8 @@ Board FenTranslator::Translate(const std::string& fenPos) {
         pos = _processCastlings(workBoard, pos, fenPos);
         pos = _skipBlanks(pos, fenPos);
         _processElPassant(workBoard, pos, fenPos);
+        workBoard.kingMSBPositions[WHITE] = ExtractMsbPos(workBoard.boards[kingIndex]);
+        workBoard.kingMSBPositions[BLACK] = ExtractMsbPos(workBoard.boards[Board::BoardsPerCol + kingIndex]);
     }
     catch (const std::exception& exc) {
         GlobalLogger.LogError(exc.what());

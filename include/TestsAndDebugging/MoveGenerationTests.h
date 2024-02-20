@@ -67,8 +67,15 @@ private:
 struct MoveGenerationTester {
     MoveGenerationTester( [[maybe_unused]] const std::string& unused) {}
 
-    void PerformSingleTest(const std::string& fenPosition, const int depth) const {
+    void PerformSingleTest([[maybe_unused]]const std::string& fenPosition, [[maybe_unused]]const int depth) const
+    {
         GlobalLogger.StartErrLogging() << "[ ERROR ] Tests supported only under unix compatible platforms!\n";
+    }
+
+    void PerformDeepTest([[maybe_unused]] const std::string& fenPosition, [[maybe_unused]] int depth,
+        [[maybe_unused]] const std::vector<std::string>& moves) const
+    {
+        PerformSingleTest(fenPosition, depth);
     }
 };
 

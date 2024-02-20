@@ -59,7 +59,7 @@ private:
     UCICommand _stopResponse() const;
     [[nodiscard]] UCICommand _goResponse(const std::string& str) const;
     [[nodiscard]] UCICommand _positionResponse(const std::string& str);
-    UCICommand _ucinewgameResponse() const;
+    UCICommand _ucinewgameResponse();
     [[nodiscard]] UCICommand _setoptionResponse(const std::string& str) const;
     static UCICommand _uciResponse();
     UCICommand static _isReadyResponse();

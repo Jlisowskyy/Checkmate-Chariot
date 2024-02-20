@@ -32,9 +32,8 @@ public:
         const uint64_t attackMoves = GetAttackFields(pawnBit) & enemyMap;
         const uint64_t frontMove = (pawnBit << 8) & ~fullMap;
 
-        const uint64_t isOnStartField = pawnBit & StartMask;
-        const uint64_t isNotBlockedOnFirstMove = (~fullMap) >> 8;
-        const uint64_t frontDoubleMove = (isOnStartField & isNotBlockedOnFirstMove) << 16;
+        const uint64_t isOnStartField = ((frontMove >> 8) & pawnBit & StartMask) << 16;
+        const uint64_t frontDoubleMove = isOnStartField & ~fullMap;
 
         return attackMoves | frontMove | frontDoubleMove;
     }

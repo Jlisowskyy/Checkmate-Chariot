@@ -51,6 +51,8 @@ struct PinningMasks {
 
         for (int i = 0; i < PinningMasksCount/2; ++i) rookMask |= masks[i];
         for (int i = PinningMasksCount/2; i < PinningMasksCount; ++i) bishopMask |= masks[i];
+        rookMask |= (1LLU << bInd);
+        bishopMask |= (1LLU << bInd);
         fullMask = bishopMask | rookMask;
     }
 
@@ -70,7 +72,7 @@ struct PinningMasks {
     static constexpr size_t RookLines = 4;
     std::array<uint64_t, PinningMasksCount> masks{};
     uint64_t fullMask{};
-    uint64_t rookMask{};
+    uint64_t rookMask{};;
     uint64_t bishopMask{};
 
     // ------------------------------

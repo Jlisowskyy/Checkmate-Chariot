@@ -8,6 +8,7 @@
 #include <string>
 #include <format>
 
+#include "../BitOperations.h"
 #include "../EngineTypeDefs.h"
 
 struct FenTranslator {
@@ -59,6 +60,7 @@ struct FenTranslator {
     // ------------------------------
     // class fields
     // ------------------------------
+
     static constexpr const char* StartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 private:
@@ -67,6 +69,7 @@ private:
         .Castlings = { true, true, true, true },
         .elPassantField = INVALID,
         .movColor = WHITE,
+        .kingMSBPositions = { ConvertToReversedPos(4), ConvertToReversedPos(60) },
         .boards = {
             65280LLU,
             66LLU,

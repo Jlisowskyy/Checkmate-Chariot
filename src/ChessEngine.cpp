@@ -6,6 +6,8 @@
 
 #include "../include/Interface/UCITranslator.h"
 #include "../include/Engine.h"
+#include "../include/MoveGeneration/BishopMap.h"
+#include "../include/MoveGeneration/RookMap.h"
 // #include "../include/MoveGeneration/KingMap.h"
 // #include "../include/MoveGeneration/BishopMapGenerator.h"
 // #include "../include/MapTypes/ModuloFreeNoOffsetBishopMap.h"

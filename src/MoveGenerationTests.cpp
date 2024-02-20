@@ -74,9 +74,15 @@ void MoveGenerationTester::PerformDeepTest(const std::string& fenPosition,
 
     if (invalidMoveChain.empty())
         GlobalLogger.StartLogging() << "[  OK  ] No errors occured!\n";
-    else
+    else {
         GlobalLogger.StartLogging() << std::format("[ ERROR ] Found invalind moves chain:\n\t{}\n",
-                                                   invalidMoveChain + " NULL");
+                                                  invalidMoveChain + " NULL");
+
+        std::string moveString{};
+        for(const auto& move: innerMoves) moveString += move + ' ';
+
+        GlobalLogger.StartLogging() << std::format("\tReady pos command:\n\tposition startpos moves {}\n", moveString);
+    }
 }
 
 void MoveGenerationTester::_deepTestRecu(const std::string& fenPosition, const int depth,
