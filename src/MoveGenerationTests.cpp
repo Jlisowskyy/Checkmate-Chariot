@@ -9,10 +9,14 @@
 #include <cstring>
 #include <sys/wait.h>
 #include <format>
+#include <fstream>
 
 #include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/ParseTools.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
+
+#include <string>
+
 #include "../include/Engine.h"
 #include "../include/Interface/Logger.h"
 
@@ -123,6 +127,48 @@ void MoveGenerationTester::PerformFullTest(const std::string&fenPosition, const 
     {
         GlobalLogger.StartLogging() << "[  OK  ] No invalid positions found!\n";
     }
+}
+
+void MoveGenerationTester::PerformSeriesOfDeepTests(const std::vector<std::pair<std::string, int>>& testPositions) const
+{
+    for(const auto& [position, depth] : testPositions)
+    {
+        GlobalLogger.StartLogging() << std::format("Starting deep debug test on position:\n\t{}\n\tWith depth: {}\n", position, depth);
+        PerformDeepTest(position, depth, std::vector<std::string>());
+    }
+}
+
+bool MoveGenerationTester::PerformSeriesOfDeepTestFromFile(const std::string& path) const
+{
+    std::vector<std::pair<std::string, int>> tests{};
+    std::ifstream csvRead(path.empty() ? DefaultTestPath : path);
+
+    for(std::string buffer{}; std::getline(csvRead, buffer);)
+    {
+        std::string innerBuf{};
+        size_t pos = ParseTools::ExtractNextWord<[](int x)->int{ return x == ','; }>(buffer, innerBuf, 0);
+        if (pos == 0) return false;
+
+        innerBuf.pop_back();
+        tests.emplace_back(innerBuf, 0);
+
+        pos = ParseTools::ExtractNextWord(buffer, innerBuf, pos+1);
+        if (pos == 0) return false;
+
+        try
+        {
+            tests.back().second = static_cast<int>(ParseTools::ParseTolli(innerBuf));
+        }
+        catch(const std::exception& exc)
+        {
+            GlobalLogger.StartErrLogging() << std::format("[ ERROR ] Error occured:\n{}\n", exc.what());
+            return false;
+        }
+    }
+
+    PerformSeriesOfDeepTests(tests);
+
+    return true;
 }
 
 void MoveGenerationTester::_deepTestRecu(const std::string&fenPosition, const int depth,

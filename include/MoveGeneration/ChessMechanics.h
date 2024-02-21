@@ -186,7 +186,6 @@ private:
         const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
         const uint64_t allyMap = GetColMap(board.movColor);
 
-
         // Specific figure processing
         _processFigMoves<ActionT, RookMap, true, false, false, true>(action, depth,
                                                                      board.boards[

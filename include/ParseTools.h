@@ -26,7 +26,21 @@ struct ParseTools
     // Parses passed string 'str' splitting string into words one by one startring by given position pos.
     // returns position after the end of parsed word.
     // If returned position is equal to 0, then no word was detected.
-    static size_t ExtractNextWord(const std::string&str, std::string&wordOut, size_t startPos);
+
+    template<
+        int (*crit)(int) = isblank
+    >static size_t ExtractNextWord(const std::string&str, std::string&wordOut, size_t startPos)
+    {
+        while (startPos < str.length() && isblank(str[startPos])) { ++startPos; }
+        const size_t beg = startPos;
+        while (startPos < str.length() && !crit(str[startPos])) { ++startPos; }
+        const size_t end = startPos;
+
+        if (beg == end) return 0;
+
+        wordOut = str.substr(beg, end - beg);
+        return end;
+    }
 
     // Returns last character present in outBuffer + 1
     static size_t ExtractNextLine(size_t startPos, size_t maxPos, const char* inBuffer, std::string&outBuffer);

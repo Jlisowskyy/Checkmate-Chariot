@@ -47,25 +47,6 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     // King attacks generation.
     const uint64_t kingBlockedMap = KingMap::GetMoves(board.kingMSBPositions[enemyCol]);
 
-    // Pawns attacks generation.
-    const uint64_t pawnsMap = board.boards[enemyFigInd + pawnsIndex];
-    const uint64_t pawnBlockedMap = enemyCol == WHITE
-                                        ? WhitePawnMap::GetAttackFields(pawnsMap)
-                                        : BlackPawnMap::GetAttackFields(pawnsMap);
-    const uint8_t wasCheckedByPawnFlag = (pawnBlockedMap & allyKingMap) >> allyKingShift;
-    // = 1 or 0 depending whether hits or not
-    checksCount += wasCheckedByPawnFlag;
-    chT = simpleFigCheck * wasCheckedByPawnFlag;
-
-    // Knight attacks generation.
-    const uint64_t knighBlockedMap = _blockIterativeGenerator(board.boards[enemyFigInd + knightsIndex],
-                                                              [=](const int pos) { return KnightMap::GetMoves(pos); }
-    );
-    const uint8_t wasCheckedByKnightFlag = (knighBlockedMap & allyKingMap) >> allyKingShift;
-    // = 1 or 0 depending whether hits or not
-    checksCount += wasCheckedByKnightFlag;
-    chT = simpleFigCheck * wasCheckedByKnightFlag;
-
     // Rook attacks generation.
     const uint64_t rookBlockedMap = _blockIterativeGenerator(
         board.boards[enemyFigInd + rooksIndex] | board.boards[enemyFigInd + queensIndex],
@@ -74,8 +55,6 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     const uint8_t wasCheckedByRookFlag = (rookBlockedMap & allyKingMap) >> allyKingShift;
     // = 1 or 0 depending whether hits or not
     checksCount += wasCheckedByRookFlag;
-    chT = slidingFigCheck * wasCheckedByRookFlag;
-
     // Bishop attacks generation.
     const uint64_t bishopBlockedMap = _blockIterativeGenerator(
         board.boards[enemyFigInd + bishopsIndex] | board.boards[enemyFigInd + queensIndex],
@@ -84,7 +63,25 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     const uint8_t wasCheckedByBishopFlag = (bishopBlockedMap & allyKingMap) >> allyKingShift;
     // = 1 or 0 depending whether hits or not
     checksCount += wasCheckedByBishopFlag;
-    chT = slidingFigCheck * wasCheckedByBishopFlag;
+
+    // Pawns attacks generation.
+    const uint64_t pawnsMap = board.boards[enemyFigInd + pawnsIndex];
+    const uint64_t pawnBlockedMap = enemyCol == WHITE
+                                        ? WhitePawnMap::GetAttackFields(pawnsMap)
+                                        : BlackPawnMap::GetAttackFields(pawnsMap);
+    const uint8_t wasCheckedByPawnFlag = (pawnBlockedMap & allyKingMap) >> allyKingShift;
+    // = 1 or 0 depending whether hits or not
+    checksCount += wasCheckedByPawnFlag;
+    chT += simpleFigCheck * wasCheckedByPawnFlag; // Note: king cannot be double checked by simple figure
+
+    // Knight attacks generation.
+    const uint64_t knighBlockedMap = _blockIterativeGenerator(board.boards[enemyFigInd + knightsIndex],
+                                                              [=](const int pos) { return KnightMap::GetMoves(pos); }
+    );
+    const uint8_t wasCheckedByKnightFlag = (knighBlockedMap & allyKingMap) >> allyKingShift;
+    // = 1 or 0 depending whether hits or not
+    checksCount += wasCheckedByKnightFlag;
+    chT += simpleFigCheck * wasCheckedByKnightFlag; // Note: king cannot be double checked by simple figure
 
     const uint64_t blockedMap = kingBlockedMap | pawnBlockedMap | knighBlockedMap | rookBlockedMap | bishopBlockedMap;
     return {blockedMap, checksCount, chT};
@@ -148,8 +145,8 @@ uint64_t ChessMechanics::GetAllowedTilesWhenCheckedByNonSliding(const int col) c
 
     // preparing helping variables
     const size_t enemyInd = SwapColor(board.movColor) * Board::BoardsPerCol;
-    const uint64_t allyKingPos = board.kingMSBPositions[col];
-    const uint64_t allyKing = maxMsbPossible >> allyKingPos;
+    const int allyKingBoardIndex = ConvertToReversedPos(board.kingMSBPositions[col]);
+    const uint64_t allyKing = 1LLU << allyKingBoardIndex;
 
     uint64_t allowedTiles{};
 
@@ -163,14 +160,14 @@ uint64_t ChessMechanics::GetAllowedTilesWhenCheckedByNonSliding(const int col) c
         const uint64_t attacks = KnightMap::GetMoves(msbPos);
 
         // main processing
-        allowedTiles |= (attacks & allyKing) * knightFig;
+        allowedTiles |= ((attacks & allyKing) >> allyKingBoardIndex)* knightFig;
 
         // iteration step
         knightFigures ^= knightFig;
     }
 
-    const uint64_t pawnDetectionFields = (maxMsbPossible >> (allyKingPos + pawnDetectionOffsets[col][0])) |
-                                         (maxMsbPossible >> (allyKingPos + pawnDetectionOffsets[col][1]));
+    const uint64_t pawnDetectionFields = (1LLU << (allyKingBoardIndex + pawnDetectionOffsets[col][0])) |
+                                         (1LLU << (allyKingBoardIndex + pawnDetectionOffsets[col][1]));
     allowedTiles |= pawnDetectionFields & board.boards[enemyInd + pawnsIndex];
 
     return allowedTiles;

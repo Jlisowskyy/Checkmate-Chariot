@@ -41,6 +41,11 @@ public:
 
     void PerformFullTest(const std::string&fenPosition, int depth, const std::vector<std::string>&moves) const;
 
+    void PerformSeriesOfDeepTests(const std::vector<std::pair<std::string, int>>& testPositions) const;
+
+    // reads tests from csv file, where row contains position and depth
+    bool PerformSeriesOfDeepTestFromFile(const std::string& path) const;
+
     // ------------------------------
     // Private class methods
     // ------------------------------
@@ -73,6 +78,7 @@ private:
     // ------------------------------
 public:
     static constexpr const char* DefaultPath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/correctnesGen/stockfish";
+    static constexpr const char* DefaultTestPath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/positionTests.csv";
 
 private:
     const std::string _enginePath = DefaultPath;

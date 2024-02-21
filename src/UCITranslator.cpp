@@ -114,6 +114,15 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) cons
         const MoveGenerationTester tester;
         tester.PerformFullTest(_fenPosition, depth, _appliedMoves);
     }
+    else if (workStr == "file")
+    {
+        std::string path{};
+        ParseTools::ExtractNextWord(str, path, pos);
+        const MoveGenerationTester tester;
+        const bool result = tester.PerformSeriesOfDeepTestFromFile(path);
+
+        if (result == false) return UCICommand::InvalidCommand;
+    }
     else if (workStr == "infinite")
         _engine.GoInfinite();
     else if (workStr == "depth")

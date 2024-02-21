@@ -4,19 +4,6 @@
 
 #include "../include/ParseTools.h"
 
-size_t ParseTools::ExtractNextWord(const std::string&str, std::string&wordOut, size_t startPos)
-{
-    while (startPos < str.length() && isblank(str[startPos])) { ++startPos; }
-    const size_t beg = startPos;
-    while (startPos < str.length() && !isblank(str[startPos])) { ++startPos; }
-    const size_t end = startPos;
-
-    if (beg == end) return 0;
-
-    wordOut = str.substr(beg, end - beg);
-    return end;
-}
-
 size_t ParseTools::ExtractNextLine(const size_t startPos, const size_t maxPos, const char* inBuffer,
                                    std::string&outBuffer)
 {
