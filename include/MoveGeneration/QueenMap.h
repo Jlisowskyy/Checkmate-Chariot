@@ -10,23 +10,23 @@
 #include "BishopMap.h"
 #include "RookMap.h"
 
-class QueenMap {
+class QueenMap
+{
     // ------------------------------
     // Class creation
     // ------------------------------
 public:
-
     constexpr QueenMap() = default;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullMap, [[maybe_unused]] const uint64_t _ = 0)
+    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullMap,
+                                                     [[maybe_unused]] const uint64_t _ = 0)
     {
         return BishopMap::GetMoves(msbInd, fullMap) | RookMap::GetMoves(msbInd, fullMap);
     }
-
 };
 
 #endif //QUEENMAP_H

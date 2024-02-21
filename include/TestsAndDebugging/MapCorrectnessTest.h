@@ -22,20 +22,22 @@
  */
 
 // Class used to perform tests on moves maps, based on maps stored inside files
-class MapCorrectnessTester {
+class MapCorrectnessTester
+{
     // ------------------------------
     // inner class types
     // ------------------------------
 
-    using RecordsPack = std::tuple<uint64_t, std::vector<uint64_t>, std::vector<uint64_t>, std::vector<std::vector<uint64_t>>>;
+    using RecordsPack = std::tuple<uint64_t, std::vector<uint64_t>, std::vector<uint64_t>, std::vector<std::vector<
+        uint64_t>>>;
     // [size, fullMaps, figureMaps]
 
     // ------------------------------
     // Class creation
     // ------------------------------
 public:
-
     MapCorrectnessTester() = default;
+
     ~MapCorrectnessTester() = default;
 
     // ------------------------------
@@ -43,7 +45,8 @@ public:
     // ------------------------------
 
     template<class MapT>
-    static void PerformTest(const std::string& filename, const MapT& map) noexcept(false) {
+    static void PerformTest(const std::string&filename, const MapT&map) noexcept(false)
+    {
         auto [recordCount, fullMaps, figureMaps, correctMoves] = _readTestFile(filename);
         uint64_t errorCount{};
         uint64_t moveCount{};
@@ -52,16 +55,19 @@ public:
         uint64_t lastErrorMap{};
         uint64_t lastFigPos{};
 
-        for (size_t i = 0; i < recordCount; ++i) {
+        for (size_t i = 0; i < recordCount; ++i)
+        {
             const uint64_t fullMap = fullMaps[i];
             uint64_t figureMap = figureMaps[i];
 
             int figNum{};
-            while(figureMap != 0) {
+            while (figureMap != 0)
+            {
                 const int msbPos = ExtractMsbPos(figureMap);
                 ++moveCount;
 
-                if (const uint64_t move = map.GetMoves(msbPos, fullMap); move != correctMoves[i][figNum]) {
+                if (const uint64_t move = map.GetMoves(msbPos, fullMap); move != correctMoves[i][figNum])
+                {
                     ++errorCount;
                     lastErrorMove = move;
                     lastErrorMoveCorrectOne = correctMoves[i][figNum];
@@ -77,7 +83,8 @@ public:
         // Test summary
         std::cout << "Test finished!!\n" << std::format("Total errors encoutered: {}\n", errorCount);
         std::cout << std::format("Processed records: {}\nTotally checked: {} moves\n", recordCount, moveCount);
-        if (errorCount) {
+        if (errorCount)
+        {
             std::cout << std::format("________Last error move on field {}:\n\n", fieldStrMap.at((Field)lastFigPos));
             DisplayMask(lastErrorMove);
             std::cout << "________Correct move:\n\n";
@@ -91,8 +98,8 @@ public:
     // Private class methods
     // ------------------------------
 private:
-
-    static RecordsPack _readTestFile(std::string filename) {
+    static RecordsPack _readTestFile(std::string filename)
+    {
         std::fstream stream(filename, std::fstream::binary | std::fstream::in);
 
         if (!stream)
@@ -112,7 +119,8 @@ private:
         correctResults.resize(recordCount);
 
         // records read
-        for(size_t i = 0; i < recordCount; ++i) {
+        for (size_t i = 0; i < recordCount; ++i)
+        {
             stream.read(reinterpret_cast<char *>(&fullMaps[i]), sizeof(uint64_t));
             stream.read(reinterpret_cast<char *>(&figureMaps[i]), sizeof(uint64_t));
 
@@ -125,10 +133,11 @@ private:
                 stream.read(reinterpret_cast<char *>(&correctResults[i][j]), sizeof(uint64_t));
 
             if (!stream)
-                throw std::runtime_error(std::format("[ ERROR ] Encountered ill-formed record inside the test. Test no {} (0-based).", i));
+                throw std::runtime_error(
+                    std::format("[ ERROR ] Encountered ill-formed record inside the test. Test no {} (0-based).", i));
         }
 
-        return { recordCount, std::move(fullMaps), std::move(figureMaps), std::move(correctResults) };
+        return {recordCount, std::move(fullMaps), std::move(figureMaps), std::move(correctResults)};
     }
 };
 

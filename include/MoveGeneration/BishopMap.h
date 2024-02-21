@@ -7,7 +7,8 @@
 
 #include "../MapTypes/FancyMagicBishopMap.h"
 
-class BishopMap {
+class BishopMap
+{
     // -------------------------------
     // Underlying map definition
     // -------------------------------
@@ -18,15 +19,17 @@ class BishopMap {
     // Class creation and initialization
     // ---------------------------------------
 public:
-
     BishopMap() = delete;
+
     ~BishopMap() = delete;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullBoard, [[maybe_unused]] const uint64_t _ = 0) {
+    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullBoard,
+                                                     [[maybe_unused]] const uint64_t _ = 0)
+    {
         return _map.GetMoves(msbInd, fullBoard);
     }
 
@@ -34,7 +37,7 @@ public:
     // Class fields
     // ------------------------------
 
-    inline static const char* names[] = { "nwMask", "neMask", "swMask", "seMask" };
+    inline static const char* names[] = {"nwMask", "neMask", "swMask", "seMask"};
 
     static constexpr _underlyingMap _map{};
 };

@@ -6,11 +6,9 @@
 #define EVALUATOR_H
 
 
-
-class Evaluator {
-
+class Evaluator
+{
 };
-
 
 
 #endif //EVALUATOR_H

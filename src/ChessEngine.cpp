@@ -19,7 +19,8 @@
 // #include "../include/MapTypes/SimpleBishopMap.h"
 // #include "../include/MapTypes/SimpleRookMap.h"
 
-void ChessEngineMainEntry() {
+void ChessEngineMainEntry()
+{
     Engine engine{};
     UCITranslator translator{engine};
 
@@ -27,18 +28,21 @@ void ChessEngineMainEntry() {
     translator.BeginCommandTranslation();
 }
 
-void BishopHashingTest() {
+void BishopHashingTest()
+{
     // FancyMagicBishopMap::ParameterSearch();
 }
 
-void RookHashingTest() {
+void RookHashingTest()
+{
     // SimpleRookMap::ParameterSearch();
     // ModuloFreeRookMap::ParameterSearch();
     // ModuloFreeNoOffsetRookMap::ParameterSearch();
     // FancyMagicRookMap::ParameterSearch();
 }
 
-void MapHashTest() {
+void MapHashTest()
+{
     // std::cout << "________________________________TEST 1______________________________________\n";
     // std::cout << "----------------------------SimpleBishopMap----------------------------\n";
     // MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf1", SimpleBishopMap());
@@ -90,7 +94,8 @@ void MapHashTest() {
     // MapPerformanceTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/perf5", FancyMagicRookMap());
 }
 
-void MapCorrectnessTest() {
+void MapCorrectnessTest()
+{
     // std::cout << "________________________________TEST 1______________________________________\n";
     // std::cout << "----------------------------SimpleBishopMap----------------------------\n";
     // MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr1", SimpleBishopMap());
@@ -130,8 +135,4 @@ void MapCorrectnessTest() {
     // MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr4", ModuloFreeNoOffsetRookMap());
     // std::cout << "----------------------------FancyMagicRookMap----------------------------\n";
     // MapCorrectnessTester::PerformTest("/home/Jlisowskyy/Repos/ChessEngine/Tests/corr4", FancyMagicRookMap());
-
-
 }
-
-

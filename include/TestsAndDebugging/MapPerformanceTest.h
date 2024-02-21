@@ -22,7 +22,8 @@
  *      - uint64_t - map containing only rooks or bishops - 8 bytes
  */
 
-class MapPerformanceTester {
+class MapPerformanceTester
+{
     // ------------------------------
     // inner class types
     // ------------------------------
@@ -34,8 +35,8 @@ class MapPerformanceTester {
     // Class creation
     // ------------------------------
 public:
-
     MapPerformanceTester() = default;
+
     ~MapPerformanceTester() = default;
 
     // ------------------------------
@@ -43,34 +44,39 @@ public:
     // ------------------------------
 
     template<class MapT>
-    static double PerformTest(const std::string& filename, const MapT& map) noexcept(false) {
+    static double PerformTest(const std::string&filename, const MapT&map) noexcept(false)
+    {
         auto [recordCount, fullMaps, figureMaps] = _readTestFile(filename);
         uint64_t mapReads{};
         uint64_t trulyNotRandomNumber{}; // was unsure about optimisations done when there was no use of read value
 
         const auto timeStart = std::chrono::steady_clock::now();
 
-        for (size_t i = 0; i < recordCount; ++i) {
+        for (size_t i = 0; i < recordCount; ++i)
+        {
             const uint64_t fullMap = fullMaps[i];
             uint64_t figureMap = figureMaps[i];
 
-            while(figureMap != 0) {
+            while (figureMap != 0)
+            {
                 const int msbPos = ExtractMsbPos(figureMap);
 
                 const uint64_t move = map.GetMoves(msbPos, fullMap);
                 trulyNotRandomNumber += move;
 
                 ++mapReads;
-                figureMap ^=  maxMsbPossible >> msbPos;
+                figureMap ^= maxMsbPossible >> msbPos;
             }
         }
 
         const auto timeStop = std::chrono::steady_clock::now();
         const double timeSpentMs = (timeStop - timeStart).count() * 1e-6;
-        const double readPerMs = mapReads/timeSpentMs;
+        const double readPerMs = mapReads / timeSpentMs;
 
-        std::cout << std::format("During the test there was {} reads in total.\nAll done in {}ms.\nWhich outputs {} reads per ms\n", mapReads, timeSpentMs, readPerMs)
-        << std::format("Aquired test number: {}\n", trulyNotRandomNumber);
+        std::cout << std::format(
+                    "During the test there was {} reads in total.\nAll done in {}ms.\nWhich outputs {} reads per ms\n",
+                    mapReads, timeSpentMs, readPerMs)
+                << std::format("Aquired test number: {}\n", trulyNotRandomNumber);
 
         return readPerMs;
     }
@@ -79,8 +85,8 @@ public:
     // Private class methods
     // ------------------------------
 private:
-
-    static RecordsPack _readTestFile(std::string filename) {
+    static RecordsPack _readTestFile(std::string filename)
+    {
         std::ifstream stream(filename, std::ios::binary | std::ios::in);
 
         if (!stream)
@@ -96,22 +102,24 @@ private:
         fullMaps.resize(recordCount);
         figureMaps.resize(recordCount);
 
-        if (!stream) {
+        if (!stream)
+        {
             throw std::runtime_error(std::format("[ ERROR ] Failed when opening file: {}!\n", filename));
         }
 
         // records read
-        for(size_t i = 0; i < recordCount; ++i) {
+        for (size_t i = 0; i < recordCount; ++i)
+        {
             stream.read(reinterpret_cast<char *>(&fullMaps[i]), sizeof(uint64_t));
             stream.read(reinterpret_cast<char *>(&figureMaps[i]), sizeof(uint64_t));
 
             if (!stream)
-                throw std::runtime_error(std::format("[ ERROR ] Encountered ill-formed record inside the test. Test no {} (0-based).", i));
+                throw std::runtime_error(
+                    std::format("[ ERROR ] Encountered ill-formed record inside the test. Test no {} (0-based).", i));
         }
 
-        return { recordCount, fullMaps, figureMaps };
+        return {recordCount, fullMaps, figureMaps};
     }
-
 };
 
 #endif //MAPPERFORMANCETEST_H

@@ -10,17 +10,20 @@
 #include <iostream>
 #include <array>
 
-enum MoveTypes {
+enum MoveTypes
+{
     NormalMove,
     PromotingMove
 };
 
-enum Color: int {
+enum Color: int
+{
     WHITE,
     BLACK,
 };
 
-enum ColorlessDescriptors: size_t {
+enum ColorlessDescriptors: size_t
+{
     pawnsIndex,
     knightsIndex,
     bishopsIndex,
@@ -29,7 +32,8 @@ enum ColorlessDescriptors: size_t {
     kingIndex,
 };
 
-enum Descriptors: size_t {
+enum Descriptors: size_t
+{
     wPawnsIndex,
     wKnightsIndex,
     wBishopsIndex,
@@ -44,7 +48,8 @@ enum Descriptors: size_t {
     bKingIndex,
 };
 
-enum Field : uint64_t {
+enum Field : uint64_t
+{
     INVALID = 0,
     A1 = 1LLU,
     B1 = 1LLU << 1,
@@ -112,25 +117,29 @@ enum Field : uint64_t {
     H8 = 1LLU << 63
 };
 
-enum CastlingIndexes: size_t {
+enum CastlingIndexes: size_t
+{
     KingCastlingIndex,
     QueenCastlingIndex,
 };
 
-enum CastlingPossibilities: size_t {
+enum CastlingPossibilities: size_t
+{
     WhiteKingSide,
     WhiteQueenSide,
     BlackKingSide,
     BlackQueenSide,
 };
 
-struct Board {
+struct Board
+{
     // ------------------------------
     // class interaction
     // ------------------------------
 
     void ChangePlayingColor();
-    friend std::ostream& operator<<(std::ostream& out, const Board& bd);
+
+    friend std::ostream& operator<<(std::ostream&out, const Board&bd);
 
     // ------------------------------
     // Class fields
@@ -143,31 +152,31 @@ struct Board {
     static constexpr size_t KingPosCount = 2;
     static constexpr size_t CastlingsPerColor = 2;
 
-    static constexpr std::array<uint8_t, KingPosCount> DefaultKingPos { 4, 60 };
-    static constexpr std::array<uint64_t, CastlingCount> CastlingNewKingPos { 6, 2, 62, 58 };
+    static constexpr std::array<uint8_t, KingPosCount> DefaultKingPos{4, 60};
+    static constexpr std::array<uint64_t, CastlingCount> CastlingNewKingPos{6, 2, 62, 58};
 
-    static constexpr std::array<uint64_t, CastlingCount> CastlingsRookMaps {
+    static constexpr std::array<uint64_t, CastlingCount> CastlingsRookMaps{
         1LLU << 7,
         1LLU,
         1LLU << 63,
         1LLU << 56
     };
 
-    static constexpr std::array<uint64_t, CastlingCount> CastlingNewRookMaps {
+    static constexpr std::array<uint64_t, CastlingCount> CastlingNewRookMaps{
         1LLU << 5,
         1LLU << 3,
         1LLU << 61,
         1LLU << 59
     };
 
-    static constexpr std::array<uint64_t, CastlingCount> CastlingSensitiveFields {
+    static constexpr std::array<uint64_t, CastlingCount> CastlingSensitiveFields{
         1LLU << 6 | 1LLU << 5,
         1LLU << 2 | 1LLU << 3,
         1LLU << 61 | 1LLU << 62,
         1LLU << 58 | 1LLU << 59
     };
 
-    std::array<bool, CastlingCount> Castlings{ false, false, false, false };
+    std::array<bool, CastlingCount> Castlings{false, false, false, false};
     Field elPassantField = INVALID;
     int movColor = WHITE;
     uint8_t kingMSBPositions[KingPosCount] = {};
@@ -175,16 +184,19 @@ struct Board {
 };
 
 int SwapColor(int col);
+
 void DisplayMask(uint64_t mask);
-std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board& oldBoard, const Board& newBoard);
-std::string GetShortAlgebraicMoveEncoding(const Board& bd, uint64_t oldMap, uint64_t newMap, MoveTypes mType);
+
+std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board&oldBoard, const Board&newBoard);
+
+std::string GetShortAlgebraicMoveEncoding(const Board&bd, uint64_t oldMap, uint64_t newMap, MoveTypes mType);
 
 // returns 0 if invalid characters were passed
 uint64_t ExtractPosFromStr(int x, int y);
 
 // in case of invalid encoding returns 0 in corresponding value, if string is to short returns (0, 0).
 // return scheme: [ oldMap, newMap ]
-std::pair<uint64_t, uint64_t> ExtractPositionsFromEncoding(const std::string& encoding);
+std::pair<uint64_t, uint64_t> ExtractPositionsFromEncoding(const std::string&encoding);
 
 
 extern const std::unordered_map<size_t, Descriptors> figToDescMap;

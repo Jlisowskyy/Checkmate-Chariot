@@ -22,18 +22,20 @@
  *              TESTED!
  */
 
-struct  KingMap {
+struct KingMap
+{
     // ------------------------------
     // Class creation
     // ------------------------------
 
-     KingMap() = delete;
+    KingMap() = delete;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd) {
+    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd)
+    {
         return movesMap[msbInd];
     }
 
@@ -44,17 +46,17 @@ struct  KingMap {
     static constexpr std::array<PinningMasks, Board::BoardFields> pinMasks = PinningMasks::PinningArrayFactory();
 
 private:
-
     static constexpr size_t maxMovesCount = 8;
 
     // Describes king possible moves cordinates.
-    static constexpr int movesCords[] = { -1, -9, -8, -7, 1, 9, 8, 7 };
+    static constexpr int movesCords[] = {-1, -9, -8, -7, 1, 9, 8, 7};
 
     // Describes accordingly y positions after the move relatively to king's y position.
     // Used to omit errors during generation.
-    static constexpr int rowCords[] = { 0, -1, -1, -1, 0, 1, 1, 1 };
+    static constexpr int rowCords[] = {0, -1, -1, -1, 0, 1, 1, 1};
 
-    static constexpr std::array<uint64_t, Board::BoardFields> movesMap = GenStaticMoves(maxMovesCount, movesCords, rowCords);
+    static constexpr std::array<uint64_t, Board::BoardFields> movesMap = GenStaticMoves(
+        maxMovesCount, movesCords, rowCords);
 };
 
 #endif //KINGMAP_H

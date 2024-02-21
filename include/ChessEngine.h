@@ -6,9 +6,13 @@
 #define CHESS_ENGINE_H
 
 void ChessEngineMainEntry();
+
 void BishopHashingTest();
+
 void RookHashingTest();
+
 void MapHashTest();
+
 void MapCorrectnessTest();
 
 #endif //CHESS_ENGINE_H

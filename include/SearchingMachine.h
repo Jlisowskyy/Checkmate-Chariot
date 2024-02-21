@@ -6,11 +6,9 @@
 #define SEARCHINGMACHINE_H
 
 
-
-class SearchingMachine {
-
+class SearchingMachine
+{
 };
-
 
 
 #endif //SEARCHINGMACHINE_H

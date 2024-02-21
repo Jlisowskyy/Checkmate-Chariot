@@ -23,18 +23,22 @@
  *  Where "depth" is integer value indicating layers of traversed move tree.
  */
 
-class UCITranslator {
+class UCITranslator
+{
     // --------------------------------------
     // Type creation and initialization
     // --------------------------------------
 public:
-    UCITranslator(Engine& engine) : _engine(engine) {}
+    UCITranslator(Engine&engine) : _engine(engine)
+    {
+    }
 
     // ------------------------------
     // internal types
     // ------------------------------
 
-    enum class UCICommand {
+    enum class UCICommand
+    {
         InvalidCommand,
         uciCommand,
         isreadyCommand,
@@ -57,16 +61,24 @@ public:
     // private methods
     // ------------------------------
 private:
+    [[nodiscard]] UCICommand _cleanMessage(const std::string&buffer);
 
-    [[nodiscard]] UCICommand _cleanMessage(const std::string& buffer);
     UCICommand _stopResponse() const;
-    [[nodiscard]] UCICommand _goResponse(const std::string& str) const;
-    [[nodiscard]] UCICommand _positionResponse(const std::string& str);
+
+    [[nodiscard]] UCICommand _goResponse(const std::string&str) const;
+
+    [[nodiscard]] UCICommand _positionResponse(const std::string&str);
+
     UCICommand _ucinewgameResponse();
-    [[nodiscard]] UCICommand _setoptionResponse(const std::string& str) const;
+
+    [[nodiscard]] UCICommand _setoptionResponse(const std::string&str) const;
+
     static UCICommand _uciResponse();
+
     UCICommand static _isReadyResponse();
+
     UCICommand _displayResponse() const;
+
     UCICommand _displayFen() const;
 
     // ------------------------------
@@ -75,7 +87,7 @@ private:
 
     std::vector<std::string> _appliedMoves{};
     std::string _fenPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    Engine& _engine;
+    Engine&_engine;
 };
 
 #endif //UCITRANSLATOR_H

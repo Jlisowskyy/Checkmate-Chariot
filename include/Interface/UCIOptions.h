@@ -20,15 +20,17 @@ class Engine;
 // Parent class
 // ------------------------------
 
-struct Option {
+struct Option
+{
     enum class OptionType { check, spin, combo, button, string };
 
     // --------------------------------------
     // Type creation and initialization
     // --------------------------------------
 
-    explicit Option(std::string&& name, const OptionType opT) :
-        optionT(opT), optionName{std::move( name )}{}
+    explicit Option(std::string&&name, const OptionType opT) : optionT(opT), optionName{std::move(name)}
+    {
+    }
 
     virtual ~Option() = default;
 
@@ -36,12 +38,14 @@ struct Option {
     // Type interaction
     // ------------------------------
 
-    friend std::ostream& operator<<(std::ostream& out, const Option& opt) {
+    friend std::ostream& operator<<(std::ostream&out, const Option&opt)
+    {
         out << "option name " << opt.optionName << " type " << OptionNames[static_cast<int>(opt.optionT)] << ' ';
         return opt._printDetails(out);
     }
 
-    bool virtual TryChangeValue(std::string& nArg, Engine& eng) const {
+    bool virtual TryChangeValue(std::string&nArg, Engine&eng) const
+    {
         return false;
     }
 
@@ -49,8 +53,8 @@ struct Option {
     // private methods
     // ------------------------------
 private:
-
-    virtual std::ostream& _printDetails(std::ostream& out) const {
+    virtual std::ostream& _printDetails(std::ostream&out) const
+    {
         return out << '\n';
     };
 
@@ -58,8 +62,7 @@ private:
     // Public fields
     // ------------------------------
 public:
-
-    static constexpr const char* OptionNames[] = { "check", "spin", "combo", "button", "string" };
+    static constexpr const char* OptionNames[] = {"check", "spin", "combo", "button", "string"};
 
     const OptionType optionT;
     const std::string optionName;
@@ -69,36 +72,42 @@ public:
 // Derived classes
 // ------------------------------
 
-template<Option::OptionType opT> struct OptionT;
+template<Option::OptionType opT>
+struct OptionT;
 
 template<>
-struct OptionT<Option::OptionType::check>final : Option{
+struct OptionT<Option::OptionType::check>final : Option
+{
     // --------------------------------------
     // Type creation and initialization
     // --------------------------------------
 
-    OptionT(std::string&& name, void (* const react)(Engine&, bool), const bool defVal) :
-        Option(std::move(name), OptionType::check), changeReaction(react), defaultValue(defVal) {}
+    OptionT(std::string&&name, void (* const react)(Engine&, bool), const bool defVal) : Option(std::move(name),
+            OptionType::check), changeReaction(react), defaultValue(defVal)
+    {
+    }
 
     // -------------------------------
     // Virtual methods overrides
     // -------------------------------
 
 private:
-
-    std::ostream& _printDetails(std::ostream& out) const override {
+    std::ostream& _printDetails(std::ostream&out) const override
+    {
         return out << "default " << defaultValue << '\n';
     }
 
 public:
-
-    bool TryChangeValue(std::string& nArg, Engine& eng) const override {
-        if (nArg == "true") {
+    bool TryChangeValue(std::string&nArg, Engine&eng) const override
+    {
+        if (nArg == "true")
+        {
             changeReaction(eng, true);
             return true;
         }
 
-        if (nArg == "false") {
+        if (nArg == "false")
+        {
             changeReaction(eng, false);
             return true;
         }
@@ -111,32 +120,37 @@ public:
     // ------------------------------
 private:
     void (* const changeReaction)(Engine&, bool);
+
 public:
     const bool defaultValue;
 };
 
 template<>
-struct OptionT<Option::OptionType::spin>final : Option{
+struct OptionT<Option::OptionType::spin>final : Option
+{
     // --------------------------------------
     // Type creation and initialization
     // --------------------------------------
 
-    OptionT(std::string&& name, void (* const react)(Engine&, lli), const lli minV, const lli maxV, const lli defV) :
-        Option(std::move(name),OptionType::spin), changeReaction(react), minVal(minV), maxVal(maxV), defaultVal(defV) {}
+    OptionT(std::string&&name, void (* const react)(Engine&, lli), const lli minV, const lli maxV,
+            const lli defV) : Option(std::move(name), OptionType::spin), changeReaction(react), minVal(minV),
+                              maxVal(maxV), defaultVal(defV)
+    {
+    }
 
     // -------------------------------
     // Virtual methods overrides
     // -------------------------------
 
 private:
-
-    std::ostream& _printDetails(std::ostream& out) const override {
+    std::ostream& _printDetails(std::ostream&out) const override
+    {
         return out << "default " << defaultVal << " min " << minVal << " max " << maxVal << '\n';
     }
 
 public:
-
-    bool TryChangeValue(std::string& nArg, Engine& eng) const override {
+    bool TryChangeValue(std::string&nArg, Engine&eng) const override
+    {
         errno = 0;
 
         const lli result = strtoll(nArg.c_str(), nullptr, 10);
@@ -151,7 +165,8 @@ public:
     // Class fields
     // ------------------------------
 private:
-    void (* const changeReaction)(Engine& eng, lli);
+    void (* const changeReaction)(Engine&eng, lli);
+
 public:
     const lli minVal;
     const lli maxVal;
@@ -159,31 +174,36 @@ public:
 };
 
 template<>
-struct OptionT<Option::OptionType::combo>final : Option{
+struct OptionT<Option::OptionType::combo>final : Option
+{
     // --------------------------------------
     // Type creation and initialization
     // --------------------------------------
 
-    OptionT(std::string&& name, void (* const react)(Engine&, std::string&), std::string&& defVal, std::vector<std::string>&& predefVal) :
-        Option(std::move(name), OptionType::combo), changeReaction(react), defaultVal(defVal), predefinedVals(predefVal) {}
+    OptionT(std::string&&name, void (* const react)(Engine&, std::string&), std::string&&defVal,
+            std::vector<std::string>&&predefVal) : Option(std::move(name), OptionType::combo), changeReaction(react),
+                                                   defaultVal(defVal), predefinedVals(predefVal)
+    {
+    }
 
     // -------------------------------
     // Virtual methods overrides
     // -------------------------------
 
 private:
-
-    std::ostream& _printDetails(std::ostream& out) const override{
+    std::ostream& _printDetails(std::ostream&out) const override
+    {
         out << "default " << defaultVal;
-        for (const auto& var : predefinedVals) {
+        for (const auto&var: predefinedVals)
+        {
             out << " var \"" << var << "\"";
         }
         return out << '\n';
     }
 
 public:
-
-    bool TryChangeValue(std::string& nArg, Engine& eng) const override {
+    bool TryChangeValue(std::string&nArg, Engine&eng) const override
+    {
         if (!_isValidOption(nArg))
             return false;
 
@@ -195,32 +215,37 @@ public:
     // private methods
     // ------------------------------
 private:
-     [[nodiscard]] bool _isValidOption(const std::string& str) const {
-         return std::any_of(
-             predefinedVals.begin(),
-             predefinedVals.end(),
-             [=](const std::string& value) { return str == value; }
-            );
-     }
+    [[nodiscard]] bool _isValidOption(const std::string&str) const
+    {
+        return std::any_of(
+            predefinedVals.begin(),
+            predefinedVals.end(),
+            [=](const std::string&value) { return str == value; }
+        );
+    }
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
     void (* const changeReaction)(Engine&, std::string&);
+
 public:
     const std::string defaultVal;
     const std::vector<std::string> predefinedVals;
 };
 
 template<>
-struct OptionT<Option::OptionType::button>final : Option{
+struct OptionT<Option::OptionType::button>final : Option
+{
     // --------------------------------------
     // Type creation and initialization
     // --------------------------------------
 
-    OptionT(std::string&& name, void (* const react)(Engine&)) :
-        Option(std::move(name), OptionType::button), changeReaction(react) {}
+    OptionT(std::string&&name, void (* const react)(Engine&)) : Option(std::move(name), OptionType::button),
+                                                                changeReaction(react)
+    {
+    }
 
 private:
     void (* const changeReaction)(Engine&);
@@ -229,35 +254,38 @@ private:
     // Virtual methods overrides
     // -------------------------------
 public:
-
-    bool TryChangeValue(std::string& nArg, Engine& eng) const override {
+    bool TryChangeValue(std::string&nArg, Engine&eng) const override
+    {
         changeReaction(eng);
         return true;
     }
 };
 
 template<>
-struct OptionT<Option::OptionType::string>final : Option{
+struct OptionT<Option::OptionType::string>final : Option
+{
     // --------------------------------------
     // Type creation and initialization
     // --------------------------------------
 
-    OptionT(std::string&& name, void (* const react)(Engine& eng, std::string&), std::string&& defV) :
-        Option(std::move(name), OptionType::string), changeReaction(react), defaultVal(defV) {}
+    OptionT(std::string&&name, void (* const react)(Engine&eng, std::string&),
+            std::string&&defV) : Option(std::move(name), OptionType::string), changeReaction(react), defaultVal(defV)
+    {
+    }
 
     // -------------------------------
     // Virtual methods overrides
     // -------------------------------
 
 private:
-
-    std::ostream& _printDetails(std::ostream& out) const override {
+    std::ostream& _printDetails(std::ostream&out) const override
+    {
         return out << "default \"" << defaultVal << "\"\n";
     }
 
 public:
-
-    bool TryChangeValue(std::string& nArg, Engine& eng) const override {
+    bool TryChangeValue(std::string&nArg, Engine&eng) const override
+    {
         changeReaction(eng, nArg);
         return true;
     }
@@ -266,17 +294,19 @@ public:
     // Class fields
     // ------------------------------
 private:
-    void (* const changeReaction)(Engine& eng, std::string&);
+    void (* const changeReaction)(Engine&eng, std::string&);
+
 public:
     const std::string defaultVal;
     std::string actVal;
 };
 
-struct EngineInfo {
+struct EngineInfo
+{
     std::string author;
     std::string name;
 
-    std::map<std::string, const Option*> options;
+    std::map<std::string, const Option *> options;
 };
 
 #endif //UCIOPTIONS_H

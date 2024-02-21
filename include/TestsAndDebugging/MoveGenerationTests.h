@@ -11,13 +11,18 @@
 #include <map>
 #include <utility>
 
-class MoveGenerationTester {
+class MoveGenerationTester
+{
     // ------------------------------
     // Class creation
     // ------------------------------
 public:
     MoveGenerationTester() = default;
-    MoveGenerationTester(std::string comparedEnginePath): _enginePath(std::move(comparedEnginePath)) {}
+
+    MoveGenerationTester(std::string comparedEnginePath): _enginePath(std::move(comparedEnginePath))
+    {
+    }
+
     ~MoveGenerationTester() = default;
 
     // ------------------------------
@@ -28,12 +33,13 @@ public:
     //  - passed depth parameter when final count on leaves differs,
     //  - 0 - when error occured in root
     //  - "-1" when no error occured
-    std::pair<std::string, int> PerformSingleShallowTest(const std::string& fenPosition, int depth,
-        const std::vector<std::string>& moves, bool writeOnOut = false) const;
+    std::pair<std::string, int> PerformSingleShallowTest(const std::string&fenPosition, int depth,
+                                                         const std::vector<std::string>&moves,
+                                                         bool writeOnOut = false) const;
 
-    void PerformDeepTest(const std::string& fenPosition, int depth, const std::vector<std::string>& moves) const;
+    void PerformDeepTest(const std::string&fenPosition, int depth, const std::vector<std::string>&moves) const;
 
-    void PerformFullTest(const std::string& fenPosition, int depth, const std::vector<std::string>& moves) const;
+    void PerformFullTest(const std::string&fenPosition, int depth, const std::vector<std::string>&moves) const;
 
     // ------------------------------
     // Private class methods
@@ -43,23 +49,31 @@ private:
     static constexpr size_t ReadPipe = 0;
     static constexpr size_t buffSize = 4096;
 
-    void _deepTestRecu(const std::string& fenPosition, int depth, std::vector<std::string>& moves, std::string& chainOut) const;
+    void _deepTestRecu(const std::string&fenPosition, int depth, std::vector<std::string>&moves,
+                       std::string&chainOut) const;
 
-    [[nodiscard]] std::map<std::string, uint64_t> _generateCorrectMoveCounts(const std::string& fenPosition,
-                                                                             int depth, const std::vector<std::string>& moves) const;
+    [[nodiscard]] std::map<std::string, uint64_t> _generateCorrectMoveCounts(const std::string&fenPosition,
+                                                                             int depth,
+                                                                             const std::vector<std::string>&moves)
+    const;
 
-    static size_t _chessSubstrEnd(const std::string& str);
-    static void _processLine(std::map<std::string, uint64_t>& out, const std::string& line);
+    static size_t _chessSubstrEnd(const std::string&str);
+
+    static void _processLine(std::map<std::string, uint64_t>&out, const std::string&line);
+
     static std::map<std::string, uint64_t> _getCorrectMovesMap(int readFileDesc);
-    static void _startUpPerft(const std::string& fenPosition, int depth, const std::vector<std::string>& moves, int writeFileDesc);
-    void _spawnEngine(const int*  inPipeFileDesc, const int* outPipeFileDesc) const;
+
+    static void _startUpPerft(const std::string&fenPosition, int depth, const std::vector<std::string>&moves,
+                              int writeFileDesc);
+
+    void _spawnEngine(const int* inPipeFileDesc, const int* outPipeFileDesc) const;
 
     // ------------------------------
     // Class fields
     // ------------------------------
 public:
-
     static constexpr const char* DefaultPath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/correctnesGen/stockfish";
+
 private:
     const std::string _enginePath = DefaultPath;
 };
