@@ -134,8 +134,6 @@ private:
         const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
         const uint64_t allyMap = GetColMap(board.movColor);
 
-        DisplayMask(pinnedFigsMap);
-
         _processFigMoves<ActionT, RookMap, true>(action, depth,
                                                  board.boards[Board::BoardsPerCol * board.movColor + rooksIndex],
                                                  enemyMap, allyMap, pinnedFigsMap);
@@ -435,6 +433,7 @@ private:
             const uint64_t allowedTiles = _generateAllowedTilesForPrecisedPinnedFig(figBoard, fullMap);
             const uint64_t figMoves = MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap & allowedTiles;
             // TODO: ischeck applid here?
+            // TODO: breaking if there?
 
             // preparing moves
             const uint64_t attackMoves = figMoves & enemyMap;
@@ -813,7 +812,7 @@ private:
         while (suspectedFigs != 0)
         {
             const int msbPos = ExtractMsbPos(suspectedFigs);
-            const uint64_t attackedFig = MoveMapT::GetMoves(msbPos, fullMap)
+            const uint64_t attackedFig = MoveMapT::GetMoves(msbPos, fullMap) & fullMap
                                          & MoveMapT::GetMoves(ConvertToReversedPos(allyKingShift), fullMap);
 
             const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
@@ -847,11 +846,11 @@ private:
             const uint64_t kingsPerspective = MoveMapT::GetMoves(ConvertToReversedPos(allyKingShift), fullMap);
 
             // TODO: ERROR HERE
-            if (const uint64_t attackedFig = suspectedFigAttackFields & (
-                                                 kingsPerspective | board.boards[allyCord + kingIndex]);
+            if (const uint64_t attackedFig = suspectedFigAttackFields & fullMap &
+                                                                (kingsPerspective | board.boards[allyCord + kingIndex]);
                 attackedFig == board.boards[allyCord + kingIndex])
             {
-                allowedTilesFigMap |= (suspectedFigAttackFields | (maxMsbPossible >> msbPos)) & suspectedLines;
+                allowedTilesFigMap |= (suspectedFigAttackFields | (maxMsbPossible >> msbPos)) & kingsPerspective;
             }
             else
             {

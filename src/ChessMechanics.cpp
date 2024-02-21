@@ -4,6 +4,7 @@
 
 #include "../include/MoveGeneration/ChessMechanics.h"
 
+// Gets occupancy maps, which simply indicates wheter some field is occupied or not. Does not distinguish colors.
 uint64_t ChessMechanics::GetFullMap() const
 {
     uint64_t map = 0;
@@ -11,6 +12,7 @@ uint64_t ChessMechanics::GetFullMap() const
     return map;
 }
 
+// Gets occupancy maps, which simply indicates wheter some field is occupied or not, by desired color figures.
 uint64_t ChessMechanics::GetColMap(const int col) const
 {
     uint64_t map = 0;
@@ -20,6 +22,15 @@ uint64_t ChessMechanics::GetColMap(const int col) const
 
 // Todo: test later wheter accumulation of blocked maps is faster?
 // Todo: AVX applied here?
+
+/*      IMPORTANT NOTES:
+ *  BlockedFieldsMap - indicates wheter some field could be attacked by enemy figures in their next round.
+ *  During generation process there are check test performed with counting, what yields 3 code branches inside main
+ *  generation code. Map is mainly used when king is moving, allowing to simply predict wheter king should
+ *  move to that tile or not.
+ *
+ */
+
 std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const uint64_t fullMap) const
 {
     uint8_t checksCount{};
@@ -29,6 +40,9 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     const size_t enemyFigInd = enemyCol * Board::BoardsPerCol;
     const int allyKingShift = ConvertToReversedPos(board.kingMSBPositions[board.movColor]);
     const uint64_t allyKingMap = 1LLU << allyKingShift;
+
+    // allows to also simply predict which tiles on the other side of the king are allowed.
+    const uint64_t fullMapWoutKing = fullMap ^ allyKingMap;
 
     // King attacks generation.
     const uint64_t kingBlockedMap = KingMap::GetMoves(board.kingMSBPositions[enemyCol]);
@@ -55,7 +69,7 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     // Rook attacks generation.
     const uint64_t rookBlockedMap = _blockIterativeGenerator(
         board.boards[enemyFigInd + rooksIndex] | board.boards[enemyFigInd + queensIndex],
-        [=](const int pos) { return RookMap::GetMoves(pos, fullMap); }
+        [=](const int pos) { return RookMap::GetMoves(pos, fullMapWoutKing); }
     );
     const uint8_t wasCheckedByRookFlag = (rookBlockedMap & allyKingMap) >> allyKingShift;
     // = 1 or 0 depending whether hits or not
@@ -65,7 +79,7 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     // Bishop attacks generation.
     const uint64_t bishopBlockedMap = _blockIterativeGenerator(
         board.boards[enemyFigInd + bishopsIndex] | board.boards[enemyFigInd + queensIndex],
-        [=](const int pos) { return BishopMap::GetMoves(pos, fullMap); }
+        [=](const int pos) { return BishopMap::GetMoves(pos, fullMapWoutKing); }
     );
     const uint8_t wasCheckedByBishopFlag = (bishopBlockedMap & allyKingMap) >> allyKingShift;
     // = 1 or 0 depending whether hits or not
