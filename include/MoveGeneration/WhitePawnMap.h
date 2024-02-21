@@ -44,11 +44,14 @@ public:
         return leftField | righField;
     }
 
+    [[nodiscard]] static constexpr uint64_t GetElPassantMoveField(const uint64_t elPassantField) {
+        return elPassantField >> 8;
+    }
+
     // ------------------------------
     // Class fields
     // ------------------------------
 
-    static constexpr int ElPassantShift = -8;
     static constexpr uint64_t PromotingMask = GenMask(48, 56, 1);
     static constexpr uint64_t ElPassantMask = GenMask(24, 32, 1);
 private:

@@ -54,7 +54,7 @@ struct ChessMechanics {
     [[nodiscard]] uint64_t GetColMap(int col) const;
 
     // [blockedFigMap, checksCount, checkType]
-    [[nodiscard]] std::tuple<uint64_t, uint8_t, uint8_t> GetBlockedFieldMap(uint64_t fullMap) const;
+    [[nodiscard]] std::tuple<uint64_t, uint8_t, uint8_t> GetBlockedFi23eldMap(uint64_t fullMap) const;
 
     // should only be used when no check is on board
     [[nodiscard]] uint64_t GetPinnedFigsMapWoutCheck(int col, uint64_t fullMap) const;
@@ -157,7 +157,7 @@ private:
                 return GetPinnedFigsMapWithCheck(board.movColor, fullMap);
 
             auto pinned = GetPinnedFigsMapWoutCheck(board.movColor, fullMap);
-            return { pinned, GetAllowedTilesWhenCheckedByNonSliding(board.movColor, fullMap)};
+            return { pinned, GetAllowedTilesWhenCheckedByNonSliding(board.movColor) };
         }();
 
         // helping variable preparation
@@ -191,6 +191,7 @@ private:
                 board.boards[Board::BoardsPerCol*board.movColor + pawnsIndex],
                 enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
 
+
         _processPlainKingMoves(action, depth, blockedFigMap, allyMap, enemyMap);
     }
 
@@ -219,7 +220,7 @@ private:
         _processFigMoves<ActionT, MapT, false, true, true, isCheck>(action, depth, figMap, enemyMap,
             allyMap,  pinnedFigMap, promotingPawns, allowedMoveFillter);
 
-        // _processElPassantMoves<ActionT, MapT, isCheck>(action, depth, figMap);
+        _processElPassantMoves<ActionT, MapT, isCheck>(action, depth, allyMap | enemyMap, pinnedFigMap, figMap);
     }
 
     // TODO: Consider different soluition?
@@ -249,7 +250,7 @@ private:
                     RookMap::GetMoves(board.kingMSBPositions[board.movColor], cleanedFromPawnsMap) & MapT::ElPassantMask;
                     (kingHorizontalLine & enemyRookFigs) != 0) return;
 
-            const uint64_t moveMap = board.elPassantField << MapT::ElPassantShift;
+            const uint64_t moveMap = MapT::GetElPassantMoveField(board.elPassantField);
 
             // checking wheter moving some pawns would undercover king on some line -
             if ((processedPawns & pinnedFigMap) != 0) {
@@ -258,7 +259,7 @@ private:
             }
 
             // applying changes on board
-            Field oldElPassantField = board.elPassantField;
+            const Field oldElPassantField = board.elPassantField;
             figMap ^= pawnMap;
             figMap |= moveMap;
             board.boards[enemyCord + pawnsIndex] ^= board.elPassantField;
@@ -277,7 +278,6 @@ private:
 
             possiblePawnsToMove ^= pawnMap;
         }
-
     }
 
     // TODO: Compare with simple if searching loop
@@ -576,6 +576,78 @@ private:
 
                 attackingMoves ^= newKingBoard;
             }
+        }
+
+        // reverting changes
+        board.Castlings = oldCastlings;
+        board.kingMSBPositions[board.movColor] = oldKingPos;
+        board.boards[board.movColor*Board::BoardsPerCol + kingIndex] = maxMsbPossible >> oldKingPos;
+        board.elPassantField = oldElPassant;
+    }
+
+    template<
+       class ActionT
+    >void _processKingMovesWhenChecked(ActionT action, const int depth, const uint64_t blockedFigMap,
+        const uint64_t allyMap, const uint64_t enemyMap, const uint64_t allowedTilesMaps)
+    {
+        static constexpr size_t CastlingPerColor = 2;
+
+        // simple helping variables
+        const size_t movingColorIndex = board.movColor*Board::BoardsPerCol;
+        const size_t enemyColorIndex = SwapColor(board.movColor)*Board::BoardsPerCol;
+
+        // generating moves
+        const uint64_t kingMoves = KingMap::GetMoves(board.kingMSBPositions[board.movColor]) & ~blockedFigMap & ~allyMap;
+        uint64_t nonAttackingMoves = kingMoves & ~enemyMap;
+
+        // saving old parameters
+        const uint8_t oldKingPos = board.kingMSBPositions[board.movColor];
+        const auto oldCastlings = board.Castlings;
+        const Field oldElPassant = board.elPassantField;
+
+        // prohibiting castlings
+        board.Castlings[CastlingPerColor*board.movColor + KingCastlingIndex] = false;
+        board.Castlings[CastlingPerColor*board.movColor + QueenCastlingIndex] = false;
+
+        // prohibiting elPassant
+        board.elPassantField = INVALID;
+
+        // processing simple non attacking moves
+        while(nonAttackingMoves) {
+            // extracting new king position data
+            const uint8_t newPos = ExtractMsbPos(nonAttackingMoves);
+            const uint64_t newKingBoard = maxMsbPossible >> newPos;
+
+            // preparing board changes
+            board.kingMSBPositions[board.movColor] = newPos;
+            board.boards[movingColorIndex + kingIndex] = newKingBoard;
+
+            // performing core actions
+            board.ChangePlayingColor();
+            IterativeBoardTraversal(action, depth-1);
+            board.ChangePlayingColor();
+
+            nonAttackingMoves ^= newKingBoard;
+        }
+
+        if (const uint64_t attackField = kingMoves & allowedTilesMaps & ~blockedFigMap)
+            // possibly prevents some slowing memory copying operation
+        {
+            const int msbPos = ExtractMsbPos(attackField);
+            board.kingMSBPositions[board.movColor] = msbPos;
+            board.boards[movingColorIndex + kingIndex] = attackField;
+
+            for (size_t i = 0; i < 4; ++i)
+                if (uint64_t& figBd = board.boards[enemyColorIndex + i]; (figBd & attackField) != 0) {
+                    figBd ^= attackField;
+
+                    board.ChangePlayingColor();
+                    IterativeBoardTraversal(action, depth-1);
+                    board.ChangePlayingColor();
+
+                    figBd |= attackField;
+                    break;
+                }
         }
 
         // reverting changes
