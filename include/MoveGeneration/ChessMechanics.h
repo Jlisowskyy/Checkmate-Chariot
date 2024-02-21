@@ -718,7 +718,7 @@ private:
             board.kingMSBPositions[board.movColor] = msbPos;
             board.boards[movingColorIndex + kingIndex] = attackField;
 
-            for (size_t i = 0; i < 4; ++i)
+            for (size_t i = 0; i <= queensIndex; ++i)
                 if (uint64_t&figBd = board.boards[enemyColorIndex + i]; (figBd & attackField) != 0)
                 {
                     figBd ^= attackField;

@@ -141,7 +141,12 @@ void MoveGenerationTester::PerformSeriesOfDeepTests(const std::vector<std::pair<
 bool MoveGenerationTester::PerformSeriesOfDeepTestFromFile(const std::string& path) const
 {
     std::vector<std::pair<std::string, int>> tests{};
-    std::ifstream csvRead(path.empty() ? DefaultTestPath : path);
+    std::ifstream csvRead(path.empty()
+                                        ? DefaultTestPath
+                                        : path == "/"
+                                        ? DefaultTestPath1
+                                        : path
+                                        );
 
     for(std::string buffer{}; std::getline(csvRead, buffer);)
     {

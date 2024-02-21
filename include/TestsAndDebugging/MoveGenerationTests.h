@@ -79,6 +79,7 @@ private:
 public:
     static constexpr const char* DefaultPath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/correctnesGen/stockfish";
     static constexpr const char* DefaultTestPath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/positionTests.csv";
+    static constexpr const char* DefaultTestPath1 = "/home/Jlisowskyy/Repos/ChessEngine/Tests/singlePos.csv";
 
 private:
     const std::string _enginePath = DefaultPath;

@@ -50,7 +50,7 @@ public:
 
     [[nodiscard]] static constexpr uint64_t GetElPassantMoveField(const uint64_t elPassantField)
     {
-        return elPassantField >> 8;
+        return elPassantField << 8;
     }
 
     [[nodiscard]] static Field GetElPassantField(const uint64_t moveField, const uint64_t allMovesMap)
