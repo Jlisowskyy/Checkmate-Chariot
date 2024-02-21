@@ -54,7 +54,7 @@ struct ChessMechanics {
     [[nodiscard]] uint64_t GetColMap(int col) const;
 
     // [blockedFigMap, checksCount, checkType]
-    [[nodiscard]] std::tuple<uint64_t, uint8_t, uint8_t> GetBlockedFi23eldMap(uint64_t fullMap) const;
+    [[nodiscard]] std::tuple<uint64_t, uint8_t, uint8_t> GetBlockedFieldMap(uint64_t fullMap) const;
 
     // should only be used when no check is on board
     [[nodiscard]] uint64_t GetPinnedFigsMapWoutCheck(int col, uint64_t fullMap) const;
@@ -192,7 +192,7 @@ private:
                 enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
 
 
-        _processPlainKingMoves(action, depth, blockedFigMap, allyMap, enemyMap);
+        _processKingMovesWhenChecked(action, depth, blockedFigMap, allyMap, enemyMap, allowedTilesMap);
     }
 
     template<
@@ -506,7 +506,7 @@ private:
     // TODO: test copying all old castlings
     template<
        class ActionT
-    >void _processPlainKingMoves(ActionT action, const int depth, const uint64_t blockedFigMap,
+    >void _processPlainKingMoves(ActionT action, const int depth, const uint64_t blockedFigMap,z
         const uint64_t allyMap, const uint64_t enemyMap)
     {
         static constexpr size_t CastlingPerColor = 2;
