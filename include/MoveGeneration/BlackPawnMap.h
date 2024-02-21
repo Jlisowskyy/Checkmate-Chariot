@@ -48,12 +48,18 @@ public:
         return elPassantField << 8;
     }
 
+    [[nodiscard]] static constexpr Field GetElPassantField(const uint64_t moveField, const uint64_t allMovesMap) {
+        return static_cast<Field>((moveField & ElPassantMask & (allMovesMap >> 8)));
+    }
+
     // ------------------------------
     // Class fields
     // ------------------------------
 
     static constexpr uint64_t PromotingMask = GenMask(8, 16, 1);
     static constexpr uint64_t ElPassantMask = GenMask(32, 40, 1);
+    // Mask with ones only on "x7" line
+    static constexpr uint64_t StartMask = GenMask(48, 56, 1);
 
 private:
 
@@ -62,9 +68,6 @@ private:
 
     // Mask with ones only on "Hx" line
     static constexpr uint64_t RightMask = ~GenMask(7, 64, 8);
-
-    // Mask with ones only on "x7" line
-    static constexpr uint64_t StartMask = GenMask(48, 56, 1);
 
 };
 

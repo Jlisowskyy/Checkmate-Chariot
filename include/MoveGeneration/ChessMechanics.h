@@ -120,6 +120,7 @@ private:
         const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
         const uint64_t allyMap = GetColMap(board.movColor);
 
+
         _processFigMoves<ActionT, RookMap, true>(action, depth,
             board.boards[Board::BoardsPerCol*board.movColor + rooksIndex], enemyMap, allyMap,  pinnedFigsMap);
 
@@ -214,7 +215,7 @@ private:
         const uint64_t promotingPawns = figMap & MapT::PromotingMask;
         const uint64_t nonPromotingPawns = figMap ^ promotingPawns;
 
-        _processFigMoves<ActionT, MapT, false, false, true, isCheck, MapT::ElPassantMask>(action, depth, figMap, enemyMap,
+        _processFigMoves<ActionT, MapT, false, false, true, isCheck, MapT::GetElPassantField>(action, depth, figMap, enemyMap,
             allyMap,  pinnedFigMap, nonPromotingPawns, allowedMoveFillter);
 
         _processFigMoves<ActionT, MapT, false, true, true, isCheck>(action, depth, figMap, enemyMap,
@@ -241,7 +242,7 @@ private:
         uint64_t possiblePawnsToMove = figMap & suspectedFields;
 
         while(possiblePawnsToMove) {
-            const uint64_t pawnMap = ExtractMsbPos(possiblePawnsToMove);
+            const uint64_t pawnMap = maxMsbPossible >> ExtractMsbPos(possiblePawnsToMove);
 
             // checking wheteher move would affect horizontal line attacks on king
             const uint64_t processedPawns = pawnMap | board.elPassantField;
@@ -289,7 +290,7 @@ private:
         bool promotePawns = false,
         bool selectFigures = false,
         bool isCheck = false,
-        uint64_t elPassantLine = 0LLU
+        Field (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
     >void _processFigMoves(ActionT action, const int depth, uint64_t& figMap,
         const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
         [[maybe_unused]] const uint64_t figureSelector = 0, [[maybe_unused]] const uint64_t allowedMovesSelector = 0)
@@ -344,7 +345,7 @@ private:
             figMap ^= figBoard;
 
             // processing move consequneces
-            _processNonAttackingMoves<ActionT, promotePawns, elPassantLine>(action, depth, figMap, nonAttackingMoves);
+            _processNonAttackingMoves<ActionT, promotePawns, elPassantFieldDeducer>(action, depth, figMap, nonAttackingMoves);
             if (attackMoves) _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup);
 
             // cleaning up
@@ -378,7 +379,7 @@ private:
             figMap ^= figBoard;
 
             // processing move consequences
-            _processNonAttackingMoves<ActionT, promotePawns, elPassantLine>(action, depth, figMap, nonAttackingMoves);
+            _processNonAttackingMoves<ActionT, promotePawns, elPassantFieldDeducer>(action, depth, figMap, nonAttackingMoves);
             if (attackMoves) _processAttackingMoves<ActionT, promotePawns>(action ,depth, figMap, attackMoves, mapsBackup); // TODO: There is exactly one move possible
 
             figMap |= figBoard;
@@ -393,9 +394,12 @@ private:
     template<
         class ActionT,
         bool promotePawns,
-        uint64_t elPassantLine = 0LLU
+        Field (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
     >void _processNonAttackingMoves(ActionT action, const int depth, uint64_t& figMap, uint64_t nonAttackingMoves)
     {
+        [[maybe_unused]] const uint64_t nonAttackingMovesCopy = nonAttackingMoves; // used only to allow simple el passant field detection.
+        // TODO: replace with something more creative
+
         while (nonAttackingMoves) {
             // extracting moves
             const uint8_t movePos = ExtractMsbPos(nonAttackingMoves);
@@ -406,9 +410,8 @@ private:
                 // simple figure case
             {
                 // if el passant line is passed when figure moved to these line flag will turned on
-                if constexpr (elPassantLine != 0LLU) {
-                    if ((elPassantLine & moveBoard) != 0)
-                        board.elPassantField = static_cast<Field>(moveBoard);
+                if constexpr (elPassantFieldDeducer != nullptr) {
+                    board.elPassantField = elPassantFieldDeducer(moveBoard, nonAttackingMovesCopy);
                 }
 
                 // applying moves
@@ -420,7 +423,7 @@ private:
                 board.ChangePlayingColor();
 
                 // reverting flag changes
-                if constexpr (elPassantLine != 0LLU) {
+                if constexpr (elPassantFieldDeducer != nullptr) {
                     board.elPassantField = INVALID;
                 }
 
@@ -506,7 +509,7 @@ private:
     // TODO: test copying all old castlings
     template<
        class ActionT
-    >void _processPlainKingMoves(ActionT action, const int depth, const uint64_t blockedFigMap,z
+    >void _processPlainKingMoves(ActionT action, const int depth, const uint64_t blockedFigMap,
         const uint64_t allyMap, const uint64_t enemyMap)
     {
         static constexpr size_t CastlingPerColor = 2;
