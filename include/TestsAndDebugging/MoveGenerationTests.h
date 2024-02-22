@@ -46,6 +46,11 @@ public:
     // reads tests from csv file, where row contains position and depth
     bool PerformSeriesOfDeepTestFromFile(const std::string& path) const;
 
+    void PerformPerformanceTest(const std::string& inputTestPath, const std::string& output = "test_output.csv")
+    {
+
+    }
+
     // ------------------------------
     // Private class methods
     // ------------------------------
