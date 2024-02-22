@@ -434,21 +434,19 @@ void MoveGenerationTester::_startUpPerft(const std::string&fenPosition, const in
                                          const std::vector<std::string>&moves, const int writeFileDesc)
 {
     static constexpr auto quitCommand = "quit\n";
-    const std::string fenCommand = std::format("position fen {}\n", fenPosition);
     const std::string perftCommand = std::format("go perft {}\n", depth);
 
-    write(writeFileDesc, fenCommand.c_str(), fenCommand.size());
-
     // applying moves to the external engine
+    std::string fenCommand = std::format("position fen {}", fenPosition);
     if (!moves.empty())
     {
-        std::string moveString = "position startpos moves ";
+        fenCommand += " moves ";
         for (const auto&move: moves)
-            moveString += move + ' ';
-
-        moveString += '\n';
-        write(writeFileDesc, moveString.c_str(), moveString.size());
+            fenCommand += move + ' ';
     }
+
+    fenCommand += '\n';
+    write(writeFileDesc, fenCommand.c_str(), fenCommand.size());
 
     write(writeFileDesc, perftCommand.c_str(), perftCommand.size());
     write(writeFileDesc, quitCommand, strlen(quitCommand));

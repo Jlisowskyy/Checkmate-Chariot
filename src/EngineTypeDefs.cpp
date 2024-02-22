@@ -97,7 +97,8 @@ std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board&oldBoard, const B
 {
     const size_t movingColInd = oldBoard.movColor * Board::BoardsPerCol;
 
-    for (size_t i = 0; i < 6; ++i)
+    // its importtant search boards in reverse to firstly detect king moves as algebraic notation works
+    for (ssize_t i = 5; i >= 0; --i)
     {
         if (oldBoard.boards[movingColInd + i] != newBoard.boards[movingColInd + i])
         {

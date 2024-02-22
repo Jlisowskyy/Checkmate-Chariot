@@ -36,7 +36,9 @@ void ChessEngineMainEntry(const int argc, const char** argv)
             commandBuffer += std::string(argv[i]) + '\n';
 
         std::istringstream stream(commandBuffer);
-        translator.BeginCommandTranslation(stream);
+        auto lastCommand = translator.BeginCommandTranslation(stream);
+
+        if (lastCommand != UCITranslator::UCICommand::quitCommand) translator.BeginCommandTranslation(std::cin);
     }
 }
 

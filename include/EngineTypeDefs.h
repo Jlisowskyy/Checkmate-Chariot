@@ -10,6 +10,8 @@
 #include <iostream>
 #include <array>
 
+#include "BitOperations.h"
+
 enum MoveTypes
 {
     NormalMove,
@@ -152,8 +154,16 @@ struct Board
     static constexpr size_t KingPosCount = 2;
     static constexpr size_t CastlingsPerColor = 2;
 
-    static constexpr std::array<uint8_t, KingPosCount> DefaultKingPos{4, 60};
-    static constexpr std::array<uint64_t, CastlingCount> CastlingNewKingPos{6, 2, 62, 58};
+    static constexpr std::array<int, KingPosCount> DefaultKingPos{
+        ConvertToReversedPos(4),
+        ConvertToReversedPos(60)
+    };
+    static constexpr std::array<int, CastlingCount> CastlingNewKingPos{
+        ConvertToReversedPos(6),
+        ConvertToReversedPos(2),
+        ConvertToReversedPos(62),
+        ConvertToReversedPos(58)
+    };
 
     static constexpr std::array<uint64_t, CastlingCount> CastlingsRookMaps{
         1LLU << 7,

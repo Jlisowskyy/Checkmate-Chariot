@@ -7,7 +7,7 @@
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/Interface/Logger.h"
 
-void UCITranslator::BeginCommandTranslation(std::istream& input)
+UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream&input)
 {
     auto lastCommand = UCICommand::InvalidCommand;
     std::string recordBuffer;
@@ -20,6 +20,8 @@ void UCITranslator::BeginCommandTranslation(std::istream& input)
             GlobalLogger.StartErrLogging() <<
                     "[ ERROR ] Error uccured during translation or execution.\n Refer to UCI protocl manual to get more detailed information.\n";
     }
+
+    return lastCommand;
 }
 
 UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string&buffer)

@@ -59,7 +59,7 @@ public:
     // Clas interaction
     // ------------------------------
 
-    void BeginCommandTranslation(std::istream& input);
+    UCICommand BeginCommandTranslation(std::istream&input);
 
     // ------------------------------
     // private methods

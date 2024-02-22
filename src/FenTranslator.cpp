@@ -6,6 +6,8 @@
 
 #include "../include/BitOperations.h"
 #include "../include/Interface/Logger.h"
+#include "../include/MoveGeneration/BlackPawnMap.h"
+#include "../include/MoveGeneration/WhitePawnMap.h"
 
 const Board& FenTranslator::GetDefault() { return StartBoard; }
 
@@ -47,7 +49,13 @@ std::string FenTranslator::Translate(const Board&board)
     fenPos += ' ';
     fenPos += _extractCastling(board);
     fenPos += ' ';
-    fenPos += board.elPassantField == INVALID ? "-" : fieldStrMap.at(board.elPassantField);
+
+    // inner representation points to position made with long pawn move
+    auto FenCompatibleElPassantPosition = board.movColor == WHITE
+                ? WhitePawnMap::GetElPassantMoveField(board.elPassantField)
+                : BlackPawnMap::GetElPassantMoveField(board.elPassantField);
+
+    fenPos += board.elPassantField == INVALID ? "-" : fieldStrMap.at(static_cast<Field>(FenCompatibleElPassantPosition));
 
     // skpping moves counters - not supported
     fenPos += " 0 1";
@@ -163,6 +171,12 @@ size_t FenTranslator::_processElPassant(Board&bd, const size_t pos, const std::s
         throw std::runtime_error("[ ERROR ] Invalid field description detected on ElPassant field!\n");
 
     bd.elPassantField = strFieldMap.at(field);
+
+    // inner representation points to position made with long pawn move
+    bd.elPassantField = static_cast<Field>(bd.movColor == WHITE
+                                               ? BlackPawnMap::GetElPassantMoveField(bd.elPassantField)
+                                               : WhitePawnMap::GetElPassantMoveField(bd.elPassantField));
+
     return pos + 2;
 }
 
