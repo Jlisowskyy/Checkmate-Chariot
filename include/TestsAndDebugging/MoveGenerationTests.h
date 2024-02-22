@@ -46,10 +46,7 @@ public:
     // reads tests from csv file, where row contains position and depth
     bool PerformSeriesOfDeepTestFromFile(const std::string& path) const;
 
-    void PerformPerformanceTest(const std::string& inputTestPath, const std::string& output = "test_output.csv")
-    {
-
-    }
+    bool PerformPerformanceTest(const std::string& inputTestPath, const std::string& output) const;
 
     // ------------------------------
     // Private class methods
@@ -58,6 +55,14 @@ private:
     static constexpr size_t WritePipe = 1;
     static constexpr size_t ReadPipe = 0;
     static constexpr size_t buffSize = 4096;
+
+    static void _saveResultToCsv(const std::vector<std::tuple<std::string, int, double, double, double>>& results, std::ofstream& stream);
+
+    [[nodiscard]] double _performExternalEngineSpeedTest(const std::string& fenPostion, int depth) const;
+
+    [[nodiscard]] static double _performEngineSpeedTest(const std::string& fenPosition, int depth);
+
+    [[nodiscard]] static std::vector<std::pair<std::string, int>> _getPositionsFromCsv(std::ifstream& stream);
 
     void _deepTestRecu(const std::string&fenPosition, int depth, std::vector<std::string>&moves,
                        std::string&chainOut) const;
@@ -78,13 +83,18 @@ private:
 
     void _spawnEngine(const int* inPipeFileDesc, const int* outPipeFileDesc) const;
 
+    std::pair<std::array<int, 2>, pid_t> _getExternalEngineProcess() const;
+
     // ------------------------------
     // Class fields
     // ------------------------------
 public:
+    // TODO: temporary to speedup testing
     static constexpr const char* DefaultPath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/correctnesGen/stockfish";
     static constexpr const char* DefaultTestPath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/positionTests.csv";
     static constexpr const char* DefaultTestPath1 = "/home/Jlisowskyy/Repos/ChessEngine/Tests/singlePos.csv";
+    static constexpr const char* DefaultCompTestPath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/perfTest1.csv";
+    static constexpr const char* DefaultSaveFile = "test_output.csv";
 
 private:
     const std::string _enginePath = DefaultPath;

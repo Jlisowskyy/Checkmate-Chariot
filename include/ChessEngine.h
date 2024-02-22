@@ -5,7 +5,7 @@
 #ifndef CHESS_ENGINE_H
 #define CHESS_ENGINE_H
 
-void ChessEngineMainEntry();
+void ChessEngineMainEntry(int argc, const char** argv);
 
 void BishopHashingTest();
 

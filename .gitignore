@@ -2,3 +2,5 @@ build/
 .idea/
 python\ scripts/
 *.exec
+*.csv
+*.out

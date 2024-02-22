@@ -2,8 +2,8 @@
 
 #include "include/ChessEngine.h"
 
-int main() {
-    ChessEngineMainEntry();
+int main(const int argc, const char** argv) {
+    ChessEngineMainEntry(argc, argv);
 
     return EXIT_SUCCESS;
 }

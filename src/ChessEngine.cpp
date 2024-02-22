@@ -2,10 +2,12 @@
 // Created by Jlisowskyy on 12/26/23.
 //
 
-#include "../include/ChessEngine.h"
+#include <sstream>
 
+#include "../include/ChessEngine.h"
 #include "../include/Interface/UCITranslator.h"
 #include "../include/Engine.h"
+
 // #include "../include/MoveGeneration/KingMap.h"
 // #include "../include/MoveGeneration/BishopMapGenerator.h"
 // #include "../include/MapTypes/ModuloFreeNoOffsetBishopMap.h"
@@ -19,13 +21,23 @@
 // #include "../include/MapTypes/SimpleBishopMap.h"
 // #include "../include/MapTypes/SimpleRookMap.h"
 
-void ChessEngineMainEntry()
+void ChessEngineMainEntry(const int argc, const char** argv)
 {
     Engine engine{};
     UCITranslator translator{engine};
-
     engine.Initialize();
-    translator.BeginCommandTranslation();
+
+    if (argc == 1)
+        translator.BeginCommandTranslation(std::cin);
+    else
+    {
+        std::string commandBuffer{};
+        for (int i = 1; i < argc; ++i)
+            commandBuffer += std::string(argv[i]) + '\n';
+
+        std::istringstream stream(commandBuffer);
+        translator.BeginCommandTranslation(stream);
+    }
 }
 
 void BishopHashingTest()

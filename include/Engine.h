@@ -11,6 +11,7 @@
 #include "Interface/UCIOptions.h"
 #include "EngineTypeDefs.h"
 #include "Interface/FenTranslator.h"
+#include "Interface/Logger.h"
 
 
 class Engine
@@ -39,7 +40,10 @@ public:
 
     std::map<std::string, uint64_t> GetPerft(int depth);
 
-    void GoPerft(int depth);
+    template<
+        bool LogToOut = true
+        >
+    double GoPerft(int depth);
 
     void SetFenPosition(const std::string&fenStr);
 
@@ -99,5 +103,26 @@ private:
         }),
     };
 };
+
+template<bool LogToOut>
+double Engine::GoPerft(const int depth)
+{
+    const auto t1 = std::chrono::steady_clock::now();
+    auto moves = GetPerft(depth);
+    const auto t2 = std::chrono::steady_clock::now();
+
+    uint64_t totalSum{};
+    for (const auto&[moveStr, moveCount]: moves)
+    {
+        if constexpr (LogToOut) GlobalLogger.StartLogging() << std::format("{}: {}\n", moveStr, moveCount);
+        totalSum += moveCount;
+    }
+
+    double spentTime = static_cast<double>((t2 - t1).count()) * 1e-6;
+    if constexpr (LogToOut) GlobalLogger.StartLogging() << std::format("Calculated moves: {} in time: {}ms\n", totalSum,
+                                                                       spentTime);
+
+    return spentTime;
+}
 
 #endif //ENGINE_H

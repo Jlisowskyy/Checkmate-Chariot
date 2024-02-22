@@ -7,14 +7,13 @@
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/Interface/Logger.h"
 
-void UCITranslator::BeginCommandTranslation()
+void UCITranslator::BeginCommandTranslation(std::istream& input)
 {
     auto lastCommand = UCICommand::InvalidCommand;
+    std::string recordBuffer;
 
-    while (lastCommand != UCICommand::quitCommand)
+    while (lastCommand != UCICommand::quitCommand && std::getline(input, recordBuffer))
     {
-        std::string recordBuffer;
-        std::getline(std::cin, recordBuffer);
         lastCommand = _cleanMessage(recordBuffer);
 
         if (lastCommand == UCICommand::InvalidCommand)
@@ -70,7 +69,8 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) cons
     if (workStr == "perft")
     {
         std::string depthStr{};
-        ParseTools::ExtractNextWord(str, depthStr, pos);
+        pos = ParseTools::ExtractNextWord(str, depthStr, pos);
+        if (pos == 0) return UCICommand::InvalidCommand;
 
         int depth;
         try { depth = std::stoi(depthStr); }
@@ -81,7 +81,8 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) cons
     else if (workStr == "debug")
     {
         std::string depthStr{};
-        ParseTools::ExtractNextWord(str, depthStr, pos);
+        pos = ParseTools::ExtractNextWord(str, depthStr, pos);
+        if (pos == 0) return UCICommand::InvalidCommand;
 
         int depth;
         try { depth = std::stoi(depthStr); }
@@ -93,7 +94,8 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) cons
     else if (workStr == "deepDebug")
     {
         std::string depthStr{};
-        ParseTools::ExtractNextWord(str, depthStr, pos);
+        pos = ParseTools::ExtractNextWord(str, depthStr, pos);
+        if (pos == 0) return UCICommand::InvalidCommand;
 
         int depth;
         try { depth = std::stoi(depthStr); }
@@ -105,7 +107,8 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) cons
     else if (workStr == "fullDebug")
     {
         std::string depthStr{};
-        ParseTools::ExtractNextWord(str, depthStr, pos);
+        pos = ParseTools::ExtractNextWord(str, depthStr, pos);
+        if (pos == 0) return UCICommand::InvalidCommand;
 
         int depth;
         try { depth = std::stoi(depthStr); }
@@ -142,6 +145,18 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) cons
         if (arg <= 0) return UCICommand::InvalidCommand;
 
         _engine.GoMovetime(arg);
+    }
+    else if (workStr == "perfComp")
+    {
+        std::string file1Str{};
+        std::string file2Str{};
+        pos = ParseTools::ExtractNextWord(str, file1Str, pos);
+        if (pos != 0) ParseTools::ExtractNextWord(str, file2Str, pos);
+
+        const MoveGenerationTester tester;
+        bool result = tester.PerformPerformanceTest(file1Str, file2Str);
+        if (result == false)
+            return UCICommand::InvalidCommand;
     }
 
     return UCICommand::goCommand;

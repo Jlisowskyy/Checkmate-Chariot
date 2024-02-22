@@ -45,23 +45,6 @@ std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
     return moveMap;
 }
 
-void Engine::GoPerft(const int depth)
-{
-    const auto t1 = std::chrono::steady_clock::now();
-    auto moves = GetPerft(depth);
-    const auto t2 = std::chrono::steady_clock::now();
-
-    uint64_t totalSum{};
-    for (const auto&[moveStr, moveCount]: moves)
-    {
-        GlobalLogger.StartLogging() << std::format("{}: {}\n", moveStr, moveCount);
-        totalSum += moveCount;
-    }
-
-    GlobalLogger.StartLogging() << std::format("Calculated moves: {} in time: {}ms\n", totalSum,
-                                               (t2 - t1).count() * 1e-6);
-}
-
 void Engine::SetFenPosition(const std::string&fenStr)
 {
     _board = FenTranslator::Translate(fenStr);

@@ -140,7 +140,6 @@ void MoveGenerationTester::PerformSeriesOfDeepTests(const std::vector<std::pair<
 
 bool MoveGenerationTester::PerformSeriesOfDeepTestFromFile(const std::string& path) const
 {
-    std::vector<std::pair<std::string, int>> tests{};
     std::ifstream csvRead(path.empty()
                                         ? DefaultTestPath
                                         : path == "/"
@@ -148,32 +147,140 @@ bool MoveGenerationTester::PerformSeriesOfDeepTestFromFile(const std::string& pa
                                         : path
                                         );
 
-    for(std::string buffer{}; std::getline(csvRead, buffer);)
+
+    std::vector<std::pair<std::string, int>> tests{};
+    try
     {
-        std::string innerBuf{};
-        size_t pos = ParseTools::ExtractNextWord<[](int x)->int{ return x == ','; }>(buffer, innerBuf, 0);
-        if (pos == 0) return false;
-
-        innerBuf.pop_back();
-        tests.emplace_back(innerBuf, 0);
-
-        pos = ParseTools::ExtractNextWord(buffer, innerBuf, pos+1);
-        if (pos == 0) return false;
-
-        try
-        {
-            tests.back().second = static_cast<int>(ParseTools::ParseTolli(innerBuf));
-        }
-        catch(const std::exception& exc)
-        {
-            GlobalLogger.StartErrLogging() << std::format("[ ERROR ] Error occured:\n{}\n", exc.what());
-            return false;
-        }
+        tests = _getPositionsFromCsv(csvRead);
+    }
+    catch(const std::exception& exc)
+    {
+        GlobalLogger.StartErrLogging() << std::format("[ ERROR ] Error occured:\n{}\n", exc.what());
+        return false;
     }
 
     PerformSeriesOfDeepTests(tests);
 
     return true;
+}
+
+bool MoveGenerationTester::PerformPerformanceTest(const std::string& inputTestPath, const std::string& output) const
+{
+    // openning file
+    std::ifstream csvRead(inputTestPath.empty()
+                              ? DefaultCompTestPath
+                              : inputTestPath
+    );
+
+    // reading tests from file
+    std::vector<std::pair<std::string, int>> tests{};
+    try
+    {
+        tests = _getPositionsFromCsv(csvRead);
+    }
+    catch(const std::exception& exc)
+    {
+        GlobalLogger.StartErrLogging() << std::format("[ ERROR ] Error occured:\n{}\n", exc.what());
+        return false;
+    }
+
+    // performing tests
+    std::vector<std::tuple<std::string, int, double, double, double>> results{};
+    double internalSum{};
+    double externalSum{};
+
+
+    GlobalLogger.StartLogging() << "All results are displayed in following manner:\n\t Internal Engine time in ms, External Engine time in ms, ratio (external/internal)\n";
+
+    for (const auto& [pos, dep]: tests)
+    {
+        double internalTime = _performEngineSpeedTest(pos, dep);
+        double externalTime = _performExternalEngineSpeedTest(pos, dep);
+        double ratio = externalTime / internalTime;
+
+        internalSum += internalTime;
+        externalSum += externalTime;
+
+        results.emplace_back(pos, dep, internalTime, externalTime, ratio);
+
+        GlobalLogger.StartLogging() << std::format("Performed test on position with depth {}:\n\t{}\nAcquired results: {}, {}, {}\n",
+            dep, pos, internalTime, externalTime, ratio);
+    }
+
+    // last summary note
+    const double tCount = tests.size();
+    results.emplace_back("Average results based on test count:", tCount, internalSum/tCount, externalSum/tCount, externalSum/internalSum);
+    GlobalLogger.StartLogging() << std::format("Final average results: {}, {}, {}\n",
+        internalSum/tCount, externalSum/tCount, externalSum/internalSum);
+
+    // writiing to desired csv file
+    std::ofstream csvWrite(output.empty()
+                                        ? DefaultSaveFile
+                                        : output
+    );
+    _saveResultToCsv(results, csvWrite);
+
+    return true;
+}
+
+void MoveGenerationTester::_saveResultToCsv(
+    const std::vector<std::tuple<std::string, int, double, double, double>>& results, std::ofstream& stream)
+{
+    stream << "Fen Position, depth, internal engine time, external engine time, ratio (external/internal)\n";
+    for(const auto& [i1, i2, i3, i4, i5] : results)
+        stream << std::format("{}, {}, {}, {}, {}\n", i1, i2, i3, i4, i5);
+}
+
+double MoveGenerationTester::_performExternalEngineSpeedTest(const std::string& fenPostion, int depth) const
+{
+    static constexpr double BootupDelay = 100;
+
+    const auto t1 = std::chrono::steady_clock::now();
+
+    const auto[ communcationChannel, process ] = _getExternalEngineProcess();
+    _startUpPerft(fenPostion, depth, std::vector<std::string>(), communcationChannel[WritePipe]);
+    waitpid(process, nullptr, 0);
+
+    close(communcationChannel[ReadPipe]);
+    close(communcationChannel[WritePipe]);
+
+    const auto t2 = std::chrono::steady_clock::now();
+
+    return static_cast<double>((t2 - t1).count())*1e-6 - BootupDelay;
+}
+
+double MoveGenerationTester::_performEngineSpeedTest(const std::string& fenPosition, const int depth)
+{
+    Engine eng{};
+    eng.Initialize();
+    eng.SetFenPosition(fenPosition);
+
+    return eng.GoPerft<false>(depth);
+}
+
+std::vector<std::pair<std::string, int>> MoveGenerationTester::_getPositionsFromCsv(std::ifstream& stream)
+{
+    std::vector<std::pair<std::string, int>> records{};
+
+    for(std::string buffer{}; std::getline(stream, buffer);)
+    {
+        std::string innerBuf{};
+        buffer = ParseTools::GetTrimmed(buffer);
+        if (buffer.empty()) continue;
+
+        size_t pos = ParseTools::ExtractNextWord<[](int x)->int{ return x == ','; }>(buffer, innerBuf, 0);
+        if (pos == 0) throw std::runtime_error("missing comma: expected two values fen position and depth");
+
+        innerBuf.pop_back();
+        records.emplace_back(innerBuf, 0);
+
+        pos = ParseTools::ExtractNextWord(buffer, innerBuf, pos+1);
+        if (pos == 0) throw std::runtime_error("missing second argument: expected two values fen position and depth");
+
+        records.back().second = static_cast<int>(ParseTools::ParseTolli(innerBuf));
+    }
+
+    return records;
 }
 
 void MoveGenerationTester::_deepTestRecu(const std::string&fenPosition, const int depth,
@@ -201,37 +308,16 @@ void MoveGenerationTester::_deepTestRecu(const std::string&fenPosition, const in
 std::map<std::string, uint64_t> MoveGenerationTester::_generateCorrectMoveCounts(const std::string&fenPosition,
     const int depth, const std::vector<std::string>&moves) const
 {
-    // preparing pipes. 1 - input, 0 - output
-    int inPipeFileDesc[2];
-    int outPipeFileDesc[2];
+    const auto[ communcationChannel, process ] = _getExternalEngineProcess();
 
-    if (pipe(inPipeFileDesc))
-    {
-        perror("inPipeFileDesc init failed!");
-        exit(EXIT_FAILURE);
-    }
-    if (pipe(outPipeFileDesc))
-    {
-        perror("outPipeFileDesc init failed!");
-        exit(EXIT_FAILURE);
-    }
+    _startUpPerft(fenPosition, depth, moves, communcationChannel[WritePipe]);
+    auto moveMap = _getCorrectMovesMap(communcationChannel[ReadPipe]);
 
-    // fork branching
-    const pid_t proc = fork();
-    if (proc == 0)
-    {
-        _spawnEngine(inPipeFileDesc, outPipeFileDesc);
-        exit(EXIT_FAILURE);
-    }
+    waitpid(process, nullptr, 0);
 
-    // plumbing not used pipe sides
-    close(outPipeFileDesc[ReadPipe]);
-    close(inPipeFileDesc[WritePipe]);
+    close(communcationChannel[ReadPipe]);
+    close(communcationChannel[WritePipe]);
 
-    _startUpPerft(fenPosition, depth, moves, outPipeFileDesc[WritePipe]);
-    auto moveMap = _getCorrectMovesMap(inPipeFileDesc[ReadPipe]);
-
-    waitpid(proc, nullptr, 0);
     return moveMap;
 }
 
@@ -398,4 +484,36 @@ void MoveGenerationTester::_spawnEngine(const int* const inPipeFileDesc, const i
 
     // executing desired enginef
     execl(_enginePath.c_str(), "stockfish", nullptr);
+}
+
+std::pair<std::array<int, 2>, pid_t> MoveGenerationTester::_getExternalEngineProcess() const
+{
+    // preparing pipes. 1 - input, 0 - output
+    int inPipeFileDesc[2];
+    int outPipeFileDesc[2];
+
+    if (pipe(inPipeFileDesc))
+    {
+        perror("inPipeFileDesc init failed!");
+        exit(EXIT_FAILURE);
+    }
+    if (pipe(outPipeFileDesc))
+    {
+        perror("outPipeFileDesc init failed!");
+        exit(EXIT_FAILURE);
+    }
+
+    // fork branching
+    const pid_t proc = fork();
+    if (proc == 0)
+    {
+        _spawnEngine(inPipeFileDesc, outPipeFileDesc);
+        exit(EXIT_FAILURE);
+    }
+
+    // plumbing not used pipe sides
+    close(outPipeFileDesc[ReadPipe]);
+    close(inPipeFileDesc[WritePipe]);
+
+    return { { inPipeFileDesc[ReadPipe], outPipeFileDesc[WritePipe] }, proc};
 }
