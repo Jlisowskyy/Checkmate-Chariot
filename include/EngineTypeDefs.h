@@ -186,6 +186,13 @@ struct Board
         1LLU << 58 | 1LLU << 59
     };
 
+    static constexpr std::array<uint64_t, CastlingCount> CastlingTouchedFields{
+        1LLU << 6 | 1LLU << 5,
+        1LLU << 2 | 1LLU << 3 | 1LLU << 1,
+        1LLU << 61 | 1LLU << 62,
+        1LLU << 58 | 1LLU << 59 | 1LLU << 57
+    };
+
     std::array<bool, CastlingCount> Castlings{false, false, false, false};
     Field elPassantField = INVALID;
     int movColor = WHITE;

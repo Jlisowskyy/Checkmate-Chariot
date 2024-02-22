@@ -679,6 +679,7 @@ private:
         const uint64_t kingMoves = KingMap::GetMoves(board.kingMSBPositions[board.movColor]) & ~blockedFigMap & ~
                                    allyMap;
         uint64_t nonAttackingMoves = kingMoves & ~enemyMap;
+        uint64_t attackingMoves = kingMoves ^ nonAttackingMoves;
 
         // saving old parameters
         const uint8_t oldKingPos = board.kingMSBPositions[board.movColor];
@@ -711,25 +712,33 @@ private:
             nonAttackingMoves ^= newKingBoard;
         }
 
-        if (const uint64_t attackField = kingMoves & allowedTilesMaps & ~blockedFigMap)
-        // possibly prevents some slowing memory copying operation
+        if (attackingMoves)
+            // possibly prevents some slowing memory copying operation
         {
-            const int msbPos = ExtractMsbPos(attackField);
-            board.kingMSBPositions[board.movColor] = msbPos;
-            board.boards[movingColorIndex + kingIndex] = attackField;
+            // processing slightly more complicated attacking moves
+            std::array<uint64_t, 5> mapsBackup{};
+            for (size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[enemyColorIndex + i];
+            while (attackingMoves)
+            {
+                // extracting new king position data
+                const uint8_t newPos = ExtractMsbPos(attackingMoves);
+                const uint64_t newKingBoard = maxMsbPossible >> newPos;
 
-            for (size_t i = 0; i <= queensIndex; ++i)
-                if (uint64_t&figBd = board.boards[enemyColorIndex + i]; (figBd & attackField) != 0)
-                {
-                    figBd ^= attackField;
+                // preparing board changes
+                for (size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] &= ~newKingBoard;
+                board.kingMSBPositions[board.movColor] = newPos;
+                board.boards[movingColorIndex + kingIndex] = newKingBoard;
 
-                    board.ChangePlayingColor();
-                    IterativeBoardTraversal(action, depth - 1);
-                    board.ChangePlayingColor();
+                // performing core actions
+                board.ChangePlayingColor();
+                IterativeBoardTraversal(action, depth - 1);
 
-                    figBd |= attackField;
-                    break;
-                }
+                // cleaning up
+                board.ChangePlayingColor();
+                for (size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] = mapsBackup[i];
+
+                attackingMoves ^= newKingBoard;
+            }
         }
 
         // reverting changes
@@ -740,6 +749,7 @@ private:
     }
 
     // TODO: simplify ifs??
+    // TODO: cleanup left castling available when rook is dead then propagate no castling checking?
     template<
         class ActionT
     >
@@ -747,11 +757,17 @@ private:
     {
         for (size_t i = 0; i < Board::CastlingsPerColor; ++i)
             if (const size_t castlingIndex = board.movColor * Board::CastlingsPerColor + i;
-                board.Castlings[castlingIndex] && (Board::CastlingSensitiveFields[castlingIndex] & blockedFigMap) == 0
-                && (Board::CastlingSensitiveFields[castlingIndex] & fullMap) == 0)
+                board.Castlings[castlingIndex]
+                && (Board::CastlingsRookMaps[castlingIndex] & board.boards[board.movColor*Board::BoardsPerCol + rooksIndex]) != 0
+                && (Board::CastlingSensitiveFields[castlingIndex] & blockedFigMap) == 0
+                && (Board::CastlingTouchedFields[castlingIndex] & fullMap) == 0)
             {
                 // processing mvoe and performing cleanup
+                const size_t otherCastlingIndex = board.movColor * Board::CastlingsPerColor + (1 - i);
+                const bool otherCastling = board.Castlings[otherCastlingIndex]; // saving up the other castling state
                 board.Castlings[castlingIndex] = false;
+                board.Castlings[otherCastlingIndex] = false;
+
                 board.kingMSBPositions[board.movColor] = Board::CastlingNewKingPos[castlingIndex];
                 board.boards[board.movColor * Board::BoardsPerCol + kingIndex] =
                         maxMsbPossible >> Board::CastlingNewKingPos[castlingIndex];
@@ -769,6 +785,7 @@ private:
 
                 // cleaning up after last move
                 board.Castlings[castlingIndex] = true;
+                board.Castlings[otherCastlingIndex] = otherCastling;
                 board.kingMSBPositions[board.movColor] = Board::DefaultKingPos[board.movColor];
                 board.boards[board.movColor * Board::BoardsPerCol + kingIndex] =
                         maxMsbPossible >> Board::DefaultKingPos[board.movColor];
