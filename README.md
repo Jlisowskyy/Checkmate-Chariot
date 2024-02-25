@@ -28,7 +28,7 @@ While I strive to incorporate my own ideas and solutions, I occasionally draw in
 
 Clone the repository to the desired directory:
 ```shell
-   git clone https://github.com/Jlisowskyy/ChessEngine ; cd ChessEngine
+   git clone https://github.com/Jlisowskyy/Checkmate-Chariot ; cd Checkmate-Chariot
 ```
 
 Use a command below to build the project:
