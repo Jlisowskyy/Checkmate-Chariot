@@ -1,5 +1,5 @@
 
-# PixelChess
+# Checkmate Chariot
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -22,10 +22,16 @@ While I strive to incorporate my own ideas and solutions, I occasionally draw in
 - OpenMp - is used to parallelize map parameter search
 - GCC compiler
 - x86_64 platform
+- linux environment - to correctly run tests
 
 ### Installation
 
-Use command to build the project:
+Clone the repository to the desired directory:
+```shell
+   git clone https://github.com/Jlisowskyy/ChessEngine ; cd ChessEngine
+```
+
+Use a command below to build the project:
 ```shell
    cmake CMakeLists.txt ; make
 ```
@@ -33,12 +39,12 @@ Use command to build the project:
 ## Roadmap
 
 Progress in this repository may be slower due to demanding university duties.
-However, future plans include the incorporation of the following features:
+However, plans include the incorporation of the following features:
 
 - [x] Working UCI interface
 - [x] Rook and Bishop moves generation implemented and tested
 - [ ] Move generation implemented and well tested
-- [ ] Openning book implemented and collected
+- [ ] Opening book implemented and collected
 - [ ] Search algorithm implemented and well tested
 - [ ] Parallel implementation of search algorithm
 - [ ] Evaluation stage of the board implemented
