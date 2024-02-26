@@ -60,6 +60,7 @@ add_executable(ChessEngine main.cpp
         src/MoveTRIE.cpp
         src/OpeningBook.cpp
         include/OpeningBook/BookTester.h
+        src/BookTester.cpp
 )
 
 find_package(OpenMP)

@@ -3,7 +3,7 @@
 #include "include/ChessEngine.h"
 
 #include "include/OpeningBook/OpeningBook.h"
-#include "include/OpeningBook/BookTester.h"
+#include "include/TestsAndDebugging/BookTester.h"
 
 int main(const int argc, const char** argv) {
     // ChessEngineMainEntry(argc, argv);
