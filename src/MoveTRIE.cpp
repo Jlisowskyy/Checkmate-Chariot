@@ -4,6 +4,7 @@
 
 #include "../include/OpeningBook/MoveTRIE.h"
 
+// "d2d4 g8f6 c2c4 c7c5 d4d5 e7e6 b1c3 e6d5 c4d5 d7d6 g1f3 g7g6 g2g3 f8g7 f1g2 e8g8 e1g1 b8d7 f3d2 a7a6"
 void MoveTRIE::AddMoveSequence(const std::vector<std::string>& moves)
 {
     node* root = _root;
@@ -18,6 +19,7 @@ void MoveTRIE::AddMoveSequence(const std::vector<std::string>& moves)
         {
             root->_moves.push_back(move);
             root->_next.push_back(new node());
+            root = root->_next[root->_next.size() - 1];
         }
         else root = root->_next[nextInd];
     }
@@ -30,12 +32,13 @@ void MoveTRIE::OptimiseMemoryUsage()
 
 const std::vector<std::string>& MoveTRIE::FindNextMoves(const std::vector<std::string>&moves) const
 {
+    static constexpr std::vector<std::string> _emptVect{};
     const node* root = _root;
 
     for (const auto& move: moves)
     {
         const ssize_t nextInd = _findOnArr(move, root->_moves);
-        if (nextInd == -1) return {};
+        if (nextInd == -1) return _emptVect;
         root = root->_next[nextInd];
     }
 

@@ -12,7 +12,7 @@
 
 #include "MoveTRIE.h"
 
-struct  OpenningBook
+struct  OpeningBook
 {
     // ------------------------------
     // Class inner Types
@@ -30,7 +30,7 @@ struct  OpenningBook
     // ------------------------------
 
     // initalizing the only const field
-    OpenningBook(const std::string& bookPath, bookFileType type);
+    OpeningBook(const std::string& bookPath, bookFileType type);
 
     // ------------------------------
     // Class interaction

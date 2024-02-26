@@ -14,7 +14,7 @@
 //     _moveTrie(std::move(type == bookFileType::text_uci ? _readTextBook(bookPath) : _readBinaryBook(bookPath)))
 // {}
 
-OpenningBook::OpenningBook(const std::string& bookPath, const bookFileType type)
+OpeningBook::OpeningBook(const std::string& bookPath, const bookFileType type)
 {
     switch (type)
     {
@@ -27,32 +27,33 @@ OpenningBook::OpenningBook(const std::string& bookPath, const bookFileType type)
     }
 }
 
-void OpenningBook::SaveToBinary(const std::string&outputPath) const
+void OpeningBook::SaveToBinary(const std::string&outputPath) const
 {
     throw std::runtime_error("[ ERROR ] Not yet implemented!");
 }
 
-const std::string& OpenningBook::GetRandomNextMove(const std::vector<std::string>&moves) const
+const std::string& OpeningBook::GetRandomNextMove(const std::vector<std::string>&moves) const
 {
+    static std::string _emptyStr{};
     static std::mt19937_64 randEng((std::chrono::steady_clock::now().time_since_epoch().count()));
 
-    auto nextMoves = _moveTrie.FindNextMoves(moves);
-    if (nextMoves.empty()) return "";
+    const auto& nextMoves = _moveTrie.FindNextMoves(moves);
+    if (nextMoves.empty()) return _emptyStr;
 
     return nextMoves[randEng() % nextMoves.size()];
 }
 
-const std::vector<std::string>& OpenningBook::GetAllPossibleNextMoves(const std::vector<std::string>& moves) const
+const std::vector<std::string>& OpeningBook::GetAllPossibleNextMoves(const std::vector<std::string>& moves) const
 {
     return _moveTrie.FindNextMoves(moves);
 }
 
-void OpenningBook::_readBinaryBook(const std::string&bookPath)
+void OpeningBook::_readBinaryBook(const std::string&bookPath)
 {
     throw std::runtime_error("[ ERROR ] Not yet implemented!");
 }
 
-void OpenningBook::_readTextBook(const std::string&bookPath)
+void OpeningBook::_readTextBook(const std::string&bookPath)
 {
     std::ifstream stream(bookPath);
 

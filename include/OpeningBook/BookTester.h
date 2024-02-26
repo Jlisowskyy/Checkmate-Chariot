@@ -10,10 +10,12 @@
 #include <iostream>
 #include <chrono>
 #include <random>
+#include <algorithm>
 #include <format>
 
 #include "OpeningBook.h"
 #include "../ParseTools.h"
+#include "../Interface/Logger.h"
 
 /*          IMPORTANT NOTES
  *  Refer to OpenningBook.h header to get information
@@ -33,7 +35,7 @@ struct BookTester
     // Class interaction
     // ------------------------------
 
-    static void PerformRandomAccessTest(const OpenningBook& book, const std::string& textBookPath, const uint64_t testPositionCount)
+    static void PerformRandomAccessTest(const OpeningBook& book, const std::string& textBookPath, const uint64_t testPositionCount)
     {
         std::fstream stream(textBookPath, std::ios::in);
 
@@ -55,6 +57,8 @@ struct BookTester
 
             // extracting moves
             auto moves = ParseTools::Split(lineBuff);
+
+            _testSequence(book, moves, lineBuff);
         }
     }
 
@@ -63,14 +67,20 @@ struct BookTester
     // ------------------------------
 private:
 
-    static void _testSequence(std::vector<std::string>& moves){
+    static void _testSequence(const OpeningBook& book, const std::vector<std::string>& moves, const std::string& buff){
+        for(size_t i = 1; i < moves.size(); ++i)
+        {
+            const std::vector vect(moves.begin(), moves.begin()+1);
 
+            if (book.GetRandomNextMove(vect).empty())
+                GlobalLogger.StartLogging() << std::format("[ ERROR ] Internal consistency of structure was not met!\n\tOn moves: {}\n", buff);
+        }
     }
 
     // simply generates vector of indices, indicating which lines will be tested
     static std::vector<uint64_t> _generateTestRecordsNums(const uint64_t testPositionCount, const uint64_t lineCount)
     {
-        uint64_t averageOffset = static_cast<uint64_t>(
+        const uint64_t averageOffset = static_cast<uint64_t>(
             std::max(1.0, std::floor(static_cast<double>(lineCount) / static_cast<double>(testPositionCount))));
 
         std::vector<uint64_t> positions{};
