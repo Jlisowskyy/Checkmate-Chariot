@@ -4,3 +4,4 @@ python\ scripts/
 *.exec
 *.csv
 *.out
+scripts/

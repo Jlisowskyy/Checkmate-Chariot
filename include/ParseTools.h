@@ -6,6 +6,8 @@
 #define PARSETOOLS_H
 
 #include <string>
+#include <vector>
+#include <fstream>
 
 #include "compilationConstants.h"
 
@@ -53,6 +55,23 @@ struct ParseTools
 
     static std::string GetTrimmed(const std::string&str);
 
+
+    template<
+        int (*crit)(int) = isblank
+    > [[nodiscard]] static std::vector<std::string> Split(const std::string& text, size_t pos = 0)
+    {
+        std::vector<std::string> splittedWords{};
+        std::string wordBuffer{};
+
+        while ((pos = ParseTools::ExtractNextWord<crit>(text, wordBuffer, pos)) != 0)
+            splittedWords.push_back(wordBuffer);
+
+        return splittedWords;
+    }
+
+    static ssize_t GetLineCountFromFile(std::fstream& stream)
+        // returns number of '\n' + 1 when stream is good to read otherwise returns -1
+    ;
 
     // ------------------------------
     // Class fields

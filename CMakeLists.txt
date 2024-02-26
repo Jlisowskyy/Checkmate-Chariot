@@ -55,6 +55,11 @@ add_executable(ChessEngine main.cpp
         src/MoveGenerationTests.cpp
         include/ParseTools.h
         src/ParseTools.cpp
+        include/OpeningBook/OpeningBook.h
+        include/OpeningBook/MoveTRIE.h
+        src/MoveTRIE.cpp
+        src/OpeningBook.cpp
+        include/OpeningBook/BookTester.h
 )
 
 find_package(OpenMP)
@@ -63,5 +68,5 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(ChessEngine PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-target_compile_options(ChessEngine  PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=133554432)
-#target_compile_options(ChessEngine PUBLIC -fconstexpr-ops-limit=133554432;-g;)
+#target_compile_options(ChessEngine  PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=133554432)
+target_compile_options(ChessEngine PUBLIC -fconstexpr-ops-limit=133554432;-g;)

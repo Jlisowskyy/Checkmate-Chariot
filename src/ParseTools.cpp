@@ -46,3 +46,20 @@ std::string ParseTools::GetTrimmed(const std::string&str)
 
     return str.substr(tLeft, tRight - tLeft);
 }
+
+ssize_t ParseTools::GetLineCountFromFile(std::fstream& stream)
+{
+    if (stream.bad()) return -1;
+    if (stream.eof()) stream.clear();
+
+    const std::streampos oldPos = stream.tellg();
+    stream.seekg(0);
+
+    ssize_t newLineCount{};
+    for (char buff; stream.get(buff);)
+        newLineCount += (buff == '\n');
+
+    stream.clear();
+    stream.seekg(oldPos);
+    return newLineCount+1;
+}

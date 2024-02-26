@@ -187,11 +187,7 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string&str
     {
         pos = movesCord + 5;
 
-        std::vector<std::string> movesVect{};
-        while ((pos = ParseTools::ExtractNextWord(str, workStr, pos)) != 0)
-        {
-            movesVect.push_back(workStr);
-        }
+        const std::vector<std::string> movesVect = ParseTools::Split(str, pos);
 
         if (!_engine.ApplyMoves(movesVect))
             return UCICommand::InvalidCommand;
