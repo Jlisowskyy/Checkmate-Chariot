@@ -186,6 +186,7 @@ const std::unordered_map<size_t, char> descToFigMap{
 };
 
 const std::unordered_map<Field, std::string> fieldStrMap{
+    {INVALID, "XX"},
     {A1, "a1"},
     {B1, "b1"},
     {C1, "c1"},

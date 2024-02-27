@@ -49,7 +49,7 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string&buffer)
 
     while ((pos = ParseTools::ExtractNextWord(buffer, workStr, pos)) != 0)
         if (auto iter = CommandBuff.find(workStr) ; iter != CommandBuff.end())
-            return (this->*(iter->second))(workStr.substr(pos));
+            return (this->*(iter->second))(buffer.substr(pos));
 
     return UCICommand::InvalidCommand;
 }
