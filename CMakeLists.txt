@@ -59,7 +59,7 @@ add_executable(ChessEngine main.cpp
         include/OpeningBook/MoveTRIE.h
         src/MoveTRIE.cpp
         src/OpeningBook.cpp
-        include/OpeningBook/BookTester.h
+        include/TestsAndDebugging/BookTester.h
         src/BookTester.cpp
 )
 

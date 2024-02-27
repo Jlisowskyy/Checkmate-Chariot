@@ -51,6 +51,8 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string&buffer)
             return _displayResponse();
         if (workStr == "fen")
             return _displayFen();
+        if (workStr == "help")
+            return _displayHelp();
     }
 
     return UCICommand::InvalidCommand;
@@ -254,6 +256,33 @@ UCITranslator::UCICommand UCITranslator::_displayResponse() const
 {
     _engine.writeBoard();
     return UCICommand::displayCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_displayHelp()
+{
+    static auto CustomCommands =
+            "In addition to standard UCI commands, these are implemented:\n"
+            "- go perft \"depth\" - Simple PERFT test.\n"
+            "- go debug \"depth\" - debugging tool reporting first occured error in comparison to any engine\n"
+            "                which implements \"go perft command\" - default target engine is stockfish\n"
+            "- go deepDebug \"depth\" - debugging tool, which is used to possibly identify invalid move chains which produces\n"
+            "                 buggy result.\n"
+            "- go fullDebug \"depth\" - traverses whole tree and invokes simple debug test on each leaf parent to check\n"
+            "                 move correctnes on lowest level possible. Insanly slow - use only for lower search. Could be optimised.\n"
+            "- fen - simply displays fen encoding of current map\n"
+            "- go perfComp \"input file\" \"output file\" - generates csv file to \"output file\" which contains information\n"
+            "                 about results of simple comparison tests, which uses external engine times to get results\n"
+            "- go file \"input file\" - performs series of deepDebug on each positions saved inside input file. For simplicity\n"
+            "                \"input file\" must be containg csv records in given manner: \"fen position\", \"depth\"\n"
+            "Where \"depth\" is integer value indicating layers of traversed move tree.\n\n\n"
+            "Additional notes:\n"
+            "   - \"go file\" - will run tests on singlePos.csv\n"
+            "   - \"go file /\" - will run tests on positionTests.csv\n"
+            "   - \"go perfComp/\" - will run tets on perfTest1.csv\n";
+
+    GlobalLogger.StartLogging() << "Help content:\n\n" << "TODO MAIN HELP\n\n" << CustomCommands;
+
+    return UCICommand::helpCommand;
 }
 
 UCITranslator::UCICommand UCITranslator::_displayFen() const

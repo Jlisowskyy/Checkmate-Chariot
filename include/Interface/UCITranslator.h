@@ -53,6 +53,7 @@ public:
         stopCommand,
         quitCommand,
         displayCommand,
+        helpCommand,
     };
 
     // ------------------------------
@@ -84,6 +85,8 @@ private:
     UCICommand _displayResponse() const;
 
     UCICommand _displayFen() const;
+
+    static UCICommand _displayHelp();
 
     // ------------------------------
     // private fields
