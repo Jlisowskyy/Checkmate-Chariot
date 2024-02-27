@@ -68,25 +68,31 @@ public:
 private:
     [[nodiscard]] UCICommand _cleanMessage(const std::string&buffer);
 
-    UCICommand _stopResponse() const;
+    // ------------------------------
+    // Command response methods
+    // ------------------------------
 
-    [[nodiscard]] UCICommand _goResponse(const std::string&str) const;
+    UCICommand _stopResponse(const std::string& unused);
+
+    [[nodiscard]] UCICommand _goResponse(const std::string&str);
 
     [[nodiscard]] UCICommand _positionResponse(const std::string&str);
 
-    UCICommand _ucinewgameResponse();
+    UCICommand _ucinewgameResponse(const std::string& unused);
 
-    [[nodiscard]] UCICommand _setoptionResponse(const std::string&str) const;
+    [[nodiscard]] UCICommand _setoptionResponse(const std::string&str);
 
-    static UCICommand _uciResponse();
+    UCICommand _uciResponse(const std::string& unused);
 
-    UCICommand static _isReadyResponse();
+    UCICommand _isReadyResponse(const std::string& unused);
 
-    UCICommand _displayResponse() const;
+    UCICommand _displayResponse(const std::string& unused);
 
-    UCICommand _displayFen() const;
+    UCICommand _displayFenResponse(const std::string& unused);
 
-    static UCICommand _displayHelp();
+    UCICommand _displayHelpResponse(const std::string& unused);
+
+    UCICommand _quitResponse(const std::string& unused);
 
     // ------------------------------
     // private fields

@@ -26,46 +26,40 @@ UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream&in
 
 UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string&buffer)
 {
+    using funcT = UCICommand (UCITranslator::*)(const std::string&);
+    static std::unordered_map<std::string, funcT> CommandBuff{
+        {std::string("uci"), &UCITranslator::_uciResponse},
+        {std::string("isready"), &UCITranslator::_isReadyResponse},
+        {std::string("setoption"), &UCITranslator::_setoptionResponse},
+        {std::string("ucinewgame"), &UCITranslator::_ucinewgameResponse},
+        {std::string("position"), &UCITranslator::_positionResponse},
+        {std::string("go"), &UCITranslator::_goResponse},
+        {std::string("stop"), &UCITranslator::_stopResponse},
+        {std::string("quit"), &UCITranslator::_quitResponse},
+        {std::string("exit"), &UCITranslator::_quitResponse},
+        {std::string("d"), &UCITranslator::_displayResponse},
+        {std::string("display"), &UCITranslator::_displayResponse},
+        {std::string("disp"), &UCITranslator::_displayResponse},
+        {std::string("fen"), &UCITranslator::_displayFenResponse},
+        {std::string("help"), &UCITranslator::_displayHelpResponse}
+    };
+
     std::string workStr;
     size_t pos = 0;
 
     while ((pos = ParseTools::ExtractNextWord(buffer, workStr, pos)) != 0)
-    {
-        if (workStr == "uci")
-            return _uciResponse();
-        if (workStr == "isready")
-            return _isReadyResponse();
-        if (workStr == "setoption")
-            return _setoptionResponse(buffer.substr(pos));
-        if (workStr == "ucinewgame")
-            return _ucinewgameResponse();
-        if (workStr == "position")
-            return _positionResponse(buffer.substr(pos));
-        if (workStr == "go")
-            return _goResponse(buffer.substr(pos));
-        if (workStr == "stop")
-            return _stopResponse();
-        if (workStr == "quit" || workStr == "exit")
-            return UCICommand::quitCommand;
-        if (workStr == "display" || workStr == "d")
-            return _displayResponse();
-        if (workStr == "fen")
-            return _displayFen();
-        if (workStr == "help")
-            return _displayHelp();
-    }
+        if (auto iter = CommandBuff.find(workStr) ; iter != CommandBuff.end())
+            return (this->*(iter->second))(workStr.substr(pos));
 
     return UCICommand::InvalidCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_stopResponse() const
-{
+UCITranslator::UCICommand UCITranslator::_stopResponse(const std::string& unused) {
     _engine.StopSearch();
     return UCICommand::stopCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) const
-{
+UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) {
     std::string workStr;
     size_t pos = ParseTools::ExtractNextWord(str, workStr, 0);
     if (pos == 0) return UCICommand::InvalidCommand;
@@ -200,15 +194,14 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string&str
     return UCICommand::positionCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_ucinewgameResponse()
+UCITranslator::UCICommand UCITranslator::_ucinewgameResponse(const std::string& unused)
 {
     _engine.RestartEngine();
     _appliedMoves.clear();
     return UCICommand::ucinewgameCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string&str) const
-{
+UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string&str) {
     std::string workStr;
     size_t pos = ParseTools::ExtractNextWord(str, workStr, 0);
     if (pos == 0 || workStr != "name") return UCICommand::InvalidCommand;
@@ -233,7 +226,7 @@ UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string&st
     return UCICommand::InvalidCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_uciResponse()
+UCITranslator::UCICommand UCITranslator::_uciResponse(const std::string& unused)
 {
     GlobalLogger.StartLogging() << "id name " << Engine::GetEngineInfo().name << '\n';
     GlobalLogger.StartLogging() << "id author " << Engine::GetEngineInfo().author << '\n';
@@ -246,19 +239,18 @@ UCITranslator::UCICommand UCITranslator::_uciResponse()
     return UCICommand::uciCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_isReadyResponse()
+UCITranslator::UCICommand UCITranslator::_isReadyResponse(const std::string& unused)
 {
     GlobalLogger.StartLogging() << "readyok" << std::endl;
     return UCICommand::isreadyCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_displayResponse() const
-{
+UCITranslator::UCICommand UCITranslator::_displayResponse(const std::string& unused) {
     _engine.writeBoard();
     return UCICommand::displayCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_displayHelp()
+UCITranslator::UCICommand UCITranslator::_displayHelpResponse(const std::string& unused)
 {
     static auto CustomCommands =
             "In addition to standard UCI commands, these are implemented:\n"
@@ -285,8 +277,11 @@ UCITranslator::UCICommand UCITranslator::_displayHelp()
     return UCICommand::helpCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_displayFen() const
-{
+UCITranslator::UCICommand UCITranslator::_quitResponse(const std::string& unused) {
+    return UCICommand::quitCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_displayFenResponse(const std::string& unused) {
     GlobalLogger.StartLogging() << "Acquired fen translation:\n" << _engine.GetFenTranslation() << '\n';
     return UCICommand::displayCommand;
 }
