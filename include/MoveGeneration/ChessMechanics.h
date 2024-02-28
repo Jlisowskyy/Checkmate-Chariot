@@ -416,7 +416,7 @@ private:
 
             // processing move consequneces
             _processNonAttackingMoves<ActionT, promotePawns, elPassantFieldDeducer>(
-                action, depth, figMap, nonAttackingMoves);
+                action, depth, figMap, nonAttackingMoves, figBoard);
             if (attackMoves)
                 _processAttackingMoves<ActionT, promotePawns>(
                     action, depth, figMap, attackMoves, mapsBackup);
@@ -457,7 +457,7 @@ private:
 
             // processing move consequences
             _processNonAttackingMoves<ActionT, promotePawns, elPassantFieldDeducer>(
-                action, depth, figMap, nonAttackingMoves);
+                action, depth, figMap, nonAttackingMoves, figBoard);
             if (attackMoves)
                 _processAttackingMoves<ActionT, promotePawns>(
                     action, depth, figMap, attackMoves, mapsBackup); // TODO: There is exactly one move possible
@@ -476,12 +476,9 @@ private:
         bool promotePawns,
         Field (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
     >
-    void _processNonAttackingMoves(ActionT action, const int depth, uint64_t&figMap, uint64_t nonAttackingMoves)
+    void _processNonAttackingMoves(ActionT action, const int depth, uint64_t&figMap, uint64_t nonAttackingMoves,
+        [[maybe_unused]] const uint64_t startPos = 0 /* used only for pawns to check el passant*/)
     {
-        [[maybe_unused]] const uint64_t nonAttackingMovesCopy = nonAttackingMoves;
-        // used only to allow simple el passant field detection.
-        // TODO: replace with something more creative
-
         while (nonAttackingMoves)
         {
             // extracting moves
@@ -495,7 +492,7 @@ private:
                 // if el passant line is passed when figure moved to these line flag will turned on
                 if constexpr (elPassantFieldDeducer != nullptr)
                 {
-                    board.elPassantField = elPassantFieldDeducer(moveBoard, nonAttackingMovesCopy);
+                    board.elPassantField = elPassantFieldDeducer(moveBoard, startPos);
                 }
 
                 // applying moves

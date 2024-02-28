@@ -53,9 +53,9 @@ public:
         return elPassantField << 8;
     }
 
-    [[nodiscard]] static Field GetElPassantField(const uint64_t moveField, const uint64_t allMovesMap)
+    [[nodiscard]] static Field GetElPassantField(const uint64_t moveField, const uint64_t startField)
     {
-        return static_cast<Field>((moveField & ElPassantMask & (allMovesMap << 8)));
+        return static_cast<Field>((moveField & ElPassantMask & ((StartMask & startField) << 16)));
     }
 
     // ------------------------------
