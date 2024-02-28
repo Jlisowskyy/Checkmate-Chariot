@@ -7,8 +7,6 @@ add_executable(ChessEngine main.cpp
         include/compilationConstants.h
         include/ChessEngine.h
         src/ChessEngine.cpp
-        src/SearchThreadCordination.cpp
-        include/SearchThreadCordination.h
         src/UCITranslator.cpp
         include/Interface/UCIOptions.h
         src/Engine.cpp
@@ -28,10 +26,6 @@ add_executable(ChessEngine main.cpp
         include/MoveGeneration/MoveGeneration.h
         include/MoveGeneration/QueenMap.h
         include/MoveGeneration/WhitePawnMap.h
-        src/Evaluator.cpp
-        include/Evaluator.h
-        src/SearchingMachine.cpp
-        include/SearchingMachine.h
         src/ChessMechanics.cpp
         include/MoveGeneration/ChessMechanics.h
         include/Interface/UCITranslator.h
@@ -61,6 +55,7 @@ add_executable(ChessEngine main.cpp
         src/OpeningBook.cpp
         include/TestsAndDebugging/BookTester.h
         src/BookTester.cpp
+        include/Evaluation/BoardEvaluator.h
 )
 
 find_package(OpenMP)
@@ -69,5 +64,5 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(ChessEngine PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-#target_compile_options(ChessEngine  PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=133554432)
-target_compile_options(ChessEngine PUBLIC -fconstexpr-ops-limit=133554432;-g;)
+target_compile_options(ChessEngine  PUBLIC -O3;-march=raptorlake;-fopenmp;-fconstexpr-ops-limit=133554432;-funroll-loops;-fno-peel-loops;-fno-tracer)
+#target_compile_options(ChessEngine PUBLIC -fconstexpr-ops-limit=133554432;-g;)
