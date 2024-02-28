@@ -304,14 +304,22 @@ private:
                 // should be unblocked on specific lines
 
                 if ((pawnMap & pinnedFigMap) != 0 && (
-                        _generateAllowedTilesForPrecisedPinnedFig(pawnMap, fullMap) & moveMap) == 0)
+                        _generateAllowedTilesForPrecisedPinnedFig(pawnMap, fullMap) & moveMap) == 0) {
+                    possiblePawnsToMove ^= pawnMap;
                     continue;
-                if ((_generateAllowedTilesForPrecisedPinnedFig(board.elPassantField, fullMap) & moveMap) == 0) continue;
+                }
+                if ((_generateAllowedTilesForPrecisedPinnedFig(board.elPassantField, fullMap) & moveMap) == 0) {
+                    possiblePawnsToMove ^= pawnMap;
+                    continue;
+                }
             }
 
             // When king is checked only if move is going to allowed tile el passant is correct
             if constexpr (isCheck)
-                if ((moveMap & allowedMoveFillter) == 0) continue;
+                if ((moveMap & allowedMoveFillter) == 0) {
+                    possiblePawnsToMove ^= pawnMap;
+                    continue;
+                }
 
             // applying changes on board
             const Field oldElPassantField = board.elPassantField;
