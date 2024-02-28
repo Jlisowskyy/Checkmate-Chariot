@@ -94,6 +94,8 @@ private:
 
     UCICommand _quitResponse(const std::string& unused);
 
+    UCICommand _clearConsole(const std::string& unused);
+
     // ------------------------------
     // private fields
     // ------------------------------

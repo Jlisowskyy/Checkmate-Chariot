@@ -260,18 +260,19 @@ private:
                                                                     allyMap, pinnedFigMap, promotingPawns,
                                                                     allowedMoveFillter);
 
-        _processElPassantMoves<ActionT, MapT, isCheck>(action, depth, allyMap | enemyMap, pinnedFigMap, figMap);
+        _processElPassantMoves<ActionT, MapT, isCheck>(action, depth, allyMap | enemyMap, pinnedFigMap,
+            figMap, allowedMoveFillter);
     }
 
     // TODO: Consider different soluition?
-    // TODO: IMPORTANT: WHATT HAPPENS WHEN EL PASSANT PAWN CHECKS KING?
     template<
         class ActionT,
         class MapT,
         bool isCheck = false
     >
     void _processElPassantMoves(ActionT action, const int depth, const uint64_t fullMap,
-                                const uint64_t pinnedFigMap, uint64_t&figMap)
+                                const uint64_t pinnedFigMap, uint64_t&figMap,
+                                [[maybe_unused]] const uint64_t allowedMoveFillter = 0)
     {
         if (board.elPassantField == INVALID) return;
 
@@ -299,11 +300,18 @@ private:
             // checking wheter moving some pawns would undercover king on some line -
             if ((processedPawns & pinnedFigMap) != 0)
             {
+                // two separate situations thats need to be considered, every pawn that participate in el passant move
+                // should be unblocked on specific lines
+
                 if ((pawnMap & pinnedFigMap) != 0 && (
                         _generateAllowedTilesForPrecisedPinnedFig(pawnMap, fullMap) & moveMap) == 0)
                     continue;
                 if ((_generateAllowedTilesForPrecisedPinnedFig(board.elPassantField, fullMap) & moveMap) == 0) continue;
             }
+
+            // When king is checked only if move is going to allowed tile el passant is correct
+            if constexpr (isCheck)
+                if ((moveMap & allowedMoveFillter) == 0) continue;
 
             // applying changes on board
             const Field oldElPassantField = board.elPassantField;

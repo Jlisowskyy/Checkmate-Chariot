@@ -2,6 +2,8 @@
 // Created by Jlisowskyy on 12/26/23.
 //
 
+#include <cstdlib>
+
 #include "../include/Interface/UCITranslator.h"
 #include "../include/ParseTools.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
@@ -41,7 +43,10 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string&buffer)
         {std::string("display"), &UCITranslator::_displayResponse},
         {std::string("disp"), &UCITranslator::_displayResponse},
         {std::string("fen"), &UCITranslator::_displayFenResponse},
-        {std::string("help"), &UCITranslator::_displayHelpResponse}
+        {std::string("help"), &UCITranslator::_displayHelpResponse},
+        {std::string("clear"), &UCITranslator::_clearConsole},
+        {std::string("clean"), &UCITranslator::_clearConsole},
+        {std::string("cls"), &UCITranslator::_clearConsole},
     };
 
     std::string workStr;
@@ -279,6 +284,16 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse(const std::string&
 
 UCITranslator::UCICommand UCITranslator::_quitResponse(const std::string& unused) {
     return UCICommand::quitCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_clearConsole(const std::string& unused) {
+#ifdef __unix__
+    system("clear");
+#else
+    system("cls");
+#endif
+
+    return UCICommand::displayCommand;
 }
 
 UCITranslator::UCICommand UCITranslator::_displayFenResponse(const std::string& unused) {
