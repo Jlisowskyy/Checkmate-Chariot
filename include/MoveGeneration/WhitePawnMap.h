@@ -63,7 +63,10 @@ public:
     // ------------------------------
 
     static constexpr uint64_t PromotingMask = GenMask(48, 56, 1);
+    // Mask indicating whether white pawn can be killed on that field by enemy pawn
     static constexpr uint64_t ElPassantMask = GenMask(24, 32, 1);
+    // Mask indicating whether black pawn can be killed on that field by enemy pawn
+    static constexpr uint64_t EnemyElPassantMask = GenMask(32, 40, 1);
     // Mask with ones only on "x2" line
     static constexpr uint64_t StartMask = GenMask(8, 16, 1);
 

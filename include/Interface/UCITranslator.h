@@ -33,7 +33,7 @@ class UCITranslator
     // Type creation and initialization
     // --------------------------------------
 public:
-    UCITranslator(Engine&engine) : _engine(engine)
+    UCITranslator(Engine& engine) : _engine(engine)
     {
     }
 

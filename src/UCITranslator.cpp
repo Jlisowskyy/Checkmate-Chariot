@@ -87,7 +87,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) {
         catch (const std::exception&exc) { return UCICommand::InvalidCommand; }
 
         const MoveGenerationTester tester;
-        [[maybe_unused]] tester.PerformSingleShallowTest(_fenPosition, depth, _appliedMoves, true);
+        [[maybe_unused]] auto unused = tester.PerformSingleShallowTest(_fenPosition, depth, _appliedMoves, true);
     }
     else if (workStr == "deepDebug")
     {

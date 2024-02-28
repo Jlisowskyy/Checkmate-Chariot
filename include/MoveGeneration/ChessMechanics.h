@@ -290,7 +290,7 @@ private:
             const uint64_t cleanedFromPawnsMap = fullMap ^ processedPawns;
             if (const uint64_t kingHorizontalLine =
                         RookMap::GetMoves(board.kingMSBPositions[board.movColor], cleanedFromPawnsMap) &
-                        MapT::ElPassantMask;
+                        MapT::EnemyElPassantMask;
                 (kingHorizontalLine & enemyRookFigs) != 0)
                 return;
 
