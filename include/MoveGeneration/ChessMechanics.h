@@ -316,7 +316,7 @@ private:
 
             // When king is checked only if move is going to allowed tile el passant is correct
             if constexpr (isCheck)
-                if ((moveMap & allowedMoveFillter) == 0) {
+                if ((moveMap & allowedMoveFillter) == 0 && (board.elPassantField & allowedMoveFillter) == 0) {
                     possiblePawnsToMove ^= pawnMap;
                     continue;
                 }

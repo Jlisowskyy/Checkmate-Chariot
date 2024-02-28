@@ -89,7 +89,7 @@ void DisplayMask(const uint64_t mask)
             GlobalLogger.StartLogging() << ' ' << ((pos & mask) != 0 ? 'x' : ' ') << ' ' << (x != 7 ? '|' : '\n');
         }
 
-        if (y != 0) GlobalLogger.StartLogging() << std::string(7 + 3 * 8, '-') << std::endl;
+        if (y8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 != 0) GlobalLogger.StartLogging() << std::string(7 + 3 * 8, '-') << std::endl;
     }
 }
 
