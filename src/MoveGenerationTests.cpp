@@ -10,13 +10,11 @@
 #include <sys/wait.h>
 #include <format>
 #include <fstream>
+#include <string>
 
 #include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/ParseTools.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
-
-#include <string>
-
 #include "../include/Engine.h"
 #include "../include/Interface/Logger.h"
 

@@ -8,6 +8,7 @@
 
 #include "../include/BitOperations.h"
 #include "../include/Interface/Logger.h"
+#include "../include/MoveGeneration/MoveGeneration.h"
 
 std::ostream& operator<<(std::ostream&out, const Board&bd)
 {
@@ -89,7 +90,7 @@ void DisplayMask(const uint64_t mask)
             GlobalLogger.StartLogging() << ' ' << ((pos & mask) != 0 ? 'x' : ' ') << ' ' << (x != 7 ? '|' : '\n');
         }
 
-        if (y8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 != 0) GlobalLogger.StartLogging() << std::string(7 + 3 * 8, '-') << std::endl;
+        if (y != 0) GlobalLogger.StartLogging() << std::string(7 + 3 * 8, '-') << std::endl;
     }
 }
 
@@ -103,8 +104,16 @@ std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board&oldBoard, const B
         if (oldBoard.boards[movingColInd + i] != newBoard.boards[movingColInd + i])
         {
             const uint64_t newPos = newBoard.boards[movingColInd + i] & ~oldBoard.boards[movingColInd + i];
-            const uint64_t oldPos = ~newBoard.boards[movingColInd + i] & oldBoard.boards[movingColInd + i];
-            const MoveTypes mType = (newPos == 0 ? PromotingMove : NormalMove);
+            uint64_t oldPos = ~newBoard.boards[movingColInd + i] & oldBoard.boards[movingColInd + i];
+
+            MoveTypes mType = NormalMove;
+
+            // New figure was added to the board so the pawn was promoted
+            if (oldPos == 0)
+            {
+                mType = PromotingMove;
+                oldPos = ~newBoard.boards[movingColInd + pawnsIndex] & oldBoard.boards[movingColInd + pawnsIndex];
+            }
 
             return {oldPos, newPos, mType};
         }
@@ -117,7 +126,7 @@ std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board&oldBoard, const B
 }
 
 std::string GetShortAlgebraicMoveEncoding(const Board&bd, const uint64_t oldMap, const uint64_t newMap,
-                                          MoveTypes mType)
+                                          const MoveTypes mType)
 {
     static constexpr std::string FigTypeMap[] = {"", "n", "b", "r", "q"};
 
