@@ -28,7 +28,7 @@ struct BoardEvaluator
     // ------------------------------
 
     // function uses only material to evaluate passed board
-    [[nodiscard]] static int32_t NaiveEvaluation1(const Board& bd, const Color color)
+    [[nodiscard]] static int32_t NaiveEvaluation1(const Board& bd, const int color)
     {
         const size_t allyIndex = color*Board::BoardsPerCol;
         int materialValue = 0;
@@ -40,14 +40,29 @@ struct BoardEvaluator
         return materialValue;
     }
 
-    [[nodiscard]] static int32_t NaiveEvaluation2(const Board& bd, const Color color)
+    [[nodiscard]] static int32_t NaiveEvaluation2(const Board& bd, const int color)
     {
         const size_t allyIndex = color*Board::BoardsPerCol;
         int materialValue = 0;
 
+        // iterate through boards
         for (size_t i = 0; i < kingIndex; ++i)
-            for (uint64_t figs = bd.boards[allyIndex + i]; figs; figs ^= ExtractLsbBit(figs))
-                materialValue += BasicFigureValues[i];
+        {
+            // extract figures board
+            uint64_t figs = bd.boards[allyIndex + i];
+
+            // iterate through figures
+            while(figs)
+            {
+                const int figPos = ExtractMsbPos(figs);
+
+                // sum costs offseted by position
+                materialValue += CostsWithPositionsIncluded[allyIndex + i][figPos];
+
+                // remove processed figures
+                figs ^= maxMsbPossible >> figPos;
+            }
+        }
 
         return materialValue;
     }
