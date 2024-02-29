@@ -10,6 +10,10 @@
 #include <format>
 #include <iostream>
 #include <vector>
+#include <cinttypes>
+
+#include "../BitOperations.h"
+#include "../EngineTypeDefs.h"
 
 /*              IMPORTANT NOTES
  *  All files containing maps used to test must follow this scheme:
@@ -85,7 +89,7 @@ public:
         std::cout << std::format("Processed records: {}\nTotally checked: {} moves\n", recordCount, moveCount);
         if (errorCount)
         {
-            std::cout << std::format("________Last error move on field {}:\n\n", fieldStrMap.at((Field)lastFigPos));
+            std::cout << std::format("________Last error move on field {}:\n\n", fieldStrMap.at(static_cast<Field>(lastFigPos)));
             DisplayMask(lastErrorMove);
             std::cout << "________Correct move:\n\n";
             DisplayMask(lastErrorMoveCorrectOne);
