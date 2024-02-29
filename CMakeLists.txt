@@ -56,6 +56,7 @@ add_executable(ChessEngine main.cpp
         include/TestsAndDebugging/BookTester.h
         src/BookTester.cpp
         include/Evaluation/BoardEvaluator.h
+        src/BoardEvaluator.cpp
 )
 
 find_package(OpenMP)
