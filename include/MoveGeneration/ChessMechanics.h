@@ -57,6 +57,8 @@ struct ChessMechanics
     // Class interaction
     // ------------------------------
 
+    [[nodiscard]] bool IsCheck() const;
+
     [[nodiscard]] uint64_t GetFullMap() const;
 
     [[nodiscard]] uint64_t GetColMap(int col) const;

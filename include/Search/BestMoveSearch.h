@@ -30,8 +30,6 @@ struct BestMoveSearch
     // Class interaction
     // ------------------------------
 
-
-    // TODO: add checks and draws
     template<
         class FullBoardEvalFuncT,
         bool WriteInfo = false
@@ -71,7 +69,7 @@ struct BestMoveSearch
             }
 
             // move sorting
-            InsertionSort(sortedMoveList);
+            _insertionSort(sortedMoveList);
 
             // saving result
             bestMove = GetShortAlgebraicMoveEncoding(_board, moves[sortedMoveList[1].first]);
@@ -82,8 +80,44 @@ struct BestMoveSearch
 
             ++depth;
         }
+    }
 
-        return bestMove;
+    template<
+        class FullBoardEvalFuncT,
+        bool WriteInfo = false
+    > [[nodiscard]] std::string searchMoveDepthFullBoardEvalUnthreaded(FullBoardEvalFuncT evalF, const int targetDepth)
+    {
+        ChessMechanics mechanics(_board);
+        auto moves = mechanics.GetPossibleMoveSlow();
+        std::vector<std::pair<int, int>> sortedMoveList(moves.size() + 1);
+
+        // sentinel guarded
+        for (size_t i = 1 ; i <= moves.size(); ++i)
+            sortedMoveList[i] = std::make_pair(i-1, 0);
+        //sentinel
+        sortedMoveList[0] = std::make_pair(-1, PositiveInfinity);
+
+        for(int depth = 1; depth <= targetDepth; ++depth){
+            // resetting alpha
+            int alpha = NegativeInfinity;
+
+            // list iteration
+            for (size_t i = 1; i <= moves.size(); ++i) {
+                int eval = -_alphaBeta(evalF, moves[sortedMoveList[i].first], NegativeInfinity, -alpha, depth);
+                alpha = std::max(alpha, eval);
+                sortedMoveList[i].second = eval;
+            }
+
+            // move sorting
+            _insertionSort(sortedMoveList);
+
+            if constexpr (WriteInfo){
+                auto bestMove = GetShortAlgebraicMoveEncoding(_board, moves[sortedMoveList[1].first]);
+                GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}\n", depth, bestMove);
+            }
+        }
+
+        return GetShortAlgebraicMoveEncoding(_board, moves[sortedMoveList[1].first]);
     }
 
     // ------------------------------
@@ -98,15 +132,14 @@ private:
     > [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board& bd, int alpha, int beta, const int depth)
     {
         if (depth == 0) {
-            int evaluation = evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
-
-            return evaluation;
+            return evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
         }
 
         ChessMechanics mechanics(bd);
         auto moves = mechanics.GetPossibleMoveSlow();
 
-        // TODO: CHECKS FOR DRAW AND CHECK
+        if (moves.empty())
+            return mechanics.IsCheck() ? NegativeInfinity : 0;
 
         for (auto& moveBoard : moves)
         {
@@ -121,19 +154,7 @@ private:
         return alpha;
     }
 
-    static void InsertionSort(std::vector<std::pair<int, int>>& list){
-        for (size_t i = 2; i < list.size(); ++i)
-        {
-            size_t j = i - 1;
-            auto val = list[i];
-            while(list[j].second < val.second)
-            {
-                list[j+1] = list[j];
-                j--;
-            }
-            list[j+1] = val;
-        }
-    }
+    static void _insertionSort(std::vector<std::pair<int, int>>& list);
 
     // ------------------------------
     // Class fields

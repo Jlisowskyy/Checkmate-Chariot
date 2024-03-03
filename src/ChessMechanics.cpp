@@ -4,6 +4,13 @@
 
 #include "../include/MoveGeneration/ChessMechanics.h"
 
+bool ChessMechanics::IsCheck() const
+{
+    [[maybe_unused]] const auto [unused1, checksCount, unused2] = GetBlockedFieldMap(GetFullMap());
+
+    return checksCount > 0;
+}
+
 // Gets occupancy maps, which simply indicates wheter some field is occupied or not. Does not distinguish colors.
 uint64_t ChessMechanics::GetFullMap() const
 {
