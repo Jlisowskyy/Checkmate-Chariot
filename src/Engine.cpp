@@ -6,6 +6,7 @@
 #include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/Search/BestMoveSearch.h"
 #include "../include/Evaluation/BoardEvaluator.h"
+#include "../include/OpeningBook/OpeningBook.h"
 
 void Engine::Initialize()
 {
@@ -147,10 +148,34 @@ void Engine::_changeDebugState(Engine&eng, std::string&nPath)
     GlobalLogger.ChangeLogStream(nPath);
 }
 
-void Engine::GoMoveTime(lli time) {
+// IMPORTANT TODO: what happens when startpos is not basic game?!
+
+void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves) const
+{
+    if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
+    {
+        GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
+        return;
+    }
+
     BestMoveSearch searchMachine(_board);
     auto bestMove = searchMachine.searchMoveTimeFullBoardEvalUnthreaded<decltype(BoardEvaluator::DefaultFullEvalFunction),
             true>(BoardEvaluator::DefaultFullEvalFunction, time);
+
+    GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
+}
+
+void Engine::GoDepth(const int depth, const std::vector<std::string>& moves) const
+{
+    if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
+    {
+        GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
+        return;
+    }
+
+    BestMoveSearch searchMachine(_board);
+    auto bestMove = searchMachine.searchMoveDepthFullBoardEvalUnthreaded<decltype(BoardEvaluator::DefaultFullEvalFunction),
+        true>(BoardEvaluator::DefaultFullEvalFunction, depth);
 
     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
 }

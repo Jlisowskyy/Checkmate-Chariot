@@ -12,6 +12,7 @@
 #include "EngineTypeDefs.h"
 #include "Interface/FenTranslator.h"
 #include "Interface/Logger.h"
+#include "OpeningBook/OpeningBook.h"
 
 class Engine
 {
@@ -56,12 +57,13 @@ public:
 
     [[nodiscard]] std::string GetFenTranslation() const;
 
-    void GoMoveTime(lli time);
+    void GoMoveTime(lli time, const std::vector<std::string>& moves) const;
+
+    void GoDepth(const int depth, const std::vector<std::string>& moves) const;
 
 
     // TODO: next goals:
     void StopSearch() { std::cout << "stop search resullt! " << std::endl; }
-    void GoDepth(lli depth) { std::cout << "go depth resutl: " << depth << std::endl; }
     void GoInfinite() { std::cout << "go infinite result! " << std::endl; }
 
     // ------------------------------
@@ -83,6 +85,7 @@ private:
 
     Board _board{};
     Board _startingBoard{};
+    OpeningBook _book{"uci_ready", OpeningBook::bookFileType::text_uci} ;
 
     // ------------------------------
     // Engine options
