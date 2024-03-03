@@ -57,6 +57,13 @@ struct BestMoveSearch
 
             // list iteration
             for (size_t i = 1; i <= moves.size(); ++i) {
+                // comparing spent time
+                auto timeStop = std::chrono::steady_clock::now();
+                auto timeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart);
+
+                if (timeSpent.count() > timeLimit)
+                    return bestMove;
+
                 int eval = -_alphaBeta(evalF, moves[sortedMoveList[i].first], NegativeInfinity, -alpha, depth);
 
                 alpha = std::max(alpha, eval);
@@ -69,15 +76,10 @@ struct BestMoveSearch
             // saving result
             bestMove = GetShortAlgebraicMoveEncoding(_board, moves[sortedMoveList[1].first]);
 
-            // comparing spent time
-            auto timeStop = std::chrono::steady_clock::now();
-            auto timeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart);
-
             if constexpr (WriteInfo){
                 GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}\n", depth, bestMove);
             }
 
-            if (timeSpent.count() > timeLimit) break;
             ++depth;
         }
 

@@ -680,7 +680,7 @@ private:
         class ActionT
     >
     void _processKingMovesWhenChecked(ActionT action, const int depth, const uint64_t blockedFigMap,
-                                      const uint64_t allyMap, const uint64_t enemyMap, const uint64_t allowedTilesMaps)
+                                      const uint64_t allyMap, const uint64_t enemyMap, const uint64_t hallowedTilesMaps)
     {
         static constexpr size_t CastlingPerColor = 2;
 
