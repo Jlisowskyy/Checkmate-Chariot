@@ -27,6 +27,11 @@ struct BoardEvaluator
     // Class interaction
     // ------------------------------
 
+    [[nodiscard]] static int32_t DefaultFullEvalFunction(const Board& bd, const int color)
+    {
+        return NaiveEvaluation2(bd, color);
+    }
+
     // function uses only material to evaluate passed board
     [[nodiscard]] static int32_t NaiveEvaluation1(const Board& bd, const int color)
     {

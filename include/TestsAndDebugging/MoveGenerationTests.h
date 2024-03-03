@@ -62,8 +62,6 @@ private:
 
     [[nodiscard]] static double _performEngineSpeedTest(const std::string& fenPosition, int depth);
 
-    [[nodiscard]] static std::vector<std::pair<std::string, int>> _getPositionsFromCsv(std::ifstream& stream);
-
     void _deepTestRecu(const std::string&fenPosition, int depth, std::vector<std::string>&moves,
                        std::string&chainOut) const;
 

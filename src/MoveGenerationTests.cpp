@@ -17,6 +17,7 @@
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/Engine.h"
 #include "../include/Interface/Logger.h"
+#include "../include/TestsAndDebugging/CsvOperator.h"
 
 std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const std::string&fenPosition,
                                                                            const int depth,
@@ -138,24 +139,13 @@ void MoveGenerationTester::PerformSeriesOfDeepTests(const std::vector<std::pair<
 
 bool MoveGenerationTester::PerformSeriesOfDeepTestFromFile(const std::string& path) const
 {
-    std::ifstream csvRead(path.empty()
-                                        ? DefaultTestPath
-                                        : path == "/"
-                                        ? DefaultTestPath1
-                                        : path
-                                        );
+    const auto tests = CsvOperator::ReadPosDepthCsv(path.empty()
+                                                        ? DefaultTestPath
+                                                        : path == "/"
+                                                              ? DefaultTestPath1
+                                                              : path);
 
-
-    std::vector<std::pair<std::string, int>> tests{};
-    try
-    {
-        tests = _getPositionsFromCsv(csvRead);
-    }
-    catch(const std::exception& exc)
-    {
-        GlobalLogger.StartErrLogging() << std::format("[ ERROR ] Error occured:\n{}\n", exc.what());
-        return false;
-    }
+    if (tests.empty()) return false;
 
     PerformSeriesOfDeepTests(tests);
 
@@ -164,29 +154,17 @@ bool MoveGenerationTester::PerformSeriesOfDeepTestFromFile(const std::string& pa
 
 bool MoveGenerationTester::PerformPerformanceTest(const std::string& inputTestPath, const std::string& output) const
 {
-    // openning file
-    std::ifstream csvRead(inputTestPath.empty()
+    // reading csv file
+    auto tests = CsvOperator::ReadPosDepthCsv(inputTestPath.empty()
                               ? DefaultCompTestPath
-                              : inputTestPath
-    );
+                              : inputTestPath);
+    if (tests.empty()) return false;
 
-    // reading tests from file
-    std::vector<std::pair<std::string, int>> tests{};
-    try
-    {
-        tests = _getPositionsFromCsv(csvRead);
-    }
-    catch(const std::exception& exc)
-    {
-        GlobalLogger.StartErrLogging() << std::format("[ ERROR ] Error occured:\n{}\n", exc.what());
-        return false;
-    }
 
     // performing tests
     std::vector<std::tuple<std::string, int, double, double, double>> results{};
     double internalSum{};
     double externalSum{};
-
 
     GlobalLogger.StartLogging() << "All results are displayed in following manner:\n\t Internal Engine time in ms, External Engine time in ms, ratio (external/internal)\n";
 
@@ -254,31 +232,6 @@ double MoveGenerationTester::_performEngineSpeedTest(const std::string& fenPosit
     eng.SetFenPosition(fenPosition);
 
     return eng.GoPerft<false>(depth);
-}
-
-std::vector<std::pair<std::string, int>> MoveGenerationTester::_getPositionsFromCsv(std::ifstream& stream)
-{
-    std::vector<std::pair<std::string, int>> records{};
-
-    for(std::string buffer{}; std::getline(stream, buffer);)
-    {
-        std::string innerBuf{};
-        buffer = ParseTools::GetTrimmed(buffer);
-        if (buffer.empty()) continue;
-
-        size_t pos = ParseTools::ExtractNextWord<[](int x)->int{ return x == ','; }>(buffer, innerBuf, 0);
-        if (pos == 0) throw std::runtime_error("missing comma: expected two values fen position and depth");
-
-        innerBuf.pop_back();
-        records.emplace_back(innerBuf, 0);
-
-        pos = ParseTools::ExtractNextWord(buffer, innerBuf, pos+1);
-        if (pos == 0) throw std::runtime_error("missing second argument: expected two values fen position and depth");
-
-        records.back().second = static_cast<int>(ParseTools::ParseTolli(innerBuf));
-    }
-
-    return records;
 }
 
 void MoveGenerationTester::_deepTestRecu(const std::string&fenPosition, const int depth,

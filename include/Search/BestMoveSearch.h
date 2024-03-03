@@ -12,8 +12,6 @@
 #include <format>
 
 #include "../EngineTypeDefs.h"
-#include "../Evaluation/BoardEvaluator.h"
-#include "../Interface/FenTranslator.h"
 #include "../MoveGeneration/ChessMechanics.h"
 
 struct BestMoveSearch

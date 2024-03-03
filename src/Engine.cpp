@@ -149,8 +149,8 @@ void Engine::_changeDebugState(Engine&eng, std::string&nPath)
 
 void Engine::GoMoveTime(lli time) {
     BestMoveSearch searchMachine(_board);
-    auto bestMove = searchMachine.searchMoveTimeFullBoardEvalUnthreaded<decltype(BoardEvaluator::NaiveEvaluation2),
-            true>(BoardEvaluator::NaiveEvaluation2, time);
+    auto bestMove = searchMachine.searchMoveTimeFullBoardEvalUnthreaded<decltype(BoardEvaluator::DefaultFullEvalFunction),
+            true>(BoardEvaluator::DefaultFullEvalFunction, time);
 
     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
 }

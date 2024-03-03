@@ -59,6 +59,10 @@ add_executable(Checkmate-Chariot main.cpp
         src/BoardEvaluator.cpp
         include/Search/BestMoveSearch.h
         src/BestMoveSearch.cpp
+        include/TestsAndDebugging/CsvOperator.h
+        include/TestsAndDebugging/SearchPerfTester.h
+        src/SearchPerfTester.cpp
+        src/CsvOperator.cpp
 )
 
 find_package(OpenMP)

@@ -8,6 +8,7 @@
 #include "../include/ParseTools.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/Interface/Logger.h"
+#include "../include/TestsAndDebugging/SearchPerfTester.h"
 
 UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream&input)
 {
@@ -158,6 +159,17 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) {
 
         const MoveGenerationTester tester;
         bool result = tester.PerformPerformanceTest(file1Str, file2Str);
+        if (result == false)
+            return UCICommand::InvalidCommand;
+    }
+    else if (workStr == "searchPerf")
+    {
+        std::string file1Str{};
+        std::string file2Str{};
+        pos = ParseTools::ExtractNextWord(str, file1Str, pos);
+        if (pos != 0) ParseTools::ExtractNextWord(str, file2Str, pos);
+
+        bool result = SearchPerfTester::PerformSearchPerfTest(file1Str, file2Str);
         if (result == false)
             return UCICommand::InvalidCommand;
     }
