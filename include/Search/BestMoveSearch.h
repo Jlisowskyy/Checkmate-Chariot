@@ -5,8 +5,11 @@
 #ifndef BESTMOVESEARCH_H
 #define BESTMOVESEARCH_H
 
-#include <limits.h>
+#include <climits>
 #include <string>
+#include <chrono>
+#include <vector>
+#include <format>
 
 #include "../EngineTypeDefs.h"
 #include "../Evaluation/BoardEvaluator.h"
@@ -19,20 +22,69 @@ struct BestMoveSearch
     // Class creation
     // ------------------------------
 
-    BestMoveSearch() = default;
+    BestMoveSearch() = delete;
+    BestMoveSearch(const Board& board): _board(board) {}
     ~BestMoveSearch() = default;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    template<
-        class FullBoardEvalFuncT
-    > [[nodiscard]] std::string SearchMoveTimeFullBoardEval(FullBoardEvalFuncT evalF, long mSecs)
-    {
-        std::cout << _alphaBeta(evalF, FenTranslator::GetDefault(), INT_MIN, INT_MAX, 7);
 
-        return "";
+    // TODO: add checks and draws
+    template<
+        class FullBoardEvalFuncT,
+        bool WriteToOut = false
+    > [[nodiscard]] std::string searchMoveTimeFullBoardEvalUnthreaded(FullBoardEvalFuncT evalF, long timeLimit)
+    {
+        auto timeStart = std::chrono::steady_clock::now();
+
+        ChessMechanics mechanics(_board);
+        auto moves = mechanics.GetPossibleMoveSlow();
+        std::vector<std::pair<int, int>> sortedMoveList(moves.size() + 1);
+
+        // sentinel guarded
+        for (size_t i = 1 ; i <= moves.size(); ++i)
+            sortedMoveList[i] = std::make_pair(i-1, 0);
+        //sentinel
+        sortedMoveList[0] = std::make_pair(-1, PositiveInfinity);
+
+        int depth = 1;
+        std::string bestMove;
+        while(true){
+            // resetting alpha
+            int alpha = NegativeInfinity;
+
+            // list iteration
+            for (size_t i = 1; i <= moves.size(); ++i) {
+                int eval = -_alphaBeta(evalF, moves[sortedMoveList[i].first], NegativeInfinity, -alpha, depth);
+
+                alpha = std::max(alpha, eval);
+                sortedMoveList[i].second = eval;
+            }
+
+            // move sorting
+            InsertionSort(sortedMoveList);
+
+            // saving result
+            bestMove = GetShortAlgebraicMoveEncoding(_board, moves[sortedMoveList[1].first]);
+
+            // comparing spent time
+            auto timeStop = std::chrono::steady_clock::now();
+            auto timeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart);
+
+            if constexpr (WriteToOut){
+                GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}\n", depth, bestMove);
+            }
+
+            if (timeSpent.count() > timeLimit) break;
+            ++depth;
+        }
+
+        if constexpr (WriteToOut)
+            GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
+
+        return bestMove;
     }
 
     // ------------------------------
@@ -40,31 +92,59 @@ struct BestMoveSearch
     // ------------------------------
 private:
 
+    // ALPHA - minimum score of maximizing player
+    // BETA - maximum score of minimazing player
     template<
         class FullBoardEvalFuncT
-    > [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board bd, int alpha, int beta, const int depth)
+    > [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board& bd, int alpha, int beta, const int depth)
     {
-        if (depth == 0) return evalF(bd, bd.movColor);
+        if (depth == 0) {
+            int evaluation = evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
+
+            return evaluation;
+        }
 
         ChessMechanics mechanics(bd);
+        auto moves = mechanics.GetPossibleMoveSlow();
 
-        for (const auto& moveBoard : mechanics.GetPossibleMoveSlow())
+        // TODO: CHECKS FOR DRAW AND CHECK
+
+        for (auto& moveBoard : moves)
         {
-            const int moveValue = _alphaBeta(evalF, moveBoard, alpha, beta, depth-1);
+            const int moveValue = -_alphaBeta(evalF, moveBoard, -beta, -alpha, depth-1);
 
             if (moveValue >= beta)
                 return beta;
-            if (moveValue > alpha)
-                alpha = moveValue;
+
+            alpha = std::max(alpha, moveValue);
         }
 
         return alpha;
+    }
+
+    static void InsertionSort(std::vector<std::pair<int, int>>& list){
+        for (size_t i = 2; i < list.size(); ++i)
+        {
+            size_t j = i - 1;
+            auto val = list[i];
+            while(list[j].second < val.second)
+            {
+                list[j+1] = list[j];
+                j--;
+            }
+            list[j+1] = val;
+        }
     }
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
+    static constexpr int NegativeInfinity = INT_MIN + 1;
+    static constexpr int PositiveInfinity = INT_MAX;
+    static constexpr int ListStop = INT_MIN;
+
+    Board _board;
 };
 
 #endif //BESTMOVESEARCH_H

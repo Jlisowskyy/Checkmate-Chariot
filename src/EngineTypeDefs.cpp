@@ -76,7 +76,7 @@ void Board::ChangePlayingColor()
 
 int SwapColor(const int col)
 {
-    return 1 - col;
+    return col ^ 1;
 }
 
 void DisplayMask(const uint64_t mask)
@@ -125,8 +125,8 @@ std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board&oldBoard, const B
 #endif
 }
 
-std::string GetShortAlgebraicMoveEncoding(const Board&bd, const uint64_t oldMap, const uint64_t newMap,
-                                          const MoveTypes mType)
+std::string GetEncodingFromBoards(const Board&bd, uint64_t oldMap, uint64_t newMap,
+                                  MoveTypes mType)
 {
     static constexpr std::string FigTypeMap[] = {"", "n", "b", "r", "q"};
 
@@ -328,3 +328,8 @@ const std::unordered_map<std::string, Field> strFieldMap{
     {"g8", G8},
     {"h8", H8}
 };
+
+std::string GetShortAlgebraicMoveEncoding(const Board &oBoard, const Board &nBoard) {
+    auto [oldBoard, newBoard, mType] = FindMove(oBoard, nBoard);
+    return GetEncodingFromBoards(oBoard, oldBoard, newBoard, mType);
+}

@@ -206,7 +206,9 @@ void DisplayMask(uint64_t mask);
 
 std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board&oldBoard, const Board&newBoard);
 
-std::string GetShortAlgebraicMoveEncoding(const Board&bd, uint64_t oldMap, uint64_t newMap, MoveTypes mType);
+std::string GetEncodingFromBoards(const Board&bd, uint64_t oldMap, uint64_t newMap, MoveTypes mType);
+
+std::string GetShortAlgebraicMoveEncoding(const Board& oBoard, const Board& nBoard);
 
 // returns 0 if invalid characters were passed
 uint64_t ExtractPosFromStr(int x, int y);
