@@ -34,7 +34,7 @@ struct BestMoveSearch
     // TODO: add checks and draws
     template<
         class FullBoardEvalFuncT,
-        bool WriteToOut = false
+        bool WriteInfo = false
     > [[nodiscard]] std::string searchMoveTimeFullBoardEvalUnthreaded(FullBoardEvalFuncT evalF, long timeLimit)
     {
         auto timeStart = std::chrono::steady_clock::now();
@@ -73,16 +73,13 @@ struct BestMoveSearch
             auto timeStop = std::chrono::steady_clock::now();
             auto timeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart);
 
-            if constexpr (WriteToOut){
+            if constexpr (WriteInfo){
                 GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}\n", depth, bestMove);
             }
 
             if (timeSpent.count() > timeLimit) break;
             ++depth;
         }
-
-        if constexpr (WriteToOut)
-            GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
 
         return bestMove;
     }
@@ -142,7 +139,6 @@ private:
 
     static constexpr int NegativeInfinity = INT_MIN + 1;
     static constexpr int PositiveInfinity = INT_MAX;
-    static constexpr int ListStop = INT_MIN;
 
     Board _board;
 };

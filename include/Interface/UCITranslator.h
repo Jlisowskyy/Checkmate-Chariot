@@ -72,29 +72,29 @@ private:
     // Command response methods
     // ------------------------------
 
-    UCICommand _stopResponse(const std::string& unused);
+    UCICommand _stopResponse([[maybe_unused]] const std::string& unused);
 
     [[nodiscard]] UCICommand _goResponse(const std::string&str);
 
     [[nodiscard]] UCICommand _positionResponse(const std::string&str);
 
-    UCICommand _ucinewgameResponse(const std::string& unused);
+    UCICommand _ucinewgameResponse([[maybe_unused]] const std::string& unused);
 
     [[nodiscard]] UCICommand _setoptionResponse(const std::string&str);
 
-    UCICommand _uciResponse(const std::string& unused);
+    UCICommand _uciResponse([[maybe_unused]] const std::string& unused);
 
-    UCICommand _isReadyResponse(const std::string& unused);
+    UCICommand _isReadyResponse([[maybe_unused]] const std::string& unused);
 
-    UCICommand _displayResponse(const std::string& unused);
+    UCICommand _displayResponse([[maybe_unused]] const std::string& unused);
 
-    UCICommand _displayFenResponse(const std::string& unused);
+    UCICommand _displayFenResponse([[maybe_unused]] const std::string& unused);
 
-    UCICommand _displayHelpResponse(const std::string& unused);
+    UCICommand _displayHelpResponse([[maybe_unused]] const std::string& unused);
 
-    UCICommand _quitResponse(const std::string& unused);
+    UCICommand _quitResponse([[maybe_unused]] const std::string& unused);
 
-    UCICommand _clearConsole(const std::string& unused);
+    UCICommand _clearConsole([[maybe_unused]] const std::string& unused);
 
     // ------------------------------
     // private fields

@@ -4,9 +4,8 @@
 
 #include "../include/Engine.h"
 #include "../include/MoveGeneration/ChessMechanics.h"
-#include "../include/Interface/Logger.h"
-#include "../include/MoveGeneration/BlackPawnMap.h"
-#include "../include/MoveGeneration/WhitePawnMap.h"
+#include "../include/Search/BestMoveSearch.h"
+#include "../include/Evaluation/BoardEvaluator.h"
 
 void Engine::Initialize()
 {
@@ -146,4 +145,12 @@ bool Engine::_applyMove(Board&board, const std::string&move, const uint64_t oldP
 void Engine::_changeDebugState(Engine&eng, std::string&nPath)
 {
     GlobalLogger.ChangeLogStream(nPath);
+}
+
+void Engine::GoMoveTime(lli time) {
+    BestMoveSearch searchMachine(_board);
+    auto bestMove = searchMachine.searchMoveTimeFullBoardEvalUnthreaded<decltype(BoardEvaluator::NaiveEvaluation2),
+            true>(BoardEvaluator::NaiveEvaluation2, time);
+
+    GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
 }

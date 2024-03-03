@@ -13,7 +13,6 @@
 #include "Interface/FenTranslator.h"
 #include "Interface/Logger.h"
 
-
 class Engine
 {
     // --------------------------------------
@@ -57,10 +56,12 @@ public:
 
     [[nodiscard]] std::string GetFenTranslation() const;
 
+    void GoMoveTime(lli time);
+
+
     // TODO: next goals:
     void StopSearch() { std::cout << "stop search resullt! " << std::endl; }
     void GoDepth(lli depth) { std::cout << "go depth resutl: " << depth << std::endl; }
-    void GoMovetime(lli time) { std::cout << "go movetime resutl: " << time << std::endl; }
     void GoInfinite() { std::cout << "go infinite result! " << std::endl; }
 
     // ------------------------------
@@ -96,7 +97,7 @@ private:
 
     inline static const EngineInfo engineInfo = {
         .author = "Jakub Lisowski, Warsaw University of Technology",
-        .name = "ChessEngine development version 0.03",
+        .name = "ChessEngine development version 0.04",
         .options = std::map<std::string, const Option *>({
             std::make_pair("Threads", &Threads),
             std::make_pair("Debug Log File", &DebugLogFile),
