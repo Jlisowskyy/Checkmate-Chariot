@@ -12,7 +12,8 @@
 #include <format>
 
 #include "../EngineTypeDefs.h"
-#include "../MoveGeneration/ChessMechanics.h"
+// #include "../MoveGeneration/ChessMechanics.h"
+#include "../MoveGeneration/MoveGenerator.h"
 
 struct BestMoveSearch
 {
@@ -35,8 +36,8 @@ struct BestMoveSearch
     {
         auto timeStart = std::chrono::steady_clock::now();
 
-        ChessMechanics mechanics(_board);
-        auto moves = mechanics.GetPossibleMoveSlow();
+        MoveGenerator mechanics(_board);
+        auto moves = mechanics.GetMovesFast();
         std::vector<std::pair<int, int>> sortedMoveList(moves.size() + 1);
 
         // sentinel guarded
@@ -85,8 +86,8 @@ struct BestMoveSearch
         bool WriteInfo = false
     > [[nodiscard]] std::string searchMoveDepthFullBoardEvalUnthreaded(FullBoardEvalFuncT evalF, const int targetDepth)
     {
-        ChessMechanics mechanics(_board);
-        auto moves = mechanics.GetPossibleMoveSlow();
+        MoveGenerator mechanics(_board);
+        auto moves = mechanics.GetMovesFast();
         std::vector<std::pair<int, int>> sortedMoveList(moves.size() + 1);
 
         // sentinel guarded
@@ -133,8 +134,8 @@ private:
             return evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
         }
 
-        ChessMechanics mechanics(bd);
-        auto moves = mechanics.GetPossibleMoveSlow();
+        MoveGenerator mechanics(bd);
+        auto moves = mechanics.GetMovesFast();
 
         if (moves.empty())
             return mechanics.IsCheck() ? NegativeInfinity : 0;

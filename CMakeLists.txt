@@ -66,6 +66,8 @@ add_executable(Checkmate-Chariot main.cpp
         include/MoveGeneration/Move.h
         include/Board.h
         src/Board.cpp
+        src/MoveGenerator.cpp
+        include/MoveGeneration/MoveGenerator.h
 )
 
 find_package(OpenMP)
