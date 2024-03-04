@@ -33,12 +33,11 @@ struct MoveGenerator
     // Class Creation
     // ------------------------------
 
+    static constexpr size_t AverageChessMoves = 40;
     MoveGenerator() = delete;
 
     explicit MoveGenerator(Board&bd): board(bd)
     {
-        static constexpr size_t AverageChessMoves = 40;
-        _resultingMoves.reserve(AverageChessMoves);
     }
 
     MoveGenerator(MoveGenerator&other) = delete;
@@ -76,20 +75,23 @@ struct MoveGenerator
         const uint64_t fullMap = GetFullMap();
         const auto [blockedFigMap, checksCount, checkType] = GetBlockedFieldMap(fullMap);
 
+        std::vector<Board> results{};
+        results.reserve(AverageChessMoves);
+
         switch (checksCount)
         {
             case 0:
-                _noCheckGen(fullMap, blockedFigMap);
-                break;
+                _noCheckGen(results, fullMap, blockedFigMap);
+            break;
             case 1:
-                _singleCheckGen(fullMap, blockedFigMap, checkType);
-                break;
+                _singleCheckGen(results, fullMap, blockedFigMap, checkType);
+            break;
             case 2:
-                _doubleCheckGen(blockedFigMap);
-                break;
+                _doubleCheckGen(results, blockedFigMap);
+            break;
         }
 
-        return _resultingMoves;
+        return results;
     }
 
     // ------------------------------
@@ -98,37 +100,37 @@ struct MoveGenerator
 private:
     [[nodiscard]] uint64_t _generateAllowedTilesForPrecisedPinnedFig(uint64_t figBoard, uint64_t fullMap) const;
 
-    void _noCheckGen(const uint64_t fullMap, const uint64_t blockedFigMap)
+    void _noCheckGen(std::vector<Board>& results, const uint64_t fullMap, const uint64_t blockedFigMap)
     {
         const uint64_t pinnedFigsMap = GetPinnedFigsMapWoutCheck(board.movColor, fullMap);
         const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
         const uint64_t allyMap = GetColMap(board.movColor);
 
-        _processFigMoves<RookMap, true>(board.boards[Board::BoardsPerCol * board.movColor + rooksIndex],
+        _processFigMoves<RookMap, true>(results, board.boards[Board::BoardsPerCol * board.movColor + rooksIndex],
                                                  enemyMap, allyMap, pinnedFigsMap);
 
-        _processFigMoves<BishopMap>(board.boards[Board::BoardsPerCol * board.movColor + bishopsIndex],
+        _processFigMoves<BishopMap>(results, board.boards[Board::BoardsPerCol * board.movColor + bishopsIndex],
                                              enemyMap, allyMap, pinnedFigsMap);
 
-        _processFigMoves<QueenMap>(board.boards[Board::BoardsPerCol * board.movColor + queensIndex], enemyMap,
+        _processFigMoves<QueenMap>(results, board.boards[Board::BoardsPerCol * board.movColor + queensIndex], enemyMap,
                                             allyMap, pinnedFigsMap);
 
-        _processFigMoves<KnightMap>(board.boards[Board::BoardsPerCol * board.movColor + knightsIndex],
+        _processFigMoves<KnightMap>(results, board.boards[Board::BoardsPerCol * board.movColor + knightsIndex],
                                              enemyMap, allyMap, pinnedFigsMap);
 
         if (board.movColor == WHITE)
-            _processPawnMoves<WhitePawnMap>(board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
+            _processPawnMoves<WhitePawnMap>(results, board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
                                                      enemyMap, allyMap, pinnedFigsMap);
         else
-            _processPawnMoves<BlackPawnMap>(board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
+            _processPawnMoves<BlackPawnMap>(results, board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
                                                      enemyMap, allyMap, pinnedFigsMap);
 
-        _processPlainKingMoves(blockedFigMap, allyMap, enemyMap);
+        _processPlainKingMoves(results, blockedFigMap, allyMap, enemyMap);
 
-        _processKingCastlings(blockedFigMap, fullMap);
+        _processKingCastlings(results, blockedFigMap, fullMap);
     }
 
-    void _singleCheckGen(const uint64_t fullMap, const uint64_t blockedFigMap, const uint8_t checkType)
+    void _singleCheckGen(std::vector<Board>& results, const uint64_t fullMap, const uint64_t blockedFigMap, const uint8_t checkType)
     {
         static constexpr uint64_t UNUSED = 0;
 
@@ -147,64 +149,64 @@ private:
         const uint64_t allyMap = GetColMap(board.movColor);
 
         // Specific figure processing
-        _processFigMoves<RookMap, true, false, false, true>(board.boards[Board::BoardsPerCol * board.movColor + rooksIndex],
+        _processFigMoves<RookMap, true, false, false, true>(results, board.boards[Board::BoardsPerCol * board.movColor + rooksIndex],
                                                                      enemyMap, allyMap, pinnedFigsMap, UNUSED,
                                                                      allowedTilesMap);
 
-        _processFigMoves<BishopMap, false, false, false, true>(board.boards[Board::BoardsPerCol * board.movColor +
+        _processFigMoves<BishopMap, false, false, false, true>(results, board.boards[Board::BoardsPerCol * board.movColor +
                                                                             bishopsIndex],
                                                                         enemyMap, allyMap, pinnedFigsMap, UNUSED,
                                                                         allowedTilesMap);
 
-        _processFigMoves<QueenMap, false, false, false, true>(board.boards[Board::BoardsPerCol * board.movColor +
+        _processFigMoves<QueenMap, false, false, false, true>(results, board.boards[Board::BoardsPerCol * board.movColor +
                                                                            queensIndex],
                                                                        enemyMap, allyMap, pinnedFigsMap, UNUSED,
                                                                        allowedTilesMap);
 
-        _processFigMoves<KnightMap, false, false, false, true>(board.boards[
+        _processFigMoves<KnightMap, false, false, false, true>(results, board.boards[
                                                                             Board::BoardsPerCol * board.movColor +
                                                                             knightsIndex],
                                                                         enemyMap, allyMap, pinnedFigsMap, UNUSED,
                                                                         allowedTilesMap);
 
         if (board.movColor == WHITE)
-            _processPawnMoves<WhitePawnMap, true>(board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
+            _processPawnMoves<WhitePawnMap, true>(results, board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
                                                            enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
         else
-            _processPawnMoves<BlackPawnMap, true>(board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
+            _processPawnMoves<BlackPawnMap, true>(results, board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
                                                            enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
 
 
-        _processKingMovesWhenChecked(blockedFigMap, allyMap, enemyMap, allowedTilesMap);
+        _processKingMovesWhenChecked(results, blockedFigMap, allyMap, enemyMap, allowedTilesMap);
     }
 
-    void _doubleCheckGen(const uint64_t blockedFigMap)
+    void _doubleCheckGen(std::vector<Board>& results, const uint64_t blockedFigMap)
     {
         const uint64_t allyMap = GetColMap(board.movColor);
         const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
-        _processPlainKingMoves(blockedFigMap, allyMap, enemyMap);
+        _processPlainKingMoves(results, blockedFigMap, allyMap, enemyMap);
     }
 
     template<
         class MapT,
         bool isCheck = false
     >
-    void _processPawnMoves(uint64_t&figMap,
+    void _processPawnMoves(std::vector<Board>& results, uint64_t&figMap,
                            const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
                            [[maybe_unused]] const uint64_t allowedMoveFillter = 0)
     {
         const uint64_t promotingPawns = figMap & MapT::PromotingMask;
         const uint64_t nonPromotingPawns = figMap ^ promotingPawns;
 
-        _processFigMoves<MapT, false, false, true, isCheck, MapT::GetElPassantField>(figMap, enemyMap,
+        _processFigMoves<MapT, false, false, true, isCheck, MapT::GetElPassantField>(results, figMap, enemyMap,
             allyMap, pinnedFigMap, nonPromotingPawns, allowedMoveFillter);
 
         if (promotingPawns)
-            _processFigMoves<MapT, false, true, true, isCheck>(figMap, enemyMap,
+            _processFigMoves<MapT, false, true, true, isCheck>(results, figMap, enemyMap,
                                                                     allyMap, pinnedFigMap, promotingPawns,
                                                                     allowedMoveFillter);
 
-        _processElPassantMoves<MapT, isCheck>(allyMap | enemyMap, pinnedFigMap,
+        _processElPassantMoves<MapT, isCheck>(results, allyMap | enemyMap, pinnedFigMap,
             figMap, allowedMoveFillter);
     }
 
@@ -213,7 +215,7 @@ private:
         class MapT,
         bool isCheck = false
     >
-    void _processElPassantMoves(const uint64_t fullMap, const uint64_t pinnedFigMap, uint64_t&figMap,
+    void _processElPassantMoves(std::vector<Board>& results, const uint64_t fullMap, const uint64_t pinnedFigMap, uint64_t&figMap,
                                 [[maybe_unused]] const uint64_t allowedMoveFillter = 0)
     {
         if (board.elPassantField == INVALID) return;
@@ -271,7 +273,7 @@ private:
             board.elPassantField = INVALID;
             board.ChangePlayingColor();
 
-            _resultingMoves.push_back(board);
+            results.push_back(board);
 
             // reverting changes on board
             board.ChangePlayingColor();
@@ -294,7 +296,7 @@ private:
         bool isCheck = false,
         Field (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
     >
-    void _processFigMoves(uint64_t&figMap, const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
+    void _processFigMoves(std::vector<Board>& results, uint64_t&figMap, const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
                           [[maybe_unused]] const uint64_t figureSelector = 0,
                           [[maybe_unused]] const uint64_t allowedMovesSelector = 0)
     {
@@ -351,8 +353,8 @@ private:
             figMap ^= figBoard;
 
             // processing move consequneces
-            _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(figMap, nonAttackingMoves, figBoard);
-            _processAttackingMoves<promotePawns>(figMap, attackMoves);
+            _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(results, figMap, nonAttackingMoves, figBoard);
+            _processAttackingMoves<promotePawns>(results, figMap, attackMoves);
 
             // cleaning up
             figMap |= figBoard;
@@ -389,9 +391,9 @@ private:
             figMap ^= figBoard;
 
             // processing move consequences
-            _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(figMap, nonAttackingMoves, figBoard);
+            _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(results, figMap, nonAttackingMoves, figBoard);
             // TODO: There is exactly one move possible
-            _processAttackingMoves<promotePawns>(figMap, attackMoves);
+            _processAttackingMoves<promotePawns>(results, figMap, attackMoves);
 
             figMap |= figBoard;
             pinnedOnes ^= figBoard;
@@ -406,7 +408,7 @@ private:
         bool promotePawns,
         Field (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
     >
-    void _processNonAttackingMoves(uint64_t&figMap, uint64_t nonAttackingMoves,[[maybe_unused]] const uint64_t startPos = 0)  /* used only for pawns to check el passant*/
+    void _processNonAttackingMoves(std::vector<Board>& results, uint64_t&figMap, uint64_t nonAttackingMoves,[[maybe_unused]] const uint64_t startPos = 0)  /* used only for pawns to check el passant*/
     {
         while (nonAttackingMoves)
         {
@@ -426,7 +428,7 @@ private:
 
                 // performing core actions
                 board.ChangePlayingColor();
-                _resultingMoves.push_back(board);
+                results.push_back(board);
                 board.ChangePlayingColor();
 
                 // reverting flag changes
@@ -447,7 +449,7 @@ private:
 
                     // performing core actions
                     board.ChangePlayingColor();
-                    _resultingMoves.push_back(board);
+                    results.push_back(board);
                     board.ChangePlayingColor();
 
                     // cleaning up
@@ -462,7 +464,7 @@ private:
     template<
         bool promotePawns
     >
-    void _processAttackingMoves(uint64_t&figMap, uint64_t attackingMoves)
+    void _processAttackingMoves(std::vector<Board>& results, uint64_t&figMap, uint64_t attackingMoves)
     {
         while (attackingMoves)
         {
@@ -480,7 +482,7 @@ private:
 
                 // performing core actions
                 board.ChangePlayingColor();
-                _resultingMoves.push_back(board);
+                results.push_back(board);
                 board.ChangePlayingColor();
 
                 // cleaning
@@ -502,7 +504,7 @@ private:
 
                     // performing core actions
                     board.ChangePlayingColor();
-                    _resultingMoves.push_back(board);
+                    results.push_back(board);
                     board.ChangePlayingColor();
 
                     // cleaning up
@@ -518,7 +520,7 @@ private:
     }
 
     // TODO: test copying all old castlings
-    void _processPlainKingMoves(const uint64_t blockedFigMap, const uint64_t allyMap, const uint64_t enemyMap)
+    void _processPlainKingMoves(std::vector<Board>& results, const uint64_t blockedFigMap, const uint64_t allyMap, const uint64_t enemyMap)
     {
         static constexpr size_t CastlingPerColor = 2;
 
@@ -555,7 +557,7 @@ private:
 
             // performing core actions
             board.ChangePlayingColor();
-            _resultingMoves.push_back(board);
+            results.push_back(board);
             board.ChangePlayingColor();
 
             nonAttackingMoves ^= newKingBoard;
@@ -577,7 +579,7 @@ private:
             board.ChangePlayingColor();
 
             // performing core actions
-            _resultingMoves.push_back(board);
+            results.push_back(board);
 
             // cleaning up
             board.ChangePlayingColor();
@@ -592,7 +594,7 @@ private:
         board.elPassantField = oldElPassant;
     }
 
-    void _processKingMovesWhenChecked(const uint64_t blockedFigMap, const uint64_t allyMap, const uint64_t enemyMap, const uint64_t hallowedTilesMaps)
+    void _processKingMovesWhenChecked(std::vector<Board>& results, const uint64_t blockedFigMap, const uint64_t allyMap, const uint64_t enemyMap, const uint64_t hallowedTilesMaps)
     {
         static constexpr size_t CastlingPerColor = 2;
 
@@ -629,7 +631,7 @@ private:
 
             // performing core actions
             board.ChangePlayingColor();
-            _resultingMoves.push_back(board);
+            results.push_back(board);
             board.ChangePlayingColor();
 
             nonAttackingMoves ^= newKingBoard;
@@ -651,7 +653,7 @@ private:
             board.ChangePlayingColor();
 
             // performing core actions
-            _resultingMoves.push_back(board);
+            results.push_back(board);
 
             // cleaning up
             board.ChangePlayingColor();
@@ -668,7 +670,7 @@ private:
 
     // TODO: simplify ifs??
     // TODO: cleanup left castling available when rook is dead then propagate no castling checking?
-    void _processKingCastlings(const uint64_t blockedFigMap, const uint64_t fullMap)
+    void _processKingCastlings(std::vector<Board>& results, const uint64_t blockedFigMap, const uint64_t fullMap)
     {
         for (size_t i = 0; i < Board::CastlingsPerColor; ++i)
             if (const size_t castlingIndex = board.movColor * Board::CastlingsPerColor + i;
@@ -694,7 +696,7 @@ private:
 
                 // processiong main actions
                 board.ChangePlayingColor();
-                _resultingMoves.push_back(board);
+                results.push_back(board);
                 board.ChangePlayingColor();
 
                 // cleaning up after last move
@@ -799,7 +801,6 @@ private:
     // Class fields
     // ------------------------------
 
-    std::vector<Board> _resultingMoves{};
     Board&board;
 };
 
