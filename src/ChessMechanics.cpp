@@ -143,39 +143,12 @@ std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMapWithCheck(const in
     return {figsPinnedByRookMoves | figsPinnedByBishopMoves, allowedTileRook | allowedTileBishop};
 }
 
-uint64_t ChessMechanics::GetAllowedTilesWhenCheckedByNonSliding(const int col) const
+uint64_t ChessMechanics::GetAllowedTilesWhenCheckedByNonSliding() const
 {
-    static constexpr int pawnDetectionOffsets[][2]{
-        {7, 9},
-        {-7, -9}
-    };
-
-    // preparing helping variables
-    const size_t enemyInd = SwapColor(board.movColor) * Board::BoardsPerCol;
-    const int allyKingBoardIndex = ConvertToReversedPos(board.kingMSBPositions[col]);
-    const uint64_t allyKing = 1LLU << allyKingBoardIndex;
-
     uint64_t allowedTiles{};
 
-    // Knights iteration
-    uint64_t knightFigures = board.boards[enemyInd + knightsIndex];
-    while (knightFigures)
-    {
-        // another helping variables
-        const int msbPos = ExtractMsbPos(knightFigures);
-        const uint64_t knightFig = maxMsbPossible >> msbPos;
-        const uint64_t attacks = KnightMap::GetMoves(msbPos);
-
-        // main processing
-        allowedTiles |= ((attacks & allyKing) >> allyKingBoardIndex)* knightFig;
-
-        // iteration step
-        knightFigures ^= knightFig;
-    }
-
-    const uint64_t pawnDetectionFields = (1LLU << (allyKingBoardIndex + pawnDetectionOffsets[col][0])) |
-                                         (1LLU << (allyKingBoardIndex + pawnDetectionOffsets[col][1]));
-    allowedTiles |= pawnDetectionFields & board.boards[enemyInd + pawnsIndex];
+    allowedTiles |= KingMap::GetSimpleFigCheckKnightsAllowedTiles(board);
+    allowedTiles |= KingMap::GetSimpleFigCheckPawnAllowedTiles(board);
 
     return allowedTiles;
 }

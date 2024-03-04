@@ -285,8 +285,8 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
             "                \"input file\" must be containg csv records in given manner: \"fen position\", \"depth\"\n"
             "Where \"depth\" is integer value indicating layers of traversed move tree.\n\n\n"
             "Additional notes:\n"
-            "   - \"go file\" - will run tests on singlePos.csv\n"
-            "   - \"go file /\" - will run tests on positionTests.csv\n"
+            "   - \"go file / \" - will run tests on singlePos.csv\n"
+            "   - \"go file\" - will run tests on positionTests.csv\n"
             "   - \"go perfComp/\" - will run tets on perfTest1.csv\n";
 
     GlobalLogger.StartLogging() << "Help content:\n\n" << "TODO MAIN HELP\n\n" << CustomCommands;

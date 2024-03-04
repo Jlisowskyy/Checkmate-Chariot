@@ -72,7 +72,7 @@ struct ChessMechanics
     // returns [ pinnedFigMap, allowedTilesMap ]
     [[nodiscard]] std::pair<uint64_t, uint64_t> GetPinnedFigsMapWithCheck(int col, uint64_t fullMap) const;
 
-    [[nodiscard]] uint64_t GetAllowedTilesWhenCheckedByNonSliding(int col) const;
+    [[nodiscard]] uint64_t GetAllowedTilesWhenCheckedByNonSliding() const;
 
     [[nodiscard]] std::vector<Board> GetPossibleMoveSlow();
 
@@ -181,7 +181,7 @@ private:
                 return GetPinnedFigsMapWithCheck(board.movColor, fullMap);
 
             auto pinned = GetPinnedFigsMapWoutCheck(board.movColor, fullMap);
-            return {pinned, GetAllowedTilesWhenCheckedByNonSliding(board.movColor)};
+            return {pinned, GetAllowedTilesWhenCheckedByNonSliding()};
         }();
 
         // helping variable preparation
