@@ -25,6 +25,13 @@
  *
  */
 
+/*  There is general bug in the logic
+ *  double check can also occur by two same type figures
+ *  in result of pawn upgrade
+ *  what is not predicted in procedure
+ *  that generates check count
+ */
+
 struct ChessMechanics
 {
     // ------------------------------
@@ -62,6 +69,9 @@ struct ChessMechanics
     [[nodiscard]] uint64_t GetFullMap() const;
 
     [[nodiscard]] uint64_t GetColMap(int col) const;
+
+    // does not check kings boards!!!
+    [[nodiscard]] size_t GetIndexOfContainingBoard(const uint64_t map, const int col) const;
 
     // [blockedFigMap, checksCount, checkType]
     [[nodiscard]] std::tuple<uint64_t, uint8_t, uint8_t> GetBlockedFieldMap(uint64_t fullMap) const;
@@ -367,17 +377,12 @@ private:
         uint64_t pinnedOnes = pinnedFigMap & figMap;
         uint64_t unpinnedOnes = figMap ^ pinnedOnes;
 
+        // applying filter if needed
         if constexpr (selectFigures)
         {
             pinnedOnes &= figureSelector;
             unpinnedOnes &= figureSelector;
         }
-
-        // to restore destroyed figures during attack moves
-        std::array<uint64_t, 5> mapsBackup{};
-        for (size_t i = 0; i < 5; ++i)
-            mapsBackup[i] = board.boards[
-                SwapColor(board.movColor) * Board::BoardsPerCol + i];
 
         // saving results of previous el passant field, used only when figure is not a pawn
         const Field oldElpassant = board.elPassantField;
@@ -389,6 +394,8 @@ private:
             // processing moves
             const uint8_t figPos = ExtractMsbPos(unpinnedOnes);
             const uint64_t figBoard = maxMsbPossible >> figPos;
+
+            // selecting allowed moves if in check
             const uint64_t figMoves = [&]() constexpr
             {
                 if constexpr (!isCheck)
@@ -421,7 +428,7 @@ private:
                 action, depth, figMap, nonAttackingMoves, figBoard);
             if (attackMoves)
                 _processAttackingMoves<ActionT, promotePawns>(
-                    action, depth, figMap, attackMoves, mapsBackup);
+                    action, depth, figMap, attackMoves);
 
             // cleaning up
             figMap |= figBoard;
@@ -462,7 +469,7 @@ private:
                 action, depth, figMap, nonAttackingMoves, figBoard);
             if (attackMoves)
                 _processAttackingMoves<ActionT, promotePawns>(
-                    action, depth, figMap, attackMoves, mapsBackup); // TODO: There is exactly one move possible
+                    action, depth, figMap, attackMoves); // TODO: There is exactly one move possible
 
             figMap |= figBoard;
             pinnedOnes ^= figBoard;
@@ -541,37 +548,39 @@ private:
         class ActionT,
         bool promotePawns
     >
-    void _processAttackingMoves(ActionT action, const int depth, uint64_t&figMap,
-                                uint64_t attackingMoves, const std::array<uint64_t, 5>&backup)
+    void _processAttackingMoves(ActionT action, const int depth, uint64_t&figMap, uint64_t attackingMoves)
     {
         while (attackingMoves)
         {
             // extracting moves
             const uint8_t movePos = ExtractMsbPos(attackingMoves);
             const uint64_t moveBoard = maxMsbPossible >> movePos;
-            const size_t enemyColInd = SwapColor(board.movColor) * Board::BoardsPerCol;
-
-            // removing enemy pieces
-            for (size_t i = 0; i < 5; ++i) board.boards[enemyColInd + i] &= ~moveBoard;
+            const size_t attackedFigBoardIndex = GetIndexOfContainingBoard(moveBoard, SwapColor(board.movColor));
 
             if constexpr (!promotePawns)
             // simple figure case
             {
                 // applying moves
                 figMap |= moveBoard;
+                board.boards[attackedFigBoardIndex] ^= moveBoard;
 
                 // performing core actions
                 board.ChangePlayingColor();
                 IterativeBoardTraversal(action, depth - 1);
                 board.ChangePlayingColor();
 
-                // cleaning up
+                // cleaning
                 figMap ^= moveBoard;
+                board.boards[attackedFigBoardIndex] |= moveBoard;
             }
             if constexpr (promotePawns)
             // upgrading pawn case
             {
                 const size_t colIndex = board.movColor * Board::BoardsPerCol;
+
+                // removing attacked piece
+                board.boards[attackedFigBoardIndex] ^= moveBoard;
+
                 for (size_t i = knightsIndex; i < kingIndex; ++i)
                 {
                     // applying moves
@@ -585,9 +594,11 @@ private:
                     // cleaning up
                     board.boards[colIndex + i] ^= moveBoard;
                 }
+
+                // replacing attacked fig
+                board.boards[attackedFigBoardIndex] |= moveBoard;
             }
 
-            for (size_t i = 0; i < 5; ++i) board.boards[enemyColInd + i] = backup[i];
             attackingMoves ^= moveBoard;
         }
     }
@@ -646,26 +657,27 @@ private:
         // possibly prevents some slowing memory copying operation
         {
             // processing slightly more complicated attacking moves
-            std::array<uint64_t, 5> mapsBackup{};
-            for (size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[enemyColorIndex + i];
             while (attackingMoves)
             {
                 // extracting new king position data
                 const uint8_t newPos = ExtractMsbPos(attackingMoves);
                 const uint64_t newKingBoard = maxMsbPossible >> newPos;
 
+                // finding attacked figure
+                const size_t attackedFigBoardIndex = GetIndexOfContainingBoard(newKingBoard, SwapColor(board.movColor));
+
                 // preparing board changes
-                for (size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] &= ~newKingBoard;
                 board.kingMSBPositions[board.movColor] = newPos;
                 board.boards[movingColorIndex + kingIndex] = newKingBoard;
+                board.boards[attackedFigBoardIndex] ^= newKingBoard;
+                board.ChangePlayingColor();
 
                 // performing core actions
-                board.ChangePlayingColor();
                 IterativeBoardTraversal(action, depth - 1);
 
                 // cleaning up
                 board.ChangePlayingColor();
-                for (size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] = mapsBackup[i];
+                board.boards[attackedFigBoardIndex] |= newKingBoard;
 
                 attackingMoves ^= newKingBoard;
             }
@@ -731,26 +743,27 @@ private:
             // possibly prevents some slowing memory copying operation
         {
             // processing slightly more complicated attacking moves
-            std::array<uint64_t, 5> mapsBackup{};
-            for (size_t i = 0; i < 5; ++i) mapsBackup[i] = board.boards[enemyColorIndex + i];
             while (attackingMoves)
             {
                 // extracting new king position data
                 const uint8_t newPos = ExtractMsbPos(attackingMoves);
                 const uint64_t newKingBoard = maxMsbPossible >> newPos;
 
+                // finding attacked figure
+                const size_t attackedFigBoardIndex = GetIndexOfContainingBoard(newKingBoard, SwapColor(board.movColor));
+
                 // preparing board changes
-                for (size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] &= ~newKingBoard;
                 board.kingMSBPositions[board.movColor] = newPos;
                 board.boards[movingColorIndex + kingIndex] = newKingBoard;
+                board.boards[attackedFigBoardIndex] ^= newKingBoard;
+                board.ChangePlayingColor();
 
                 // performing core actions
-                board.ChangePlayingColor();
                 IterativeBoardTraversal(action, depth - 1);
 
                 // cleaning up
                 board.ChangePlayingColor();
-                for (size_t i = 0; i < 5; ++i) board.boards[enemyColorIndex + i] = mapsBackup[i];
+                board.boards[attackedFigBoardIndex] |= newKingBoard;
 
                 attackingMoves ^= newKingBoard;
             }

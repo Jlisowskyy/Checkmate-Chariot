@@ -74,11 +74,6 @@ void Board::ChangePlayingColor()
     movColor = SwapColor(movColor);
 }
 
-int SwapColor(const int col)
-{
-    return col ^ 1;
-}
-
 void DisplayMask(const uint64_t mask)
 {
     for (int y = 56; y >= 0; y -= 8)

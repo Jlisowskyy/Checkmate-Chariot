@@ -27,6 +27,22 @@ uint64_t ChessMechanics::GetColMap(const int col) const
     return map;
 }
 
+size_t ChessMechanics::GetIndexOfContainingBoard(const uint64_t map, const int col) const
+{
+    const size_t range = Board::BoardsPerCol * col + kingIndex;
+    const size_t startInd = Board::BoardsPerCol * col;
+
+    for (size_t i = startInd; i < range; ++i)
+        if ((board.boards[i] & map) != 0) return i;
+
+#ifndef NDEBUG
+    throw std::runtime_error(std::format("[ ERROR ] This code path should never be executed in {} on line {}"
+                                         "\n Figure not found on enemy maps!", __FILE__, __LINE__));
+#endif
+
+    return 0;
+}
+
 // Todo: test later wheter accumulation of blocked maps is faster?
 // Todo: AVX applied here?
 

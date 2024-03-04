@@ -200,7 +200,10 @@ struct Board
     uint64_t boards[BoardsCount] = {};
 };
 
-int SwapColor(int col);
+constexpr int SwapColor(const int col)
+{
+    return col ^ 1;
+}
 
 void DisplayMask(uint64_t mask);
 
