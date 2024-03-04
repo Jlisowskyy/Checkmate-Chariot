@@ -75,16 +75,19 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
         board.boards[enemyFigInd + rooksIndex] | board.boards[enemyFigInd + queensIndex],
         [=](const int pos) { return RookMap::GetMoves(pos, fullMapWoutKing); }
     );
-    const uint8_t wasCheckedByRookFlag = (rookBlockedMap & allyKingMap) >> allyKingShift;
+
     // = 1 or 0 depending whether hits or not
+    const uint8_t wasCheckedByRookFlag = (rookBlockedMap & allyKingMap) >> allyKingShift;
     checksCount += wasCheckedByRookFlag;
+
     // Bishop attacks generation.
     const uint64_t bishopBlockedMap = _blockIterativeGenerator(
         board.boards[enemyFigInd + bishopsIndex] | board.boards[enemyFigInd + queensIndex],
         [=](const int pos) { return BishopMap::GetMoves(pos, fullMapWoutKing); }
     );
-    const uint8_t wasCheckedByBishopFlag = (bishopBlockedMap & allyKingMap) >> allyKingShift;
+
     // = 1 or 0 depending whether hits or not
+    const uint8_t wasCheckedByBishopFlag = (bishopBlockedMap & allyKingMap) >> allyKingShift;
     checksCount += wasCheckedByBishopFlag;
 
     // Pawns attacks generation.
@@ -92,18 +95,24 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     const uint64_t pawnBlockedMap = enemyCol == WHITE
                                         ? WhitePawnMap::GetAttackFields(pawnsMap)
                                         : BlackPawnMap::GetAttackFields(pawnsMap);
-    const uint8_t wasCheckedByPawnFlag = (pawnBlockedMap & allyKingMap) >> allyKingShift;
+
     // = 1 or 0 depending whether hits or not
+    const uint8_t wasCheckedByPawnFlag = (pawnBlockedMap & allyKingMap) >> allyKingShift;
     checksCount += wasCheckedByPawnFlag;
+
+    // modyfing check type
     chT += simpleFigCheck * wasCheckedByPawnFlag; // Note: king cannot be double checked by simple figure
 
     // Knight attacks generation.
     const uint64_t knighBlockedMap = _blockIterativeGenerator(board.boards[enemyFigInd + knightsIndex],
                                                               [=](const int pos) { return KnightMap::GetMoves(pos); }
     );
-    const uint8_t wasCheckedByKnightFlag = (knighBlockedMap & allyKingMap) >> allyKingShift;
+
     // = 1 or 0 depending whether hits or not
+    const uint8_t wasCheckedByKnightFlag = (knighBlockedMap & allyKingMap) >> allyKingShift;
     checksCount += wasCheckedByKnightFlag;
+
+    // modyfing check type
     chT += simpleFigCheck * wasCheckedByKnightFlag; // Note: king cannot be double checked by simple figure
 
     const uint64_t blockedMap = kingBlockedMap | pawnBlockedMap | knighBlockedMap | rookBlockedMap | bishopBlockedMap;
@@ -121,13 +130,13 @@ uint64_t ChessMechanics::GetPinnedFigsMapWoutCheck(const int col, const uint64_t
     const uint64_t suspectedRooks = (board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]) &
                                     rookLinesOnKing;
     const uint64_t figsPinnedByRookMoves = _getPinnedFigsWoutCheckGenerator<RookMap>(
-        suspectedRooks, fullMap, rookLinesOnKing, allyCord, allyKingShift);
+        suspectedRooks, fullMap, allyCord, allyKingShift);
 
     const uint64_t bishopLinesOnKing = KingMap::pinMasks[board.kingMSBPositions[col]].bishopMask;
     const uint64_t suspectedBishops = (board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]) &
                                       bishopLinesOnKing;
     const uint64_t figsPinnedByBishopMoves = _getPinnedFigsWoutCheckGenerator<BishopMap>(
-        suspectedBishops, fullMap, bishopLinesOnKing, allyCord, allyKingShift);
+        suspectedBishops, fullMap, allyCord, allyKingShift);
 
     return figsPinnedByRookMoves | figsPinnedByBishopMoves;
 }
@@ -144,8 +153,7 @@ std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMapWithCheck(const in
     const uint64_t suspectedRooks = (board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]) &
                                     rookLinesOnKing;
     const auto [figsPinnedByRookMoves, allowedTileRook] =
-            _getPinnedFigsWithCheckGenerator<
-                RookMap>(suspectedRooks, fullMap, rookLinesOnKing, allyCord, allyKingShift);
+            _getPinnedFigsWithCheckGenerator<RookMap>(suspectedRooks, fullMap, allyCord, allyKingShift);
 
     // TODO: what I meant: if (!allowedTileRook) { ... }
     // Bishop lines search
@@ -153,8 +161,7 @@ std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMapWithCheck(const in
     const uint64_t suspectedBishops = (board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]) &
                                       bishopLinesOnKing;
     const auto [figsPinnedByBishopMoves, allowedTileBishop] =
-            _getPinnedFigsWithCheckGenerator<BishopMap>(suspectedBishops, fullMap, bishopLinesOnKing, allyCord,
-                                                        allyKingShift);
+            _getPinnedFigsWithCheckGenerator<BishopMap>(suspectedBishops, fullMap, allyCord, allyKingShift);
 
     return {figsPinnedByRookMoves | figsPinnedByBishopMoves, allowedTileRook | allowedTileBishop};
 }
