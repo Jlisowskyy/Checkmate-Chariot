@@ -26,6 +26,11 @@ struct KingMap
     // Class interaction
     // ------------------------------
 
+    [[nodiscard]] static constexpr size_t GetBoardIndex(const int color)
+    {
+        return Board::BoardsPerCol * color + kingIndex;
+    }
+
     [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd)
     {
         return movesMap[msbInd];

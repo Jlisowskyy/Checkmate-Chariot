@@ -106,23 +106,21 @@ private:
         const uint64_t enemyMap = GetColMap(SwapColor(board.movColor));
         const uint64_t allyMap = GetColMap(board.movColor);
 
-        _processFigMoves<RookMap, true>(results, board.boards[Board::BoardsPerCol * board.movColor + rooksIndex],
-                                                 enemyMap, allyMap, pinnedFigsMap);
+        _processFigMoves<RookMap, true>(results, enemyMap, allyMap, pinnedFigsMap);
 
-        _processFigMoves<BishopMap>(results, board.boards[Board::BoardsPerCol * board.movColor + bishopsIndex],
+        _processFigMoves<BishopMap>(results,
                                              enemyMap, allyMap, pinnedFigsMap);
 
-        _processFigMoves<QueenMap>(results, board.boards[Board::BoardsPerCol * board.movColor + queensIndex], enemyMap,
-                                            allyMap, pinnedFigsMap);
+        _processFigMoves<QueenMap>(results, enemyMap, allyMap, pinnedFigsMap);
 
-        _processFigMoves<KnightMap>(results, board.boards[Board::BoardsPerCol * board.movColor + knightsIndex],
+        _processFigMoves<KnightMap>(results,
                                              enemyMap, allyMap, pinnedFigsMap);
 
         if (board.movColor == WHITE)
-            _processPawnMoves<WhitePawnMap>(results, board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
+            _processPawnMoves<WhitePawnMap>(results,
                                                      enemyMap, allyMap, pinnedFigsMap);
         else
-            _processPawnMoves<BlackPawnMap>(results, board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
+            _processPawnMoves<BlackPawnMap>(results,
                                                      enemyMap, allyMap, pinnedFigsMap);
 
         _processPlainKingMoves(results, blockedFigMap, allyMap, enemyMap);
@@ -149,31 +147,27 @@ private:
         const uint64_t allyMap = GetColMap(board.movColor);
 
         // Specific figure processing
-        _processFigMoves<RookMap, true, false, false, true>(results, board.boards[Board::BoardsPerCol * board.movColor + rooksIndex],
+        _processFigMoves<RookMap, true, false, false, true>(results,
                                                                      enemyMap, allyMap, pinnedFigsMap, UNUSED,
                                                                      allowedTilesMap);
 
-        _processFigMoves<BishopMap, false, false, false, true>(results, board.boards[Board::BoardsPerCol * board.movColor +
-                                                                            bishopsIndex],
+        _processFigMoves<BishopMap, false, false, false, true>(results,
                                                                         enemyMap, allyMap, pinnedFigsMap, UNUSED,
                                                                         allowedTilesMap);
 
-        _processFigMoves<QueenMap, false, false, false, true>(results, board.boards[Board::BoardsPerCol * board.movColor +
-                                                                           queensIndex],
+        _processFigMoves<QueenMap, false, false, false, true>(results,
                                                                        enemyMap, allyMap, pinnedFigsMap, UNUSED,
                                                                        allowedTilesMap);
 
-        _processFigMoves<KnightMap, false, false, false, true>(results, board.boards[
-                                                                            Board::BoardsPerCol * board.movColor +
-                                                                            knightsIndex],
+        _processFigMoves<KnightMap, false, false, false, true>(results,
                                                                         enemyMap, allyMap, pinnedFigsMap, UNUSED,
                                                                         allowedTilesMap);
 
         if (board.movColor == WHITE)
-            _processPawnMoves<WhitePawnMap, true>(results, board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
+            _processPawnMoves<WhitePawnMap, true>(results,
                                                            enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
         else
-            _processPawnMoves<BlackPawnMap, true>(results, board.boards[Board::BoardsPerCol * board.movColor + pawnsIndex],
+            _processPawnMoves<BlackPawnMap, true>(results,
                                                            enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
 
 
@@ -191,23 +185,22 @@ private:
         class MapT,
         bool isCheck = false
     >
-    void _processPawnMoves(std::vector<Board>& results, uint64_t&figMap,
-                           const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
+    void _processPawnMoves(std::vector<Board>& results, const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
                            [[maybe_unused]] const uint64_t allowedMoveFillter = 0)
     {
-        const uint64_t promotingPawns = figMap & MapT::PromotingMask;
-        const uint64_t nonPromotingPawns = figMap ^ promotingPawns;
+        const uint64_t promotingPawns = board.boards[MapT::GetBoardIndex(0)] & MapT::PromotingMask;
+        const uint64_t nonPromotingPawns = board.boards[MapT::GetBoardIndex(0)] ^ promotingPawns;
 
-        _processFigMoves<MapT, false, false, true, isCheck, MapT::GetElPassantField>(results, figMap, enemyMap,
+        _processFigMoves<MapT, false, false, true, isCheck, MapT::GetElPassantField>(results, enemyMap,
             allyMap, pinnedFigMap, nonPromotingPawns, allowedMoveFillter);
 
         if (promotingPawns)
-            _processFigMoves<MapT, false, true, true, isCheck>(results, figMap, enemyMap,
+            _processFigMoves<MapT, false, true, true, isCheck>(results, enemyMap,
                                                                     allyMap, pinnedFigMap, promotingPawns,
                                                                     allowedMoveFillter);
 
         _processElPassantMoves<MapT, isCheck>(results, allyMap | enemyMap, pinnedFigMap,
-            figMap, allowedMoveFillter);
+             allowedMoveFillter);
     }
 
     // TODO: Consider different soluition?
@@ -215,7 +208,7 @@ private:
         class MapT,
         bool isCheck = false
     >
-    void _processElPassantMoves(std::vector<Board>& results, const uint64_t fullMap, const uint64_t pinnedFigMap, uint64_t&figMap,
+    void _processElPassantMoves(std::vector<Board>& results, const uint64_t fullMap, const uint64_t pinnedFigMap,
                                 [[maybe_unused]] const uint64_t allowedMoveFillter = 0)
     {
         if (board.elPassantField == INVALID) return;
@@ -224,7 +217,7 @@ private:
         const uint64_t suspectedFields = MapT::GetElPassantSuspectedFields(board.elPassantField);
         const size_t enemyCord = SwapColor(board.movColor) * Board::BoardsPerCol;
         const uint64_t enemyRookFigs = board.boards[enemyCord + queensIndex] | board.boards[enemyCord + rooksIndex];
-        uint64_t possiblePawnsToMove = figMap & suspectedFields;
+        uint64_t possiblePawnsToMove = board.boards[MapT::GetBoardIndex(0)] & suspectedFields;
 
         while (possiblePawnsToMove)
         {
@@ -267,8 +260,8 @@ private:
 
             // applying changes on board
             const uint64_t oldElPassantField = board.elPassantField;
-            figMap ^= pawnMap;
-            figMap |= moveMap;
+            board.boards[MapT::GetBoardIndex(0)] ^= pawnMap;
+            board.boards[MapT::GetBoardIndex(0)] |= moveMap;
             board.boards[enemyCord + pawnsIndex] ^= board.elPassantField;
             board.elPassantField = INVALID;
             board.ChangePlayingColor();
@@ -279,8 +272,8 @@ private:
             board.ChangePlayingColor();
             board.elPassantField = oldElPassantField;
             board.boards[enemyCord + pawnsIndex] |= oldElPassantField;
-            figMap ^= moveMap;
-            figMap |= pawnMap;
+            board.boards[MapT::GetBoardIndex(0)] ^= moveMap;
+            board.boards[MapT::GetBoardIndex(0)] |= pawnMap;
 
             possiblePawnsToMove ^= pawnMap;
         }
@@ -296,15 +289,15 @@ private:
         bool isCheck = false,
         Field (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
     >
-    void _processFigMoves(std::vector<Board>& results, uint64_t&figMap, const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
+    void _processFigMoves(std::vector<Board>& results, const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
                           [[maybe_unused]] const uint64_t figureSelector = 0,
                           [[maybe_unused]] const uint64_t allowedMovesSelector = 0)
     {
         static constexpr size_t invalidCastlingIndex = 99;
 
         const uint64_t fullMap = enemyMap | allyMap;
-        uint64_t pinnedOnes = pinnedFigMap & figMap;
-        uint64_t unpinnedOnes = figMap ^ pinnedOnes;
+        uint64_t pinnedOnes = pinnedFigMap & board.boards[MapT::GetBoardIndex(board.movColor)];
+        uint64_t unpinnedOnes = board.boards[MapT::GetBoardIndex(board.movColor)] ^ pinnedOnes;
 
         // applying filter if needed
         if constexpr (selectFigures)
@@ -350,14 +343,14 @@ private:
             // preparing moves
             const uint64_t attackMoves = figMoves & enemyMap;
             const uint64_t nonAttackingMoves = figMoves ^ attackMoves;
-            figMap ^= figBoard;
+            board.boards[MapT::GetBoardIndex(board.movColor)] ^= figBoard;
 
             // processing move consequneces
-            _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(results, figMap, nonAttackingMoves, figBoard);
-            _processAttackingMoves<promotePawns>(results, figMap, attackMoves);
+            _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(results, board.boards[MapT::GetBoardIndex(board.movColor)], nonAttackingMoves, figBoard);
+            _processAttackingMoves<promotePawns>(results, board.boards[MapT::GetBoardIndex(board.movColor)], attackMoves);
 
             // cleaning up
-            figMap |= figBoard;
+            board.boards[MapT::GetBoardIndex(board.movColor)] |= figBoard;
             if constexpr (checkForCastling)
                 if (castlingIndex != invalidCastlingIndex)
                     board.Castlings[castlingIndex] = true;
@@ -388,14 +381,14 @@ private:
             // preparing moves
             const uint64_t attackMoves = figMoves & enemyMap;
             const uint64_t nonAttackingMoves = figMoves ^ attackMoves;
-            figMap ^= figBoard;
+            board.boards[MapT::GetBoardIndex(board.movColor)] ^= figBoard;
 
             // processing move consequences
-            _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(results, figMap, nonAttackingMoves, figBoard);
+            _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(results, board.boards[MapT::GetBoardIndex(board.movColor)], nonAttackingMoves, figBoard);
             // TODO: There is exactly one move possible
-            _processAttackingMoves<promotePawns>(results, figMap, attackMoves);
+            _processAttackingMoves<promotePawns>(results, board.boards[MapT::GetBoardIndex(board.movColor)], attackMoves);
 
-            figMap |= figBoard;
+            board.boards[MapT::GetBoardIndex(board.movColor)] |= figBoard;
             pinnedOnes ^= figBoard;
         }
 

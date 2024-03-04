@@ -27,6 +27,11 @@ public:
     // Class interaction
     // ------------------------------
 
+    [[nodiscard]] static constexpr size_t GetBoardIndex(const int color)
+    {
+        return Board::BoardsPerCol * color + bishopsIndex;
+    }
+
     [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullBoard,
                                                      [[maybe_unused]] const uint64_t _ = 0)
     {
@@ -37,7 +42,7 @@ public:
     // Class fields
     // ------------------------------
 
-    inline static const char* names[] = {"nwMask", "neMask", "swMask", "seMask"};
+    static constexpr const char* names[] = {"nwMask", "neMask", "swMask", "seMask"};
 
     static constexpr _underlyingMap _map{};
 };

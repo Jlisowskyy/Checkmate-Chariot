@@ -21,6 +21,11 @@ public:
     // Class interaction
     // ------------------------------
 
+    [[nodiscard]] static constexpr size_t GetBoardIndex([[maybe_unused]] const int color)
+    {
+        return bPawnsIndex;
+    }
+
     [[nodiscard]] static constexpr uint64_t GetAttackFields(const uint64_t pawnBits)
     {
         const uint64_t leftAttack = (LeftMask & pawnBits) >> 9;

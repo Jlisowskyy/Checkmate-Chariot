@@ -22,6 +22,11 @@ public:
     // Class interaction
     // ------------------------------
 
+    [[nodiscard]] static constexpr size_t GetBoardIndex(const int color)
+    {
+        return Board::BoardsPerCol * color + queensIndex;
+    }
+
     [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullMap,
                                                      [[maybe_unused]] const uint64_t _ = 0)
     {
