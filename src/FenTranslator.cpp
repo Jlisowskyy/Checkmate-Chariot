@@ -27,8 +27,6 @@ Board FenTranslator::Translate(const std::string&fenPos)
         pos = _processCastlings(workBoard, pos, fenPos);
         pos = _skipBlanks(pos, fenPos);
         _processElPassant(workBoard, pos, fenPos);
-        workBoard.kingMSBPositions[WHITE] = ExtractMsbPos(workBoard.boards[kingIndex]);
-        workBoard.kingMSBPositions[BLACK] = ExtractMsbPos(workBoard.boards[Board::BoardsPerCol + kingIndex]);
     }
     catch (const std::exception&exc)
     {
@@ -304,11 +302,6 @@ void FenTranslator::_addFigure(const std::string&pos, char fig, Board&bd)
         );
 
     bd.boards[figToDescMap.at(fig)] |= field;
-
-    if (fig == 'K')
-        bd.kingMSBPositions[WHITE] = ExtractMsbPos(field);
-    else if (fig == 'k')
-        bd.kingMSBPositions[BLACK] = ExtractMsbPos(field);
 }
 
 size_t FenTranslator::_skipBlanks(size_t pos, const std::string&fenPos)

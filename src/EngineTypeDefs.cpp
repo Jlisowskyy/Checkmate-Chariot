@@ -8,9 +8,23 @@
 
 #include "../include/BitOperations.h"
 #include "../include/Interface/Logger.h"
-#include "../include/MoveGeneration/MoveGeneration.h"
 
-std::ostream& operator<<(std::ostream&out, const Board&bd)
+void DisplayMask(const uint64_t mask)
+{
+    for (int y = 56; y >= 0; y -= 8)
+    {
+        for (int x = 0; x < 8; ++x)
+        {
+            const uint64_t pos = 1LLU << (y + x);
+
+            GlobalLogger.StartLogging() << ' ' << ((pos & mask) != 0 ? 'x' : ' ') << ' ' << (x != 7 ? '|' : '\n');
+        }
+
+        if (y != 0) GlobalLogger.StartLogging() << std::string(7 + 3 * 8, '-') << std::endl;
+    }
+}
+
+void DisplayBoard(const Board& bd)
 {
     std::string posBuffer = "00";
 
@@ -38,7 +52,7 @@ std::ostream& operator<<(std::ostream&out, const Board&bd)
             GlobalLogger.StartLogging() << ' ';
 
             if (x != 7) GlobalLogger.StartLogging() << '|';
-            else GlobalLogger.StartLogging() << std::format("   {}", (char)('8' - y));
+            else GlobalLogger.StartLogging() << std::format("   {}", static_cast<char>('8' - y));
         }
 
         GlobalLogger.StartLogging() << std::endl;
@@ -48,7 +62,7 @@ std::ostream& operator<<(std::ostream&out, const Board&bd)
     GlobalLogger.StartLogging() << std::string(7 + 3 * 8, '-') << std::endl;
     for (size_t x = 0; x < 8; ++x)
     {
-        GlobalLogger.StartLogging() << ' ' << (char)('A' + x) << ' ' << ' ';
+        GlobalLogger.StartLogging() << ' ' << static_cast<char>('A' + x) << ' ' << ' ';
     }
     GlobalLogger.StartLogging() << std::endl;
 
@@ -63,30 +77,8 @@ std::ostream& operator<<(std::ostream&out, const Board&bd)
 
     GlobalLogger.StartLogging() << "El passand field: " << (bd.elPassantField == INVALID
                                                                 ? "-"
-                                                                : fieldStrMap.at(bd.elPassantField))
+                                                                : fieldStrMap.at(static_cast<Field>(bd.elPassantField)))
             << std::endl;
-
-    return out;
-}
-
-void Board::ChangePlayingColor()
-{
-    movColor = SwapColor(movColor);
-}
-
-void DisplayMask(const uint64_t mask)
-{
-    for (int y = 56; y >= 0; y -= 8)
-    {
-        for (int x = 0; x < 8; ++x)
-        {
-            const uint64_t pos = 1LLU << (y + x);
-
-            GlobalLogger.StartLogging() << ' ' << ((pos & mask) != 0 ? 'x' : ' ') << ' ' << (x != 7 ? '|' : '\n');
-        }
-
-        if (y != 0) GlobalLogger.StartLogging() << std::string(7 + 3 * 8, '-') << std::endl;
-    }
 }
 
 std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board&oldBoard, const Board&newBoard)
@@ -121,7 +113,7 @@ std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board&oldBoard, const B
 }
 
 std::string GetEncodingFromBoards(const Board&bd, uint64_t oldMap, uint64_t newMap,
-                                  MoveTypes mType)
+                                  const MoveTypes mType)
 {
     static constexpr std::string FigTypeMap[] = {"", "n", "b", "r", "q"};
 
@@ -138,7 +130,7 @@ std::string GetEncodingFromBoards(const Board&bd, uint64_t oldMap, uint64_t newM
             }
     }
 
-    return fieldStrMap.at((Field)oldMap) + fieldStrMap.at((Field)newMap) + figType;
+    return fieldStrMap.at(static_cast<Field>(oldMap)) + fieldStrMap.at(static_cast<Field>(newMap)) + figType;
 }
 
 uint64_t ExtractPosFromStr(const int x, const int y)

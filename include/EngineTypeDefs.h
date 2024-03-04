@@ -8,30 +8,13 @@
 #include <cstdint>
 #include <unordered_map>
 #include <iostream>
-#include <array>
 
-#include "BitOperations.h"
+#include "Board.h"
 
 enum MoveTypes
 {
     NormalMove,
     PromotingMove
-};
-
-enum Color: int
-{
-    WHITE,
-    BLACK,
-};
-
-enum ColorlessDescriptors: size_t
-{
-    pawnsIndex,
-    knightsIndex,
-    bishopsIndex,
-    rooksIndex,
-    queensIndex,
-    kingIndex,
 };
 
 enum Descriptors: size_t
@@ -133,79 +116,13 @@ enum CastlingPossibilities: size_t
     BlackQueenSide,
 };
 
-struct Board
-{
-    // ------------------------------
-    // class interaction
-    // ------------------------------
-
-    void ChangePlayingColor();
-
-    friend std::ostream& operator<<(std::ostream&out, const Board&bd);
-
-    // ------------------------------
-    // Class fields
-    // ------------------------------
-
-    static constexpr size_t BoardsCount = 12;
-    static constexpr size_t CastlingCount = 4;
-    static constexpr size_t BoardFields = 64;
-    static constexpr size_t BoardsPerCol = 6;
-    static constexpr size_t KingPosCount = 2;
-    static constexpr size_t CastlingsPerColor = 2;
-
-    static constexpr std::array<int, KingPosCount> DefaultKingPos{
-        ConvertToReversedPos(4),
-        ConvertToReversedPos(60)
-    };
-    static constexpr std::array<int, CastlingCount> CastlingNewKingPos{
-        ConvertToReversedPos(6),
-        ConvertToReversedPos(2),
-        ConvertToReversedPos(62),
-        ConvertToReversedPos(58)
-    };
-
-    static constexpr std::array<uint64_t, CastlingCount> CastlingsRookMaps{
-        1LLU << 7,
-        1LLU,
-        1LLU << 63,
-        1LLU << 56
-    };
-
-    static constexpr std::array<uint64_t, CastlingCount> CastlingNewRookMaps{
-        1LLU << 5,
-        1LLU << 3,
-        1LLU << 61,
-        1LLU << 59
-    };
-
-    static constexpr std::array<uint64_t, CastlingCount> CastlingSensitiveFields{
-        1LLU << 6 | 1LLU << 5,
-        1LLU << 2 | 1LLU << 3,
-        1LLU << 61 | 1LLU << 62,
-        1LLU << 58 | 1LLU << 59
-    };
-
-    static constexpr std::array<uint64_t, CastlingCount> CastlingTouchedFields{
-        1LLU << 6 | 1LLU << 5,
-        1LLU << 2 | 1LLU << 3 | 1LLU << 1,
-        1LLU << 61 | 1LLU << 62,
-        1LLU << 58 | 1LLU << 59 | 1LLU << 57
-    };
-
-    std::array<bool, CastlingCount> Castlings{false, false, false, false};
-    Field elPassantField = INVALID;
-    int movColor = WHITE;
-    uint8_t kingMSBPositions[KingPosCount] = {};
-    uint64_t boards[BoardsCount + 1] = {}; // addiitonal sentinel board
-};
-
 constexpr int SwapColor(const int col)
 {
     return col ^ 1;
 }
 
 void DisplayMask(uint64_t mask);
+void DisplayBoard(const Board& bd);
 
 std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board&oldBoard, const Board&newBoard);
 

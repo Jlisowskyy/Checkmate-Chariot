@@ -61,14 +61,14 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
 
     const int enemyCol = SwapColor(board.movColor);
     const size_t enemyFigInd = enemyCol * Board::BoardsPerCol;
-    const int allyKingShift = ConvertToReversedPos(board.kingMSBPositions[board.movColor]);
+    const int allyKingShift = ConvertToReversedPos(board.GetKingMsbPos(board.movColor));
     const uint64_t allyKingMap = 1LLU << allyKingShift;
 
     // allows to also simply predict which tiles on the other side of the king are allowed.
     const uint64_t fullMapWoutKing = fullMap ^ allyKingMap;
 
     // King attacks generation.
-    const uint64_t kingBlockedMap = KingMap::GetMoves(board.kingMSBPositions[enemyCol]);
+    const uint64_t kingBlockedMap = KingMap::GetMoves(board.GetKingMsbPos(enemyCol));
 
     // Rook attacks generation.
     const uint64_t rookBlockedMap = _blockIterativeGenerator(
@@ -124,15 +124,15 @@ uint64_t ChessMechanics::GetPinnedFigsMapWoutCheck(const int col, const uint64_t
 {
     const size_t enemyCord = SwapColor(col) * Board::BoardsPerCol;
     const size_t allyCord = col * Board::BoardsPerCol;
-    const int allyKingShift = ConvertToReversedPos(board.kingMSBPositions[col]);
+    const int allyKingShift = ConvertToReversedPos(board.GetKingMsbPos(col));
 
-    const uint64_t rookLinesOnKing = KingMap::pinMasks[board.kingMSBPositions[col]].rookMask;
+    const uint64_t rookLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].rookMask;
     const uint64_t suspectedRooks = (board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]) &
                                     rookLinesOnKing;
     const uint64_t figsPinnedByRookMoves = _getPinnedFigsWoutCheckGenerator<RookMap>(
         suspectedRooks, fullMap, allyCord, allyKingShift);
 
-    const uint64_t bishopLinesOnKing = KingMap::pinMasks[board.kingMSBPositions[col]].bishopMask;
+    const uint64_t bishopLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].bishopMask;
     const uint64_t suspectedBishops = (board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]) &
                                       bishopLinesOnKing;
     const uint64_t figsPinnedByBishopMoves = _getPinnedFigsWoutCheckGenerator<BishopMap>(
@@ -146,10 +146,10 @@ std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMapWithCheck(const in
 {
     const size_t enemyCord = SwapColor(col) * Board::BoardsPerCol;
     const size_t allyCord = col * Board::BoardsPerCol;
-    const int allyKingShift = ConvertToReversedPos(board.kingMSBPositions[col]);
+    const int allyKingShift = ConvertToReversedPos(board.GetKingMsbPos(col));
 
     // Rook lines search
-    const uint64_t rookLinesOnKing = KingMap::pinMasks[board.kingMSBPositions[col]].rookMask;
+    const uint64_t rookLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].rookMask;
     const uint64_t suspectedRooks = (board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]) &
                                     rookLinesOnKing;
     const auto [figsPinnedByRookMoves, allowedTileRook] =
@@ -157,7 +157,7 @@ std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMapWithCheck(const in
 
     // TODO: what I meant: if (!allowedTileRook) { ... }
     // Bishop lines search
-    const uint64_t bishopLinesOnKing = KingMap::pinMasks[board.kingMSBPositions[col]].bishopMask;
+    const uint64_t bishopLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].bishopMask;
     const uint64_t suspectedBishops = (board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]) &
                                       bishopLinesOnKing;
     const auto [figsPinnedByBishopMoves, allowedTileBishop] =
@@ -200,18 +200,18 @@ uint64_t ChessMechanics::_generateAllowedTilesForPrecisedPinnedFig(const uint64_
 {
     constexpr size_t bishopRange = PinningMasks::BishopLines + PinningMasks::PinningMaskPerLinesType;
     for (size_t i = PinningMasks::BishopLines; i < bishopRange; ++i)
-        if (const uint64_t mask = KingMap::pinMasks[board.kingMSBPositions[board.movColor]].masks[i];
+        if (const uint64_t mask = KingMap::pinMasks[board.GetKingMsbPos(board.movColor)].masks[i];
             (figBoard & mask) != 0)
         {
-            return BishopMap::GetMoves(board.kingMSBPositions[board.movColor], fullMap ^ figBoard) & mask;
+            return BishopMap::GetMoves(board.GetKingMsbPos(board.movColor), fullMap ^ figBoard) & mask;
         }
 
     constexpr size_t rookRange = PinningMasks::RookLines + PinningMasks::PinningMaskPerLinesType;
     for (size_t i = PinningMasks::RookLines; i < rookRange; ++i)
-        if (const uint64_t mask = KingMap::pinMasks[board.kingMSBPositions[board.movColor]].masks[i];
+        if (const uint64_t mask = KingMap::pinMasks[board.GetKingMsbPos(board.movColor)].masks[i];
             (figBoard & mask) != 0)
         {
-            return RookMap::GetMoves(board.kingMSBPositions[board.movColor], fullMap ^ figBoard) & mask;
+            return RookMap::GetMoves(board.GetKingMsbPos(board.movColor), fullMap ^ figBoard) & mask;
         }
 
 #ifndef NDEBUG

@@ -42,7 +42,7 @@ struct KingMap
 
     [[nodiscard]] static constexpr uint64_t GetSimpleFigCheckKnightsAllowedTiles(const Board& bd)
     {
-        const uint64_t detectionFields = KnightMap::GetMoves(bd.kingMSBPositions[bd.movColor]);
+        const uint64_t detectionFields = KnightMap::GetMoves(bd.GetKingMsbPos(bd.movColor));
 
         return detectionFields & bd.boards[Board::BoardsPerCol*SwapColor(bd.movColor) + knightsIndex];
     }

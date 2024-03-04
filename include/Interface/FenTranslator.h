@@ -99,7 +99,6 @@ public:
         .Castlings = {true, true, true, true},
         .elPassantField = INVALID,
         .movColor = WHITE,
-        .kingMSBPositions = {ConvertToReversedPos(4), ConvertToReversedPos(60)},
         .boards = {
             65280LLU,
             66LLU,

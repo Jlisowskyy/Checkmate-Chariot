@@ -64,6 +64,8 @@ add_executable(Checkmate-Chariot main.cpp
         src/SearchPerfTester.cpp
         src/CsvOperator.cpp
         include/MoveGeneration/Move.h
+        include/Board.h
+        src/Board.cpp
 )
 
 find_package(OpenMP)

@@ -14,7 +14,7 @@ void Engine::Initialize()
     _startingBoard = _board;
 }
 
-void Engine::writeBoard() const { std::cout << _board; }
+void Engine::writeBoard() const { DisplayBoard(_board); }
 
 std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
 {

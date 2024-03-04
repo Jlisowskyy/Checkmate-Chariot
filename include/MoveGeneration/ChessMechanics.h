@@ -303,7 +303,7 @@ private:
             const uint64_t processedPawns = pawnMap | board.elPassantField;
             const uint64_t cleanedFromPawnsMap = fullMap ^ processedPawns;
             if (const uint64_t kingHorizontalLine =
-                        RookMap::GetMoves(board.kingMSBPositions[board.movColor], cleanedFromPawnsMap) &
+                        RookMap::GetMoves(board.GetKingMsbPos(board.movColor), cleanedFromPawnsMap) &
                         MapT::EnemyElPassantMask;
                 (kingHorizontalLine & enemyRookFigs) != 0)
                 return;
@@ -335,7 +335,7 @@ private:
                 }
 
             // applying changes on board
-            const Field oldElPassantField = board.elPassantField;
+            const uint64_t oldElPassantField = board.elPassantField;
             figMap ^= pawnMap;
             figMap |= moveMap;
             board.boards[enemyCord + pawnsIndex] ^= board.elPassantField;
@@ -386,7 +386,7 @@ private:
         }
 
         // saving results of previous el passant field, used only when figure is not a pawn
-        const Field oldElpassant = board.elPassantField;
+        const uint64_t oldElpassant = board.elPassantField;
         board.elPassantField = INVALID;
 
         // procesing unpinned moves
@@ -610,15 +610,15 @@ private:
         const size_t movingColorIndex = board.movColor * Board::BoardsPerCol;
 
         // generating moves
-        const uint64_t kingMoves = KingMap::GetMoves(board.kingMSBPositions[board.movColor]) & ~blockedFigMap & ~
+        const uint64_t kingMoves = KingMap::GetMoves(board.GetKingMsbPos(board.movColor)) & ~blockedFigMap & ~
                                    allyMap;
         uint64_t attackingMoves = kingMoves & enemyMap;
         uint64_t nonAttackingMoves = kingMoves ^ attackingMoves;
 
         // saving old parameters
-        const uint8_t oldKingPos = board.kingMSBPositions[board.movColor];
+        const uint64_t oldKingBoard = board.boards[movingColorIndex + kingIndex];
         const auto oldCastlings = board.Castlings;
-        const Field oldElPassant = board.elPassantField;
+        const uint64_t oldElPassant = board.elPassantField;
 
         // prohibiting castlings
         board.Castlings[CastlingPerColor * board.movColor + KingCastlingIndex] = false;
@@ -635,7 +635,6 @@ private:
             const uint64_t newKingBoard = maxMsbPossible >> newPos;
 
             // preparing board changes
-            board.kingMSBPositions[board.movColor] = newPos;
             board.boards[movingColorIndex + kingIndex] = newKingBoard;
 
             // performing core actions
@@ -657,7 +656,6 @@ private:
             const size_t attackedFigBoardIndex = GetIndexOfContainingBoard(newKingBoard, SwapColor(board.movColor));
 
             // preparing board changes
-            board.kingMSBPositions[board.movColor] = newPos;
             board.boards[movingColorIndex + kingIndex] = newKingBoard;
             board.boards[attackedFigBoardIndex] ^= newKingBoard;
             board.ChangePlayingColor();
@@ -674,8 +672,7 @@ private:
 
         // reverting changes
         board.Castlings = oldCastlings;
-        board.kingMSBPositions[board.movColor] = oldKingPos;
-        board.boards[board.movColor * Board::BoardsPerCol + kingIndex] = maxMsbPossible >> oldKingPos;
+        board.boards[board.movColor * Board::BoardsPerCol + kingIndex] = oldKingBoard;
         board.elPassantField = oldElPassant;
     }
 
@@ -689,18 +686,17 @@ private:
 
         // simple helping variables
         const size_t movingColorIndex = board.movColor * Board::BoardsPerCol;
-        const size_t enemyColorIndex = SwapColor(board.movColor) * Board::BoardsPerCol;
 
         // generating moves
-        const uint64_t kingMoves = KingMap::GetMoves(board.kingMSBPositions[board.movColor]) & ~blockedFigMap & ~
+        const uint64_t kingMoves = KingMap::GetMoves(board.GetKingMsbPos(board.movColor)) & ~blockedFigMap & ~
                                    allyMap;
         uint64_t nonAttackingMoves = kingMoves & ~enemyMap;
         uint64_t attackingMoves = kingMoves ^ nonAttackingMoves;
 
         // saving old parameters
-        const uint8_t oldKingPos = board.kingMSBPositions[board.movColor];
         const auto oldCastlings = board.Castlings;
-        const Field oldElPassant = board.elPassantField;
+        const uint64_t oldElPassant = board.elPassantField;
+        const uint64_t oldKingBoard = board.boards[movingColorIndex + kingIndex];
 
         // prohibiting castlings
         board.Castlings[CastlingPerColor * board.movColor + KingCastlingIndex] = false;
@@ -717,7 +713,6 @@ private:
             const uint64_t newKingBoard = maxMsbPossible >> newPos;
 
             // preparing board changes
-            board.kingMSBPositions[board.movColor] = newPos;
             board.boards[movingColorIndex + kingIndex] = newKingBoard;
 
             // performing core actions
@@ -739,7 +734,6 @@ private:
             const size_t attackedFigBoardIndex = GetIndexOfContainingBoard(newKingBoard, SwapColor(board.movColor));
 
             // preparing board changes
-            board.kingMSBPositions[board.movColor] = newPos;
             board.boards[movingColorIndex + kingIndex] = newKingBoard;
             board.boards[attackedFigBoardIndex] ^= newKingBoard;
             board.ChangePlayingColor();
@@ -756,8 +750,7 @@ private:
 
         // reverting changes
         board.Castlings = oldCastlings;
-        board.kingMSBPositions[board.movColor] = oldKingPos;
-        board.boards[board.movColor * Board::BoardsPerCol + kingIndex] = maxMsbPossible >> oldKingPos;
+        board.boards[board.movColor * Board::BoardsPerCol + kingIndex] = oldKingBoard;
         board.elPassantField = oldElPassant;
     }
 
@@ -781,14 +774,13 @@ private:
                 board.Castlings[castlingIndex] = false;
                 board.Castlings[otherCastlingIndex] = false;
 
-                board.kingMSBPositions[board.movColor] = Board::CastlingNewKingPos[castlingIndex];
                 board.boards[board.movColor * Board::BoardsPerCol + kingIndex] =
                         maxMsbPossible >> Board::CastlingNewKingPos[castlingIndex];
                 board.boards[board.movColor * Board::BoardsPerCol + rooksIndex] ^= Board::CastlingsRookMaps[
                     castlingIndex];
                 board.boards[board.movColor * Board::BoardsPerCol + rooksIndex] |= Board::CastlingNewRookMaps[
                     castlingIndex];
-                const Field oldElPassant = board.elPassantField;
+                const uint64_t oldElPassant = board.elPassantField;
                 board.elPassantField = INVALID;
 
                 // processiong main actions
@@ -799,9 +791,8 @@ private:
                 // cleaning up after last move
                 board.Castlings[castlingIndex] = true;
                 board.Castlings[otherCastlingIndex] = otherCastling;
-                board.kingMSBPositions[board.movColor] = Board::DefaultKingPos[board.movColor];
                 board.boards[board.movColor * Board::BoardsPerCol + kingIndex] =
-                        maxMsbPossible >> Board::DefaultKingPos[board.movColor];
+                        Board::DefaultKingBoards[board.movColor];
                 board.boards[board.movColor * Board::BoardsPerCol + rooksIndex] |= Board::CastlingsRookMaps[
                     castlingIndex];
                 board.boards[board.movColor * Board::BoardsPerCol + rooksIndex] ^= Board::CastlingNewRookMaps[
