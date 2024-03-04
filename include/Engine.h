@@ -85,7 +85,7 @@ private:
 
     Board _board{};
     Board _startingBoard{};
-    OpeningBook _book{"uci_ready", OpeningBook::bookFileType::text_uci} ;
+    OpeningBook _book{"uci_ready_long", OpeningBook::bookFileType::text_uci} ;
 
     // ------------------------------
     // Engine options

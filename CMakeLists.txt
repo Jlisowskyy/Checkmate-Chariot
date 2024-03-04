@@ -72,11 +72,11 @@ if(OpenMP_CXX_FOUND)
 endif()
 
 target_compile_options(Checkmate-Chariot  PUBLIC -O3;-march=raptorlake;-fopenmp;-fconstexpr-ops-limit=133554432;-funroll-loops;-fno-peel-loops;-fno-tracer)
-#target_compile_options(ChessEngine PUBLIC -fconstexpr-ops-limit=133554432;-g;)
+#target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-ops-limit=133554432;-g;)
 
 
 # Define the source file you want to copy
-set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/resources/uci_ready")
+set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/resources/uci_ready_long")
 
 # Define the destination directory (usually where your executable is built)
 set(DESTINATION_DIR "${CMAKE_BINARY_DIR}")
