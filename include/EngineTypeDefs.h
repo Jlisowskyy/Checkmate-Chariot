@@ -197,7 +197,7 @@ struct Board
     Field elPassantField = INVALID;
     int movColor = WHITE;
     uint8_t kingMSBPositions[KingPosCount] = {};
-    uint64_t boards[BoardsCount] = {};
+    uint64_t boards[BoardsCount + 1] = {}; // addiitonal sentinel board
 };
 
 constexpr int SwapColor(const int col)
