@@ -14,17 +14,27 @@
  *  togethr inside some uint64_t value. Encoding corresponds to value below:
  *  (bit indexed from lsb to msb manner)
  *  - bits 0-16 encodes heristic evaluation of current move (16 bits)
- *  - bits 16-22 - encodes field from which figure moved (6 bits)
- *  - bits 22-26 - encodes board index from which figure moved (4 bits)
- *  - bits 26-32 - encodes field to which figure moved (6 bits)
+ *                      Note: additionaly to allow simple evaluation on run
+ *  - bits 16-22 - encodes field from which figure moved (6 bits)                                                       - "StartField" - OBLIG
+ *                      IMPORTANT: should always be filled
+ *  - bits 22-26 - encodes board index from which figure moved (4 bits)                                                 - "StartBoardIndex" - OBLIG
+ *                      IMPORTANT: should always be filled
+ *  - bits 26-32 - encodes field to which figure moved (6 bits)                                                         - "TargetField" - OBLIG
+ *                      IMPORTANT: should always be filled
  *  - bits 32-36 - encodes board index to which figure moved - diffrent than option 2
- *          only in case move encodes promotion (4 bits)
+ *          only in case move encodes promotion (4 bits)                                                                - "TargetBoardIndex" - OBLIG
+ *                      IMPORTANT: should always be filled, in case no promotion is done simply put here positoin no 3
  *  - bits 36-40 - encodes board index on which figure was killed (4 bits) - used in case of
- *          attacking moves (4 bits)
- *  - bits 40-46 - encodes field on which figure was killed - used only in case of el passant killing move (6 bits)
- *  - bits 46-52 - encodes new elPassant field (6 bits)
- *  - bits 52-56 - encodes castling rights (4 bits)
- *  - bits 56-59 - encodes type of performed castlins (3 bits)
+ *          attacking moves (4 bits)                                                                                    - "KilledFigureBoardIndex" - OBLIG
+ *                      IMPORTANT: if not used should be filled with sentinel value
+ *  - bits 40-46 - encodes field on which figure was killed - used only in case of el passant killing move (6 bits)     - "KilledFigureField" - OPT
+ *                      WARNING: possibly unfilled when no attacking move and sentinel value is set
+ *  - bits 46-52 - encodes new elPassant field (6 bits)                                                                 - "ElPassantField" - OBLIG
+ *                      IMPORTANT: should always contain new el passant field, if not used simply put here literal from board
+ *  - bits 52-56 - encodes castling rights (4 bits)                                                                     - "CastlingRights" - OLBIG
+ *                      IMPORTANT: should always be filled, in case no changes was done simply copy previous values
+ *  - bits 56-59 - encodes type of performed castlins (3 bits)                                                          - "CastlingType" - OPT
+ *                      WARNING: possibly unfilled when no castling is done
  */
 
 /*      IMPORTANT NOTE:

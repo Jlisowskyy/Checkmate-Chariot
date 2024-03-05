@@ -267,17 +267,17 @@ private:
                     continue;
                 }
 
-
             // preparing and sending move
             Move mv{};
-            mv.SetCasltingRights(board.Castlings);
             mv.SetStartField(ExtractMsbPos(pawnMap));
             mv.SetStartBoardIndex(MapT::GetBoardIndex(0));
-            mv.SetTargetBoardIndex(MapT::GetBoardIndex(0));
             mv.SetTargetField(ExtractMsbPos(moveMap));
-            mv.SetElPassantField(Board::InvalidElPassantField);
+            mv.SetTargetBoardIndex(MapT::GetBoardIndex(0));
             mv.SetKilledBoardIndex(MapT::GetEnemyPawnBoardIndex());
             mv.SetKilledFigureField(ExtractMsbPos(board.elPassantField));
+            mv.SetElPassantField(Board::InvalidElPassantField);
+            mv.SetCasltingRights(board.Castlings);
+
             results.push_back(mv);
 
             possiblePawnsToMove ^= pawnMap;
@@ -392,18 +392,17 @@ private:
             // simple figure case
             {
                 Move mv{};
-                mv.SetCasltingRights(castlings);
                 mv.SetStartField(ExtractMsbPos(startField));
                 mv.SetStartBoardIndex(figBoardIndex);
-                mv.SetTargetBoardIndex(figBoardIndex);
                 mv.SetTargetField(movePos);
+                mv.SetTargetBoardIndex(figBoardIndex);
                 mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
-
                 // if el passant line is passed when figure moved to these line flag will turned on
                 if constexpr (elPassantFieldDeducer != nullptr)
                     mv.SetElPassantField(ExtractMsbPos(elPassantFieldDeducer(moveBoard, startField)));
                 else
                     mv.SetElPassantField(Board::InvalidElPassantField);
+                mv.SetCasltingRights(castlings);
 
                 results.push_back(mv);
             }
@@ -414,13 +413,13 @@ private:
                 for (size_t i = knightsIndex; i < kingIndex; ++i)
                 {
                     Move mv{};
-                    mv.SetCasltingRights(castlings);
                     mv.SetStartField(ExtractMsbPos(startField));
                     mv.SetStartBoardIndex(figBoardIndex);
-                    mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + i);
                     mv.SetTargetField(movePos);
+                    mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + i);
                     mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
                     mv.SetElPassantField(Board::InvalidElPassantField);
+                    mv.SetCasltingRights(castlings);
 
                     results.push_back(mv);
                 }
@@ -447,14 +446,14 @@ private:
             // simple figure case
             {
                 Move mv{};
-                mv.SetCasltingRights(castlings);
                 mv.SetStartField(ExtractMsbPos(startField));
                 mv.SetStartBoardIndex(figBoardIndex);
-                mv.SetTargetBoardIndex(figBoardIndex);
                 mv.SetTargetField(movePos);
+                mv.SetTargetBoardIndex(figBoardIndex);
                 mv.SetKilledBoardIndex(attackedFigBoardIndex);
                 mv.SetKilledFigureField(movePos);
                 mv.SetElPassantField(Board::InvalidElPassantField);
+                mv.SetCasltingRights(castlings);
 
                 results.push_back(mv);
             }
@@ -466,14 +465,14 @@ private:
                 for (size_t i = knightsIndex; i < kingIndex; ++i)
                 {
                     Move mv{};
-                    mv.SetCasltingRights(castlings);
                     mv.SetStartField(ExtractMsbPos(startField));
                     mv.SetStartBoardIndex(figBoardIndex);
-                    mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + i);
                     mv.SetTargetField(movePos);
+                    mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + i);
                     mv.SetKilledBoardIndex(attackedFigBoardIndex);
                     mv.SetKilledFigureField(movePos);
                     mv.SetElPassantField(Board::InvalidElPassantField);
+                    mv.SetCasltingRights(castlings);
 
                     results.push_back(mv);
                 }
@@ -507,13 +506,13 @@ private:
             const uint8_t newPos = ExtractMsbPos(nonAttackingMoves);
 
             Move mv{};
-            mv.SetCasltingRights(castlings);
             mv.SetStartField(oldKingPos);
-            mv.SetStartBoardIndex(board.movColor + kingIndex);
-            mv.SetTargetBoardIndex(board.movColor + kingIndex);
+            mv.SetStartBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetTargetField(newPos);
-            mv.SetElPassantField(Board::InvalidElPassantField);
+            mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
+            mv.SetElPassantField(Board::InvalidElPassantField);
+            mv.SetCasltingRights(castlings);
             results.push_back(mv);
 
             nonAttackingMoves ^= (maxMsbPossible >> newPos);
@@ -530,14 +529,14 @@ private:
             const size_t attackedFigBoardIndex = mechanics.GetIndexOfContainingBoard(newKingBoard, SwapColor(board.movColor));
 
             Move mv{};
-            mv.SetCasltingRights(castlings);
             mv.SetStartField(oldKingPos);
-            mv.SetStartBoardIndex(board.movColor + kingIndex);
-            mv.SetTargetBoardIndex(board.movColor + kingIndex);
+            mv.SetStartBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetTargetField(newPos);
-            mv.SetElPassantField(Board::InvalidElPassantField);
+            mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetKilledBoardIndex(attackedFigBoardIndex);
             mv.SetKilledFigureField(newPos);
+            mv.SetElPassantField(Board::InvalidElPassantField);
+            mv.SetCasltingRights(castlings);
             results.push_back(mv);
 
             attackingMoves ^= newKingBoard;
@@ -568,13 +567,13 @@ private:
             const uint8_t newPos = ExtractMsbPos(nonAttackingMoves);
 
             Move mv{};
-            mv.SetCasltingRights(castlings);
             mv.SetStartField(oldKingPos);
-            mv.SetStartBoardIndex(board.movColor + kingIndex);
-            mv.SetTargetBoardIndex(board.movColor + kingIndex);
+            mv.SetStartBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetTargetField(newPos);
-            mv.SetElPassantField(Board::InvalidElPassantField);
+            mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
+            mv.SetElPassantField(Board::InvalidElPassantField);
+            mv.SetCasltingRights(castlings);
             results.push_back(mv);
 
             nonAttackingMoves ^= maxMsbPossible >> newPos;
@@ -591,14 +590,14 @@ private:
             const size_t attackedFigBoardIndex = mechanics.GetIndexOfContainingBoard(newKingBoard, SwapColor(board.movColor));
 
             Move mv{};
-            mv.SetCasltingRights(castlings);
             mv.SetStartField(oldKingPos);
-            mv.SetStartBoardIndex(board.movColor + kingIndex);
-            mv.SetTargetBoardIndex(board.movColor + kingIndex);
+            mv.SetStartBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetTargetField(newPos);
-            mv.SetElPassantField(Board::InvalidElPassantField);
+            mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetKilledBoardIndex(attackedFigBoardIndex);
             mv.SetKilledFigureField(newPos);
+            mv.SetElPassantField(Board::InvalidElPassantField);
+            mv.SetCasltingRights(castlings);
             results.push_back(mv);
 
             attackingMoves ^= newKingBoard;
@@ -621,14 +620,14 @@ private:
                 castlings[board.movColor * Board::CastlingsPerColor + QueenCastlingIndex] = false;
 
                 Move mv{};
-                mv.SetCasltingRights(castlings);
                 mv.SetStartField(ExtractMsbPos(Board::DefaultKingBoards[board.movColor]));
                 mv.SetStartBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
-                mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
                 mv.SetTargetField(Board::CastlingNewKingPos[castlingIndex]);
-                mv.SetElPassantField(Board::InvalidElPassantField);
+                mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
                 mv.SetKilledBoardIndex(board.movColor * Board::BoardsPerCol + rooksIndex);
                 mv.SetKilledFigureField(ExtractMsbPos(Board::CastlingsRookMaps[castlingIndex]));
+                mv.SetElPassantField(Board::InvalidElPassantField);
+                mv.SetCasltingRights(castlings);
                 mv.SetCastlingType(1 + castlingIndex);
                 results.push_back(mv);
             }
