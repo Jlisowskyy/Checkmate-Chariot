@@ -29,7 +29,7 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const
     eng.ApplyMoves(moves);
 
     const auto externalEngineMoves = _generateCorrectMoveCounts(fenPosition, depth, moves);
-    const auto internalEngineMoves = eng.GetPerft(depth);
+    const auto internalEngineMoves = eng.GetMoveBasedPerft(depth);
 
     for (const auto&[move, count]: externalEngineMoves)
     {

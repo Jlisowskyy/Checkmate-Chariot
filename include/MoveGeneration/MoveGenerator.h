@@ -81,6 +81,30 @@ struct MoveGenerator
         return results;
     }
 
+    uint64_t CountMoves(const int depth)
+    {
+        if (depth == 0)
+        {
+            // DisplayBoard(board);
+            return 1;
+        }
+
+        uint64_t sum{};
+        const auto moves = GetMovesFast();
+
+        const auto oldCastling = board.Castlings;
+        const auto oldElPassant = board.elPassantField;
+
+        for(const auto move : moves)
+        {
+            Move::MakeMove(move, board);
+            sum += CountMoves(depth - 1);
+            Move::UnmakeMove(move, board, oldCastling, oldElPassant);
+        }
+
+        return sum;
+    }
+
     // ------------------------------
     // private methods
     // ------------------------------
@@ -159,7 +183,7 @@ private:
         _processKingMovesWhenChecked(results, blockedFigMap, allyMap, enemyMap, allowedTilesMap);
     }
 
-    void _doubleCheckGen(std::vector<Move>& results, const uint64_t blockedFigMap)
+    void _doubleCheckGen(std::vector<Move>& results, const uint64_t blockedFigMap) const
     {
         const uint64_t allyMap = mechanics.GetColMap(board.movColor);
         const uint64_t enemyMap = mechanics.GetColMap(SwapColor(board.movColor));
@@ -253,7 +277,7 @@ private:
             mv.SetTargetField(ExtractMsbPos(moveMap));
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetKilledBoardIndex(MapT::GetEnemyPawnBoardIndex());
-            mv.SetKilledFigureField(board.elPassantField);
+            mv.SetKilledFigureField(ExtractMsbPos(board.elPassantField));
             results.push_back(mv);
 
             possiblePawnsToMove ^= pawnMap;
@@ -604,7 +628,7 @@ private:
                 mv.SetTargetField(Board::CastlingNewKingPos[castlingIndex]);
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetKilledBoardIndex(board.movColor * Board::BoardsPerCol + rooksIndex);
-                mv.SetKilledFigureField(Board::CastlingsRookMaps[castlingIndex]);
+                mv.SetKilledFigureField(ExtractMsbPos(Board::CastlingsRookMaps[castlingIndex]));
                 mv.SetCastlingType(1 + castlingIndex);
                 results.push_back(mv);
             }

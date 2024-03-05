@@ -39,6 +39,7 @@ public:
     void writeBoard() const;
 
     std::map<std::string, uint64_t> GetPerft(int depth);
+    std::map<std::string, uint64_t> GetMoveBasedPerft(int depth);
 
     template<
         bool LogToOut = true
@@ -59,7 +60,7 @@ public:
 
     void GoMoveTime(lli time, const std::vector<std::string>& moves) const;
 
-    void GoDepth(const int depth, const std::vector<std::string>& moves) const;
+    void GoDepth(int depth, const std::vector<std::string>& moves) const;
 
 
     // TODO: next goals:
@@ -112,7 +113,7 @@ template<bool LogToOut>
 double Engine::GoPerft(const int depth)
 {
     const auto t1 = std::chrono::steady_clock::now();
-    auto moves = GetPerft(depth);
+    auto moves = GetMoveBasedPerft(depth);
     const auto t2 = std::chrono::steady_clock::now();
 
     uint64_t totalSum{};

@@ -7,6 +7,7 @@
 #include "../include/Search/BestMoveSearch.h"
 #include "../include/Evaluation/BoardEvaluator.h"
 #include "../include/OpeningBook/OpeningBook.h"
+#include "../include/MoveGeneration/MoveGenerator.h"
 
 void Engine::Initialize()
 {
@@ -40,6 +41,26 @@ std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
         },
         1
     );
+
+    return moveMap;
+}
+
+std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
+{
+    Board startingBoard = _board;
+    MoveGenerator game(startingBoard);
+    std::map<std::string, uint64_t> moveMap{};
+
+    const auto moves = game.GetMovesFast();
+
+    const auto oldCastling = _board.Castlings;
+    const auto oldElPassant = _board.elPassantField;
+    for(const auto move : moves)
+    {
+        Move::MakeMove(move, startingBoard);
+        moveMap[move.GetLongAlgebraicNotation()] = game.CountMoves(depth - 1);
+        Move::UnmakeMove(move, startingBoard, oldCastling, oldElPassant);
+    }
 
     return moveMap;
 }

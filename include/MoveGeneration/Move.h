@@ -42,6 +42,12 @@ public:
     Move() = default;
     ~Move() = default;
 
+    Move(const Move& other) = default;
+    Move& operator=(const Move& other) = default;
+
+    Move(Move&& other) = default;
+    Move& operator=(Move&& other) = default;
+
     // ------------------------------
     // Class interaction
     // ------------------------------
@@ -78,10 +84,14 @@ public:
         // applying addidtional castling operation
         auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
         bd.boards[boardIndex] |= field;
+
+        bd.ChangePlayingColor();
     }
 
-    static void UnmakeMove(Move mv, Board& bd, const std::array<bool, Board::CastlingCount+1>& castlings, const uint64_t oldElPassant)
+    static void UnmakeMove(const Move mv, Board& bd, const std::array<bool, Board::CastlingCount+1>& castlings, const uint64_t oldElPassant)
     {
+        bd.ChangePlayingColor();
+
         // placing piece on old board
         bd.boards[mv.GetStartBoardIndex()] |= maxMsbPossible >> mv.GetStartField();
 
@@ -104,7 +114,7 @@ public:
 
     void SetEval(const int16_t eval)
     {
-        _storage &= eval;
+        _storage |= eval;
     }
 
     [[nodiscard]] int16_t GetEval() const
@@ -115,7 +125,7 @@ public:
 
     void SetStartField(const uint64_t startField)
     {
-        _storage &= startField << 16;
+        _storage |= startField << 16;
     }
 
     [[nodiscard]]uint64_t GetStartField() const
@@ -126,7 +136,7 @@ public:
 
     void SetStartBoardIndex(const uint64_t startBoard)
     {
-        _storage &= (startBoard << 22);
+        _storage |= (startBoard << 22);
     }
 
     [[nodiscard]]uint64_t GetStartBoardIndex() const
@@ -137,7 +147,7 @@ public:
 
     void SetTargetField(const uint64_t targetField)
     {
-        _storage &= targetField << 26;
+        _storage |= targetField << 26;
     }
 
     [[nodiscard]]uint64_t GetTargetField() const
@@ -148,7 +158,7 @@ public:
 
     void SetTargetBoardIndex(const uint64_t targetBoardIndex)
     {
-        _storage &= targetBoardIndex << 32;
+        _storage |= targetBoardIndex << 32;
     }
 
     [[nodiscard]]uint64_t GetTargetBoardIndex() const
@@ -159,7 +169,7 @@ public:
 
     void SetKilledBoardIndex(const uint64_t killedBoardIndex)
     {
-        _storage &= killedBoardIndex << 36;
+        _storage |= killedBoardIndex << 36;
     }
 
     [[nodiscard]]uint64_t GetKilledBoardIndex() const
@@ -170,7 +180,7 @@ public:
 
     void SetKilledFigureField(const uint64_t killedFigureField)
     {
-        _storage &= killedFigureField << 40;
+        _storage |= killedFigureField << 40;
     }
 
     [[nodiscard]]uint64_t GetKilledFigureField() const
@@ -181,7 +191,7 @@ public:
 
     void SetElPassantField(const uint64_t elPassantField)
     {
-        _storage &= elPassantField << 46;
+        _storage |= elPassantField << 46;
     }
 
     [[nodiscard]]uint64_t GetElPassantField() const
@@ -193,7 +203,7 @@ public:
     void SetCasltingRights(const std::array<bool, Board::CastlingCount+1>& arr)
     {
         const uint64_t rights = (arr[0] << 0) | (arr[1] << 1) | (arr[2] << 2) | (arr[3] << 3);
-        _storage &= rights << 52;
+        _storage |= rights << 52;
     }
 
     [[nodiscard]]std::array<bool, Board::CastlingCount+1> GetCastlingRights() const
@@ -212,7 +222,7 @@ public:
 
     void SetCastlingType(const uint64_t castlingType)
     {
-        _storage &= castlingType << 56;
+        _storage |= castlingType << 56;
     }
 
     [[nodiscard]]uint64_t GetCastlingType() const
