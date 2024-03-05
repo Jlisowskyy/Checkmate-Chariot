@@ -195,7 +195,7 @@ std::vector<Board> ChessMechanics::GetPossibleMoveSlow()
 }
 
 // TODO: pretty fking stupid but ok could be optimised after tests:
-uint64_t ChessMechanics::_generateAllowedTilesForPrecisedPinnedFig(const uint64_t figBoard,
+uint64_t ChessMechanics::GenerateAllowedTilesForPrecisedPinnedFig(const uint64_t figBoard,
                                                                    const uint64_t fullMap) const
 {
     constexpr size_t bishopRange = PinningMasks::BishopLines + PinningMasks::PinningMaskPerLinesType;

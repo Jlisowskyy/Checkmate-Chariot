@@ -26,6 +26,11 @@ public:
         return bPawnsIndex;
     }
 
+    [[nodiscard]] static constexpr size_t GetEnemyPawnBoardIndex()
+    {
+        return wPawnsIndex;
+    }
+
     [[nodiscard]] static constexpr uint64_t GetAttackFields(const uint64_t pawnBits)
     {
         const uint64_t leftAttack = (LeftMask & pawnBits) >> 9;
@@ -58,9 +63,9 @@ public:
         return elPassantField >> 8;
     }
 
-    [[nodiscard]] static constexpr Field GetElPassantField(const uint64_t moveField, const uint64_t startField)
+    [[nodiscard]] static constexpr uint64_t GetElPassantField(const uint64_t moveField, const uint64_t startField)
     {
-        return static_cast<Field>((moveField & ElPassantMask & ((StartMask & startField) >> 16)));
+        return moveField & ElPassantMask & (StartMask & startField) >> 16;
     }
 
     // ------------------------------

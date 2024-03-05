@@ -34,10 +34,10 @@ struct BestMoveSearch
         bool WriteInfo = false
     > [[nodiscard]] std::string searchMoveTimeFullBoardEvalUnthreaded(FullBoardEvalFuncT evalF, long timeLimit)
     {
-        auto timeStart = std::chrono::steady_clock::now();
+        const auto timeStart = std::chrono::steady_clock::now();
 
-        MoveGenerator mechanics(_board);
-        auto moves = mechanics.GetMovesFast();
+        MoveGenerator generator(_board);
+        const auto moves = generator.GetMovesFast();
         std::vector<std::pair<int, int>> sortedMoveList(moves.size() + 1);
 
         // sentinel guarded
@@ -48,9 +48,14 @@ struct BestMoveSearch
 
         int depth = 1;
         std::string bestMove;
-        while(true){
+        int alpha = NegativeInfinity;
+        while(alpha != PositiveInfinity){
             // resetting alpha
-            int alpha = NegativeInfinity;
+            alpha = NegativeInfinity;
+
+            // saving old params
+            const auto oldCastlings = _board.Castlings;
+            const auto oldElPassant = _board.elPassantField;
 
             // list iteration
             for (size_t i = 1; i <= moves.size(); ++i) {
@@ -61,7 +66,9 @@ struct BestMoveSearch
                 if (timeSpent.count() > timeLimit)
                     return bestMove;
 
-                int eval = -_alphaBeta(evalF, moves[sortedMoveList[i].first], NegativeInfinity, -alpha, depth);
+                Move::MakeMove(moves[sortedMoveList[i].first], _board);
+                int eval = -_alphaBeta(evalF, _board, NegativeInfinity, -alpha, depth);
+                Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
 
                 alpha = std::max(alpha, eval);
                 sortedMoveList[i].second = eval;
@@ -71,7 +78,7 @@ struct BestMoveSearch
             _insertionSort(sortedMoveList);
 
             // saving result
-            bestMove = GetShortAlgebraicMoveEncoding(_board, moves[sortedMoveList[1].first]);
+            bestMove = moves[sortedMoveList[1].first].GetLongAlgebraicNotation();
 
             if constexpr (WriteInfo){
                 GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}\n", depth, bestMove);
@@ -79,6 +86,8 @@ struct BestMoveSearch
 
             ++depth;
         }
+
+        return bestMove;
     }
 
     template<
@@ -86,8 +95,8 @@ struct BestMoveSearch
         bool WriteInfo = false
     > [[nodiscard]] std::string searchMoveDepthFullBoardEvalUnthreaded(FullBoardEvalFuncT evalF, const int targetDepth)
     {
-        MoveGenerator mechanics(_board);
-        auto moves = mechanics.GetMovesFast();
+        MoveGenerator generator(_board);
+        const auto moves = generator.GetMovesFast();
         std::vector<std::pair<int, int>> sortedMoveList(moves.size() + 1);
 
         // sentinel guarded
@@ -100,9 +109,16 @@ struct BestMoveSearch
             // resetting alpha
             int alpha = NegativeInfinity;
 
+            // saving old params
+            const auto oldCastlings = _board.Castlings;
+            const auto oldElPassant = _board.elPassantField;
+
             // list iteration
             for (size_t i = 1; i <= moves.size(); ++i) {
-                int eval = -_alphaBeta(evalF, moves[sortedMoveList[i].first], NegativeInfinity, -alpha, depth);
+                Move::MakeMove(moves[sortedMoveList[i].first], _board);
+                int eval = -_alphaBeta(evalF, _board, NegativeInfinity, -alpha, depth);
+                Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
+
                 alpha = std::max(alpha, eval);
                 sortedMoveList[i].second = eval;
             }
@@ -111,12 +127,12 @@ struct BestMoveSearch
             _insertionSort(sortedMoveList);
 
             if constexpr (WriteInfo){
-                auto bestMove = GetShortAlgebraicMoveEncoding(_board, moves[sortedMoveList[1].first]);
+                auto bestMove = moves[sortedMoveList[1].first].GetLongAlgebraicNotation();
                 GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}\n", depth, bestMove);
             }
         }
 
-        return GetShortAlgebraicMoveEncoding(_board, moves[sortedMoveList[1].first]);
+        return moves[sortedMoveList[1].first].GetLongAlgebraicNotation();
     }
 
     // ------------------------------
@@ -128,7 +144,7 @@ private:
     // BETA - maximum score of minimazing player
     template<
         class FullBoardEvalFuncT
-    > [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board& bd, int alpha, int beta, const int depth)
+    > [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, const int depth)
     {
         if (depth == 0) {
             return evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
@@ -140,9 +156,14 @@ private:
         if (moves.empty())
             return mechanics.IsCheck() ? NegativeInfinity : 0;
 
-        for (auto& moveBoard : moves)
+        const auto oldCastlings = bd.Castlings;
+        const auto oldElPassant = bd.elPassantField;
+
+        for (const auto move : moves)
         {
-            const int moveValue = -_alphaBeta(evalF, moveBoard, -beta, -alpha, depth-1);
+            Move::MakeMove(move, bd);
+            const int moveValue = -_alphaBeta(evalF, bd, -beta, -alpha, depth-1);
+            Move::UnmakeMove(move, bd, oldCastlings, oldElPassant);
 
             if (moveValue >= beta)
                 return beta;

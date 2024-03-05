@@ -52,7 +52,9 @@ struct Board
     static constexpr size_t BoardsPerCol = 6;
     static constexpr size_t KingPosCount = 2;
     static constexpr size_t CastlingsPerColor = 2;
-    static constexpr uint64_t InvalidElPassantField = 0;
+    static constexpr uint64_t InvalidElPassantField = 1;
+    static constexpr size_t SentinelBoardIndex = 12;
+    static constexpr size_t SentinelCastlingIndex = 4;
 
     static constexpr std::array<uint64_t, KingPosCount> DefaultKingBoards{
         maxMsbPossible >> ConvertToReversedPos(4),
@@ -93,7 +95,7 @@ struct Board
         1LLU << 58 | 1LLU << 59 | 1LLU << 57
     };
 
-    std::array<bool, CastlingCount> Castlings{false, false, false, false};
+    std::array<bool, CastlingCount+1> Castlings{false, false, false, false, false}; //additional sentinel field
     uint64_t elPassantField = InvalidElPassantField;
     int movColor = WHITE;
     uint64_t boards[BoardsCount + 1] = {}; // addiitonal sentinel board

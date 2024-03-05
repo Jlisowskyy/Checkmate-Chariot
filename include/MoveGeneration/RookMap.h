@@ -39,6 +39,16 @@ public:
         return _map.GetMoves(msbInd, fullBoard);
     }
 
+    [[nodiscard]] static constexpr size_t GetMatchingCastlingIndex(const Board& bd, const uint64_t figBoard)
+    {
+        for (size_t i = 0; i < Board::CastlingsPerColor; ++i)
+            if (const size_t index = bd.movColor * Board::CastlingsPerColor + i;
+                bd.Castlings[index] && (Board::CastlingsRookMaps[index] & figBoard) != 0)
+                return index;
+
+        return Board::SentinelCastlingIndex;
+    }
+
     // ------------------------------
     // Class fields
     // ------------------------------

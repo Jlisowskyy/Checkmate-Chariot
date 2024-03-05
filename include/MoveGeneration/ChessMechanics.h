@@ -79,6 +79,9 @@ struct ChessMechanics
     // should only be used when no check is on board
     [[nodiscard]] uint64_t GetPinnedFigsMapWoutCheck(int col, uint64_t fullMap) const;
 
+    [[nodiscard]] uint64_t GenerateAllowedTilesForPrecisedPinnedFig(uint64_t figBoard, uint64_t fullMap) const;
+
+
     // returns [ pinnedFigMap, allowedTilesMap ]
     [[nodiscard]] std::pair<uint64_t, uint64_t> GetPinnedFigsMapWithCheck(int col, uint64_t fullMap) const;
 
@@ -133,7 +136,6 @@ struct ChessMechanics
     // private methods
     // ------------------------------
 private:
-    [[nodiscard]] uint64_t _generateAllowedTilesForPrecisedPinnedFig(uint64_t figBoard, uint64_t fullMap) const;
 
     // Todo: el passnt
     template<
@@ -317,11 +319,11 @@ private:
                 // should be unblocked on specific lines
 
                 if ((pawnMap & pinnedFigMap) != 0 && (
-                        _generateAllowedTilesForPrecisedPinnedFig(pawnMap, fullMap) & moveMap) == 0) {
+                        GenerateAllowedTilesForPrecisedPinnedFig(pawnMap, fullMap) & moveMap) == 0) {
                     possiblePawnsToMove ^= pawnMap;
                     continue;
                 }
-                if ((_generateAllowedTilesForPrecisedPinnedFig(board.elPassantField, fullMap) & moveMap) == 0) {
+                if ((GenerateAllowedTilesForPrecisedPinnedFig(board.elPassantField, fullMap) & moveMap) == 0) {
                     possiblePawnsToMove ^= pawnMap;
                     continue;
                 }
@@ -365,7 +367,7 @@ private:
         bool promotePawns = false,
         bool selectFigures = false,
         bool isCheck = false,
-        Field (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
+        uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
     >
     void _processFigMoves(ActionT action, const int depth, uint64_t&figMap,
                           const uint64_t enemyMap, const uint64_t allyMap, const uint64_t pinnedFigMap,
@@ -454,7 +456,7 @@ private:
             // processing moves
             const uint8_t figPos = ExtractMsbPos(pinnedOnes);
             const uint64_t figBoard = maxMsbPossible >> figPos;
-            const uint64_t allowedTiles = _generateAllowedTilesForPrecisedPinnedFig(figBoard, fullMap);
+            const uint64_t allowedTiles = GenerateAllowedTilesForPrecisedPinnedFig(figBoard, fullMap);
             const uint64_t figMoves = MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap & allowedTiles;
             // TODO: ischeck applid here?
             // TODO: breaking if there?
@@ -482,7 +484,7 @@ private:
     template<
         class ActionT,
         bool promotePawns,
-        Field (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
+        uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
     >
     void _processNonAttackingMoves(ActionT action, const int depth, uint64_t&figMap, uint64_t nonAttackingMoves,
         [[maybe_unused]] const uint64_t startPos = 0 /* used only for pawns to check el passant*/)

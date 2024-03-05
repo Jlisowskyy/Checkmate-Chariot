@@ -128,7 +128,7 @@ std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board&oldBoard, const B
 
 std::string GetEncodingFromBoards(const Board&bd, uint64_t oldMap, uint64_t newMap, MoveTypes mType);
 
-std::string GetShortAlgebraicMoveEncoding(const Board& oBoard, const Board& nBoard);
+std::string GetLongAlgebraicMoveEncoding(const Board& oBoard, const Board& nBoard);
 
 // returns 0 if invalid characters were passed
 uint64_t ExtractPosFromStr(int x, int y);

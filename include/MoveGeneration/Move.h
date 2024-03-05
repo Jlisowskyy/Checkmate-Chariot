@@ -24,7 +24,7 @@
  *  - bits 40-46 - encodes field on which figure was killed - used only in case of el passant killing move (6 bits)
  *  - bits 46-52 - encodes new elPassant field (6 bits)
  *  - bits 52-56 - encodes castling rights (4 bits)
- *
+ *  - bits 56-59 - encodes type of performed castlins (3 bits)
  */
 
 /*      IMPORTANT NOTE:
@@ -46,6 +46,18 @@ public:
     // Class interaction
     // ------------------------------
 
+    [[nodiscard]] std::string GetLongAlgebraicNotation() const
+    {
+        static constexpr std::string FigTypeMap[] = {"", "n", "b", "r", "q"};
+        std::string promotionMark;
+
+        if (GetStartBoardIndex() != GetTargetBoardIndex())
+            promotionMark = FigTypeMap[GetTargetBoardIndex() % Board::BoardsPerCol];
+
+        return fieldStrMap.at(static_cast<Field>(maxMsbPossible >> GetStartField())) +
+            fieldStrMap.at(static_cast<Field>(maxMsbPossible >> GetTargetField())) + promotionMark;
+    }
+
     static void MakeMove(const Move mv, Board& bd)
     {
         // removing old piece from board
@@ -61,12 +73,33 @@ public:
         bd.Castlings = mv.GetCastlingRights();
 
         // applying new el passant field
-        bd.elPassantField = mv.GetElPassantField() == 0 ? INVALID : static_cast<Field>(maxMsbPossible >> mv.GetTargetField());
+        bd.elPassantField = maxMsbPossible >> mv.GetElPassantField();
+
+        // applying addidtional castling operation
+        auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
+        bd.boards[boardIndex] |= field;
     }
 
-    static void UnmakeMove(Move mv, const Board& bd)
+    static void UnmakeMove(Move mv, Board& bd, const std::array<bool, Board::CastlingCount+1>& castlings, const uint64_t oldElPassant)
     {
+        // placing piece on old board
+        bd.boards[mv.GetStartBoardIndex()] |= maxMsbPossible >> mv.GetStartField();
 
+        // removing figure from new field
+        bd.boards[mv.GetTargetBoardIndex()] ^= maxMsbPossible >> mv.GetTargetField();
+
+        // placing killed figure in good place
+        bd.boards[mv.GetKilledBoardIndex()] |= maxMsbPossible >> mv.GetKilledFigureField();
+
+        // recovering old castlings
+        bd.Castlings = castlings;
+
+        // recovering old el passant field
+        bd.elPassantField = oldElPassant;
+
+        // reverting castling operation
+        auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
+        bd.boards[boardIndex] ^= field;
     }
 
     void SetEval(const int16_t eval)
@@ -76,8 +109,8 @@ public:
 
     [[nodiscard]] int16_t GetEval() const
     {
-        static constexpr uint64_t EvalMask = 0xFFFF;
-        return _storage & EvalMask;
+        static constexpr uint64_t EvalMask = 0xFFFFLLU;
+        return static_cast<int16_t>(_storage & EvalMask);
     }
 
     void SetStartField(const uint64_t startField)
@@ -87,7 +120,7 @@ public:
 
     [[nodiscard]]uint64_t GetStartField() const
     {
-        static constexpr uint64_t StartFieldMask = 0x3F << 16;
+        static constexpr uint64_t StartFieldMask = 0x3FLLU << 16;
         return (_storage & StartFieldMask) >> 16;
     }
 
@@ -98,7 +131,7 @@ public:
 
     [[nodiscard]]uint64_t GetStartBoardIndex() const
     {
-        static constexpr uint64_t StartBoardMask = 0xF << 22;
+        static constexpr uint64_t StartBoardMask = 0xFLLU << 22;
         return (_storage & StartBoardMask) >> 22;
     }
 
@@ -109,7 +142,7 @@ public:
 
     [[nodiscard]]uint64_t GetTargetField() const
     {
-        static constexpr uint64_t TargetFieldMask = 0x3F << 26;
+        static constexpr uint64_t TargetFieldMask = 0x3FLLU << 26;
         return (_storage & TargetFieldMask) >> 26;
     }
 
@@ -120,7 +153,7 @@ public:
 
     [[nodiscard]]uint64_t GetTargetBoardIndex() const
     {
-        static constexpr uint64_t TargetBoardIndexMask = 0xF << 32;
+        static constexpr uint64_t TargetBoardIndexMask = 0xFLLU << 32;
         return (_storage & TargetBoardIndexMask) >> 32;
     }
 
@@ -131,7 +164,7 @@ public:
 
     [[nodiscard]]uint64_t GetKilledBoardIndex() const
     {
-        static constexpr uint64_t KilledBoardIndexMask = 0xF << 36;
+        static constexpr uint64_t KilledBoardIndexMask = 0xFLLU << 36;
         return (_storage & KilledBoardIndexMask) >> 36;
     }
 
@@ -142,7 +175,7 @@ public:
 
     [[nodiscard]]uint64_t GetKilledFigureField() const
     {
-        static constexpr uint64_t KilledFigureFieldMask = 0x3F << 40;
+        static constexpr uint64_t KilledFigureFieldMask = 0x3FLLU << 40;
         return (_storage & KilledFigureFieldMask) >> 40;
     }
 
@@ -153,20 +186,20 @@ public:
 
     [[nodiscard]]uint64_t GetElPassantField() const
     {
-        static constexpr uint64_t ElPassantFieldMask = 0x3F << 46;
+        static constexpr uint64_t ElPassantFieldMask = 0x3FLLU << 46;
         return (_storage & ElPassantFieldMask) >> 46;
     }
 
-    void SetCasltingRights(const std::array<bool, Board::CastlingCount>& arr)
+    void SetCasltingRights(const std::array<bool, Board::CastlingCount+1>& arr)
     {
         const uint64_t rights = (arr[0] << 0) | (arr[1] << 1) | (arr[2] << 2) | (arr[3] << 3);
         _storage &= rights << 52;
     }
 
-    [[nodiscard]]std::array<bool, Board::CastlingCount> GetCastlingRights() const
+    [[nodiscard]]std::array<bool, Board::CastlingCount+1> GetCastlingRights() const
     {
-        static constexpr uint64_t CastlingMask = 0xF << 52;
-        std::array<bool, Board::CastlingCount> arr{};
+        static constexpr uint64_t CastlingMask = 0xFLLU << 52;
+        std::array<bool, Board::CastlingCount+1> arr{};
         const uint64_t rights = (_storage & CastlingMask) >> 52;
 
         arr[0] = 1 & rights;
@@ -175,6 +208,17 @@ public:
         arr[3] = (8 & rights) >> 3;
 
         return arr;
+    }
+
+    void SetCastlingType(const uint64_t castlingType)
+    {
+        _storage &= castlingType << 56;
+    }
+
+    [[nodiscard]]uint64_t GetCastlingType() const
+    {
+        static constexpr uint64_t CastlingTypeMask = 0x7LLU << 56;
+        return (_storage & CastlingTypeMask) >> 56;
     }
 
     // ------------------------------
@@ -186,6 +230,14 @@ public:
     // ------------------------------
 private:
     uint64_t _storage{};
+
+    static constexpr std::pair<size_t, uint64_t> CastlingActions[] = {
+        { Board::SentinelBoardIndex, 0LLU },
+        { wRooksIndex, Board::CastlingNewRookMaps[0] },
+        { wRooksIndex, Board::CastlingNewRookMaps[1] },
+        { bRooksIndex, Board::CastlingNewRookMaps[2] },
+        { bRooksIndex, Board::CastlingNewRookMaps[3] },
+    };
 };
 
 #endif //MOVE_H

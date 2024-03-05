@@ -316,7 +316,7 @@ const std::unordered_map<std::string, Field> strFieldMap{
     {"h8", H8}
 };
 
-std::string GetShortAlgebraicMoveEncoding(const Board &oBoard, const Board &nBoard) {
+std::string GetLongAlgebraicMoveEncoding(const Board &oBoard, const Board &nBoard) {
     auto [oldBoard, newBoard, mType] = FindMove(oBoard, nBoard);
     return GetEncodingFromBoards(nBoard, oldBoard, newBoard, mType);
 }

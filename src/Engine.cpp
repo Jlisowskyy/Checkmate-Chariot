@@ -25,7 +25,7 @@ std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
     game.IterativeBoardTraversal(
         [&](const Board&bd)
         {
-            const auto moveStr = GetShortAlgebraicMoveEncoding(startingBoard, bd);
+            const auto moveStr = GetLongAlgebraicMoveEncoding(startingBoard, bd);
 
             uint64_t localSum{};
             game.IterativeBoardTraversal(
