@@ -77,10 +77,8 @@ struct MoveGenerator {
     }
 
     uint64_t CountMoves(const int depth) {
-        if (depth == 0) {
-            // DisplayBoard(board);
-            return 1;
-        }
+        if (depth == 0) return 1;
+        if (depth == 1) return GetMovesFast().size();
 
         uint64_t sum{};
         const auto moves = GetMovesFast();
@@ -89,16 +87,9 @@ struct MoveGenerator {
         const auto oldElPassant = board.elPassantField;
 
         for (const auto move: moves) {
-            const auto oBoard = board;
             Move::MakeMove(move, board);
             sum += CountMoves(depth - 1);
             Move::UnmakeMove(move, board, oldCastling, oldElPassant);
-            // if (!(Board::Comp(oBoard, board))) {
-            //     // std::cout << std::format("ERROR on move: {}\n", move.GetLongAlgebraicNotation()) << std::endl;
-            //     // DisplayBoard(oBoard);
-            //     // DisplayBoard(board);
-            //     // std::cout << "------------------------------------------------------------\n";
-            // }
         }
 
         return sum;

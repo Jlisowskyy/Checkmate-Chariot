@@ -1,7 +1,7 @@
 Important todos:
     - added guards and correct messaging for uint128
     - REPAIR FKIGN UCI WITH GO FEN COMMAND!!!!!!!
-
+    - repair uci when go time or go depth are runnig on fen changed position
     - what is field hallowedTiles in processking moves when checked
 
 LAST ERROR:
