@@ -249,6 +249,10 @@ public:
     // Class fields
     // ------------------------------
 private:
+    static constexpr uint64_t Bit4 = 0b1111LLU;
+    static constexpr uint64_t Bit6 = 0b111111LLU;
+    static constexpr uint64_t Bit3 = 0b111LLU;
+
     uint64_t _storage{};
 
     static constexpr std::pair<size_t, uint64_t> CastlingActions[] = {

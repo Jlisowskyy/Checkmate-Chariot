@@ -60,6 +60,8 @@ std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
         Move::MakeMove(move, startingBoard);
         moveMap[move.GetLongAlgebraicNotation()] = game.CountMoves(depth - 1);
         Move::UnmakeMove(move, startingBoard, oldCastling, oldElPassant);
+        // if (!(_board == startingBoard))
+        //     std::cerr << "ERROR" << std::endl;
     }
 
     return moveMap;

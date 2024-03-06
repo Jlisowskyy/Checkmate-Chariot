@@ -42,6 +42,8 @@ struct Board
         return ExtractMsbPos(boards[col*BoardsPerCol + kingIndex]);
     }
 
+    static bool Comp(const Board& a, const Board& b);
+
     // ------------------------------
     // Class fields
     // ------------------------------
