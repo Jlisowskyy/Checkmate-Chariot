@@ -220,7 +220,7 @@ private:
     void _processElPassantMoves(std::vector<Move>& results, const uint64_t fullMap, const uint64_t pinnedFigMap,
                                 [[maybe_unused]] const uint64_t allowedMoveFillter = 0)
     {
-        if (board.elPassantField == Board::InvalidElPassantField) return;
+        if (board.elPassantField == Board::InvalidElPassantBoard) return;
 
         // calculation preparation
         const uint64_t suspectedFields = MapT::GetElPassantSuspectedFields(board.elPassantField);
@@ -399,7 +399,12 @@ private:
                 mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
                 // if el passant line is passed when figure moved to these line flag will turned on
                 if constexpr (elPassantFieldDeducer != nullptr)
-                    mv.SetElPassantField(ExtractMsbPos(elPassantFieldDeducer(moveBoard, startField)));
+                {
+                    // TODO: CHANGED TEMPORALRALKSFLAJSF TEMP
+                    if (const auto result = elPassantFieldDeducer(moveBoard, startField); result == 0)
+                        mv.SetElPassantField(Board::InvalidElPassantField);
+                    else mv.SetElPassantField(ExtractMsbPos(result));
+                }
                 else
                     mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);

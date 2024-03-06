@@ -97,7 +97,7 @@ public:
 
     static constexpr Board StartBoard = {
         .Castlings = {true, true, true, true},
-        .elPassantField = INVALID,
+        .elPassantField = Board::InvalidElPassantBoard,
         .movColor = WHITE,
         .boards = {
             65280LLU,

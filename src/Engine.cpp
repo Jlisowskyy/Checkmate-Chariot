@@ -53,8 +53,8 @@ std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
 
     const auto moves = game.GetMovesFast();
 
-    const auto oldCastling = _board.Castlings;
-    const auto oldElPassant = _board.elPassantField;
+    const auto oldCastling = startingBoard.Castlings;
+    const auto oldElPassant = startingBoard.elPassantField;
     for(const auto move : moves)
     {
         Move::MakeMove(move, startingBoard);

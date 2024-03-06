@@ -53,6 +53,7 @@ struct Board
     static constexpr size_t KingPosCount = 2;
     static constexpr size_t CastlingsPerColor = 2;
     static constexpr uint64_t InvalidElPassantField = 1;
+    static constexpr uint64_t InvalidElPassantBoard = maxMsbPossible >> InvalidElPassantField;
     static constexpr size_t SentinelBoardIndex = 12;
     static constexpr size_t SentinelCastlingIndex = 4;
 
@@ -96,7 +97,7 @@ struct Board
     };
 
     std::array<bool, CastlingCount+1> Castlings{false, false, false, false, false}; //additional sentinel field
-    uint64_t elPassantField = InvalidElPassantField;
+    uint64_t elPassantField = maxMsbPossible >> InvalidElPassantField;
     int movColor = WHITE;
     uint64_t boards[BoardsCount + 1] = {}; // addiitonal sentinel board
 };

@@ -75,7 +75,7 @@ void DisplayBoard(const Board& bd)
         GlobalLogger.StartLogging() << castlingNames[i] << ": " << bd.Castlings[i] << std::endl;
     }
 
-    GlobalLogger.StartLogging() << "El passand field: " << (bd.elPassantField == INVALID
+    GlobalLogger.StartLogging() << "El passand field: " << (bd.elPassantField == Board::InvalidElPassantBoard
                                                                 ? "-"
                                                                 : fieldStrMap.at(static_cast<Field>(bd.elPassantField)))
             << std::endl;

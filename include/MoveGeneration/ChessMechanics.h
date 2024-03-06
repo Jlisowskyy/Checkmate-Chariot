@@ -289,7 +289,7 @@ private:
                                 const uint64_t pinnedFigMap, uint64_t&figMap,
                                 [[maybe_unused]] const uint64_t allowedMoveFillter = 0)
     {
-        if (board.elPassantField == INVALID) return;
+        if (board.elPassantField == Board::InvalidElPassantBoard) return;
 
         // calculation preparation
         const uint64_t suspectedFields = MapT::GetElPassantSuspectedFields(board.elPassantField);
@@ -341,7 +341,7 @@ private:
             figMap ^= pawnMap;
             figMap |= moveMap;
             board.boards[enemyCord + pawnsIndex] ^= board.elPassantField;
-            board.elPassantField = INVALID;
+            board.elPassantField = Board::InvalidElPassantBoard;
             board.ChangePlayingColor();
 
             // starting deeper search
@@ -389,7 +389,7 @@ private:
 
         // saving results of previous el passant field, used only when figure is not a pawn
         const uint64_t oldElpassant = board.elPassantField;
-        board.elPassantField = INVALID;
+        board.elPassantField = Board::InvalidElPassantBoard;
 
         // procesing unpinned moves
         while (unpinnedOnes)
@@ -512,7 +512,7 @@ private:
 
                 // reverting flag changes
                 if constexpr (elPassantFieldDeducer != nullptr)
-                    board.elPassantField = INVALID;
+                    board.elPassantField = Board::InvalidElPassantBoard;
 
                 // cleaning up
                 figMap ^= moveBoard;
@@ -627,7 +627,7 @@ private:
         board.Castlings[CastlingPerColor * board.movColor + QueenCastlingIndex] = false;
 
         //prohibiting elPassant
-        board.elPassantField = INVALID;
+        board.elPassantField = Board::InvalidElPassantBoard;
 
         // processing simple non attacking moves
         while (nonAttackingMoves)
@@ -705,7 +705,7 @@ private:
         board.Castlings[CastlingPerColor * board.movColor + QueenCastlingIndex] = false;
 
         // prohibiting elPassant
-        board.elPassantField = INVALID;
+        board.elPassantField = Board::InvalidElPassantBoard;
 
         // processing simple non attacking moves
         while (nonAttackingMoves)
@@ -783,7 +783,7 @@ private:
                 board.boards[board.movColor * Board::BoardsPerCol + rooksIndex] |= Board::CastlingNewRookMaps[
                     castlingIndex];
                 const uint64_t oldElPassant = board.elPassantField;
-                board.elPassantField = INVALID;
+                board.elPassantField = Board::InvalidElPassantBoard;
 
                 // processiong main actions
                 board.ChangePlayingColor();

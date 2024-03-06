@@ -53,7 +53,7 @@ std::string FenTranslator::Translate(const Board&board)
                 ? WhitePawnMap::GetElPassantMoveField(board.elPassantField)
                 : BlackPawnMap::GetElPassantMoveField(board.elPassantField);
 
-    fenPos += board.elPassantField == INVALID ? "-" : fieldStrMap.at(static_cast<Field>(FenCompatibleElPassantPosition));
+    fenPos += board.elPassantField == Board::InvalidElPassantBoard ? "-" : fieldStrMap.at(static_cast<Field>(FenCompatibleElPassantPosition));
 
     // skpping moves counters - not supported
     fenPos += " 0 1";
@@ -171,9 +171,9 @@ size_t FenTranslator::_processElPassant(Board&bd, const size_t pos, const std::s
     bd.elPassantField = strFieldMap.at(field);
 
     // inner representation points to position made with long pawn move
-    bd.elPassantField = static_cast<Field>(bd.movColor == WHITE
+    bd.elPassantField = bd.movColor == WHITE
                                                ? BlackPawnMap::GetElPassantMoveField(bd.elPassantField)
-                                               : WhitePawnMap::GetElPassantMoveField(bd.elPassantField));
+                                               : WhitePawnMap::GetElPassantMoveField(bd.elPassantField);
 
     return pos + 2;
 }
