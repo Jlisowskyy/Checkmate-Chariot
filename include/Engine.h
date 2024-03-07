@@ -13,6 +13,7 @@
 #include "Interface/FenTranslator.h"
 #include "Interface/Logger.h"
 #include "OpeningBook/OpeningBook.h"
+#include "../include/ThreadManagement/SearchThreadManager.h"
 
 class Engine
 {
@@ -58,14 +59,13 @@ public:
 
     [[nodiscard]] std::string GetFenTranslation() const;
 
-    void GoMoveTime(lli time, const std::vector<std::string>& moves) const;
+    void GoMoveTime(lli time, const std::vector<std::string>& moves);
 
-    void GoDepth(int depth, const std::vector<std::string>& moves) const;
+    void GoDepth(int depth, const std::vector<std::string>& moves);
 
+    void StopSearch();
 
-    // TODO: next goals:
-    void StopSearch() { std::cout << "stop search resullt! " << std::endl; }
-    void GoInfinite() { std::cout << "go infinite result! " << std::endl; }
+    void GoInfinite();
 
     // ------------------------------
     // private methods
@@ -87,6 +87,10 @@ private:
     Board _board{};
     Board _startingBoard{};
     OpeningBook _book{"uci_ready_long", OpeningBook::bookFileType::text_uci} ;
+
+public:
+    SearchThreadManager TManager{};
+private:
 
     // ------------------------------
     // Engine options

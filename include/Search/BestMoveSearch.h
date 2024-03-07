@@ -7,12 +7,10 @@
 
 #include <climits>
 #include <string>
-#include <chrono>
 #include <vector>
 #include <format>
 
 #include "../EngineTypeDefs.h"
-// #include "../MoveGeneration/ChessMechanics.h"
 #include "../MoveGeneration/MoveGenerator.h"
 
 struct BestMoveSearch
@@ -22,34 +20,31 @@ struct BestMoveSearch
     // ------------------------------
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board& board): _board(board) {}
+    BestMoveSearch(const Board& board, stack<Move, DefaultStackSize>& s): _stack(s), _board(board) {}
     ~BestMoveSearch() = default;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    template<
-        class FullBoardEvalFuncT,
-        bool WriteInfo = false
-    > [[nodiscard]] std::string searchMoveTimeFullBoardEvalUnthreaded(FullBoardEvalFuncT evalF, long timeLimit)
+template<
+    class FullBoardEvalFuncT,
+    bool WriteInfo = true
+>void IterativeDeepening(FullBoardEvalFuncT evalF, Move* output, const int maxDepth)
     {
-        const auto timeStart = std::chrono::steady_clock::now();
-
         MoveGenerator generator(_board, _stack);
         const auto moves = generator.GetMovesFast();
-        std::vector<std::pair<int, int>> sortedMoveList(moves.size() + 1);
+        std::vector<std::pair<int, int>> sortedMoveList(moves.size + 1);
 
         // sentinel guarded
-        for (size_t i = 1 ; i <= moves.size(); ++i)
+        for (size_t i = 1 ; i <= moves.size; ++i)
             sortedMoveList[i] = std::make_pair(i-1, 0);
         //sentinel
         sortedMoveList[0] = std::make_pair(-1, PositiveInfinity);
 
         int depth = 1;
-        std::string bestMove;
         int alpha = NegativeInfinity;
-        while(alpha != PositiveInfinity){
+        while(alpha != PositiveInfinity && depth <= maxDepth){
             // resetting alpha
             alpha = NegativeInfinity;
 
@@ -58,14 +53,7 @@ struct BestMoveSearch
             const auto oldElPassant = _board.elPassantField;
 
             // list iteration
-            for (size_t i = 1; i <= moves.size(); ++i) {
-                // comparing spent time
-                auto timeStop = std::chrono::steady_clock::now();
-                auto timeSpent = std::chrono::duration_cast<std::chrono::milliseconds>(timeStop - timeStart);
-
-                if (timeSpent.count() > timeLimit)
-                    return bestMove;
-
+            for (size_t i = 1; i <= moves.size; ++i) {
                 Move::MakeMove(moves[sortedMoveList[i].first], _board);
                 int eval = -_alphaBeta(evalF, _board, NegativeInfinity, -alpha, depth);
                 Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
@@ -76,64 +64,17 @@ struct BestMoveSearch
 
             // move sorting
             _insertionSort(sortedMoveList);
-
-            // saving result
-            bestMove = moves[sortedMoveList[1].first].GetLongAlgebraicNotation();
+            *output = moves[sortedMoveList[1].first];
 
             if constexpr (WriteInfo){
-                GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}\n", depth, bestMove);
+                GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}\n",
+                    depth, moves[sortedMoveList[1].first].GetLongAlgebraicNotation());
             }
 
             ++depth;
         }
 
         _stack.PopAggregate(moves);
-        return bestMove;
-    }
-
-    template<
-        class FullBoardEvalFuncT,
-        bool WriteInfo = false
-    > [[nodiscard]] std::string searchMoveDepthFullBoardEvalUnthreaded(FullBoardEvalFuncT evalF, const int targetDepth)
-    {
-        MoveGenerator generator(_board);
-        const auto moves = generator.GetMovesFast();
-        std::vector<std::pair<int, int>> sortedMoveList(moves.size() + 1);
-
-        // sentinel guarded
-        for (size_t i = 1 ; i <= moves.size(); ++i)
-            sortedMoveList[i] = std::make_pair(i-1, 0);
-        //sentinel
-        sortedMoveList[0] = std::make_pair(-1, PositiveInfinity);
-
-        for(int depth = 1; depth <= targetDepth; ++depth){
-            // resetting alpha
-            int alpha = NegativeInfinity;
-
-            // saving old params
-            const auto oldCastlings = _board.Castlings;
-            const auto oldElPassant = _board.elPassantField;
-
-            // list iteration
-            for (size_t i = 1; i <= moves.size(); ++i) {
-                Move::MakeMove(moves[sortedMoveList[i].first], _board);
-                int eval = -_alphaBeta(evalF, _board, NegativeInfinity, -alpha, depth);
-                Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
-
-                alpha = std::max(alpha, eval);
-                sortedMoveList[i].second = eval;
-            }
-
-            // move sorting
-            _insertionSort(sortedMoveList);
-
-            if constexpr (WriteInfo){
-                auto bestMove = moves[sortedMoveList[1].first].GetLongAlgebraicNotation();
-                GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}\n", depth, bestMove);
-            }
-        }
-
-        return moves[sortedMoveList[1].first].GetLongAlgebraicNotation();
     }
 
     // ------------------------------
@@ -151,27 +92,34 @@ private:
             return evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
         }
 
-        MoveGenerator mechanics(bd);
-        auto moves = mechanics.GetMovesFast();
+        MoveGenerator mechanics(bd, _stack);
+        const auto moves = mechanics.GetMovesFast();
 
-        if (moves.empty())
+        if (moves.size == 0)
+        {
+            _stack.PopAggregate(moves);
             return mechanics.IsCheck() ? NegativeInfinity : 0;
+        }
 
         const auto oldCastlings = bd.Castlings;
         const auto oldElPassant = bd.elPassantField;
 
-        for (const auto move : moves)
+        for(size_t i = 0; i < moves.size; ++i)
         {
-            Move::MakeMove(move, bd);
+            Move::MakeMove(moves[i], bd);
             const int moveValue = -_alphaBeta(evalF, bd, -beta, -alpha, depth-1);
-            Move::UnmakeMove(move, bd, oldCastlings, oldElPassant);
+            Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
             if (moveValue >= beta)
+            {
+                _stack.PopAggregate(moves);
                 return beta;
+            }
 
             alpha = std::max(alpha, moveValue);
         }
 
+        _stack.PopAggregate(moves);
         return alpha;
     }
 
@@ -183,8 +131,8 @@ private:
 
     static constexpr int NegativeInfinity = INT_MIN + 1;
     static constexpr int PositiveInfinity = INT_MAX;
-    static stack<Move, DefaultStackSize> _stack;
 
+    stack<Move, DefaultStackSize>& _stack;
     Board _board;
 };
 

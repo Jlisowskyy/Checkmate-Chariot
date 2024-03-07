@@ -77,7 +77,7 @@ struct PinningMasks
     static constexpr size_t RookLines = 0;
     std::array<uint64_t, PinningMasksCount> masks{};
     uint64_t fullMask{};
-    uint64_t rookMask{};;
+    uint64_t rookMask{};
     uint64_t bishopMask{};
 
     // ------------------------------

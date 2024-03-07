@@ -78,7 +78,7 @@ struct MoveGenerator {
 
     uint64_t CountMoves(const int depth) {
         if (depth == 0) return 1;
-        if (depth == 1) return GetMovesFast().size();
+        if (depth == 1) return GetMovesFast().size;
 
         uint64_t sum{};
         const auto moves = GetMovesFast();
@@ -86,10 +86,10 @@ struct MoveGenerator {
         const auto oldCastling = _board.Castlings;
         const auto oldElPassant = _board.elPassantField;
 
-        for (const auto move: moves) {
-            Move::MakeMove(move, _board);
+        for (size_t i = 0; i < moves.size; ++i) {
+            Move::MakeMove(moves[i], _board);
             sum += CountMoves(depth - 1);
-            Move::UnmakeMove(move, _board, oldCastling, oldElPassant);
+            Move::UnmakeMove(moves[i], _board, oldCastling, oldElPassant);
         }
 
         return sum;

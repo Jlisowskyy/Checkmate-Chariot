@@ -169,7 +169,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) {
         pos = ParseTools::ExtractNextWord(str, file1Str, pos);
         if (pos != 0) ParseTools::ExtractNextWord(str, file2Str, pos);
 
-        bool result = SearchPerfTester::PerformSearchPerfTest(file1Str, file2Str);
+        bool result = SearchPerfTester::PerformSearchPerfTest(file1Str, file2Str, _engine.TManager.GetDefaultStack());
         if (result == false)
             return UCICommand::InvalidCommand;
     }

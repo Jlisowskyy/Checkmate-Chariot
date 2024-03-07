@@ -3,6 +3,9 @@ project(Checkmate-Chariot)
 
 set(CMAKE_CXX_STANDARD 20)
 
+cmake_host_system_information(RESULT LOGICAL_CORES QUERY NUMBER_OF_LOGICAL_CORES)
+configure_file(include/cmakeDefines.h.in include/cmakeDefines.h @ONLY)
+
 add_executable(Checkmate-Chariot main.cpp
         include/compilationConstants.h
         include/ChessEngine.h
@@ -69,6 +72,8 @@ add_executable(Checkmate-Chariot main.cpp
         src/MoveGenerator.cpp
         include/MoveGeneration/MoveGenerator.h
         include/ThreadManagement/stack.h
+        include/ThreadManagement/SearchThreadManager.h
+        src/SearchThreadManager.cpp
 )
 
 find_package(OpenMP)
@@ -77,8 +82,8 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries( Checkmate-Chariot PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-target_compile_options(Checkmate-Chariot PUBLIC -O3;-march=raptorlake;-fopenmp;-fconstexpr-ops-limit=133554432;-funroll-loops;-fno-peel-loops;-fno-tracer)
-#target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-ops-limit=133554432;-g;)
+#target_compile_options(Checkmate-Chariot PUBLIC -O3;-march=raptorlake;-fopenmp;-fconstexpr-ops-limit=133554432;-funroll-loops;-fno-peel-loops;-fno-tracer)
+target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-ops-limit=133554432;-g;)
 
 
 # Define the source file you want to copy

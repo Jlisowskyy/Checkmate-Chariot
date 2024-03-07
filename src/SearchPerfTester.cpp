@@ -14,7 +14,7 @@
 #include "../include/Search/BestMoveSearch.h"
 #include "../include/Evaluation/BoardEvaluator.h"
 
-bool SearchPerfTester::PerformSearchPerfTest(const std::string& inputTestPath, const std::string& output)
+bool SearchPerfTester::PerformSearchPerfTest(const std::string& inputTestPath, const std::string& output, stack<Move, DefaultStackSize>& stack)
 {
     // reading csv file
     auto tests = CsvOperator::ReadPosDepthCsv(inputTestPath.empty()
@@ -27,7 +27,7 @@ bool SearchPerfTester::PerformSearchPerfTest(const std::string& inputTestPath, c
 
     for(const auto& [testCase, dep] : tests)
     {
-        const double result = _performTestCase(testCase, dep);
+        const double result = _performTestCase(testCase, dep, stack);
         sumTime += result;
 
         results.emplace_back(testCase, dep, result);
@@ -42,14 +42,14 @@ bool SearchPerfTester::PerformSearchPerfTest(const std::string& inputTestPath, c
     return true;
 }
 
-double SearchPerfTester::_performTestCase(const std::string& testCase, const int depth)
+double SearchPerfTester::_performTestCase(const std::string& testCase, const int depth, stack<Move, DefaultStackSize>& stack)
 {
     const auto bd = FenTranslator::Translate(testCase);
-    BestMoveSearch searcher(bd);
+    BestMoveSearch searcher(bd, stack);
 
     const auto tStart = std::chrono::steady_clock::now();
-    [[maybe_unused]] auto unused =
-            searcher.searchMoveDepthFullBoardEvalUnthreaded(BoardEvaluator::DefaultFullEvalFunction, depth);
+    [[maybe_unused]]Move mv{};
+    searcher.IterativeDeepening(BoardEvaluator::DefaultFullEvalFunction, &mv, depth);
     const auto tStop = std::chrono::steady_clock::now();
 
     return (double)std::chrono::duration_cast<std::chrono::milliseconds>(tStop - tStart).count();

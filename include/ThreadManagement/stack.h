@@ -29,6 +29,12 @@ template<
             s.Push(item);
             ++size;
         }
+
+
+        ItemT operator[](size_t ind) const
+        {
+            return data[ind];
+        }
     };
 
     struct stackPayloadConst {
@@ -36,13 +42,18 @@ template<
 
         ItemT* data;
         const size_t size;
+
+        ItemT operator[](size_t ind) const
+        {
+            return data[ind];
+        }
     };
 
     // ------------------------------
     // Class creation
     // ------------------------------
 
-    stack(): _data(malloc(sizeof(ItemT) * StackSize)) {}
+    stack(): _data(static_cast<ItemT *>(malloc(sizeof(ItemT) * StackSize))) {}
     ~stack() { free(_data); }
 
     stack(const stack&) = delete;
@@ -67,7 +78,7 @@ template<
     }
 
     stackPayload GetPayload() {
-        return _data + _last;
+        return {_data + _last, 0};
     }
 
     void PopAggregate(const stackPayloadConst payload) {

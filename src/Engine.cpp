@@ -5,7 +5,6 @@
 #include "../include/Engine.h"
 #include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/Search/BestMoveSearch.h"
-#include "../include/Evaluation/BoardEvaluator.h"
 #include "../include/OpeningBook/OpeningBook.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
 
@@ -48,20 +47,18 @@ std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
 std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
 {
     Board startingBoard = _board;
-    MoveGenerator game(startingBoard);
+    MoveGenerator game(startingBoard, TManager.GetDefaultStack());
     std::map<std::string, uint64_t> moveMap{};
 
     const auto moves = game.GetMovesFast();
 
     const auto oldCastling = startingBoard.Castlings;
     const auto oldElPassant = startingBoard.elPassantField;
-    for(const auto move : moves)
+    for(size_t i = 0; i < moves.size; ++i)
     {
-        Move::MakeMove(move, startingBoard);
-        moveMap[move.GetLongAlgebraicNotation()] = game.CountMoves(depth - 1);
-        Move::UnmakeMove(move, startingBoard, oldCastling, oldElPassant);
-        // if (!(_board == startingBoard))
-        //     std::cerr << "ERROR" << std::endl;
+        Move::MakeMove(moves[i], startingBoard);
+        moveMap[moves[i].GetLongAlgebraicNotation()] = game.CountMoves(depth - 1);
+        Move::UnmakeMove(moves[i], startingBoard, oldCastling, oldElPassant);
     }
 
     return moveMap;
@@ -173,32 +170,39 @@ void Engine::_changeDebugState(Engine&eng, std::string&nPath)
 
 // IMPORTANT TODO: what happens when startpos is not basic game?!
 
-void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves) const
+void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves)
 {
-    if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
-    {
-        GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
-        return;
-    }
+    // if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
+    // {
+    //     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
+    //     return;
+    // }
 
-    BestMoveSearch searchMachine(_board);
-    auto bestMove = searchMachine.searchMoveTimeFullBoardEvalUnthreaded<decltype(BoardEvaluator::DefaultFullEvalFunction),
-            true>(BoardEvaluator::DefaultFullEvalFunction, time);
+    auto bestMove = TManager.goMoveTime(_board, time);
 
     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
 }
 
-void Engine::GoDepth(const int depth, const std::vector<std::string>& moves) const
+void Engine::GoDepth(const int depth, const std::vector<std::string>& moves)
 {
-    if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
-    {
-        GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
-        return;
-    }
+    // if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
+    // {
+    //     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
+    //     return;
+    // }
 
-    BestMoveSearch searchMachine(_board);
-    auto bestMove = searchMachine.searchMoveDepthFullBoardEvalUnthreaded<decltype(BoardEvaluator::DefaultFullEvalFunction),
-        true>(BoardEvaluator::DefaultFullEvalFunction, depth);
+    auto bestMove = TManager.goDepth(_board, depth);
 
     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
+}
+
+void Engine::StopSearch()
+{
+    if (const auto res = TManager.stop(); !res.empty())
+        GlobalLogger.StartLogging() << std::format("bestmove {}\n", res);
+}
+
+void Engine::GoInfinite()
+{
+    TManager.goInfinite(_board);
 }
