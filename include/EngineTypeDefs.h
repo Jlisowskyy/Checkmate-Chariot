@@ -137,6 +137,10 @@ uint64_t ExtractPosFromStr(int x, int y);
 // return scheme: [ oldMap, newMap ]
 std::pair<uint64_t, uint64_t> ExtractPositionsFromEncoding(const std::string&encoding);
 
+// global defined stack capacity used to store generated moves per thread
+static constexpr size_t MB = 1024 * 1024;
+static constexpr size_t DefaultStackSize = 32 * MB / sizeof(uint64_t);
+
 
 extern const std::unordered_map<size_t, Descriptors> figToDescMap;
 extern const std::unordered_map<size_t, char> descToFigMap;

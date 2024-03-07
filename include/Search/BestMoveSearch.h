@@ -36,7 +36,7 @@ struct BestMoveSearch
     {
         const auto timeStart = std::chrono::steady_clock::now();
 
-        MoveGenerator generator(_board);
+        MoveGenerator generator(_board, _stack);
         const auto moves = generator.GetMovesFast();
         std::vector<std::pair<int, int>> sortedMoveList(moves.size() + 1);
 
@@ -87,6 +87,7 @@ struct BestMoveSearch
             ++depth;
         }
 
+        _stack.PopAggregate(moves);
         return bestMove;
     }
 
@@ -182,6 +183,7 @@ private:
 
     static constexpr int NegativeInfinity = INT_MIN + 1;
     static constexpr int PositiveInfinity = INT_MAX;
+    static stack<Move, DefaultStackSize> _stack;
 
     Board _board;
 };

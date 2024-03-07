@@ -9,6 +9,7 @@
 
 #include "../BitOperations.h"
 #include "../EngineTypeDefs.h"
+#include "../ThreadManagement/stack.h"
 #include "ChessMechanics.h"
 #include "BishopMap.h"
 #include "KingMap.h"
@@ -20,6 +21,9 @@
 #include "Move.h"
 
 struct MoveGenerator {
+    using stck = stack<Move, DefaultStackSize>;
+    using payload = stck::stackPayload;
+
     // ------------------------------
     // Class inner types
     // ------------------------------
@@ -33,11 +37,9 @@ struct MoveGenerator {
     // Class Creation
     // ------------------------------
 
-    static constexpr size_t AverageChessMoves = 40;
-
     MoveGenerator() = delete;
 
-    explicit MoveGenerator(Board& bd): mechanics(bd), board(bd) {
+    explicit MoveGenerator(Board& bd, stack<Move, DefaultStackSize>& s): _mechanics(bd), _threadStack(s), _board(bd) {
     }
 
     MoveGenerator(MoveGenerator& other) = delete;
@@ -51,15 +53,13 @@ struct MoveGenerator {
     // ------------------------------
 
     [[nodiscard]] bool IsCheck() const {
-        return mechanics.IsCheck();
+        return _mechanics.IsCheck();
     }
 
-    std::vector<Move> GetMovesFast() {
-        const uint64_t fullMap = mechanics.GetFullMap();
-        const auto [blockedFigMap, checksCount, checkType] = mechanics.GetBlockedFieldMap(fullMap);
-
-        std::vector<Move> results{};
-        results.reserve(AverageChessMoves);
+    payload GetMovesFast() {
+        const uint64_t fullMap = _mechanics.GetFullMap();
+        const auto [blockedFigMap, checksCount, checkType] = _mechanics.GetBlockedFieldMap(fullMap);
+        payload results = _threadStack.GetPayload();
 
         switch (checksCount) {
             case 0:
@@ -83,13 +83,13 @@ struct MoveGenerator {
         uint64_t sum{};
         const auto moves = GetMovesFast();
 
-        const auto oldCastling = board.Castlings;
-        const auto oldElPassant = board.elPassantField;
+        const auto oldCastling = _board.Castlings;
+        const auto oldElPassant = _board.elPassantField;
 
         for (const auto move: moves) {
-            Move::MakeMove(move, board);
+            Move::MakeMove(move, _board);
             sum += CountMoves(depth - 1);
-            Move::UnmakeMove(move, board, oldCastling, oldElPassant);
+            Move::UnmakeMove(move, _board, oldCastling, oldElPassant);
         }
 
         return sum;
@@ -99,10 +99,10 @@ struct MoveGenerator {
     // private methods
     // ------------------------------
 private:
-    void _noCheckGen(std::vector<Move>& results, const uint64_t fullMap, const uint64_t blockedFigMap) {
-        const uint64_t pinnedFigsMap = mechanics.GetPinnedFigsMapWoutCheck(board.movColor, fullMap);
-        const uint64_t enemyMap = mechanics.GetColMap(SwapColor(board.movColor));
-        const uint64_t allyMap = mechanics.GetColMap(board.movColor);
+    void _noCheckGen(payload& results, const uint64_t fullMap, const uint64_t blockedFigMap) {
+        const uint64_t pinnedFigsMap = _mechanics.GetPinnedFigsMapWoutCheck(_board.movColor, fullMap);
+        const uint64_t enemyMap = _mechanics.GetColMap(SwapColor(_board.movColor));
+        const uint64_t allyMap = _mechanics.GetColMap(_board.movColor);
 
         _processFigMoves<RookMap, true>(results, enemyMap, allyMap, pinnedFigsMap);
 
@@ -112,7 +112,7 @@ private:
 
         _processFigMoves<KnightMap>(results, enemyMap, allyMap, pinnedFigsMap);
 
-        if (board.movColor == WHITE)
+        if (_board.movColor == WHITE)
             _processPawnMoves<WhitePawnMap>(results,
                                             enemyMap, allyMap, pinnedFigsMap);
         else
@@ -124,22 +124,22 @@ private:
         _processKingCastlings(results, blockedFigMap, fullMap);
     }
 
-    void _singleCheckGen(std::vector<Move>& results, const uint64_t fullMap, const uint64_t blockedFigMap,
+    void _singleCheckGen(payload& results, const uint64_t fullMap, const uint64_t blockedFigMap,
                          const int checkType) {
         static constexpr uint64_t UNUSED = 0;
 
         // simplifying figure search by distinguishing check types
         const auto [pinnedFigsMap, allowedTilesMap] = [&]() -> std::pair<uint64_t, uint64_t> {
             if (checkType == slidingFigCheck)
-                return mechanics.GetPinnedFigsMapWithCheck(board.movColor, fullMap);
+                return _mechanics.GetPinnedFigsMapWithCheck(_board.movColor, fullMap);
 
-            auto pinned = mechanics.GetPinnedFigsMapWoutCheck(board.movColor, fullMap);
-            return {pinned, mechanics.GetAllowedTilesWhenCheckedByNonSliding()};
+            auto pinned = _mechanics.GetPinnedFigsMapWoutCheck(_board.movColor, fullMap);
+            return {pinned, _mechanics.GetAllowedTilesWhenCheckedByNonSliding()};
         }();
 
         // helping variable preparation
-        const uint64_t enemyMap = mechanics.GetColMap(SwapColor(board.movColor));
-        const uint64_t allyMap = mechanics.GetColMap(board.movColor);
+        const uint64_t enemyMap = _mechanics.GetColMap(SwapColor(_board.movColor));
+        const uint64_t allyMap = _mechanics.GetColMap(_board.movColor);
 
         // Specific figure processing
         _processFigMoves<RookMap, true, false, false, true>(results,
@@ -158,7 +158,7 @@ private:
                                                                enemyMap, allyMap, pinnedFigsMap, UNUSED,
                                                                allowedTilesMap);
 
-        if (board.movColor == WHITE)
+        if (_board.movColor == WHITE)
             _processPawnMoves<WhitePawnMap, true>(results,
                                                   enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
         else
@@ -169,9 +169,9 @@ private:
         _processKingMovesWhenChecked(results, blockedFigMap, allyMap, enemyMap, allowedTilesMap);
     }
 
-    void _doubleCheckGen(std::vector<Move>& results, const uint64_t blockedFigMap) const {
-        const uint64_t allyMap = mechanics.GetColMap(board.movColor);
-        const uint64_t enemyMap = mechanics.GetColMap(SwapColor(board.movColor));
+    void _doubleCheckGen(payload& results, const uint64_t blockedFigMap) const {
+        const uint64_t allyMap = _mechanics.GetColMap(_board.movColor);
+        const uint64_t enemyMap = _mechanics.GetColMap(SwapColor(_board.movColor));
         _processPlainKingMoves(results, blockedFigMap, allyMap, enemyMap);
     }
 
@@ -179,11 +179,11 @@ private:
         class MapT,
         bool isCheck = false
     >
-    void _processPawnMoves(std::vector<Move>& results, const uint64_t enemyMap, const uint64_t allyMap,
+    void _processPawnMoves(payload& results, const uint64_t enemyMap, const uint64_t allyMap,
                            const uint64_t pinnedFigMap,
                            [[maybe_unused]] const uint64_t allowedMoveFillter = 0) {
-        const uint64_t promotingPawns = board.boards[MapT::GetBoardIndex(0)] & MapT::PromotingMask;
-        const uint64_t nonPromotingPawns = board.boards[MapT::GetBoardIndex(0)] ^ promotingPawns;
+        const uint64_t promotingPawns = _board.boards[MapT::GetBoardIndex(0)] & MapT::PromotingMask;
+        const uint64_t nonPromotingPawns = _board.boards[MapT::GetBoardIndex(0)] ^ promotingPawns;
 
         _processFigMoves<MapT, false, false, true, isCheck, MapT::GetElPassantField>(results, enemyMap,
             allyMap, pinnedFigMap, nonPromotingPawns, allowedMoveFillter);
@@ -202,29 +202,29 @@ private:
         class MapT,
         bool isCheck = false
     >
-    void _processElPassantMoves(std::vector<Move>& results, const uint64_t fullMap, const uint64_t pinnedFigMap,
+    void _processElPassantMoves(payload& results, const uint64_t fullMap, const uint64_t pinnedFigMap,
                                 [[maybe_unused]] const uint64_t allowedMoveFillter = 0) {
-        if (board.elPassantField == Board::InvalidElPassantBoard) return;
+        if (_board.elPassantField == Board::InvalidElPassantBoard) return;
 
         // calculation preparation
-        const uint64_t suspectedFields = MapT::GetElPassantSuspectedFields(board.elPassantField);
-        const size_t enemyCord = SwapColor(board.movColor) * Board::BoardsPerCol;
-        const uint64_t enemyRookFigs = board.boards[enemyCord + queensIndex] | board.boards[enemyCord + rooksIndex];
-        uint64_t possiblePawnsToMove = board.boards[MapT::GetBoardIndex(0)] & suspectedFields;
+        const uint64_t suspectedFields = MapT::GetElPassantSuspectedFields(_board.elPassantField);
+        const size_t enemyCord = SwapColor(_board.movColor) * Board::BoardsPerCol;
+        const uint64_t enemyRookFigs = _board.boards[enemyCord + queensIndex] | _board.boards[enemyCord + rooksIndex];
+        uint64_t possiblePawnsToMove = _board.boards[MapT::GetBoardIndex(0)] & suspectedFields;
 
         while (possiblePawnsToMove) {
             const uint64_t pawnMap = maxMsbPossible >> ExtractMsbPos(possiblePawnsToMove);
 
             // checking wheteher move would affect horizontal line attacks on king
-            const uint64_t processedPawns = pawnMap | board.elPassantField;
+            const uint64_t processedPawns = pawnMap | _board.elPassantField;
             const uint64_t cleanedFromPawnsMap = fullMap ^ processedPawns;
             if (const uint64_t kingHorizontalLine =
-                        RookMap::GetMoves(board.GetKingMsbPos(board.movColor), cleanedFromPawnsMap) &
+                        RookMap::GetMoves(_board.GetKingMsbPos(_board.movColor), cleanedFromPawnsMap) &
                         MapT::EnemyElPassantMask;
                 (kingHorizontalLine & enemyRookFigs) != 0)
                 return;
 
-            const uint64_t moveMap = MapT::GetElPassantMoveField(board.elPassantField);
+            const uint64_t moveMap = MapT::GetElPassantMoveField(_board.elPassantField);
 
             // checking wheter moving some pawns would undercover king on some line -
             if ((processedPawns & pinnedFigMap) != 0) {
@@ -232,11 +232,11 @@ private:
                 // should be unblocked on specific lines
 
                 if ((pawnMap & pinnedFigMap) != 0 && (
-                        mechanics.GenerateAllowedTilesForPrecisedPinnedFig(pawnMap, fullMap) & moveMap) == 0) {
+                        _mechanics.GenerateAllowedTilesForPrecisedPinnedFig(pawnMap, fullMap) & moveMap) == 0) {
                     possiblePawnsToMove ^= pawnMap;
                     continue;
                 }
-                if ((mechanics.GenerateAllowedTilesForPrecisedPinnedFig(board.elPassantField, fullMap) & moveMap) ==
+                if ((_mechanics.GenerateAllowedTilesForPrecisedPinnedFig(_board.elPassantField, fullMap) & moveMap) ==
                     0) {
                     possiblePawnsToMove ^= pawnMap;
                     continue;
@@ -245,7 +245,7 @@ private:
 
             // When king is checked only if move is going to allowed tile el passant is correct
             if constexpr (isCheck)
-                if ((moveMap & allowedMoveFillter) == 0 && (board.elPassantField & allowedMoveFillter) == 0) {
+                if ((moveMap & allowedMoveFillter) == 0 && (_board.elPassantField & allowedMoveFillter) == 0) {
                     possiblePawnsToMove ^= pawnMap;
                     continue;
                 }
@@ -257,11 +257,11 @@ private:
             mv.SetTargetField(ExtractMsbPos(moveMap));
             mv.SetTargetBoardIndex(MapT::GetBoardIndex(0));
             mv.SetKilledBoardIndex(MapT::GetEnemyPawnBoardIndex());
-            mv.SetKilledFigureField(ExtractMsbPos(board.elPassantField));
+            mv.SetKilledFigureField(ExtractMsbPos(_board.elPassantField));
             mv.SetElPassantField(Board::InvalidElPassantField);
-            mv.SetCasltingRights(board.Castlings);
+            mv.SetCasltingRights(_board.Castlings);
 
-            results.push_back(mv);
+            results.Push(_threadStack, mv);
 
             possiblePawnsToMove ^= pawnMap;
         }
@@ -277,13 +277,13 @@ private:
         bool isCheck = false,
         uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
     >
-    void _processFigMoves(std::vector<Move>& results, const uint64_t enemyMap, const uint64_t allyMap,
+    void _processFigMoves(payload& results, const uint64_t enemyMap, const uint64_t allyMap,
                           const uint64_t pinnedFigMap,
                           [[maybe_unused]] const uint64_t figureSelector = 0,
                           [[maybe_unused]] const uint64_t allowedMovesSelector = 0) {
         const uint64_t fullMap = enemyMap | allyMap;
-        uint64_t pinnedOnes = pinnedFigMap & board.boards[MapT::GetBoardIndex(board.movColor)];
-        uint64_t unpinnedOnes = board.boards[MapT::GetBoardIndex(board.movColor)] ^ pinnedOnes;
+        uint64_t pinnedOnes = pinnedFigMap & _board.boards[MapT::GetBoardIndex(_board.movColor)];
+        uint64_t unpinnedOnes = _board.boards[MapT::GetBoardIndex(_board.movColor)] ^ pinnedOnes;
 
         // applying filter if needed
         if constexpr (selectFigures) {
@@ -309,9 +309,9 @@ private:
             }();
 
             // Performing checks for castlings
-            std::array<bool, Board::CastlingCount + 1> updatedCastlings = board.Castlings;
+            std::array<bool, Board::CastlingCount + 1> updatedCastlings = _board.Castlings;
             if constexpr (checkForCastling)
-                updatedCastlings[RookMap::GetMatchingCastlingIndex(board, figBoard)] = false;
+                updatedCastlings[RookMap::GetMatchingCastlingIndex(_board, figBoard)] = false;
 
             // preparing moves
             const uint64_t attackMoves = figMoves & enemyMap;
@@ -321,14 +321,14 @@ private:
             _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(
                 results,
                 nonAttackingMoves,
-                MapT::GetBoardIndex(board.movColor),
+                MapT::GetBoardIndex(_board.movColor),
                 figBoard,
                 updatedCastlings
             );
             _processAttackingMoves<promotePawns>(
                 results,
                 attackMoves,
-                MapT::GetBoardIndex(board.movColor),
+                MapT::GetBoardIndex(_board.movColor),
                 figBoard,
                 updatedCastlings
             );
@@ -346,7 +346,7 @@ private:
             // processing moves
             const int figPos = ExtractMsbPos(pinnedOnes);
             const uint64_t figBoard = maxMsbPossible >> figPos;
-            const uint64_t allowedTiles = mechanics.GenerateAllowedTilesForPrecisedPinnedFig(figBoard, fullMap);
+            const uint64_t allowedTiles = _mechanics.GenerateAllowedTilesForPrecisedPinnedFig(figBoard, fullMap);
             const uint64_t figMoves = MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap & allowedTiles;
             // TODO: ischeck applid here?
             // TODO: breaking if there?
@@ -359,17 +359,17 @@ private:
             _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(
                 results,
                 nonAttackingMoves,
-                MapT::GetBoardIndex(board.movColor),
+                MapT::GetBoardIndex(_board.movColor),
                 figBoard,
-                board.Castlings
+                _board.Castlings
             );
             // TODO: There is exactly one move possible
             _processAttackingMoves<promotePawns>(
                 results,
                 attackMoves,
-                MapT::GetBoardIndex(board.movColor),
+                MapT::GetBoardIndex(_board.movColor),
                 figBoard,
-                board.Castlings
+                _board.Castlings
             );
 
             pinnedOnes ^= figBoard;
@@ -381,7 +381,7 @@ private:
         bool promotePawns,
         uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr
     >
-    void _processNonAttackingMoves(std::vector<Move>& results, uint64_t nonAttackingMoves, const size_t figBoardIndex,
+    void _processNonAttackingMoves(payload& results, uint64_t nonAttackingMoves, const size_t figBoardIndex,
                                    const uint64_t startField,
                                    const std::array<bool, Board::CastlingCount + 1>& castlings
     ) const {
@@ -409,7 +409,7 @@ private:
                     mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
 
-                results.push_back(mv);
+                results.Push(_threadStack, mv);
             }
             if constexpr (promotePawns)
             // upgrading pawn case
@@ -420,12 +420,12 @@ private:
                     mv.SetStartField(ExtractMsbPos(startField));
                     mv.SetStartBoardIndex(figBoardIndex);
                     mv.SetTargetField(movePos);
-                    mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + i);
+                    mv.SetTargetBoardIndex(_board.movColor * Board::BoardsPerCol + i);
                     mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
                     mv.SetElPassantField(Board::InvalidElPassantField);
                     mv.SetCasltingRights(castlings);
 
-                    results.push_back(mv);
+                    results.Push(_threadStack, mv);
                 }
             }
 
@@ -436,15 +436,15 @@ private:
     template<
         bool promotePawns
     >
-    void _processAttackingMoves(std::vector<Move>& results, uint64_t attackingMoves, const size_t figBoardIndex,
+    void _processAttackingMoves(payload& results, uint64_t attackingMoves, const size_t figBoardIndex,
                                 const uint64_t startField,
                                 const std::array<bool, Board::CastlingCount + 1>& castlings) const {
         while (attackingMoves) {
             // extracting moves
             const int movePos = ExtractMsbPos(attackingMoves);
             const uint64_t moveBoard = maxMsbPossible >> movePos;
-            const size_t attackedFigBoardIndex = mechanics.GetIndexOfContainingBoard(
-                moveBoard, SwapColor(board.movColor));
+            const size_t attackedFigBoardIndex = _mechanics.GetIndexOfContainingBoard(
+                moveBoard, SwapColor(_board.movColor));
 
             if constexpr (!promotePawns)
             // simple figure case
@@ -459,7 +459,7 @@ private:
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
 
-                results.push_back(mv);
+                results.Push(_threadStack, mv);
             }
             if constexpr (promotePawns)
             // upgrading pawn case
@@ -470,13 +470,13 @@ private:
                     mv.SetStartField(ExtractMsbPos(startField));
                     mv.SetStartBoardIndex(figBoardIndex);
                     mv.SetTargetField(movePos);
-                    mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + i);
+                    mv.SetTargetBoardIndex(_board.movColor * Board::BoardsPerCol + i);
                     mv.SetKilledBoardIndex(attackedFigBoardIndex);
                     mv.SetKilledFigureField(movePos);
                     mv.SetElPassantField(Board::InvalidElPassantField);
                     mv.SetCasltingRights(castlings);
 
-                    results.push_back(mv);
+                    results.Push(_threadStack, mv);
                 }
             }
 
@@ -485,21 +485,21 @@ private:
     }
 
     // TODO: test copying all old castlings
-    void _processPlainKingMoves(std::vector<Move>& results, const uint64_t blockedFigMap, const uint64_t allyMap,
+    void _processPlainKingMoves(payload& results, const uint64_t blockedFigMap, const uint64_t allyMap,
                                 const uint64_t enemyMap) const {
         static constexpr size_t CastlingPerColor = 2;
 
         // generating moves
-        const uint64_t kingMoves = KingMap::GetMoves(board.GetKingMsbPos(board.movColor)) & ~blockedFigMap & ~allyMap;
+        const uint64_t kingMoves = KingMap::GetMoves(_board.GetKingMsbPos(_board.movColor)) & ~blockedFigMap & ~allyMap;
         uint64_t attackingMoves = kingMoves & enemyMap;
         uint64_t nonAttackingMoves = kingMoves ^ attackingMoves;
 
         // preparing variables
-        auto castlings = board.Castlings;
-        castlings[CastlingPerColor * board.movColor + KingCastlingIndex] = false;
-        castlings[CastlingPerColor * board.movColor + QueenCastlingIndex] = false;
+        auto castlings = _board.Castlings;
+        castlings[CastlingPerColor * _board.movColor + KingCastlingIndex] = false;
+        castlings[CastlingPerColor * _board.movColor + QueenCastlingIndex] = false;
 
-        const int oldKingPos = ExtractMsbPos(board.boards[board.movColor * Board::BoardsPerCol  + kingIndex]);
+        const int oldKingPos = ExtractMsbPos(_board.boards[_board.movColor * Board::BoardsPerCol  + kingIndex]);
 
         // processing simple non attacking moves
         while (nonAttackingMoves) {
@@ -508,13 +508,13 @@ private:
 
             Move mv{};
             mv.SetStartField(oldKingPos);
-            mv.SetStartBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
+            mv.SetStartBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetTargetField(newPos);
-            mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
+            mv.SetTargetBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(castlings);
-            results.push_back(mv);
+            results.Push(_threadStack, mv);
 
             nonAttackingMoves ^= (maxMsbPossible >> newPos);
         }
@@ -526,41 +526,41 @@ private:
             const uint64_t newKingBoard = maxMsbPossible >> newPos;
 
             // finding attacked figure
-            const size_t attackedFigBoardIndex = mechanics.GetIndexOfContainingBoard(
-                newKingBoard, SwapColor(board.movColor));
+            const size_t attackedFigBoardIndex = _mechanics.GetIndexOfContainingBoard(
+                newKingBoard, SwapColor(_board.movColor));
 
             Move mv{};
             mv.SetStartField(oldKingPos);
-            mv.SetStartBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
+            mv.SetStartBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetTargetField(newPos);
-            mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
+            mv.SetTargetBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetKilledBoardIndex(attackedFigBoardIndex);
             mv.SetKilledFigureField(newPos);
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(castlings);
-            results.push_back(mv);
+            results.Push(_threadStack, mv);
 
             attackingMoves ^= newKingBoard;
         }
     }
 
     // TODO: GIANT TODO WTF IS HALLOWEDTILES
-    void _processKingMovesWhenChecked(std::vector<Move>& results, const uint64_t blockedFigMap, const uint64_t allyMap,
+    void _processKingMovesWhenChecked(payload& results, const uint64_t blockedFigMap, const uint64_t allyMap,
                                       const uint64_t enemyMap,
                                       [[maybe_unused]] const uint64_t hallowedTilesMaps) const {
         static constexpr size_t CastlingPerColor = 2;
 
         // generating moves
-        const uint64_t kingMoves = KingMap::GetMoves(board.GetKingMsbPos(board.movColor)) & ~blockedFigMap & ~allyMap;
+        const uint64_t kingMoves = KingMap::GetMoves(_board.GetKingMsbPos(_board.movColor)) & ~blockedFigMap & ~allyMap;
         uint64_t nonAttackingMoves = kingMoves & ~enemyMap;
         uint64_t attackingMoves = kingMoves ^ nonAttackingMoves;
 
         // preparing variables
-        auto castlings = board.Castlings;
-        castlings[CastlingPerColor * board.movColor + KingCastlingIndex] = false;
-        castlings[CastlingPerColor * board.movColor + QueenCastlingIndex] = false;
+        auto castlings = _board.Castlings;
+        castlings[CastlingPerColor * _board.movColor + KingCastlingIndex] = false;
+        castlings[CastlingPerColor * _board.movColor + QueenCastlingIndex] = false;
 
-        const int oldKingPos = ExtractMsbPos(board.boards[board.movColor * Board::BoardsPerCol  + kingIndex]);
+        const int oldKingPos = ExtractMsbPos(_board.boards[_board.movColor * Board::BoardsPerCol  + kingIndex]);
 
         // processing simple non attacking moves
         while (nonAttackingMoves) {
@@ -569,13 +569,13 @@ private:
 
             Move mv{};
             mv.SetStartField(oldKingPos);
-            mv.SetStartBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
+            mv.SetStartBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetTargetField(newPos);
-            mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
+            mv.SetTargetBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(castlings);
-            results.push_back(mv);
+            results.Push(_threadStack, mv);
 
             nonAttackingMoves ^= maxMsbPossible >> newPos;
         }
@@ -587,19 +587,19 @@ private:
             const uint64_t newKingBoard = maxMsbPossible >> newPos;
 
             // finding attacked figure
-            const size_t attackedFigBoardIndex = mechanics.GetIndexOfContainingBoard(
-                newKingBoard, SwapColor(board.movColor));
+            const size_t attackedFigBoardIndex = _mechanics.GetIndexOfContainingBoard(
+                newKingBoard, SwapColor(_board.movColor));
 
             Move mv{};
             mv.SetStartField(oldKingPos);
-            mv.SetStartBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
+            mv.SetStartBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetTargetField(newPos);
-            mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
+            mv.SetTargetBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetKilledBoardIndex(attackedFigBoardIndex);
             mv.SetKilledFigureField(newPos);
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(castlings);
-            results.push_back(mv);
+            results.Push(_threadStack, mv);
 
             attackingMoves ^= newKingBoard;
         }
@@ -607,29 +607,29 @@ private:
 
     // TODO: simplify ifs??
     // TODO: cleanup left castling available when rook is dead then propagate no castling checking?
-    void _processKingCastlings(std::vector<Move>& results, const uint64_t blockedFigMap, const uint64_t fullMap) const {
+    void _processKingCastlings(payload& results, const uint64_t blockedFigMap, const uint64_t fullMap) const {
         for (size_t i = 0; i < Board::CastlingsPerColor; ++i)
-            if (const size_t castlingIndex = board.movColor * Board::CastlingsPerColor + i;
-                board.Castlings[castlingIndex]
-                && (Board::CastlingsRookMaps[castlingIndex] & board.boards[
-                        board.movColor * Board::BoardsPerCol + rooksIndex]) != 0
+            if (const size_t castlingIndex = _board.movColor * Board::CastlingsPerColor + i;
+                _board.Castlings[castlingIndex]
+                && (Board::CastlingsRookMaps[castlingIndex] & _board.boards[
+                        _board.movColor * Board::BoardsPerCol + rooksIndex]) != 0
                 && (Board::CastlingSensitiveFields[castlingIndex] & blockedFigMap) == 0
                 && (Board::CastlingTouchedFields[castlingIndex] & fullMap) == 0) {
-                auto castlings = board.Castlings;
-                castlings[board.movColor * Board::CastlingsPerColor + KingCastlingIndex] = false;
-                castlings[board.movColor * Board::CastlingsPerColor + QueenCastlingIndex] = false;
+                auto castlings = _board.Castlings;
+                castlings[_board.movColor * Board::CastlingsPerColor + KingCastlingIndex] = false;
+                castlings[_board.movColor * Board::CastlingsPerColor + QueenCastlingIndex] = false;
 
                 Move mv{};
-                mv.SetStartField(ExtractMsbPos(Board::DefaultKingBoards[board.movColor]));
-                mv.SetStartBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
+                mv.SetStartField(ExtractMsbPos(Board::DefaultKingBoards[_board.movColor]));
+                mv.SetStartBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
                 mv.SetTargetField(Board::CastlingNewKingPos[castlingIndex]);
-                mv.SetTargetBoardIndex(board.movColor * Board::BoardsPerCol + kingIndex);
-                mv.SetKilledBoardIndex(board.movColor * Board::BoardsPerCol + rooksIndex);
+                mv.SetTargetBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
+                mv.SetKilledBoardIndex(_board.movColor * Board::BoardsPerCol + rooksIndex);
                 mv.SetKilledFigureField(ExtractMsbPos(Board::CastlingsRookMaps[castlingIndex]));
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
                 mv.SetCastlingType(1 + castlingIndex);
-                results.push_back(mv);
+                results.Push(_threadStack, mv);
             }
     }
 
@@ -637,8 +637,9 @@ private:
     // Class fields
     // ------------------------------
 
-    ChessMechanics mechanics;
-    Board& board;
+    ChessMechanics _mechanics;
+    stack<Move, DefaultStackSize>& _threadStack;
+    Board& _board;
 };
 
 #endif //MOVEGENERATOR_H
