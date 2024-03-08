@@ -58,7 +58,7 @@ private:
 #ifdef __unix__
 
     static int _sethandler(void (*f)(int), int sigNo);
-    static void _sigint_exit(int);
+    static void _sigusr1_exit(int);
 
 #endif
 

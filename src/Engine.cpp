@@ -164,7 +164,7 @@ bool Engine::_applyMove(Board&board, const std::string&move, const uint64_t oldP
     return false;
 }
 
-void Engine::_changeDebugState(Engine&eng, std::string&nPath)
+void Engine::_changeDebugState(Engine&eng, std::string& nPath)
 {
     GlobalLogger.ChangeLogStream(nPath);
 }

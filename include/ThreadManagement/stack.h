@@ -97,6 +97,9 @@ template<
         return _data[_last-1];
     }
 
+    void Clear() {
+        _last = 0;
+    }
 
     // ------------------------------
     // Private class methods

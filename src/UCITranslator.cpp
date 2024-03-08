@@ -139,7 +139,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string&str) {
         const lli arg = ParseTools::ParseTolli(workStr);
         if (arg <= 0) return UCICommand::InvalidCommand;
 
-        _engine.GoMoveTime(arg, _appliedMoves);
+        _engine.GoDepth(arg, _appliedMoves);
     }
     else if (workStr == "movetime")
     {
