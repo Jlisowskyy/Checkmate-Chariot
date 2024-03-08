@@ -49,7 +49,7 @@ double SearchPerfTester::_performTestCase(const std::string& testCase, const int
 
     const auto tStart = std::chrono::steady_clock::now();
     [[maybe_unused]]Move mv{};
-    searcher.IterativeDeepening(BoardEvaluator::DefaultFullEvalFunction, &mv, depth);
+    searcher.IterativeDeepening<decltype(BoardEvaluator::DefaultFullEvalFunction), false>(BoardEvaluator::DefaultFullEvalFunction, &mv, depth);
     const auto tStop = std::chrono::steady_clock::now();
 
     return (double)std::chrono::duration_cast<std::chrono::milliseconds>(tStop - tStart).count();

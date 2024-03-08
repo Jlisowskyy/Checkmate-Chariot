@@ -264,7 +264,7 @@ size_t FenTranslator::_processPositions(Board&bd, size_t pos, const std::string&
     {
         // Encoding position into typical chess notation.
         posBuffer[0] = static_cast<char>(processedFields % 8 + 'a');
-        posBuffer[1] = static_cast<char>('8' - (processedFields >> 3));
+        posBuffer[1] = static_cast<char>('8' - (processedFields / 8));
 
         // Checking possibilites of enocuntered characters.
         // '/' can be safely omitted due to final fields counting with processedFields variable.

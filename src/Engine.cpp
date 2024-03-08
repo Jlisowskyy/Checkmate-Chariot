@@ -61,6 +61,7 @@ std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
         Move::UnmakeMove(moves[i], startingBoard, oldCastling, oldElPassant);
     }
 
+    TManager.GetDefaultStack().PopAggregate(moves);
     return moveMap;
 }
 

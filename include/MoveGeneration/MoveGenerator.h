@@ -78,10 +78,15 @@ struct MoveGenerator {
 
     uint64_t CountMoves(const int depth) {
         if (depth == 0) return 1;
-        if (depth == 1) return GetMovesFast().size;
+
+        const auto moves = GetMovesFast();
+
+        if (depth == 1) {
+            _threadStack.PopAggregate(moves);
+            return moves.size;
+        }
 
         uint64_t sum{};
-        const auto moves = GetMovesFast();
 
         const auto oldCastling = _board.Castlings;
         const auto oldElPassant = _board.elPassantField;
@@ -92,6 +97,7 @@ struct MoveGenerator {
             Move::UnmakeMove(moves[i], _board, oldCastling, oldElPassant);
         }
 
+        _threadStack.PopAggregate(moves);
         return sum;
     }
 
