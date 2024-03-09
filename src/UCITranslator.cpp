@@ -193,7 +193,11 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string&str
 
         _engine.SetFenPosition(_fenPosition);
     }
-    else if (workStr != "startpos")
+    else if (workStr == "startpos")
+    {
+
+    }
+    else
         return UCICommand::InvalidCommand;
 
     if (movesCord != std::string::npos)

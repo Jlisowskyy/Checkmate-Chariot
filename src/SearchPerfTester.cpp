@@ -46,7 +46,8 @@ bool SearchPerfTester::PerformSearchPerfTest(const std::string& inputTestPath, c
 
 double SearchPerfTester::_performTestCase(const std::string& testCase, const int depth, stack<Move, DefaultStackSize>& stack)
 {
-    const auto bd = FenTranslator::Translate(testCase);
+    Board bd;
+    FenTranslator::Translate(testCase, bd);
     BestMoveSearch searcher(bd, stack);
 
     const auto tStart = std::chrono::steady_clock::now();

@@ -67,7 +67,24 @@ std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
 
 void Engine::SetFenPosition(const std::string&fenStr)
 {
-    _board = FenTranslator::Translate(fenStr);
+    if (fenStr.length() >= _startposPrefix.length() && fenStr.substr(0, _startposPrefix.length()) == _startposPrefix)
+    {
+        _isStartPosPlayed = true;
+        return;
+    }
+
+    if (FenTranslator::Translate(fenStr, _board) == false)
+        _isStartPosPlayed = true;
+    else
+        _isStartPosPlayed = false;
+
+    _startingBoard = _board;
+}
+
+void Engine::SetStartpos()
+{
+    _isStartPosPlayed = true;
+    _board = FenTranslator::GetDefault();
     _startingBoard = _board;
 }
 
@@ -91,7 +108,9 @@ bool Engine::ApplyMoves(const std::vector<std::string>&UCIMoves)
 
 void Engine::RestartEngine()
 {
-    _board = _startingBoard;
+    _isStartPosPlayed = true;
+    _board = FenTranslator::GetDefault();
+    _startingBoard = _board;
 }
 
 Board Engine::GetUnderlyingBoardCopy() const
@@ -169,15 +188,14 @@ void Engine::_changeDebugState([[maybe_unused]]Engine&eng, std::string& nPath)
     GlobalLogger.ChangeLogStream(nPath);
 }
 
-// IMPORTANT TODO: what happens when startpos is not basic game?!
-
 void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves)
 {
-    if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
-    {
-        GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
-        return;
-    }
+    if (_book.IsLoadedCorrectly() && _isStartPosPlayed == true)
+        if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
+        {
+            GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
+            return;
+        }
 
     auto bestMove = TManager.goMoveTime(_board, time);
 
@@ -186,11 +204,12 @@ void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves)
 
 void Engine::GoDepth(const int depth, const std::vector<std::string>& moves)
 {
-    if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
-    {
-        GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
-        return;
-    }
+    if (_book.IsLoadedCorrectly() && _isStartPosPlayed == true)
+        if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
+        {
+            GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
+            return;
+        }
 
     auto bestMove = TManager.goDepth(_board, depth);
 

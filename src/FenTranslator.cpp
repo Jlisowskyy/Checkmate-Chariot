@@ -11,31 +11,29 @@
 
 const Board& FenTranslator::GetDefault() { return StartBoard; }
 
-Board FenTranslator::Translate(const std::string&fenPos)
+bool FenTranslator::Translate(const std::string&fenPos, Board&bd)
 {
-    Board workBoard{};
-
     try
     {
         size_t pos = 0;
 
         pos = _skipBlanks(pos, fenPos);
-        pos = _processPositions(workBoard, pos, fenPos);
+        pos = _processPositions(bd, pos, fenPos);
         pos = _skipBlanks(pos, fenPos);
-        pos = _processMovingColor(workBoard, pos, fenPos);
+        pos = _processMovingColor(bd, pos, fenPos);
         pos = _skipBlanks(pos, fenPos);
-        pos = _processCastlings(workBoard, pos, fenPos);
+        pos = _processCastlings(bd, pos, fenPos);
         pos = _skipBlanks(pos, fenPos);
-        _processElPassant(workBoard, pos, fenPos);
+        _processElPassant(bd, pos, fenPos);
+        return true;
     }
     catch (const std::exception&exc)
     {
         GlobalLogger.LogError(exc.what());
         GlobalLogger.LogError("[ INFO ] Loading default layout...");
-        workBoard = StartBoard;
+        bd = StartBoard;
+        return false;
     }
-
-    return workBoard;
 }
 
 std::string FenTranslator::Translate(const Board&board)

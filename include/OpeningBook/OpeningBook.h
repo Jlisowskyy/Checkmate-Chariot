@@ -38,6 +38,8 @@ struct  OpeningBook
 
     // Possibly in use when array representation will be considered
     void SaveToBinary(const std::string&outputPath) const;
+    [[nodiscard]] bool IsLoadedCorrectly() const;
+
     [[nodiscard]] const std::string& GetRandomNextMove(const std::vector<std::string>&moves) const;
     [[nodiscard]] const std::vector<std::string>& GetAllPossibleNextMoves(const std::vector<std::string>&moves) const;
 
@@ -57,6 +59,7 @@ private:
     // ------------------------------
 
     MoveTRIE _moveTrie{};
+    bool _isCorrectlyLoaded{};
 };
 
 #endif //OPENINGBOOK_H

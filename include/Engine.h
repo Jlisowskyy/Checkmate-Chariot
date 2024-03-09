@@ -49,6 +49,8 @@ public:
 
     void SetFenPosition(const std::string&fenStr);
 
+    void SetStartpos();
+
     static const EngineInfo& GetEngineInfo();
 
     bool ApplyMoves(const std::vector<std::string>&UCIMoves);
@@ -86,8 +88,10 @@ private:
 
     Board _board{};
     Board _startingBoard{};
-    OpeningBook _book{"uci_ready_long", OpeningBook::bookFileType::text_uci} ;
+    OpeningBook _book{"uci_ready_long", OpeningBook::bookFileType::text_uci};
 
+    bool _isStartPosPlayed = true;
+    static constexpr std::string_view _startposPrefix = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
 public:
     SearchThreadManager TManager{};
 private:
@@ -105,7 +109,7 @@ private:
 
     inline static const EngineInfo engineInfo = {
         .author = "Jakub Lisowski, Warsaw University of Technology",
-        .name = "ChessEngine development version 0.04",
+        .name = "ChessEngine development version 0.05",
         .options = std::map<std::string, const Option *>({
             std::make_pair("Threads", &Threads),
             std::make_pair("Debug Log File", &DebugLogFile),

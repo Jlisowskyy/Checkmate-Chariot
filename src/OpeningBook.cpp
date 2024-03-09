@@ -16,14 +16,21 @@
 
 OpeningBook::OpeningBook(const std::string& bookPath, const bookFileType type)
 {
-    switch (type)
+    try{
+        switch (type)
+        {
+            case bookFileType::binary:
+                _readBinaryBook(bookPath);
+            break;
+            case bookFileType::text_uci:
+                _readTextBook(bookPath);
+            break;
+        }
+        _isCorrectlyLoaded = true;
+    }
+    catch (const std::exception& exc)
     {
-        case bookFileType::binary:
-            _readBinaryBook(bookPath);
-            break;
-        case bookFileType::text_uci:
-            _readTextBook(bookPath);
-            break;
+        _isCorrectlyLoaded = false;
     }
 }
 
@@ -31,6 +38,9 @@ void OpeningBook::SaveToBinary([[maybe_unused]]const std::string&outputPath) con
 {
     throw std::runtime_error("[ ERROR ] Not yet implemented!");
 }
+
+bool OpeningBook::IsLoadedCorrectly() const
+{return _isCorrectlyLoaded;}
 
 const std::string& OpeningBook::GetRandomNextMove(const std::vector<std::string>&moves) const
 {
