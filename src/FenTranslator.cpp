@@ -13,19 +13,19 @@ const Board& FenTranslator::GetDefault() { return StartBoard; }
 
 bool FenTranslator::Translate(const std::string&fenPos, Board&bd)
 {
+    Board workBoard{};
+    size_t pos = 0;
+
     try
     {
-        size_t pos = 0;
-
         pos = _skipBlanks(pos, fenPos);
-        pos = _processPositions(bd, pos, fenPos);
+        pos = _processPositions(workBoard, pos, fenPos);
         pos = _skipBlanks(pos, fenPos);
-        pos = _processMovingColor(bd, pos, fenPos);
+        pos = _processMovingColor(workBoard, pos, fenPos);
         pos = _skipBlanks(pos, fenPos);
-        pos = _processCastlings(bd, pos, fenPos);
+        pos = _processCastlings(workBoard, pos, fenPos);
         pos = _skipBlanks(pos, fenPos);
-        _processElPassant(bd, pos, fenPos);
-        return true;
+        _processElPassant(workBoard, pos, fenPos);
     }
     catch (const std::exception&exc)
     {
@@ -34,6 +34,9 @@ bool FenTranslator::Translate(const std::string&fenPos, Board&bd)
         bd = StartBoard;
         return false;
     }
+
+    bd = workBoard;
+    return true;
 }
 
 std::string FenTranslator::Translate(const Board&board)

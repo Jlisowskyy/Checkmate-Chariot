@@ -70,6 +70,8 @@ void Engine::SetFenPosition(const std::string&fenStr)
     if (fenStr.length() >= _startposPrefix.length() && fenStr.substr(0, _startposPrefix.length()) == _startposPrefix)
     {
         _isStartPosPlayed = true;
+        _board = FenTranslator::GetDefault();
+        _startingBoard = _board;
         return;
     }
 
