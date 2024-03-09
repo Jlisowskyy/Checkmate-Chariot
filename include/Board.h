@@ -37,7 +37,7 @@ struct Board
         movColor ^= 1;
     }
 
-    [[nodiscard]] int GetKingMsbPos(const int col) const
+    [[nodiscard]] constexpr int GetKingMsbPos(const int col) const
     {
         return ExtractMsbPos(boards[col*BoardsPerCol + kingIndex]);
     }

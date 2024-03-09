@@ -44,7 +44,7 @@ struct Option
         return opt._printDetails(out);
     }
 
-    bool virtual TryChangeValue(std::string&nArg, Engine&eng) const
+    bool virtual TryChangeValue([[maybe_unused]]std::string&nArg, [[maybe_unused]]Engine&eng) const
     {
         return false;
     }
@@ -254,7 +254,7 @@ private:
     // Virtual methods overrides
     // -------------------------------
 public:
-    bool TryChangeValue(std::string&nArg, Engine&eng) const override
+    bool TryChangeValue([[maybe_unused]]std::string&nArg, Engine&eng) const override
     {
         changeReaction(eng);
         return true;

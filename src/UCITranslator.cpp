@@ -60,7 +60,7 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string&buffer)
     return UCICommand::InvalidCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_stopResponse(const std::string& unused) {
+UCITranslator::UCICommand UCITranslator::_stopResponse([[maybe_unused]]const std::string&) {
     _engine.StopSearch();
     return UCICommand::stopCommand;
 }

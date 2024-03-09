@@ -75,7 +75,7 @@ private:
 
     static void _changeDebugState(Engine&eng, std::string&nPath);
 
-    static void _changeThreadCount(Engine&eng, const lli tCount)
+    static void _changeThreadCount([[maybe_unused]]Engine&eng, const lli tCount)
     {
         std::cout << "New thread count: " << tCount << '\n';
     }

@@ -53,8 +53,8 @@ struct PinningMasks
         masks[SouthEastMask] = GenMask(seBorder, bInd, BishopMapGenerator::SEOffset, std::greater_equal{});
         masks[SouthWestMask] = GenMask(swBorder, bInd, BishopMapGenerator::SWOffset, std::greater_equal{});
 
-        for (int i = 0; i < PinningMasksCount / 2; ++i) rookMask |= masks[i];
-        for (int i = PinningMasksCount / 2; i < PinningMasksCount; ++i) bishopMask |= masks[i];
+        for (size_t i = 0; i < PinningMasksCount / 2; ++i) rookMask |= masks[i];
+        for (size_t i = PinningMasksCount / 2; i < PinningMasksCount; ++i) bishopMask |= masks[i];
         rookMask |= (1LLU << bInd);
         bishopMask |= (1LLU << bInd);
         fullMask = bishopMask | rookMask;
@@ -63,7 +63,7 @@ struct PinningMasks
     static constexpr std::array<PinningMasks, Board::BoardFields> PinningArrayFactory()
     {
         std::array<PinningMasks, Board::BoardFields> maskArr{};
-        for (int i = 0; i < Board::BoardFields; ++i) maskArr[i] = PinningMasks(ConvertToReversedPos(i));
+        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i) maskArr[i] = PinningMasks(ConvertToReversedPos(i));
         return maskArr;
     }
 

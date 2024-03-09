@@ -11,7 +11,7 @@
 #include "../BitOperations.h"
 #include "../EngineTypeDefs.h"
 
-[[nodiscard]] constexpr std::array<uint64_t, Board::BoardFields> GenStaticMoves(const int maxMovesCount,
+[[nodiscard]] constexpr std::array<uint64_t, Board::BoardFields> GenStaticMoves(const size_t maxMovesCount,
     const int* movesCords, const int* rowCords)
 {
     std::array<uint64_t, Board::BoardFields> movesRet{};

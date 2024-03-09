@@ -133,17 +133,17 @@ public:
         size_t correctMaps{};
 
         // Preparing temp map to perform calculations
-        for (int i = 0; i < Board::BoardFields; ++i)
+        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
             maps[i] = movesHashMap(mInit(ConvertToReversedPos(i)), funcs[i]);
 
 #pragma omp parallel for
-        for (int i = 0; i < Board::BoardFields; ++i)
+        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
         {
             const int bInd = ConvertToReversedPos(i);
 
             // Possible neighbors generation.
             const auto [possibilities, posSize] = nGen(bInd, maps[i].masks);
-            auto getNeighbors = [&](const int unused1, const std::array<uint64_t, 4>&unused2)
+            auto getNeighbors = [&]([[maybe_unused]]const int unused1, [[maybe_unused]]const std::array<uint64_t, 4>&unused2)
             {
                 return std::make_pair(std::ref(possibilities), posSize);
             };
@@ -196,7 +196,7 @@ public:
 
             // Printing actual parameters
             ParameterSearchLogger.Log("Actual rehashing result:\n{");
-            for (int j = 0; j < Board::BoardFields; ++j)
+            for (size_t j = 0; j < Board::BoardFields; ++j)
                 ParameterSearchLogger.StartLogging() << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) <<
                         ",\n";
             ParameterSearchLogger.Log(std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps,
@@ -207,7 +207,7 @@ public:
 
         // Print final looking table
         ParameterSearchLogger.Log("Actual rehashing result:\n{");
-        for (int j = 0; j < Board::BoardFields; ++j)
+        for (size_t j = 0; j < Board::BoardFields; ++j)
             ParameterSearchLogger.StartLogging() << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) <<
                     ",\n";
         ParameterSearchLogger.Log(std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps,
@@ -224,7 +224,7 @@ public:
         ParameterSearchLogger.StartLogging() << "Collision detected on indices:\n\t{ ";
         size_t invalidIndices{};
 
-        for (int i = 0; i < Board::BoardFields; ++i)
+        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
         {
             const int bInd = ConvertToReversedPos(i);
 

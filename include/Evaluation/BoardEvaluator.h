@@ -175,7 +175,7 @@ public:
         constexpr size_t WhiteIndex = WHITE*Board::BoardsPerCol;
         for (size_t i = 0; i < kingIndex; ++i)
         {
-            for (int j = 0; j < Board::BoardFields; ++j)
+            for (int j = 0; j < static_cast<int>(Board::BoardFields); ++j)
                 arr[WhiteIndex + i][j] = BasicFigureValues[i] + BasicBlackPositionValues[i][ConvertToReversedPos(j)];
         }
 

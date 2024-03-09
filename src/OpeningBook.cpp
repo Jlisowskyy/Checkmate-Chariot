@@ -27,7 +27,7 @@ OpeningBook::OpeningBook(const std::string& bookPath, const bookFileType type)
     }
 }
 
-void OpeningBook::SaveToBinary(const std::string&outputPath) const
+void OpeningBook::SaveToBinary([[maybe_unused]]const std::string&outputPath) const
 {
     throw std::runtime_error("[ ERROR ] Not yet implemented!");
 }
@@ -48,7 +48,7 @@ const std::vector<std::string>& OpeningBook::GetAllPossibleNextMoves(const std::
     return _moveTrie.FindNextMoves(moves);
 }
 
-void OpeningBook::_readBinaryBook(const std::string&bookPath)
+void OpeningBook::_readBinaryBook([[maybe_unused]]const std::string&bookPath)
 {
     throw std::runtime_error("[ ERROR ] Not yet implemented!");
 }

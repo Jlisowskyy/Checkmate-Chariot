@@ -19,7 +19,7 @@ class FancyMagicBishopMap
 public:
     constexpr FancyMagicBishopMap()
     {
-        for (int i = 0; i < Board::BoardFields; ++i)
+        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
         {
             const int boardIndex = ConvertToReversedPos(i);
 
@@ -31,7 +31,7 @@ public:
                             {
                                 return BishopMapGenerator::GenMoves(n, ind);
                             },
-                            [](const int ind, const BishopMapGenerator::MasksT&m) constexpr
+                            []([[maybe_unused]]const int, const BishopMapGenerator::MasksT&m) constexpr
                             {
                                 return BishopMapGenerator::GenPossibleNeighborsWithOverlap(m);
                             },
@@ -52,7 +52,7 @@ public:
 
     static void ParameterSearch()
     {
-        auto nGen = [](const int _, const BishopMapGenerator::MasksT&m)
+        auto nGen = []([[maybe_unused]]const int, const BishopMapGenerator::MasksT&m)
         {
             return BishopMapGenerator::GenPossibleNeighborsWithOverlap(m);
         };

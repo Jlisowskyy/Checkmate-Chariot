@@ -39,6 +39,8 @@ bool SearchPerfTester::PerformSearchPerfTest(const std::string& inputTestPath, c
     results.emplace_back("Average results based on test count:", tests.size(), sumTime/tests.size());
     GlobalLogger.StartLogging() << std::format("Final average results: {}ms\n", sumTime/tests.size());
 
+    _saveResultsToCsv(output, results);
+
     return true;
 }
 

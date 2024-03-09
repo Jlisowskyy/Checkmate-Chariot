@@ -19,7 +19,7 @@ class FancyMagicRookMap
 public:
     constexpr FancyMagicRookMap()
     {
-        for (int i = 0; i < Board::BoardFields; ++i)
+        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
         {
             const int boardIndex = ConvertToReversedPos(i);
 
@@ -31,7 +31,7 @@ public:
                             {
                                 return RookMapGenerator::GenMoves(n, ind);
                             },
-                            [](const int ind, const RookMapGenerator::MasksT&m) constexpr
+                            []([[maybe_unused]]const int, const RookMapGenerator::MasksT&m) constexpr
                             {
                                 return RookMapGenerator::GenPossibleNeighborsWithOverlap(m);
                             },
@@ -52,7 +52,7 @@ public:
 
     static void ParameterSearch()
     {
-        auto nGen = [](const int _, const RookMapGenerator::MasksT&m)
+        auto nGen = []([[maybe_unused]]const int, const RookMapGenerator::MasksT&m)
         {
             return RookMapGenerator::GenPossibleNeighborsWithOverlap(m);
         };

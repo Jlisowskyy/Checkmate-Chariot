@@ -47,7 +47,7 @@ const std::vector<std::string>& MoveTRIE::FindNextMoves(const std::vector<std::s
 
 ssize_t MoveTRIE::_findOnArr(const std::string& move, const std::vector<std::string>& moves)
 {
-    for(ssize_t i = 0; i < moves.size(); ++i)
+    for(ssize_t i = 0; i < static_cast<ssize_t>(moves.size()); ++i)
         if (moves[i] == move) return i;
     return -1;
 }

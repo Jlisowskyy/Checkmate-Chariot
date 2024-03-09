@@ -276,7 +276,7 @@ size_t FenTranslator::_processPositions(Board&bd, size_t pos, const std::string&
             ++processedFields;
         }
 
-        if (processedFields > Board::BoardFields)
+        if (processedFields > static_cast<int>(Board::BoardFields))
             throw std::runtime_error(
                 std::format("[ ERROR ] Too much fields are used inside passed fen position!\n")
             );
@@ -284,7 +284,7 @@ size_t FenTranslator::_processPositions(Board&bd, size_t pos, const std::string&
         ++pos;
     }
 
-    if (processedFields < Board::BoardFields)
+    if (processedFields < static_cast<int>(Board::BoardFields))
         throw std::runtime_error(
             std::format("[ ERROR ] Not enugh fields are used inside passed fen position!\n")
         );

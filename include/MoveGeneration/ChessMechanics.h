@@ -241,7 +241,7 @@ private:
                                                            enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
 
 
-        _processKingMovesWhenChecked(action, depth, blockedFigMap, allyMap, enemyMap, allowedTilesMap);
+        _processPlainKingMoves(action, depth, blockedFigMap, allyMap, enemyMap);
     }
 
     template<
@@ -627,84 +627,6 @@ private:
         board.Castlings[CastlingPerColor * board.movColor + QueenCastlingIndex] = false;
 
         //prohibiting elPassant
-        board.elPassantField = Board::InvalidElPassantBoard;
-
-        // processing simple non attacking moves
-        while (nonAttackingMoves)
-        {
-            // extracting new king position data
-            const uint8_t newPos = ExtractMsbPos(nonAttackingMoves);
-            const uint64_t newKingBoard = maxMsbPossible >> newPos;
-
-            // preparing board changes
-            board.boards[movingColorIndex + kingIndex] = newKingBoard;
-
-            // performing core actions
-            board.ChangePlayingColor();
-            IterativeBoardTraversal(action, depth - 1);
-            board.ChangePlayingColor();
-
-            nonAttackingMoves ^= newKingBoard;
-        }
-
-        // processing slightly more complicated attacking moves
-        while (attackingMoves)
-        {
-            // extracting new king position data
-            const uint8_t newPos = ExtractMsbPos(attackingMoves);
-            const uint64_t newKingBoard = maxMsbPossible >> newPos;
-
-            // finding attacked figure
-            const size_t attackedFigBoardIndex = GetIndexOfContainingBoard(newKingBoard, SwapColor(board.movColor));
-
-            // preparing board changes
-            board.boards[movingColorIndex + kingIndex] = newKingBoard;
-            board.boards[attackedFigBoardIndex] ^= newKingBoard;
-            board.ChangePlayingColor();
-
-            // performing core actions
-            IterativeBoardTraversal(action, depth - 1);
-
-            // cleaning up
-            board.ChangePlayingColor();
-            board.boards[attackedFigBoardIndex] |= newKingBoard;
-
-            attackingMoves ^= newKingBoard;
-        }
-
-        // reverting changes
-        board.Castlings = oldCastlings;
-        board.boards[board.movColor * Board::BoardsPerCol + kingIndex] = oldKingBoard;
-        board.elPassantField = oldElPassant;
-    }
-
-    template<
-        class ActionT
-    >
-    void _processKingMovesWhenChecked(ActionT action, const int depth, const uint64_t blockedFigMap,
-                                      const uint64_t allyMap, const uint64_t enemyMap, const uint64_t hallowedTilesMaps)
-    {
-        static constexpr size_t CastlingPerColor = 2;
-
-        // simple helping variables
-        const size_t movingColorIndex = board.movColor * Board::BoardsPerCol;
-
-        // generating moves
-        const uint64_t kingMoves = KingMap::GetMoves(board.GetKingMsbPos(board.movColor)) & ~blockedFigMap & ~
-                                   allyMap;
-        uint64_t nonAttackingMoves = kingMoves & ~enemyMap;
-        uint64_t attackingMoves = kingMoves ^ nonAttackingMoves;
-
-        // saving old parameters
-        const auto oldCastlings = board.Castlings;
-        const uint64_t oldElPassant = board.elPassantField;
-        const uint64_t oldKingBoard = board.boards[movingColorIndex + kingIndex];
-
-        // prohibiting castlings
-        board.Castlings[CastlingPerColor * board.movColor + KingCastlingIndex] = false;
-        board.Castlings[CastlingPerColor * board.movColor + QueenCastlingIndex] = false;
-
-        // prohibiting elPassant
         board.elPassantField = Board::InvalidElPassantBoard;
 
         // processing simple non attacking moves

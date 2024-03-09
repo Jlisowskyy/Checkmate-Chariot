@@ -164,7 +164,7 @@ bool Engine::_applyMove(Board&board, const std::string&move, const uint64_t oldP
     return false;
 }
 
-void Engine::_changeDebugState(Engine&eng, std::string& nPath)
+void Engine::_changeDebugState([[maybe_unused]]Engine&eng, std::string& nPath)
 {
     GlobalLogger.ChangeLogStream(nPath);
 }
@@ -173,11 +173,11 @@ void Engine::_changeDebugState(Engine&eng, std::string& nPath)
 
 void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves)
 {
-    // if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
-    // {
-    //     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
-    //     return;
-    // }
+    if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
+    {
+        GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
+        return;
+    }
 
     auto bestMove = TManager.goMoveTime(_board, time);
 
@@ -186,11 +186,11 @@ void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves)
 
 void Engine::GoDepth(const int depth, const std::vector<std::string>& moves)
 {
-    // if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
-    // {
-    //     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
-    //     return;
-    // }
+    if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
+    {
+        GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
+        return;
+    }
 
     auto bestMove = TManager.goDepth(_board, depth);
 
