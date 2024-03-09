@@ -122,15 +122,15 @@ public:
         bd.boards[boardIndex] ^= field;
     }
 
-    void SetEval(const int16_t eval)
+    void SetEval(const uint16_t eval)
     {
         _storage |= eval;
     }
 
-    [[nodiscard]] int16_t GetEval() const
+    [[nodiscard]] uint64_t GetEval() const
     {
         static constexpr uint64_t EvalMask = 0xFFFFLLU;
-        return static_cast<int16_t>(_storage & EvalMask);
+        return _storage & EvalMask;
     }
 
     void SetStartField(const uint64_t startField)

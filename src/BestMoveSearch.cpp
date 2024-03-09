@@ -21,5 +21,15 @@ void BestMoveSearch::_insertionSort(std::vector<std::pair<int, int>>& list)
 
 void BestMoveSearch::_heapSortMoves(MoveGenerator::payload moves)
 {
-        
+    for (ssize_t i = 1; i < moves.size; ++i)
+    {
+        ssize_t j = i - 1;
+        const auto val = moves[i];
+        while(j >= 0 && moves[j].GetEval() < val.GetEval())
+        {
+            moves.data[j+1] = moves[j];
+            j--;
+        }
+        moves.data[j+1] = val;
+    }
 }
