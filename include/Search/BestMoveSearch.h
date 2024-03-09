@@ -104,6 +104,7 @@ private:
         const auto oldCastlings = bd.Castlings;
         const auto oldElPassant = bd.elPassantField;
 
+        _heapSortMoves(moves);
         for(size_t i = 0; i < moves.size; ++i)
         {
             Move::MakeMove(moves[i], bd);
@@ -124,6 +125,7 @@ private:
     }
 
     static void _insertionSort(std::vector<std::pair<int, int>>& list);
+    static void _heapSortMoves(MoveGenerator::payload moves);
 
     // ------------------------------
     // Class fields

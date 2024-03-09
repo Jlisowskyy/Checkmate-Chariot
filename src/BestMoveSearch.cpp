@@ -18,3 +18,8 @@ void BestMoveSearch::_insertionSort(std::vector<std::pair<int, int>>& list)
         list[j+1] = val;
     }
 }
+
+void BestMoveSearch::_heapSortMoves(MoveGenerator::payload moves)
+{
+        
+}
