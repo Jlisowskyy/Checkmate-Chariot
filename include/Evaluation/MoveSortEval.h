@@ -14,10 +14,10 @@ struct MoveSortEval
     // Class interaction
     // ------------------------------
 
-    static uint16_t ApplyAttackFieldEffects(uint16_t eval, const  uint64_t blockedFigMap, const uint64_t startField, const uint64_t targetField)
+    static uint16_t ApplyAttackFieldEffects(uint16_t eval, const  uint64_t pawnAttacks, const uint64_t startField, const uint64_t targetField)
     {
-        if ((blockedFigMap & startField) != 0) eval += RunAwayPrize;
-        if ((blockedFigMap & targetField) != 0) eval -= AttackedFigurePenalty;
+        if ((pawnAttacks & startField) != 0) eval += RunAwayPrize;
+        if ((pawnAttacks & targetField) != 0) eval -= AttackedFigurePenalty;
 
         return eval;
     }
