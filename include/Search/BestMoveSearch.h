@@ -89,7 +89,8 @@ private:
     > [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, const int depth)
     {
         if (depth == 0) {
-            return _alphaBetaCaptures(evalF, bd, alpha, beta);
+            // return _alphaBetaCaptures(evalF, bd, alpha, beta);
+            return evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
         }
 
         MoveGenerator mechanics(bd, _stack);
@@ -128,7 +129,7 @@ private:
         class FullBoardEvalFuncT
     > [[nodiscard]] int _alphaBetaCaptures(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta)
     {
-        const int eval = evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));;
+        const int eval = evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
 
         if (eval >= beta)
             return beta;

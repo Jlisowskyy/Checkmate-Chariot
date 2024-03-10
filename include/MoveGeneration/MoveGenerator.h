@@ -115,19 +115,10 @@ private:
         const uint64_t enemyMap = _mechanics.GetColMap(SwapColor(_board.movColor));
         const uint64_t allyMap = _mechanics.GetColMap(_board.movColor);
 
-        uint64_t pawnAttacks;
-        if (_board.movColor == WHITE)
-        {
-            pawnAttacks = BlackPawnMap::GetAttackFields(_board.boards[Board::BoardsPerCol*SwapColor(_board.movColor) + pawnsIndex]);
-            _processPawnMoves<GenOnlyAttackMoves, WhitePawnMap>(results, pawnAttacks,
-                                            enemyMap, allyMap, pinnedFigsMap);
-        }
-        else
-        {
-            pawnAttacks = WhitePawnMap::GetAttackFields(_board.boards[Board::BoardsPerCol*SwapColor(_board.movColor) + pawnsIndex]);
-            _processPawnMoves<GenOnlyAttackMoves, BlackPawnMap>(results, pawnAttacks,
-                                           enemyMap, allyMap, pinnedFigsMap);
-        }
+        const uint64_t pawnAttacks = _board.movColor == WHITE ?
+            BlackPawnMap::GetAttackFields(_board.boards[Board::BoardsPerCol*SwapColor(_board.movColor) + pawnsIndex]) :
+            WhitePawnMap::GetAttackFields(_board.boards[Board::BoardsPerCol*SwapColor(_board.movColor) + pawnsIndex]);
+
 
         _processFigMoves<GenOnlyAttackMoves, KnightMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
 
@@ -136,6 +127,13 @@ private:
         _processFigMoves<GenOnlyAttackMoves, RookMap, true>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
 
         _processFigMoves<GenOnlyAttackMoves, QueenMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
+
+        if (_board.movColor == WHITE)
+            _processPawnMoves<GenOnlyAttackMoves, WhitePawnMap>(results, pawnAttacks,
+                                            enemyMap, allyMap, pinnedFigsMap);
+        else
+            _processPawnMoves<GenOnlyAttackMoves, BlackPawnMap>(results, pawnAttacks,
+                                           enemyMap, allyMap, pinnedFigsMap);
 
         _processPlainKingMoves<GenOnlyAttackMoves>(results, blockedFigMap, allyMap, enemyMap);
 
@@ -162,21 +160,11 @@ private:
         const uint64_t enemyMap = _mechanics.GetColMap(SwapColor(_board.movColor));
         const uint64_t allyMap = _mechanics.GetColMap(_board.movColor);
 
-        // Specific figure processing
-        uint64_t pawnAttacks;
-        if (_board.movColor == WHITE)
-        {
-            pawnAttacks = BlackPawnMap::GetAttackFields(_board.boards[Board::BoardsPerCol*SwapColor(_board.movColor) + pawnsIndex]);
-            _processPawnMoves<GenOnlyAttackMoves, WhitePawnMap, true>(results, pawnAttacks,
-                                                  enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
-        }
-        else
-        {
-            pawnAttacks = WhitePawnMap::GetAttackFields(_board.boards[Board::BoardsPerCol*SwapColor(_board.movColor) + pawnsIndex]);
-            _processPawnMoves<GenOnlyAttackMoves, BlackPawnMap, true>(results, pawnAttacks,
-                                                 enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
-        }
+        const uint64_t pawnAttacks = _board.movColor == WHITE ?
+            BlackPawnMap::GetAttackFields(_board.boards[Board::BoardsPerCol*SwapColor(_board.movColor) + pawnsIndex]) :
+            WhitePawnMap::GetAttackFields(_board.boards[Board::BoardsPerCol*SwapColor(_board.movColor) + pawnsIndex]);
 
+        // Specific figure processing
         _processFigMoves<GenOnlyAttackMoves, KnightMap, false, false, false, true>(results, pawnAttacks,
                                                        enemyMap, allyMap, pinnedFigsMap, UNUSED,
                                                        allowedTilesMap);
@@ -192,6 +180,13 @@ private:
         _processFigMoves<GenOnlyAttackMoves, QueenMap, false, false, false, true>(results, pawnAttacks,
                                                               enemyMap, allyMap, pinnedFigsMap, UNUSED,
                                                               allowedTilesMap);
+
+        if (_board.movColor == WHITE)
+            _processPawnMoves<GenOnlyAttackMoves, WhitePawnMap, true>(results, pawnAttacks,
+                                                  enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
+        else
+            _processPawnMoves<GenOnlyAttackMoves, BlackPawnMap, true>(results, pawnAttacks,
+                                                 enemyMap, allyMap, pinnedFigsMap, allowedTilesMap);
 
         _processPlainKingMoves<GenOnlyAttackMoves>(results, blockedFigMap, allyMap, enemyMap);
     }
