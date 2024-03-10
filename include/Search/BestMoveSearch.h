@@ -89,7 +89,7 @@ private:
     > [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, const int depth)
     {
         if (depth == 0) {
-            return evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
+            return _alphaBetaCaptures(evalF, bd, alpha, beta);
         }
 
         MoveGenerator mechanics(bd, _stack);
@@ -109,6 +109,42 @@ private:
         {
             Move::MakeMove(moves[i], bd);
             const int moveValue = -_alphaBeta(evalF, bd, -beta, -alpha, depth-1);
+            Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
+
+            if (moveValue >= beta)
+            {
+                _stack.PopAggregate(moves);
+                return beta;
+            }
+
+            alpha = std::max(alpha, moveValue);
+        }
+
+        _stack.PopAggregate(moves);
+        return alpha;
+    }
+
+    template<
+        class FullBoardEvalFuncT
+    > [[nodiscard]] int _alphaBetaCaptures(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta)
+    {
+        const int eval = evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));;
+
+        if (eval >= beta)
+            return beta;
+        alpha = std::max(alpha, eval);
+
+        MoveGenerator mechanics(bd, _stack);
+        const auto moves = mechanics.GetMovesFast<true>();
+
+        const auto oldCastlings = bd.Castlings;
+        const auto oldElPassant = bd.elPassantField;
+
+        _heapSortMoves(moves);
+        for(size_t i = 0; i < moves.size; ++i)
+        {
+            Move::MakeMove(moves[i], bd);
+            const int moveValue = -_alphaBetaCaptures(evalF, bd, -beta, -alpha);
             Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
             if (moveValue >= beta)
