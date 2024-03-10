@@ -44,7 +44,7 @@ template<
 
         int depth = 1;
         int alpha = NegativeInfinity;
-        while(alpha != PositiveInfinity && depth <= maxDepth){
+        while(alpha != PositiveInfinity && depth <= maxDepth-1){
             // resetting alpha
             alpha = NegativeInfinity;
 
@@ -68,7 +68,7 @@ template<
 
             if constexpr (WriteInfo){
                 GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}\n",
-                    depth, moves[sortedMoveList[1].first].GetLongAlgebraicNotation());
+                    depth+1, moves[sortedMoveList[1].first].GetLongAlgebraicNotation());
             }
 
             ++depth;
@@ -89,8 +89,8 @@ private:
     > [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, const int depth)
     {
         if (depth == 0) {
-            // return _alphaBetaCaptures(evalF, bd, alpha, beta);
-            return evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
+            return _alphaBetaCaptures(evalF, bd, alpha, beta);
+            // return evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
         }
 
         MoveGenerator mechanics(bd, _stack);
