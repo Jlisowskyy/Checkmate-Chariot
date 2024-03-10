@@ -336,7 +336,7 @@ private:
             }();
 
             // Performing checks for castlings
-            std::array<bool, Board::CastlingCount + 1> updatedCastlings = _board.Castlings;
+            std::bitset<Board::CastlingCount + 1> updatedCastlings = _board.Castlings;
             if constexpr (checkForCastling)
                 updatedCastlings[RookMap::GetMatchingCastlingIndex(_board, figBoard)] = false;
 
@@ -420,7 +420,7 @@ private:
     >
     void _processNonAttackingMoves(payload& results, const uint64_t pawnAttacks, uint64_t nonAttackingMoves, const size_t figBoardIndex,
                                    const uint64_t startField,
-                                   const std::array<bool, Board::CastlingCount + 1>& castlings
+                                   const std::bitset<Board::CastlingCount + 1> castlings
     ) const {
         while (nonAttackingMoves) {
             // extracting moves
@@ -481,7 +481,7 @@ private:
     >
     void _processAttackingMoves(payload& results,  const uint64_t pawnAttacks, uint64_t attackingMoves, const size_t figBoardIndex,
                                 const uint64_t startField,
-                                const std::array<bool, Board::CastlingCount + 1>& castlings) const {
+                                const std::bitset<Board::CastlingCount + 1> castlings) const {
         while (attackingMoves) {
             // extracting moves
             const int movePos = ExtractMsbPos(attackingMoves);

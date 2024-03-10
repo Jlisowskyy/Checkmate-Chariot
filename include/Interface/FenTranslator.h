@@ -96,7 +96,7 @@ public:
     static constexpr auto StartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     static constexpr Board StartBoard = {
-        .Castlings = {true, true, true, true},
+        .Castlings = {0b11111},
         .elPassantField = Board::InvalidElPassantBoard,
         .movColor = WHITE,
         .boards = {

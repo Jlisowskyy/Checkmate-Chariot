@@ -6,6 +6,7 @@
 #define BOARD_H
 
 #include <array>
+#include <bitset>
 #include <cinttypes>
 
 #include "BitOperations.h"
@@ -98,7 +99,7 @@ struct Board
         1LLU << 58 | 1LLU << 59 | 1LLU << 57
     };
 
-    std::array<bool, CastlingCount+1> Castlings{false, false, false, false, false}; //additional sentinel field
+    std::bitset<CastlingCount+1> Castlings{0}; //additional sentinel field
     uint64_t elPassantField = maxMsbPossible >> InvalidElPassantField;
     int movColor = WHITE;
     uint64_t boards[BoardsCount + 1] = {}; // addiitonal sentinel board

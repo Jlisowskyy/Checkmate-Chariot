@@ -98,7 +98,7 @@ public:
         bd.ChangePlayingColor();
     }
 
-    static void UnmakeMove(const Move mv, Board& bd, const std::array<bool, Board::CastlingCount+1>& castlings, const uint64_t oldElPassant)
+    static void UnmakeMove(const Move mv, Board& bd, const std::bitset<Board::CastlingCount+1> castlings, const uint64_t oldElPassant)
     {
         bd.ChangePlayingColor();
 
@@ -210,22 +210,17 @@ public:
         return (_storage & ElPassantFieldMask) >> 46;
     }
 
-    void SetCasltingRights(const std::array<bool, Board::CastlingCount+1>& arr)
+    void SetCasltingRights(const std::bitset<Board::CastlingCount+1> arr)
     {
-        const uint64_t rights = (arr[0] << 0) | (arr[1] << 1) | (arr[2] << 2) | (arr[3] << 3);
+        const uint64_t rights = arr.to_ullong() & 0xFLLU;
         _storage |= rights << 52;
     }
 
-    [[nodiscard]]std::array<bool, Board::CastlingCount+1> GetCastlingRights() const
+    [[nodiscard]]std::bitset<Board::CastlingCount+1> GetCastlingRights() const
     {
         static constexpr uint64_t CastlingMask = 0xFLLU << 52;
-        std::array<bool, Board::CastlingCount+1> arr{};
         const uint64_t rights = (_storage & CastlingMask) >> 52;
-
-        arr[0] = 1 & rights;
-        arr[1] = (2 & rights) >> 1;
-        arr[2] = (4 & rights) >> 2;
-        arr[3] = (8 & rights) >> 3;
+        const std::bitset<Board::CastlingCount+1> arr{rights};
 
         return arr;
     }
