@@ -194,9 +194,7 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string&str
         _engine.SetFenPosition(_fenPosition);
     }
     else if (workStr == "startpos")
-    {
-
-    }
+        _engine.SetStartpos();
     else
         return UCICommand::InvalidCommand;
 
@@ -211,6 +209,8 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string&str
 
         _appliedMoves = movesVect;
     }
+    else
+        _appliedMoves.clear();
 
     return UCICommand::positionCommand;
 }
