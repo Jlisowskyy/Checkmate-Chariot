@@ -66,6 +66,11 @@ constexpr uint64_t ClearAFromIntersectingBits(const uint64_t a, const uint64_t b
     return a ^ (a & b);
 }
 
+constexpr int CountOnesInBoard(const uint64_t num)
+{
+    return __builtin_popcountll(num);
+}
+
 constexpr __uint128_t operator""_uint128_t(const char* x)
 {
     __uint128_t y = 0;

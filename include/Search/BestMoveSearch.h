@@ -129,7 +129,7 @@ private:
         class FullBoardEvalFuncT
     > [[nodiscard]] int _alphaBetaCaptures(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta)
     {
-        const int eval = evalF(bd, bd.movColor) - evalF(bd, SwapColor(bd.movColor));
+        const int eval = evalF(bd, bd.movColor);
 
         if (eval >= beta)
             return beta;
