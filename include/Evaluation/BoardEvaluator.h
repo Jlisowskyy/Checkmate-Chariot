@@ -104,9 +104,6 @@ struct BoardEvaluator
         // add bonuses for covering pawns
         eval = _applyBonusForCoveredPawns(bd, eval);
 
-        // add bonuses for coevered king fields
-        eval = _applyBonusForKingCoverage(bd, eval);
-
         return eval;
     }
 
@@ -121,17 +118,6 @@ private:
 
         const uint64_t coveredBPawns = BlackPawnMap::GetAttackFields(bd.boards[bPawnsIndex]) & bd.boards[bPawnsIndex];
         eval += CountOnesInBoard(coveredBPawns) * CoveredBPawnBonus;
-
-        return eval;
-    }
-
-    static int32_t _applyBonusForKingCoverage(const Board& bd, int32_t eval)
-    {
-        const uint64_t coveredWKingTiles = KingMap::GetMoves(ExtractMsbPos(bd.boards[wKingIndex])) & bd.boards[wPawnsIndex];
-        eval += CountOnesInBoard(coveredWKingTiles) * CoveredWKingBonus;
-
-        const uint64_t coveredBKingTiles = KingMap::GetMoves(ExtractMsbPos(bd.boards[bPawnsIndex])) & bd.boards[bPawnsIndex];
-        eval += CountOnesInBoard(coveredBKingTiles) * CoveredBKingBonus;
 
         return eval;
     }
