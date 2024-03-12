@@ -141,14 +141,14 @@ private:
         //sentinel
         sortedMoveList[0] = std::make_pair(-1, PositiveInfinity);
 
+        // saving old params
+        const auto oldCastlings = _board.Castlings;
+        const auto oldElPassant = _board.elPassantField;
+
         size_t cutOffIndex = moves.size;
-        for (int dep = 1; dep < depth-1; ++dep){
+        for (int dep = 1; dep < depth-2; ++dep){
             // resetting alpha
             int inAlph = alpha;
-
-            // saving old params
-            const auto oldCastlings = _board.Castlings;
-            const auto oldElPassant = _board.elPassantField;
 
             // list iteration
             for (size_t i = 1; i <= moves.size; ++i) {
@@ -172,8 +172,23 @@ private:
             cutOffIndex = moves.size;
         }
 
+        for(size_t i = 1; i <= moves.size; ++i)
+        {
+            Move::MakeMove(moves[sortedMoveList[i].first], _board);
+            int moveValue = -_alphaBetaID(evalF, _board, -beta, -alpha, depth-1);
+            Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
+
+            if (moveValue >= beta)
+            {
+                _stack.PopAggregate(moves);
+                return beta;
+            }
+
+            alpha = std::max(alpha, moveValue);
+        }
+
         _stack.PopAggregate(moves);
-        return sortedMoveList[1].second;
+        return alpha;
     }
 
     template<
