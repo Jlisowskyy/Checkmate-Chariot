@@ -6,13 +6,13 @@
 #define HASHMAP_H
 
 #include <array>
+#include <format>
 #include <mutex>
 #include <random>
-#include <format>
 #include <vector>
 
-#include "EngineTypeDefs.h"
 #include "BitOperations.h"
+#include "EngineTypeDefs.h"
 #include "Interface/Logger.h"
 
 static inline Logger ParameterSearchLogger{};
@@ -27,24 +27,21 @@ static inline Logger ParameterSearchLogger{};
  *
  */
 
-template<
-    class HashFuncT,
-    size_t mapAllocSize = 256
->
+template <class HashFuncT, size_t mapAllocSize = 256>
 class movesHashMap
 {
     // ------------------------------
     // Class creation
     // ------------------------------
-public:
+   public:
     static constexpr size_t MasksCount = 4;
 
     constexpr movesHashMap() = default;
 
     constexpr ~movesHashMap() = default;
 
-    constexpr movesHashMap(const std::array<uint64_t, MasksCount>&nMasks, const HashFuncT&func): masks(nMasks),
-        HFunc(func), _map{0}
+    constexpr movesHashMap(const std::array<uint64_t, MasksCount>& nMasks, const HashFuncT& func)
+        : masks(nMasks), HFunc(func), _map{0}
     {
     }
 
@@ -60,31 +57,16 @@ public:
     // Class interaction
     // ------------------------------
 
-    constexpr const uint64_t& operator[](const uint64_t neighbors) const
-    {
-        return _map[HFunc(neighbors)];
-    }
+    constexpr const uint64_t& operator[](const uint64_t neighbors) const { return _map[HFunc(neighbors)]; }
 
-    constexpr uint64_t& operator[](const uint64_t neighbors)
-    {
-        return _map[HFunc(neighbors)];
-    }
+    constexpr uint64_t& operator[](const uint64_t neighbors) { return _map[HFunc(neighbors)]; }
 
-    constexpr void InitFullMask()
-    {
-        fullMask = masks[0] | masks[1] | masks[2] | masks[3];
-    }
+    constexpr void InitFullMask() { fullMask = masks[0] | masks[1] | masks[2] | masks[3]; }
 
-    constexpr void clear()
-    {
-        _map.fill(EmptyField);
-    }
+    constexpr void clear() { _map.fill(EmptyField); }
 
-    template<
-        class NeighborGeneratorT,
-        uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr,
-        bool ShouldSignal = false
-    >
+    template <class NeighborGeneratorT, uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr,
+              bool ShouldSignal = false>
     std::pair<bool, size_t> IntegrityTest(NeighborGeneratorT func, const int boardIndex)
     {
         const auto [possibilities, posSize] = func(boardIndex, masks);
@@ -105,25 +87,22 @@ public:
             if (const uint64_t oldRecord = (*this)[possibilities[i]]; oldRecord != EmptyField && oldRecord != record)
             {
                 if constexpr (ShouldSignal)
-                    ParameterSearchLogger.LogError(
-                        std::format("[ ERROR ] Integrity failed on index: {}", i));
+                    ParameterSearchLogger.LogError(std::format("[ ERROR ] Integrity failed on index: {}", i));
 
                 collisionDetected = true;
                 break;
             }
 
             (*this)[possibilities[i]] = record;
-            if (const size_t ind = HFunc(possibilities[i]); ind > maxSize) maxSize = ind;
+            if (const size_t ind = HFunc(possibilities[i]); ind > maxSize)
+                maxSize = ind;
         }
 
         return {collisionDetected == false, maxSize * sizeof(uint64_t)};
     }
 
-    template<
-        class NeighborGeneratorT,
-        class MaskInitT,
-        uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr
-    >
+    template <class NeighborGeneratorT, class MaskInitT,
+              uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr>
     static void FindHashParameters(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit)
     {
         movesHashMap maps[Board::BoardFields]{};
@@ -143,14 +122,13 @@ public:
 
             // Possible neighbors generation.
             const auto [possibilities, posSize] = nGen(bInd, maps[i].masks);
-            auto getNeighbors = [&]([[maybe_unused]]const int unused1, [[maybe_unused]]const std::array<uint64_t, 4>&unused2)
-            {
-                return std::make_pair(std::ref(possibilities), posSize);
-            };
+            auto getNeighbors =
+                [&]([[maybe_unused]] const int unused1, [[maybe_unused]] const std::array<uint64_t, 4>& unused2)
+            { return std::make_pair(std::ref(possibilities), posSize); };
 
             // First inital check for correctnes
-            auto [result, size] = maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(
-                getNeighbors, bInd);
+            auto [result, size] =
+                maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
 
             // If map is correct go to the next one
             if (result)
@@ -166,9 +144,9 @@ public:
 
             // Anounce thread start
             guard.lock();
-            ParameterSearchLogger.Log(std::format(
-                "Starting hash function parameters search on index: {} and field: {}\n",
-                i, fieldStrMap.at(static_cast<Field>(1LLU << bInd))));
+            ParameterSearchLogger.Log(
+                std::format("Starting hash function parameters search on index: {} and field: {}\n", i,
+                            fieldStrMap.at(static_cast<Field>(1LLU << bInd))));
             guard.unlock();
 
             // Main Thread job - parameter searching loop
@@ -181,12 +159,11 @@ public:
                 guard.unlock();
 
                 const auto [rehashResult, rehashedSize] =
-                        maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
+                    maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
 
                 wasCollision = !rehashResult;
                 nSize = rehashedSize;
-            }
-            while (wasCollision);
+            } while (wasCollision);
 
             // Saving results
             guard.lock();
@@ -197,10 +174,10 @@ public:
             // Printing actual parameters
             ParameterSearchLogger.Log("Actual rehashing result:\n{");
             for (size_t j = 0; j < Board::BoardFields; ++j)
-                ParameterSearchLogger.StartLogging() << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) <<
-                        ",\n";
-            ParameterSearchLogger.Log(std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps,
-                                                  fullSize));
+                ParameterSearchLogger.StartLogging()
+                    << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
+            ParameterSearchLogger.Log(
+                std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps, fullSize));
 
             guard.unlock();
         }
@@ -208,17 +185,14 @@ public:
         // Print final looking table
         ParameterSearchLogger.Log("Actual rehashing result:\n{");
         for (size_t j = 0; j < Board::BoardFields; ++j)
-            ParameterSearchLogger.StartLogging() << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) <<
-                    ",\n";
-        ParameterSearchLogger.Log(std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps,
-                                              fullSize));
+            ParameterSearchLogger.StartLogging()
+                << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
+        ParameterSearchLogger.Log(
+            std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps, fullSize));
     }
 
-    template<
-        class NeighborGeneratorT,
-        class MaskInitT,
-        uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr
-    >
+    template <class NeighborGeneratorT, class MaskInitT,
+              uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr>
     static void FindCollidingIndices(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit)
     {
         ParameterSearchLogger.StartLogging() << "Collision detected on indices:\n\t{ ";
@@ -248,10 +222,10 @@ public:
     uint64_t fullMask{};
     HashFuncT HFunc{};
 
-private:
+   private:
     static constexpr uint64_t EmptyField = ~0ULL;
 
     std::array<uint64_t, mapAllocSize> _map{};
 };
 
-#endif //HASHMAP_H
+#endif  // HASHMAP_H

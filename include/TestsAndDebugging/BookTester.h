@@ -5,9 +5,9 @@
 #ifndef BOOKTESTER_H
 #define BOOKTESTER_H
 
-#include <string>
 #include <chrono>
 #include <random>
+#include <string>
 
 #include "../OpeningBook/OpeningBook.h"
 #include "../ParseTools.h"
@@ -30,13 +30,13 @@ struct BookTester
     // Class interaction
     // ------------------------------
 
-    static void PerformRandomAccessTest(const OpeningBook& book, const std::string& textBookPath, uint64_t testPositionCount);
+    static void PerformRandomAccessTest(const OpeningBook& book, const std::string& textBookPath,
+                                        uint64_t testPositionCount);
 
     // ------------------------------
     // private methods
     // ------------------------------
-private:
-
+   private:
     static void _testSequence(const OpeningBook& book, const std::vector<std::string>& moves, const std::string& buff);
 
     // simply generates vector of indices, indicating which lines will be tested
@@ -46,4 +46,4 @@ private:
     static uint64_t _getOffset(uint64_t averageOffset);
 };
 
-#endif //BOOKTESTER_H
+#endif  // BOOKTESTER_H

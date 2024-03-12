@@ -5,7 +5,7 @@
 #include "../include/ParseTools.h"
 
 size_t ParseTools::ExtractNextLine(const size_t startPos, const size_t maxPos, const char* inBuffer,
-                                   std::string&outBuffer)
+                                   std::string& outBuffer)
 {
     for (size_t pos = startPos; pos < maxPos; ++pos)
     {
@@ -17,40 +17,49 @@ size_t ParseTools::ExtractNextLine(const size_t startPos, const size_t maxPos, c
     return maxPos;
 }
 
-lli ParseTools::ParseTolli(const std::string&str)
+lli ParseTools::ParseTolli(const std::string& str)
 {
     errno = 0;
     return strtoll(str.c_str(), nullptr, 10);
 }
 
-size_t ParseTools::TrimLeft(const std::string&str)
+size_t ParseTools::TrimLeft(const std::string& str)
 {
     size_t ind = 0;
-    while (ind < str.length() && std::isblank(str[ind])) { ++ind; }
+    while (ind < str.length() && std::isblank(str[ind]))
+    {
+        ++ind;
+    }
     return ind;
 }
 
-size_t ParseTools::TrimRight(const std::string&str)
+size_t ParseTools::TrimRight(const std::string& str)
 {
     size_t ind = str.length();
-    while (ind > 0 && std::isblank(str[ind])) { --ind; }
+    while (ind > 0 && std::isblank(str[ind]))
+    {
+        --ind;
+    }
     return ind;
 }
 
-std::string ParseTools::GetTrimmed(const std::string&str)
+std::string ParseTools::GetTrimmed(const std::string& str)
 {
     const size_t tLeft = TrimLeft(str);
     const size_t tRight = TrimRight(str);
 
-    if (tLeft > tRight) return "";
+    if (tLeft > tRight)
+        return "";
 
     return str.substr(tLeft, tRight - tLeft);
 }
 
 ssize_t ParseTools::GetLineCountFromFile(std::fstream& stream)
 {
-    if (stream.bad()) return -1;
-    if (stream.eof()) stream.clear();
+    if (stream.bad())
+        return -1;
+    if (stream.eof())
+        stream.clear();
 
     const std::streampos oldPos = stream.tellg();
     stream.seekg(0);
@@ -61,5 +70,5 @@ ssize_t ParseTools::GetLineCountFromFile(std::fstream& stream)
 
     stream.clear();
     stream.seekg(oldPos);
-    return newLineCount+1;
+    return newLineCount + 1;
 }

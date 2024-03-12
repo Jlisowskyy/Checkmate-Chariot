@@ -7,4 +7,4 @@
 
 using lli = long long int;
 
-#endif //COMPILATION_CONSTANTS_H
+#endif  // COMPILATION_CONSTANTS_H

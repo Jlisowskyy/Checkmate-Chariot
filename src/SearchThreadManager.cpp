@@ -11,17 +11,18 @@
 #include <unistd.h>
 #include <csignal>
 
-#endif // __unix__
+#endif  // __unix__
 
 SearchThreadManager::~SearchThreadManager()
 {
-    for (const auto thread: _threads)
+    for (const auto thread : _threads)
         delete thread;
 }
 
 bool SearchThreadManager::goInfinite(const Board& bd)
 {
-    if (_isSearchOn == true) return false;
+    if (_isSearchOn == true)
+        return false;
 
     _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, INT_MAX);
     _isSearchOn = true;
@@ -31,7 +32,8 @@ bool SearchThreadManager::goInfinite(const Board& bd)
 
 std::string SearchThreadManager::stop()
 {
-    if (_isSearchOn == false) return "";
+    if (_isSearchOn == false)
+        return "";
 
     _cancelThread(0);
     _isSearchOn = false;
@@ -40,7 +42,8 @@ std::string SearchThreadManager::stop()
 
 std::string SearchThreadManager::goMoveTime(const Board& bd, long long msecs)
 {
-    if (_isSearchOn == true) return "";
+    if (_isSearchOn == true)
+        return "";
 
     goInfinite(bd);
     std::this_thread::sleep_for(std::chrono::milliseconds(msecs));
@@ -49,7 +52,8 @@ std::string SearchThreadManager::goMoveTime(const Board& bd, long long msecs)
 
 std::string SearchThreadManager::goDepth(const Board& bd, int depth)
 {
-    if (_isSearchOn == true) return "";
+    if (_isSearchOn == true)
+        return "";
 
     _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, depth);
     _threads[0]->join();
@@ -61,12 +65,13 @@ std::string SearchThreadManager::goDepth(const Board& bd, int depth)
     return _seachResult.GetLongAlgebraicNotation();
 }
 
-void SearchThreadManager::_threadSearchJob(const Board* bd, stack<Move, DefaultStackSize>* s, Move* output, const int depth)
+void SearchThreadManager::_threadSearchJob(const Board* bd, stack<Move, DefaultStackSize>* s, Move* output,
+                                           const int depth)
 {
 #ifdef __unix__
     if (_sethandler(_sigusr1_exit, SIGUSR1))
         exit(EXIT_FAILURE);
-#endif // __unix__
+#endif  // __unix__
 
     BestMoveSearch searcher{*bd, *s};
     searcher.IterativeDeepening(BoardEvaluator::DefaultFullEvalFunction, output, depth);
@@ -88,7 +93,7 @@ void SearchThreadManager::_cancelThread(const size_t threadInd)
 
 #ifdef __unix__
 
-int SearchThreadManager::_sethandler(void(* f)(int), int sigNo)
+int SearchThreadManager::_sethandler(void (*f)(int), int sigNo)
 {
     struct sigaction act = {};
     act.sa_handler = f;
@@ -97,9 +102,6 @@ int SearchThreadManager::_sethandler(void(* f)(int), int sigNo)
     return 0;
 }
 
-void SearchThreadManager::_sigusr1_exit(int)
-{
-    pthread_exit(nullptr);
-}
+void SearchThreadManager::_sigusr1_exit(int) { pthread_exit(nullptr); }
 
 #endif

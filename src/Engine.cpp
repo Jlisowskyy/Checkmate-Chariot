@@ -4,9 +4,9 @@
 
 #include "../include/Engine.h"
 #include "../include/MoveGeneration/ChessMechanics.h"
-#include "../include/Search/BestMoveSearch.h"
-#include "../include/OpeningBook/OpeningBook.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
+#include "../include/OpeningBook/OpeningBook.h"
+#include "../include/Search/BestMoveSearch.h"
 
 void Engine::Initialize()
 {
@@ -23,23 +23,16 @@ std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
     std::map<std::string, uint64_t> moveMap{};
 
     game.IterativeBoardTraversal(
-        [&](const Board&bd)
+        [&](const Board& bd)
         {
             const auto moveStr = GetLongAlgebraicMoveEncoding(startingBoard, bd);
 
             uint64_t localSum{};
-            game.IterativeBoardTraversal(
-                [&]([[maybe_unused]] Board&unused)
-                {
-                    ++localSum;
-                },
-                depth - 1
-            );
+            game.IterativeBoardTraversal([&]([[maybe_unused]] Board& unused) { ++localSum; }, depth - 1);
 
             moveMap[moveStr] = localSum;
         },
-        1
-    );
+        1);
 
     return moveMap;
 }
@@ -54,7 +47,7 @@ std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
 
     const auto oldCastling = startingBoard.Castlings;
     const auto oldElPassant = startingBoard.elPassantField;
-    for(size_t i = 0; i < moves.size; ++i)
+    for (size_t i = 0; i < moves.size; ++i)
     {
         Move::MakeMove(moves[i], startingBoard);
         moveMap[moves[i].GetLongAlgebraicNotation()] = game.CountMoves(depth - 1);
@@ -65,7 +58,7 @@ std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
     return moveMap;
 }
 
-void Engine::SetFenPosition(const std::string&fenStr)
+void Engine::SetFenPosition(const std::string& fenStr)
 {
     if (fenStr.length() >= _startposPrefix.length() && fenStr.substr(0, _startposPrefix.length()) == _startposPrefix)
     {
@@ -92,16 +85,18 @@ void Engine::SetStartpos()
 
 const EngineInfo& Engine::GetEngineInfo() { return engineInfo; }
 
-bool Engine::ApplyMoves(const std::vector<std::string>&UCIMoves)
+bool Engine::ApplyMoves(const std::vector<std::string>& UCIMoves)
 {
     Board workBoard = _startingBoard;
 
-    for (auto&move: UCIMoves)
+    for (auto& move : UCIMoves)
     {
         const auto [oldPos, newPos] = ExtractPositionsFromEncoding(move);
 
-        if (oldPos == 0 || newPos == 0) return false;
-        if (!_applyMove(workBoard, move, oldPos, newPos)) return false;
+        if (oldPos == 0 || newPos == 0)
+            return false;
+        if (!_applyMove(workBoard, move, oldPos, newPos))
+            return false;
     }
 
     _board = workBoard;
@@ -115,14 +110,11 @@ void Engine::RestartEngine()
     _startingBoard = _board;
 }
 
-Board Engine::GetUnderlyingBoardCopy() const
-{
-    return _board;
-}
+Board Engine::GetUnderlyingBoardCopy() const { return _board; }
 
 std::string Engine::GetFenTranslation() const { return FenTranslator::Translate(_board); }
 
-bool Engine::_applyMove(Board&board, const std::string&move, const uint64_t oldPos, const uint64_t newPos)
+bool Engine::_applyMove(Board& board, const std::string& move, const uint64_t oldPos, const uint64_t newPos)
 {
     const size_t movingColorIndex = board.movColor * Board::BoardsPerCol;
     size_t movedFigIndex = 6;
@@ -133,21 +125,23 @@ bool Engine::_applyMove(Board&board, const std::string&move, const uint64_t oldP
             movedFigIndex = i;
 
     // invalid move no figure found
-    if (movedFigIndex == 6) return false;
+    if (movedFigIndex == 6)
+        return false;
 
     // fake signal: important property used in further search
-    if ((board.boards[movingColorIndex + movedFigIndex] & newPos) != 0) return false;
+    if ((board.boards[movingColorIndex + movedFigIndex] & newPos) != 0)
+        return false;
 
     // most common situation same board to be placed
     size_t destBoardIndex = movedFigIndex;
     // moving pawn, promotion should be checked additionally
-    if (const uint64_t promotingMask = board.movColor == WHITE
-                                           ? WhitePawnMap::PromotingMask
-                                           : BlackPawnMap::PromotingMask;
+    if (const uint64_t promotingMask =
+            board.movColor == WHITE ? WhitePawnMap::PromotingMask : BlackPawnMap::PromotingMask;
         movedFigIndex == pawnsIndex && (promotingMask & oldPos) != 0)
     {
         // move does not contain promoted figure encoding
-        if (move.size() != 5) return false;
+        if (move.size() != 5)
+            return false;
 
         switch (std::toupper(move[4]))
         {
@@ -173,10 +167,10 @@ bool Engine::_applyMove(Board&board, const std::string&move, const uint64_t oldP
     ChessMechanics mech(workBoard);
 
     // generating moves
-    for (const auto moves = mech.GetPossibleMoveSlow(); const auto&movedBoard: moves)
+    for (const auto moves = mech.GetPossibleMoveSlow(); const auto& movedBoard : moves)
         // matching board was found
-        if ((movedBoard.boards[movingColorIndex + movedFigIndex] & oldPos) == 0
-            && (movedBoard.boards[movingColorIndex + destBoardIndex] & newPos) != 0)
+        if ((movedBoard.boards[movingColorIndex + movedFigIndex] & oldPos) == 0 &&
+            (movedBoard.boards[movingColorIndex + destBoardIndex] & newPos) != 0)
         {
             board = movedBoard;
             return true;
@@ -185,7 +179,7 @@ bool Engine::_applyMove(Board&board, const std::string&move, const uint64_t oldP
     return false;
 }
 
-void Engine::_changeDebugState([[maybe_unused]]Engine&eng, std::string& nPath)
+void Engine::_changeDebugState([[maybe_unused]] Engine& eng, std::string& nPath)
 {
     GlobalLogger.ChangeLogStream(nPath);
 }
@@ -224,7 +218,4 @@ void Engine::StopSearch()
         GlobalLogger.StartLogging() << std::format("bestmove {}\n", res);
 }
 
-void Engine::GoInfinite()
-{
-    TManager.goInfinite(_board);
-}
+void Engine::GoInfinite() { TManager.goInfinite(_board); }

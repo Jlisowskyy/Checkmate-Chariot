@@ -5,21 +5,20 @@
 #ifndef SEARCHTHREADMANAGER_H
 #define SEARCHTHREADMANAGER_H
 
-#include <thread>
 #include <string>
+#include <thread>
 
-#include "stack.h"
-#include "../MoveGeneration/Move.h"
 #include "../Evaluation/BoardEvaluator.h"
+#include "../MoveGeneration/Move.h"
 #include "../Search/BestMoveSearch.h"
+#include "stack.h"
 
 class SearchThreadManager
 {
     // ------------------------------
     // Class creation
     // ------------------------------
-public:
-
+   public:
     SearchThreadManager() = default;
     ~SearchThreadManager();
 
@@ -33,10 +32,7 @@ public:
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] stack<Move, DefaultStackSize>& GetDefaultStack()
-    {
-        return _stacks[0];
-    }
+    [[nodiscard]] stack<Move, DefaultStackSize>& GetDefaultStack() { return _stacks[0]; }
 
     bool goInfinite(const Board& bd);
 
@@ -49,8 +45,7 @@ public:
     // ------------------------------
     // Private class methods
     // ------------------------------
-private:
-
+   private:
     static void _threadSearchJob(const Board* bd, stack<Move, DefaultStackSize>* s, Move* output, int depth);
 
     void _cancelThread(size_t threadInd);
@@ -66,11 +61,11 @@ private:
     // Class fields
     // ------------------------------
 
-    bool _isSearchOn { false };
+    bool _isSearchOn{false};
     Move _seachResult{};
 
     stack<Move, DefaultStackSize> _stacks[20 + 1]{};
     std::thread* _threads[20 + 1]{};
 };
 
-#endif //SEARCHTHREADMANAGER_H
+#endif  // SEARCHTHREADMANAGER_H

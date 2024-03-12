@@ -18,7 +18,7 @@ class BishopMap
     // ---------------------------------------
     // Class creation and initialization
     // ---------------------------------------
-public:
+   public:
     BishopMap() = delete;
 
     ~BishopMap() = delete;
@@ -47,4 +47,4 @@ public:
     static constexpr _underlyingMap _map{};
 };
 
-#endif //BISHOPMAP_H
+#endif  // BISHOPMAP_H

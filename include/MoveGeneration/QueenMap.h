@@ -15,7 +15,7 @@ class QueenMap
     // ------------------------------
     // Class creation
     // ------------------------------
-public:
+   public:
     constexpr QueenMap() = default;
 
     // ------------------------------
@@ -34,4 +34,4 @@ public:
     }
 };
 
-#endif //QUEENMAP_H
+#endif  // QUEENMAP_H

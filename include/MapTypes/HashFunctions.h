@@ -5,13 +5,13 @@
 #ifndef HASHFUNCTIONS_H
 #define HASHFUNCTIONS_H
 
-#include <random>
 #include <chrono>
 #include <format>
+#include <random>
 
 #include "../BitOperations.h"
 
-template<class RandomGeneratorT = std::mt19937_64>
+template <class RandomGeneratorT = std::mt19937_64>
 class Fast2PowHashFunction
 {
     /*                  Description
@@ -27,7 +27,7 @@ class Fast2PowHashFunction
     // ------------------------------
     // Class creation
     // ------------------------------
-public:
+   public:
     // [a, b, size]
     using params = std::tuple<__uint128_t, __uint128_t, __uint128_t>;
 
@@ -41,10 +41,7 @@ public:
         ChangeSize(size);
     }
 
-    constexpr Fast2PowHashFunction(const params&p)
-    {
-        SetParameters(p);
-    }
+    constexpr Fast2PowHashFunction(const params& p) { SetParameters(p); }
 
     constexpr Fast2PowHashFunction(const Fast2PowHashFunction&) = default;
 
@@ -63,14 +60,13 @@ public:
     void RollParameters()
     {
         static RandomGeneratorT randEngine_64{
-            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
-        };
+            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
 
         _a = randEngine_64() | static_cast<__uint128_t>(randEngine_64()) << 64;
         _b = randEngine_64() | static_cast<__uint128_t>(randEngine_64()) << 64;
     }
 
-    constexpr void SetParameters(const params&p)
+    constexpr void SetParameters(const params& p)
     {
         const auto [a, b, size] = p;
 
@@ -79,35 +75,23 @@ public:
         ChangeSize(size);
     }
 
-    [[nodiscard]] constexpr params GetParams() const
-    {
-        return {_a, _b, _mask};
-    }
+    [[nodiscard]] constexpr params GetParams() const { return {_a, _b, _mask}; }
 
-    constexpr void ChangeSize(const __uint128_t nSize)
-    {
-        _mask = (nSize << 64) - 1;
-    }
+    constexpr void ChangeSize(const __uint128_t nSize) { _mask = (nSize << 64) - 1; }
 
-    friend std::ostream& operator<<(std::ostream&out, const Fast2PowHashFunction&f)
+    friend std::ostream& operator<<(std::ostream& out, const Fast2PowHashFunction& f)
     {
         return out << std::format("_hashFuncT(std::make_tuple({}_uint128_t, {}_uint128_t, {}))", f._a, f._b,
                                   f._getRealSize());
     }
 
-    constexpr size_t operator()(const size_t x) const
-    {
-        return ((_a * x + _b) & _mask) >> 64;
-    }
+    constexpr size_t operator()(const size_t x) const { return ((_a * x + _b) & _mask) >> 64; }
 
     // ------------------------------
     // private methods
     // ------------------------------
-private:
-    [[nodiscard]] constexpr uint64_t _getRealSize() const
-    {
-        return (_mask + 1) >> 64;
-    }
+   private:
+    [[nodiscard]] constexpr uint64_t _getRealSize() const { return (_mask + 1) >> 64; }
 
     // ------------------------------
     // Class fields
@@ -118,7 +102,7 @@ private:
     __uint128_t _mask;
 };
 
-template<class RandomGeneratorT = std::mt19937_64>
+template <class RandomGeneratorT = std::mt19937_64>
 class Fast2PowHashFunctionNoOffset
 {
     /*                  Description
@@ -132,7 +116,7 @@ class Fast2PowHashFunctionNoOffset
     // ------------------------------
     // Class creation
     // ------------------------------
-public:
+   public:
     // [a, b, size]
     using params = std::tuple<__uint128_t, __uint128_t>;
 
@@ -146,10 +130,7 @@ public:
         ChangeSize(size);
     }
 
-    constexpr Fast2PowHashFunctionNoOffset(const params&p)
-    {
-        SetParameters(p);
-    }
+    constexpr Fast2PowHashFunctionNoOffset(const params& p) { SetParameters(p); }
 
     constexpr Fast2PowHashFunctionNoOffset(const Fast2PowHashFunctionNoOffset&) = default;
 
@@ -168,13 +149,12 @@ public:
     void RollParameters()
     {
         static RandomGeneratorT randEngine_64{
-            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
-        };
+            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
 
         _a = randEngine_64() | static_cast<__uint128_t>(randEngine_64()) << 64;
     }
 
-    constexpr void SetParameters(const params&p)
+    constexpr void SetParameters(const params& p)
     {
         const auto [a, size] = p;
 
@@ -182,34 +162,22 @@ public:
         ChangeSize(size);
     }
 
-    [[nodiscard]] constexpr params GetParams() const
-    {
-        return {_a, _mask};
-    }
+    [[nodiscard]] constexpr params GetParams() const { return {_a, _mask}; }
 
-    constexpr void ChangeSize(const __uint128_t nSize)
-    {
-        _mask = (nSize << 64) - 1;
-    }
+    constexpr void ChangeSize(const __uint128_t nSize) { _mask = (nSize << 64) - 1; }
 
-    friend std::ostream& operator<<(std::ostream&out, const Fast2PowHashFunctionNoOffset&f)
+    friend std::ostream& operator<<(std::ostream& out, const Fast2PowHashFunctionNoOffset& f)
     {
         return out << std::format("_hashFuncT(std::make_tuple({}_uint128_t, {}))", f._a, f._getRealSize());
     }
 
-    constexpr size_t operator()(const size_t x) const
-    {
-        return (_a * x & _mask) >> 64;
-    }
+    constexpr size_t operator()(const size_t x) const { return (_a * x & _mask) >> 64; }
 
     // ------------------------------
     // private methods
     // ------------------------------
-private:
-    [[nodiscard]] constexpr uint64_t _getRealSize() const
-    {
-        return (_mask + 1) >> 64;
-    }
+   private:
+    [[nodiscard]] constexpr uint64_t _getRealSize() const { return (_mask + 1) >> 64; }
 
     // ------------------------------
     // Class fields
@@ -219,8 +187,7 @@ private:
     __uint128_t _mask;
 };
 
-template<
-    class RandomGeneratorT = std::mt19937_64>
+template <class RandomGeneratorT = std::mt19937_64>
 class FancyMagicHashFunction
 {
     /*               Description
@@ -233,22 +200,16 @@ class FancyMagicHashFunction
     // ------------------------------
     // Class creation
     // ------------------------------
-public:
+   public:
     // [magic, shift]
     using params = std::tuple<uint64_t, uint64_t>;
 
     // Note: expects setParameters to be invoked before usage
     constexpr FancyMagicHashFunction() = default;
 
-    explicit FancyMagicHashFunction(const uint64_t offset): _offset(offset)
-    {
-        RollParameters();
-    }
+    explicit FancyMagicHashFunction(const uint64_t offset) : _offset(offset) { RollParameters(); }
 
-    constexpr FancyMagicHashFunction(const params&p)
-    {
-        SetParameters(p);
-    }
+    constexpr FancyMagicHashFunction(const params& p) { SetParameters(p); }
 
     constexpr FancyMagicHashFunction(const FancyMagicHashFunction&) = default;
 
@@ -267,13 +228,12 @@ public:
     void RollParameters()
     {
         static RandomGeneratorT randEngine_64{
-            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
-        };
+            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
 
         _magic = randEngine_64();
     }
 
-    constexpr void SetParameters(const params&p)
+    constexpr void SetParameters(const params& p)
     {
         const auto [magic, offset] = p;
 
@@ -281,32 +241,24 @@ public:
         _offset = offset;
     }
 
-    [[nodiscard]] constexpr params GetParams() const
-    {
-        return {_magic, _offset};
-    }
+    [[nodiscard]] constexpr params GetParams() const { return {_magic, _offset}; }
 
-    friend std::ostream& operator<<(std::ostream&out, const FancyMagicHashFunction&f)
+    friend std::ostream& operator<<(std::ostream& out, const FancyMagicHashFunction& f)
     {
         return out << std::format("_hashFuncT(std::make_tuple({}LLU, {}))", f._magic, f._offset);
     }
 
-    constexpr size_t operator()(const uint64_t val) const
-    {
-        return (val * _magic) >> (64 - _offset);
-    }
+    constexpr size_t operator()(const uint64_t val) const { return (val * _magic) >> (64 - _offset); }
 
     // ------------------------------
     // Class fields
     // ------------------------------
-private:
+   private:
     uint64_t _magic;
     uint64_t _offset;
 };
 
-template<
-    bool OptimizeSecondModulo = false,
-    class RandomGeneratorT = std::mt19937_64>
+template <bool OptimizeSecondModulo = false, class RandomGeneratorT = std::mt19937_64>
 class BaseHashFunction
 {
     /*               Description
@@ -327,14 +279,14 @@ class BaseHashFunction
     // ------------------------------
     // Class creation
     // ------------------------------
-public:
+   public:
     // [a, b, prime, size]
     using params = std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>;
 
     // Note: expects setParameters to be invoked before usage
     constexpr BaseHashFunction() = default;
 
-    explicit BaseHashFunction(const size_t size): _sizeMod{_initSizeMod(size)}
+    explicit BaseHashFunction(const size_t size) : _sizeMod{_initSizeMod(size)}
     {
         RollParameters();
 
@@ -342,15 +294,12 @@ public:
         _prime = primePer2Power[msbBit / 8];
     }
 
-    explicit BaseHashFunction(const size_t size, const size_t prime): _prime{prime}, _sizeMod{_initSizeMod(size)}
+    explicit BaseHashFunction(const size_t size, const size_t prime) : _prime{prime}, _sizeMod{_initSizeMod(size)}
     {
         RollParameters();
     }
 
-    constexpr BaseHashFunction(const params&p)
-    {
-        SetParameters(p);
-    }
+    constexpr BaseHashFunction(const params& p) { SetParameters(p); }
 
     constexpr BaseHashFunction(const BaseHashFunction&) = default;
 
@@ -369,19 +318,15 @@ public:
     void RollParameters()
     {
         static RandomGeneratorT randEngine_64{
-            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
-        };
+            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
 
         _a = randEngine_64();
         _b = randEngine_64();
     }
 
-    [[nodiscard]] constexpr size_t GetMaxVal() const
-    {
-        return _prime - 1;
-    }
+    [[nodiscard]] constexpr size_t GetMaxVal() const { return _prime - 1; }
 
-    constexpr void SetParameters(const params&p)
+    constexpr void SetParameters(const params& p)
     {
         const auto [a, b, prime, size] = p;
 
@@ -391,12 +336,9 @@ public:
         _sizeMod = _initSizeMod(size);
     }
 
-    [[nodiscard]] constexpr params GetParams() const
-    {
-        return {_a, _b, _prime, _getSize(_sizeMod)};
-    }
+    [[nodiscard]] constexpr params GetParams() const { return {_a, _b, _prime, _getSize(_sizeMod)}; }
 
-    friend std::ostream& operator<<(std::ostream&out, const BaseHashFunction&f)
+    friend std::ostream& operator<<(std::ostream& out, const BaseHashFunction& f)
     {
         return out << std::format("_hashFuncT(std::make_tuple({}LLU, {}LLU, {}, {}))", f._a, f._b, f._prime,
                                   _getSize(f._sizeMod));
@@ -413,7 +355,7 @@ public:
     // ------------------------------
     // Class private methods
     // ------------------------------
-private:
+   private:
     static constexpr size_t SIZE_ONE = 1;
     static constexpr size_t SIZE_ZERO = 0;
 
@@ -433,21 +375,17 @@ private:
             return sizeMask;
     }
 
-    static constexpr size_t POW2FAST(const int degree)
-    {
-        return SIZE_ONE << degree;
-    }
+    static constexpr size_t POW2FAST(const int degree) { return SIZE_ONE << degree; }
 
     static constexpr size_t primePer2Power[] = {
-        POW2FAST(16) - 17, // 0-2^8
-        POW2FAST(24) - 17, // 2^8-2^16
-        POW2FAST(32) - 17, // 2^16-2^24
-        POW2FAST(40) - 87, // 2^24-2^32
-        POW2FAST(48) - 59, // 2^32-2^40
-        POW2FAST(56) - 5, // 2^40-2^48
-        SIZE_ZERO - 59, // 2^48-2^56
+        POW2FAST(16) - 17,  // 0-2^8
+        POW2FAST(24) - 17,  // 2^8-2^16
+        POW2FAST(32) - 17,  // 2^16-2^24
+        POW2FAST(40) - 87,  // 2^24-2^32
+        POW2FAST(48) - 59,  // 2^32-2^40
+        POW2FAST(56) - 5,   // 2^40-2^48
+        SIZE_ZERO - 59,     // 2^48-2^56
     };
-
 
     // ------------------------------
     // Class fields
@@ -455,21 +393,19 @@ private:
 
     size_t _a;
     size_t _b;
-    size_t _prime{1}; // Note: to prevent invalid expression on invocation on uinited funtion
-    size_t _sizeMod{1}; // Note: to prevent invalid expression on invocation on uinited funtion
+    size_t _prime{1};    // Note: to prevent invalid expression on invocation on uinited funtion
+    size_t _sizeMod{1};  // Note: to prevent invalid expression on invocation on uinited funtion
 };
 
 struct IdentityHash
 {
     IdentityHash() = default;
 
-    explicit IdentityHash([[maybe_unused]] size_t)
-    {
-    }
+    explicit IdentityHash([[maybe_unused]] size_t) {}
 
     ~IdentityHash() = default;
 
     size_t operator()(const size_t x) const { return x; }
 };
 
-#endif //HASHFUNCTIONS_H
+#endif  // HASHFUNCTIONS_H

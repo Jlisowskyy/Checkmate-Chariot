@@ -4,16 +4,16 @@
 
 #include "../include/Board.h"
 
-#include <iostream>
 #include <format>
+#include <iostream>
 #include "../include/EngineTypeDefs.h"
 
-bool Board::Comp(const Board& a, const Board& b) {
+bool Board::Comp(const Board& a, const Board& b)
+{
     for (int i = 0; i < 12; ++i)
-        if (a.boards[i] != b.boards[i]) {
+        if (a.boards[i] != b.boards[i])
+        {
             std::cout << std::format("Invalid board: {}\n", i);
-            // DisplayMask(a.boards[i]);
-            // DisplayMask(b.boards[i]);
             return false;
         }
 

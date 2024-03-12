@@ -15,7 +15,8 @@ bool ChessMechanics::IsCheck() const
 uint64_t ChessMechanics::GetFullMap() const
 {
     uint64_t map = 0;
-    for (const auto m: board.boards) map |= m;
+    for (const auto m : board.boards)
+        map |= m;
     return map;
 }
 
@@ -23,7 +24,8 @@ uint64_t ChessMechanics::GetFullMap() const
 uint64_t ChessMechanics::GetColMap(const int col) const
 {
     uint64_t map = 0;
-    for (size_t i = 0; i < Board::BoardsPerCol; ++i) map |= board.boards[Board::BoardsPerCol * col + i];
+    for (size_t i = 0; i < Board::BoardsPerCol; ++i)
+        map |= board.boards[Board::BoardsPerCol * col + i];
     return map;
 }
 
@@ -33,11 +35,14 @@ size_t ChessMechanics::GetIndexOfContainingBoard(const uint64_t map, const int c
     const size_t startInd = Board::BoardsPerCol * col;
 
     for (size_t i = startInd; i < range; ++i)
-        if ((board.boards[i] & map) != 0) return i;
+        if ((board.boards[i] & map) != 0)
+            return i;
 
 #ifndef NDEBUG
-    throw std::runtime_error(std::format("[ ERROR ] This code path should never be executed in {} on line {}"
-                                         "\n Figure not found on enemy maps!", __FILE__, __LINE__));
+    throw std::runtime_error(
+        std::format("[ ERROR ] This code path should never be executed in {} on line {}"
+                    "\n Figure not found on enemy maps!",
+                    __FILE__, __LINE__));
 #endif
 
     return 0;
@@ -71,20 +76,18 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     const uint64_t kingBlockedMap = KingMap::GetMoves(board.GetKingMsbPos(enemyCol));
 
     // Rook attacks generation.
-    const uint64_t rookBlockedMap = _blockIterativeGenerator(
-        board.boards[enemyFigInd + rooksIndex] | board.boards[enemyFigInd + queensIndex],
-        [=](const int pos) { return RookMap::GetMoves(pos, fullMapWoutKing); }
-    );
+    const uint64_t rookBlockedMap =
+        _blockIterativeGenerator(board.boards[enemyFigInd + rooksIndex] | board.boards[enemyFigInd + queensIndex],
+                                 [=](const int pos) { return RookMap::GetMoves(pos, fullMapWoutKing); });
 
     // = 1 or 0 depending whether hits or not
     const uint8_t wasCheckedByRookFlag = (rookBlockedMap & allyKingMap) >> allyKingShift;
     checksCount += wasCheckedByRookFlag;
 
     // Bishop attacks generation.
-    const uint64_t bishopBlockedMap = _blockIterativeGenerator(
-        board.boards[enemyFigInd + bishopsIndex] | board.boards[enemyFigInd + queensIndex],
-        [=](const int pos) { return BishopMap::GetMoves(pos, fullMapWoutKing); }
-    );
+    const uint64_t bishopBlockedMap =
+        _blockIterativeGenerator(board.boards[enemyFigInd + bishopsIndex] | board.boards[enemyFigInd + queensIndex],
+                                 [=](const int pos) { return BishopMap::GetMoves(pos, fullMapWoutKing); });
 
     // = 1 or 0 depending whether hits or not
     const uint8_t wasCheckedByBishopFlag = (bishopBlockedMap & allyKingMap) >> allyKingShift;
@@ -92,28 +95,26 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
 
     // Pawns attacks generation.
     const uint64_t pawnsMap = board.boards[enemyFigInd + pawnsIndex];
-    const uint64_t pawnBlockedMap = enemyCol == WHITE
-                                        ? WhitePawnMap::GetAttackFields(pawnsMap)
-                                        : BlackPawnMap::GetAttackFields(pawnsMap);
+    const uint64_t pawnBlockedMap =
+        enemyCol == WHITE ? WhitePawnMap::GetAttackFields(pawnsMap) : BlackPawnMap::GetAttackFields(pawnsMap);
 
     // = 1 or 0 depending whether hits or not
     const uint8_t wasCheckedByPawnFlag = (pawnBlockedMap & allyKingMap) >> allyKingShift;
     checksCount += wasCheckedByPawnFlag;
 
     // modyfing check type
-    chT += simpleFigCheck * wasCheckedByPawnFlag; // Note: king cannot be double checked by simple figure
+    chT += simpleFigCheck * wasCheckedByPawnFlag;  // Note: king cannot be double checked by simple figure
 
     // Knight attacks generation.
     const uint64_t knighBlockedMap = _blockIterativeGenerator(board.boards[enemyFigInd + knightsIndex],
-                                                              [=](const int pos) { return KnightMap::GetMoves(pos); }
-    );
+                                                              [=](const int pos) { return KnightMap::GetMoves(pos); });
 
     // = 1 or 0 depending whether hits or not
     const uint8_t wasCheckedByKnightFlag = (knighBlockedMap & allyKingMap) >> allyKingShift;
     checksCount += wasCheckedByKnightFlag;
 
     // modyfing check type
-    chT += simpleFigCheck * wasCheckedByKnightFlag; // Note: king cannot be double checked by simple figure
+    chT += simpleFigCheck * wasCheckedByKnightFlag;  // Note: king cannot be double checked by simple figure
 
     const uint64_t blockedMap = kingBlockedMap | pawnBlockedMap | knighBlockedMap | rookBlockedMap | bishopBlockedMap;
     return {blockedMap, checksCount, chT};
@@ -127,16 +128,16 @@ uint64_t ChessMechanics::GetPinnedFigsMapWoutCheck(const int col, const uint64_t
     const int allyKingShift = ConvertToReversedPos(board.GetKingMsbPos(col));
 
     const uint64_t rookLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].rookMask;
-    const uint64_t suspectedRooks = (board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]) &
-                                    rookLinesOnKing;
-    const uint64_t figsPinnedByRookMoves = _getPinnedFigsWoutCheckGenerator<RookMap>(
-        suspectedRooks, fullMap, allyCord, allyKingShift);
+    const uint64_t suspectedRooks =
+        (board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]) & rookLinesOnKing;
+    const uint64_t figsPinnedByRookMoves =
+        _getPinnedFigsWoutCheckGenerator<RookMap>(suspectedRooks, fullMap, allyCord, allyKingShift);
 
     const uint64_t bishopLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].bishopMask;
-    const uint64_t suspectedBishops = (board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]) &
-                                      bishopLinesOnKing;
-    const uint64_t figsPinnedByBishopMoves = _getPinnedFigsWoutCheckGenerator<BishopMap>(
-        suspectedBishops, fullMap, allyCord, allyKingShift);
+    const uint64_t suspectedBishops =
+        (board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]) & bishopLinesOnKing;
+    const uint64_t figsPinnedByBishopMoves =
+        _getPinnedFigsWoutCheckGenerator<BishopMap>(suspectedBishops, fullMap, allyCord, allyKingShift);
 
     return figsPinnedByRookMoves | figsPinnedByBishopMoves;
 }
@@ -150,18 +151,18 @@ std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMapWithCheck(const in
 
     // Rook lines search
     const uint64_t rookLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].rookMask;
-    const uint64_t suspectedRooks = (board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]) &
-                                    rookLinesOnKing;
+    const uint64_t suspectedRooks =
+        (board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]) & rookLinesOnKing;
     const auto [figsPinnedByRookMoves, allowedTileRook] =
-            _getPinnedFigsWithCheckGenerator<RookMap>(suspectedRooks, fullMap, allyCord, allyKingShift);
+        _getPinnedFigsWithCheckGenerator<RookMap>(suspectedRooks, fullMap, allyCord, allyKingShift);
 
     // TODO: what I meant: if (!allowedTileRook) { ... }
     // Bishop lines search
     const uint64_t bishopLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].bishopMask;
-    const uint64_t suspectedBishops = (board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]) &
-                                      bishopLinesOnKing;
+    const uint64_t suspectedBishops =
+        (board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]) & bishopLinesOnKing;
     const auto [figsPinnedByBishopMoves, allowedTileBishop] =
-            _getPinnedFigsWithCheckGenerator<BishopMap>(suspectedBishops, fullMap, allyCord, allyKingShift);
+        _getPinnedFigsWithCheckGenerator<BishopMap>(suspectedBishops, fullMap, allyCord, allyKingShift);
 
     return {figsPinnedByRookMoves | figsPinnedByBishopMoves, allowedTileRook | allowedTileBishop};
 }
@@ -183,20 +184,13 @@ std::vector<Board> ChessMechanics::GetPossibleMoveSlow()
     std::vector<Board> moveVect{};
     moveVect.reserve(averageMoveCount);
 
-    IterativeBoardTraversal(
-        [&](Board&board)
-        {
-            moveVect.emplace_back(board);
-        },
-        1
-    );
+    IterativeBoardTraversal([&](Board& board) { moveVect.emplace_back(board); }, 1);
 
     return moveVect;
 }
 
 // TODO: pretty fking stupid but ok could be optimised after tests:
-uint64_t ChessMechanics::GenerateAllowedTilesForPrecisedPinnedFig(const uint64_t figBoard,
-                                                                   const uint64_t fullMap) const
+uint64_t ChessMechanics::GenerateAllowedTilesForPrecisedPinnedFig(const uint64_t figBoard, const uint64_t fullMap) const
 {
     constexpr size_t bishopRange = PinningMasks::BishopLines + PinningMasks::PinningMaskPerLinesType;
     for (size_t i = PinningMasks::BishopLines; i < bishopRange; ++i)

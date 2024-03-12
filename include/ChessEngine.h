@@ -15,4 +15,4 @@ void MapHashTest();
 
 void MapCorrectnessTest();
 
-#endif //CHESS_ENGINE_H
+#endif  // CHESS_ENGINE_H

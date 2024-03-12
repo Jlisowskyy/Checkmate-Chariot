@@ -6,8 +6,8 @@
 #define ENGINETYPEDEFS_H
 
 #include <cstdint>
-#include <unordered_map>
 #include <iostream>
+#include <unordered_map>
 
 #include "Board.h"
 
@@ -17,7 +17,7 @@ enum MoveTypes
     PromotingMove
 };
 
-enum Descriptors: size_t
+enum Descriptors : size_t
 {
     wPawnsIndex,
     wKnightsIndex,
@@ -102,13 +102,13 @@ enum Field : uint64_t
     H8 = 1LLU << 63
 };
 
-enum CastlingIndexes: size_t
+enum CastlingIndexes : size_t
 {
     KingCastlingIndex,
     QueenCastlingIndex,
 };
 
-enum CastlingPossibilities: size_t
+enum CastlingPossibilities : size_t
 {
     WhiteKingSide,
     WhiteQueenSide,
@@ -116,17 +116,14 @@ enum CastlingPossibilities: size_t
     BlackQueenSide,
 };
 
-constexpr int SwapColor(const int col)
-{
-    return col ^ 1;
-}
+constexpr int SwapColor(const int col) { return col ^ 1; }
 
 void DisplayMask(uint64_t mask);
 void DisplayBoard(const Board& bd);
 
-std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board&oldBoard, const Board&newBoard);
+std::tuple<uint64_t, uint64_t, MoveTypes> FindMove(const Board& oldBoard, const Board& newBoard);
 
-std::string GetEncodingFromBoards(const Board&bd, uint64_t oldMap, uint64_t newMap, MoveTypes mType);
+std::string GetEncodingFromBoards(const Board& bd, uint64_t oldMap, uint64_t newMap, MoveTypes mType);
 
 std::string GetLongAlgebraicMoveEncoding(const Board& oBoard, const Board& nBoard);
 
@@ -135,16 +132,15 @@ uint64_t ExtractPosFromStr(int x, int y);
 
 // in case of invalid encoding returns 0 in corresponding value, if string is to short returns (0, 0).
 // return scheme: [ oldMap, newMap ]
-std::pair<uint64_t, uint64_t> ExtractPositionsFromEncoding(const std::string&encoding);
+std::pair<uint64_t, uint64_t> ExtractPositionsFromEncoding(const std::string& encoding);
 
 // global defined stack capacity used to store generated moves per thread
 static constexpr size_t MB = 1024 * 1024;
 static constexpr size_t DefaultStackSize = 32 * MB / sizeof(uint64_t);
-
 
 extern const std::unordered_map<size_t, Descriptors> figToDescMap;
 extern const std::unordered_map<size_t, char> descToFigMap;
 extern const std::unordered_map<Field, std::string> fieldStrMap;
 extern const std::unordered_map<std::string, Field> strFieldMap;
 
-#endif //ENGINETYPEDEFS_H
+#endif  // ENGINETYPEDEFS_H

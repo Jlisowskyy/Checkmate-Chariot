@@ -13,7 +13,7 @@
 
 class RookMapGenerator
 {
-public:
+   public:
     static constexpr size_t MaxRookPossibleNeighborsWoutOverlap = 144;
     static constexpr size_t MaxRookPossibleNeighborsWithOverlap = 4096;
 
@@ -22,12 +22,11 @@ public:
     static constexpr int WestOffset = -1;
     static constexpr int EastOffset = 1;
 
-private:
+   private:
     static constexpr size_t DirectedMaskCount = 4;
 
-public:
+   public:
     using MasksT = std::array<uint64_t, DirectedMaskCount>;
-
 
     // ---------------------------------------
     // Class creation and initialization
@@ -75,30 +74,24 @@ public:
         uint64_t moves = 0;
 
         // North lines moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, NorthOffset,
-                                 [&](const int x) { return x < northBarrier; }
-        );
+        moves |=
+            GenSlidingMoves(neighborsWoutOverlap, bInd, NorthOffset, [&](const int x) { return x < northBarrier; });
 
         // South lines moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, SouthOffset,
-                                 [&](const int x) { return x > southBarrier; }
-        );
+        moves |=
+            GenSlidingMoves(neighborsWoutOverlap, bInd, SouthOffset, [&](const int x) { return x > southBarrier; });
 
         // East line moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, EastOffset,
-                                 [&](const int x) { return x < eastBarrier; }
-        );
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, EastOffset, [&](const int x) { return x < eastBarrier; });
 
         // West line moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, WestOffset,
-                                 [&](const int x) { return x > westBarrier; }
-        );
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, WestOffset, [&](const int x) { return x > westBarrier; });
 
         return moves;
     }
 
     [[nodiscard]] constexpr static std::tuple<std::array<uint64_t, MaxRookPossibleNeighborsWoutOverlap>, size_t>
-    GenPossibleNeighborsWoutOverlap(const int bInd, const MasksT&masks)
+    GenPossibleNeighborsWoutOverlap(const int bInd, const MasksT& masks)
     {
         std::array<uint64_t, MaxRookPossibleNeighborsWoutOverlap> ret{};
         size_t usedFields = 0;
@@ -127,7 +120,6 @@ public:
                     if (northPos != bPos && (masks[nMask] & northPos) == 0)
                         continue;
 
-
                     for (int southCord = bInd; southCord > southBarrier; southCord += SouthOffset)
                     {
                         const uint64_t southPos = minMsbPossible << southCord;
@@ -145,7 +137,7 @@ public:
     }
 
     [[nodiscard]] constexpr static std::tuple<std::array<uint64_t, MaxRookPossibleNeighborsWithOverlap>, size_t>
-    GenPossibleNeighborsWithOverlap(const MasksT&masks)
+    GenPossibleNeighborsWithOverlap(const MasksT& masks)
     {
         std::array<uint64_t, MaxRookPossibleNeighborsWithOverlap> ret{};
         const uint64_t fullMask = masks[nMask] | masks[sMask] | masks[eMask] | masks[wMask];
@@ -165,7 +157,7 @@ public:
         return westCount * eastCount * southCount * northCount;
     }
 
-    static constexpr uint64_t StripBlockingNeighbors(const uint64_t fullBoard, const MasksT&masks)
+    static constexpr uint64_t StripBlockingNeighbors(const uint64_t fullBoard, const MasksT& masks)
     {
         const uint64_t northParh = ExtractLsbBit(fullBoard & masks[nMask]);
         const uint64_t southPart = ExtractMsbBit(fullBoard & masks[sMask]);
@@ -187,4 +179,4 @@ public:
     };
 };
 
-#endif //ROOKMAPGENERATOR_H
+#endif  // ROOKMAPGENERATOR_H

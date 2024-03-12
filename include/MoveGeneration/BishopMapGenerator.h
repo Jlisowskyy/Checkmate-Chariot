@@ -5,13 +5,13 @@
 #ifndef BISHOPMAPGENERATOR_H
 #define BISHOPMAPGENERATOR_H
 
-#include "MoveGeneration.h"
 #include "../BitOperations.h"
 #include "../EngineTypeDefs.h"
+#include "MoveGeneration.h"
 
 class BishopMapGenerator
 {
-public:
+   public:
     static constexpr size_t MaxPossibleNeighborsWoutOverlap = 108;
     static constexpr size_t MaxPossibleNeighborsWithOverlap = 512;
 
@@ -20,10 +20,10 @@ public:
     static constexpr int SWOffset = -9;
     static constexpr int SEOffset = -7;
 
-private:
+   private:
     static constexpr size_t DirectedMaskCount = 4;
 
-public:
+   public:
     using MasksT = std::array<uint64_t, DirectedMaskCount>;
 
     // ---------------------------------------
@@ -37,7 +37,7 @@ public:
     // ------------------------------
 
     [[nodiscard]] static constexpr std::tuple<std::array<uint64_t, MaxPossibleNeighborsWoutOverlap>, size_t>
-    GenPossibleNeighborsWoutOverlap(const int bInd, const MasksT&masks)
+    GenPossibleNeighborsWoutOverlap(const int bInd, const MasksT& masks)
     {
         std::array<uint64_t, MaxPossibleNeighborsWoutOverlap> ret{};
         size_t usedFields = 0;
@@ -86,7 +86,7 @@ public:
     }
 
     [[nodiscard]] static constexpr std::tuple<std::array<uint64_t, MaxPossibleNeighborsWithOverlap>, size_t>
-    GenPossibleNeighborsWithOverlap(const MasksT&masks)
+    GenPossibleNeighborsWithOverlap(const MasksT& masks)
     {
         std::array<uint64_t, MaxPossibleNeighborsWithOverlap> ret{};
         const uint64_t fullMask = masks[neMask] | masks[nwMask] | masks[seMask] | masks[swMask];
@@ -95,7 +95,6 @@ public:
 
         return {ret, usedFields};
     }
-
 
     [[nodiscard]] static constexpr uint64_t GenMoves(const uint64_t neighborsWoutOverlap, const int bInd)
     {
@@ -110,24 +109,16 @@ public:
         uint64_t moves = 0;
 
         // NW direction moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, NWOffset,
-                                 [&](const int b) { return b <= NWBorder; }
-        );
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, NWOffset, [&](const int b) { return b <= NWBorder; });
 
         // NE direction moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, NEOffset,
-                                 [&](const int b) { return b <= NEBorder; }
-        );
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, NEOffset, [&](const int b) { return b <= NEBorder; });
 
         // SW direction moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, SWOffset,
-                                 [&](const int b) { return b >= SWBorder; }
-        );
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, SWOffset, [&](const int b) { return b >= SWBorder; });
 
         // SE direction moves
-        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, SEOffset,
-                                 [&](const int b) { return b >= SEBorder; }
-        );
+        moves |= GenSlidingMoves(neighborsWoutOverlap, bInd, SEOffset, [&](const int b) { return b >= SEBorder; });
 
         return moves;
     }
@@ -141,7 +132,6 @@ public:
 
         return nwCount * neCount * swCount * seCount;
     }
-
 
     [[nodiscard]] static constexpr MasksT InitMasks(const int bInd)
     {
@@ -169,7 +159,7 @@ public:
         return ret;
     }
 
-    static constexpr uint64_t StripBlockingNeighbors(const uint64_t fullBoard, const MasksT&masks)
+    static constexpr uint64_t StripBlockingNeighbors(const uint64_t fullBoard, const MasksT& masks)
     {
         const uint64_t NWPart = ExtractLsbBit(fullBoard & masks[nwMask]);
         const uint64_t NEPart = ExtractLsbBit(fullBoard & masks[neMask]);
@@ -191,4 +181,4 @@ public:
     };
 };
 
-#endif //BISHOPMAPGENERATOR_H
+#endif  // BISHOPMAPGENERATOR_H

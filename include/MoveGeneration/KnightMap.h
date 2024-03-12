@@ -15,7 +15,7 @@ class KnightMap
     // ---------------------------------------
     // Class creation and initialization
     // ---------------------------------------
-public:
+   public:
     KnightMap() = delete;
 
     // ------------------------------
@@ -46,8 +46,8 @@ public:
     // Used to omit errors during generation.
     static constexpr int rowCords[] = {1, 2, 2, 1, -1, -2, -2, -1};
 
-    static constexpr std::array<uint64_t, Board::BoardFields> movesMap = GenStaticMoves(
-        maxMovesCount, movesCords, rowCords);
+    static constexpr std::array<uint64_t, Board::BoardFields> movesMap =
+        GenStaticMoves(maxMovesCount, movesCords, rowCords);
 };
 
-#endif //KNIGHTMAP_H
+#endif  // KNIGHTMAP_H

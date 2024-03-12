@@ -5,12 +5,12 @@
 #ifndef MAPCORRECTNESSTEST_H
 #define MAPCORRECTNESSTEST_H
 
-#include <string>
-#include <fstream>
-#include <format>
-#include <iostream>
-#include <vector>
 #include <cinttypes>
+#include <format>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
 
 #include "../BitOperations.h"
 #include "../EngineTypeDefs.h"
@@ -21,7 +21,8 @@
  *  - records should be saved in such manner that:
  *      - uint64_t - full map - 8 bytes
  *      - uint64_t - map containing only rooks or bishops - 8 bytes
- *      - uint8_t - contains number of following results, all should be sorted from highest board index to lowest - 1 byte
+ *      - uint8_t - contains number of following results, all should be sorted from highest board index to lowest - 1
+ * byte
  *      - uint64_t - move results for each figure from highest board index to lowest - 8 bytes each
  */
 
@@ -32,14 +33,14 @@ class MapCorrectnessTester
     // inner class types
     // ------------------------------
 
-    using RecordsPack = std::tuple<uint64_t, std::vector<uint64_t>, std::vector<uint64_t>, std::vector<std::vector<
-        uint64_t>>>;
+    using RecordsPack =
+        std::tuple<uint64_t, std::vector<uint64_t>, std::vector<uint64_t>, std::vector<std::vector<uint64_t>>>;
     // [size, fullMaps, figureMaps]
 
     // ------------------------------
     // Class creation
     // ------------------------------
-public:
+   public:
     MapCorrectnessTester() = default;
 
     ~MapCorrectnessTester() = default;
@@ -48,8 +49,8 @@ public:
     // Class interaction
     // ------------------------------
 
-    template<class MapT>
-    static void PerformTest(const std::string&filename, const MapT&map) noexcept(false)
+    template <class MapT>
+    static void PerformTest(const std::string &filename, const MapT &map) noexcept(false)
     {
         auto [recordCount, fullMaps, figureMaps, correctMoves] = _readTestFile(filename);
         uint64_t errorCount{};
@@ -89,7 +90,8 @@ public:
         std::cout << std::format("Processed records: {}\nTotally checked: {} moves\n", recordCount, moveCount);
         if (errorCount)
         {
-            std::cout << std::format("________Last error move on field {}:\n\n", fieldStrMap.at(static_cast<Field>(lastFigPos)));
+            std::cout << std::format("________Last error move on field {}:\n\n",
+                                     fieldStrMap.at(static_cast<Field>(lastFigPos)));
             DisplayMask(lastErrorMove);
             std::cout << "________Correct move:\n\n";
             DisplayMask(lastErrorMoveCorrectOne);
@@ -101,7 +103,7 @@ public:
     // ------------------------------
     // Private class methods
     // ------------------------------
-private:
+   private:
     static RecordsPack _readTestFile(std::string filename)
     {
         std::fstream stream(filename, std::fstream::binary | std::fstream::in);
@@ -116,7 +118,6 @@ private:
 
         // file size read
         stream.read(reinterpret_cast<char *>(&recordCount), sizeof(uint64_t));
-
 
         fullMaps.resize(recordCount);
         figureMaps.resize(recordCount);
@@ -145,4 +146,4 @@ private:
     }
 };
 
-#endif //MAPCORRECTNESSTEST_H
+#endif  // MAPCORRECTNESSTEST_H

@@ -5,8 +5,8 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include <cinttypes>
 #include <array>
+#include <cinttypes>
 
 #include "../EngineTypeDefs.h"
 
@@ -15,26 +15,26 @@
  *  (bit indexed from lsb to msb manner)
  *  - bits 0-16 encodes heristic evaluation of current move (16 bits)
  *                      Note: additionaly to allow simple evaluation on run
- *  - bits 16-22 - encodes field from which figure moved (6 bits)                                                       - "StartField" - OBLIG
- *                      IMPORTANT: should always be filled
- *  - bits 22-26 - encodes board index from which figure moved (4 bits)                                                 - "StartBoardIndex" - OBLIG
- *                      IMPORTANT: should always be filled
- *  - bits 26-32 - encodes field to which figure moved (6 bits)                                                         - "TargetField" - OBLIG
- *                      IMPORTANT: should always be filled
+ *  - bits 16-22 - encodes field from which figure moved (6 bits) - "StartField" - OBLIG IMPORTANT: should always be
+ * filled
+ *  - bits 22-26 - encodes board index from which figure moved (4 bits) - "StartBoardIndex" - OBLIG IMPORTANT: should
+ * always be filled
+ *  - bits 26-32 - encodes field to which figure moved (6 bits) - "TargetField" - OBLIG IMPORTANT: should always be
+ * filled
  *  - bits 32-36 - encodes board index to which figure moved - diffrent than option 2
- *          only in case move encodes promotion (4 bits)                                                                - "TargetBoardIndex" - OBLIG
- *                      IMPORTANT: should always be filled, in case no promotion is done simply put here positoin no 3
+ *          only in case move encodes promotion (4 bits) - "TargetBoardIndex" - OBLIG IMPORTANT: should always be
+ * filled, in case no promotion is done simply put here positoin no 3
  *  - bits 36-40 - encodes board index on which figure was killed (4 bits) - used in case of
- *          attacking moves (4 bits)                                                                                    - "KilledFigureBoardIndex" - OBLIG
- *                      IMPORTANT: if not used should be filled with sentinel value
- *  - bits 40-46 - encodes field on which figure was killed - used only in case of el passant killing move (6 bits)     - "KilledFigureField" - OPT
- *                      WARNING: possibly unfilled when no attacking move and sentinel value is set
- *  - bits 46-52 - encodes new elPassant field (6 bits)                                                                 - "ElPassantField" - OBLIG
- *                      IMPORTANT: should always contain new el passant field, if not used simply put here literal from board
- *  - bits 52-56 - encodes castling rights (4 bits)                                                                     - "CastlingRights" - OLBIG
- *                      IMPORTANT: should always be filled, in case no changes was done simply copy previous values
- *  - bits 56-59 - encodes type of performed castlins (3 bits)                                                          - "CastlingType" - OPT
- *                      WARNING: possibly unfilled when no castling is done
+ *          attacking moves (4 bits) - "KilledFigureBoardIndex" - OBLIG IMPORTANT: if not used should be filled with
+ * sentinel value
+ *  - bits 40-46 - encodes field on which figure was killed - used only in case of el passant killing move (6 bits) -
+ * "KilledFigureField" - OPT WARNING: possibly unfilled when no attacking move and sentinel value is set
+ *  - bits 46-52 - encodes new elPassant field (6 bits) - "ElPassantField" - OBLIG IMPORTANT: should always contain new
+ * el passant field, if not used simply put here literal from board
+ *  - bits 52-56 - encodes castling rights (4 bits) - "CastlingRights" - OLBIG IMPORTANT: should always be filled, in
+ * case no changes was done simply copy previous values
+ *  - bits 56-59 - encodes type of performed castlins (3 bits) - "CastlingType" - OPT WARNING: possibly unfilled when no
+ * castling is done
  */
 
 /*      IMPORTANT NOTE:
@@ -44,7 +44,7 @@
 
 class Move
 {
-public:
+   public:
     // ------------------------------
     // Class creation
     // ------------------------------
@@ -71,7 +71,7 @@ public:
             promotionMark = FigTypeMap[GetTargetBoardIndex() % Board::BoardsPerCol];
 
         return fieldStrMap.at(static_cast<Field>(maxMsbPossible >> GetStartField())) +
-            fieldStrMap.at(static_cast<Field>(maxMsbPossible >> GetTargetField())) + promotionMark;
+               fieldStrMap.at(static_cast<Field>(maxMsbPossible >> GetTargetField())) + promotionMark;
     }
 
     static void MakeMove(const Move mv, Board& bd)
@@ -98,7 +98,8 @@ public:
         bd.ChangePlayingColor();
     }
 
-    static void UnmakeMove(const Move mv, Board& bd, const std::bitset<Board::CastlingCount+1> castlings, const uint64_t oldElPassant)
+    static void UnmakeMove(const Move mv, Board& bd, const std::bitset<Board::CastlingCount + 1> castlings,
+                           const uint64_t oldElPassant)
     {
         bd.ChangePlayingColor();
 
@@ -122,10 +123,7 @@ public:
         bd.boards[boardIndex] ^= field;
     }
 
-    void SetEval(const uint16_t eval)
-    {
-        _storage |= eval;
-    }
+    void SetEval(const uint16_t eval) { _storage |= eval; }
 
     [[nodiscard]] uint64_t GetEval() const
     {
@@ -133,104 +131,80 @@ public:
         return _storage & EvalMask;
     }
 
-    void SetStartField(const uint64_t startField)
-    {
-        _storage |= startField << 16;
-    }
+    void SetStartField(const uint64_t startField) { _storage |= startField << 16; }
 
-    [[nodiscard]]uint64_t GetStartField() const
+    [[nodiscard]] uint64_t GetStartField() const
     {
         static constexpr uint64_t StartFieldMask = 0x3FLLU << 16;
         return (_storage & StartFieldMask) >> 16;
     }
 
-    void SetStartBoardIndex(const uint64_t startBoard)
-    {
-        _storage |= (startBoard << 22);
-    }
+    void SetStartBoardIndex(const uint64_t startBoard) { _storage |= (startBoard << 22); }
 
-    [[nodiscard]]uint64_t GetStartBoardIndex() const
+    [[nodiscard]] uint64_t GetStartBoardIndex() const
     {
         static constexpr uint64_t StartBoardMask = 0xFLLU << 22;
         return (_storage & StartBoardMask) >> 22;
     }
 
-    void SetTargetField(const uint64_t targetField)
-    {
-        _storage |= targetField << 26;
-    }
+    void SetTargetField(const uint64_t targetField) { _storage |= targetField << 26; }
 
-    [[nodiscard]]uint64_t GetTargetField() const
+    [[nodiscard]] uint64_t GetTargetField() const
     {
         static constexpr uint64_t TargetFieldMask = 0x3FLLU << 26;
         return (_storage & TargetFieldMask) >> 26;
     }
 
-    void SetTargetBoardIndex(const uint64_t targetBoardIndex)
-    {
-        _storage |= targetBoardIndex << 32;
-    }
+    void SetTargetBoardIndex(const uint64_t targetBoardIndex) { _storage |= targetBoardIndex << 32; }
 
-    [[nodiscard]]uint64_t GetTargetBoardIndex() const
+    [[nodiscard]] uint64_t GetTargetBoardIndex() const
     {
         static constexpr uint64_t TargetBoardIndexMask = 0xFLLU << 32;
         return (_storage & TargetBoardIndexMask) >> 32;
     }
 
-    void SetKilledBoardIndex(const uint64_t killedBoardIndex)
-    {
-        _storage |= killedBoardIndex << 36;
-    }
+    void SetKilledBoardIndex(const uint64_t killedBoardIndex) { _storage |= killedBoardIndex << 36; }
 
-    [[nodiscard]]uint64_t GetKilledBoardIndex() const
+    [[nodiscard]] uint64_t GetKilledBoardIndex() const
     {
         static constexpr uint64_t KilledBoardIndexMask = 0xFLLU << 36;
         return (_storage & KilledBoardIndexMask) >> 36;
     }
 
-    void SetKilledFigureField(const uint64_t killedFigureField)
-    {
-        _storage |= killedFigureField << 40;
-    }
+    void SetKilledFigureField(const uint64_t killedFigureField) { _storage |= killedFigureField << 40; }
 
-    [[nodiscard]]uint64_t GetKilledFigureField() const
+    [[nodiscard]] uint64_t GetKilledFigureField() const
     {
         static constexpr uint64_t KilledFigureFieldMask = 0x3FLLU << 40;
         return (_storage & KilledFigureFieldMask) >> 40;
     }
 
-    void SetElPassantField(const uint64_t elPassantField)
-    {
-        _storage |= elPassantField << 46;
-    }
+    void SetElPassantField(const uint64_t elPassantField) { _storage |= elPassantField << 46; }
 
-    [[nodiscard]]uint64_t GetElPassantField() const
+    [[nodiscard]] uint64_t GetElPassantField() const
     {
         static constexpr uint64_t ElPassantFieldMask = 0x3FLLU << 46;
         return (_storage & ElPassantFieldMask) >> 46;
     }
 
-    void SetCasltingRights(const std::bitset<Board::CastlingCount+1> arr)
+    void SetCasltingRights(const std::bitset<Board::CastlingCount + 1> arr)
     {
         const uint64_t rights = arr.to_ullong() & 0xFLLU;
         _storage |= rights << 52;
     }
 
-    [[nodiscard]]std::bitset<Board::CastlingCount+1> GetCastlingRights() const
+    [[nodiscard]] std::bitset<Board::CastlingCount + 1> GetCastlingRights() const
     {
         static constexpr uint64_t CastlingMask = 0xFLLU << 52;
         const uint64_t rights = (_storage & CastlingMask) >> 52;
-        const std::bitset<Board::CastlingCount+1> arr{rights};
+        const std::bitset<Board::CastlingCount + 1> arr{rights};
 
         return arr;
     }
 
-    void SetCastlingType(const uint64_t castlingType)
-    {
-        _storage |= castlingType << 56;
-    }
+    void SetCastlingType(const uint64_t castlingType) { _storage |= castlingType << 56; }
 
-    [[nodiscard]]uint64_t GetCastlingType() const
+    [[nodiscard]] uint64_t GetCastlingType() const
     {
         static constexpr uint64_t CastlingTypeMask = 0x7LLU << 56;
         return (_storage & CastlingTypeMask) >> 56;
@@ -243,7 +217,7 @@ public:
     // ------------------------------
     // Class fields
     // ------------------------------
-private:
+   private:
     static constexpr uint64_t Bit4 = 0b1111LLU;
     static constexpr uint64_t Bit6 = 0b111111LLU;
     static constexpr uint64_t Bit3 = 0b111LLU;
@@ -251,12 +225,12 @@ private:
     uint64_t _storage{};
 
     static constexpr std::pair<size_t, uint64_t> CastlingActions[] = {
-        { Board::SentinelBoardIndex, 0LLU },
-        { wRooksIndex, Board::CastlingNewRookMaps[0] },
-        { wRooksIndex, Board::CastlingNewRookMaps[1] },
-        { bRooksIndex, Board::CastlingNewRookMaps[2] },
-        { bRooksIndex, Board::CastlingNewRookMaps[3] },
+        {Board::SentinelBoardIndex, 0LLU},
+        {wRooksIndex, Board::CastlingNewRookMaps[0]},
+        {wRooksIndex, Board::CastlingNewRookMaps[1]},
+        {bRooksIndex, Board::CastlingNewRookMaps[2]},
+        {bRooksIndex, Board::CastlingNewRookMaps[3]},
     };
 };
 
-#endif //MOVE_H
+#endif  // MOVE_H

@@ -5,10 +5,11 @@
 #ifndef CSVOPERATOR_H
 #define CSVOPERATOR_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
-struct CsvOperator{
+struct CsvOperator
+{
     // ------------------------------
     // Class creation
     // ------------------------------
@@ -30,8 +31,6 @@ struct CsvOperator{
     // ------------------------------
     // Class fields
     // ------------------------------
-
-
 };
 
-#endif //CSVOPERATOR_H
+#endif  // CSVOPERATOR_H

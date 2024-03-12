@@ -2,26 +2,26 @@
 // Created by Jlisowskyy on 2/16/24.
 //
 
-#include <stack>
-#include <unistd.h>
 #include <sys/prctl.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include <csignal>
 #include <cstring>
-#include <sys/wait.h>
 #include <format>
 #include <fstream>
+#include <stack>
 #include <string>
 
-#include "../include/MoveGeneration/ChessMechanics.h"
-#include "../include/ParseTools.h"
-#include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/Engine.h"
 #include "../include/Interface/Logger.h"
+#include "../include/MoveGeneration/ChessMechanics.h"
+#include "../include/ParseTools.h"
 #include "../include/TestsAndDebugging/CsvOperator.h"
+#include "../include/TestsAndDebugging/MoveGenerationTests.h"
 
-std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const std::string&fenPosition,
+std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const std::string& fenPosition,
                                                                            const int depth,
-                                                                           const std::vector<std::string>&moves,
+                                                                           const std::vector<std::string>& moves,
                                                                            const bool writeOnOut) const
 {
     Engine eng{};
@@ -31,14 +31,14 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const
     const auto externalEngineMoves = _generateCorrectMoveCounts(fenPosition, depth, moves);
     const auto internalEngineMoves = eng.GetMoveBasedPerft(depth);
 
-    for (const auto&[move, count]: externalEngineMoves)
+    for (const auto& [move, count] : externalEngineMoves)
     {
         // first case : move not detected
         if (!internalEngineMoves.contains(move))
         {
             if (writeOnOut)
-                GlobalLogger.StartLogging() << std::format(
-                    "[ ERROR ] Internal Engine didnt detect move: {} on first depth!\n", move);
+                GlobalLogger.StartLogging()
+                    << std::format("[ ERROR ] Internal Engine didnt detect move: {} on first depth!\n", move);
             return {move, 0};
         }
 
@@ -47,8 +47,8 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const
         {
             if (writeOnOut)
                 GlobalLogger.StartLogging() << std::format(
-                    "[ ERROR ] Engine detected wrong number on move: {}\nCorrect one: {}\nBut returned: {}\n",
-                    move, count, internalEngineMoves.at(move));
+                    "[ ERROR ] Engine detected wrong number on move: {}\nCorrect one: {}\nBut returned: {}\n", move,
+                    count, internalEngineMoves.at(move));
 
             return {move, depth};
         }
@@ -57,7 +57,7 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const
     // third case : additional moves were generated
     if (internalEngineMoves.size() > externalEngineMoves.size())
     {
-        for (const auto&[move, _]: internalEngineMoves)
+        for (const auto& [move, _] : internalEngineMoves)
             if (!externalEngineMoves.contains(move))
             {
                 if (writeOnOut)
@@ -73,8 +73,8 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(const
     return {"", -1};
 }
 
-void MoveGenerationTester::PerformDeepTest(const std::string&fenPosition,
-                                           const int depth, const std::vector<std::string>&moves) const
+void MoveGenerationTester::PerformDeepTest(const std::string& fenPosition, const int depth,
+                                           const std::vector<std::string>& moves) const
 {
     std::string invalidMoveChain;
     std::vector<std::string> innerMoves = moves;
@@ -88,14 +88,15 @@ void MoveGenerationTester::PerformDeepTest(const std::string&fenPosition,
                                                    invalidMoveChain + " NULL");
 
         std::string moveString{};
-        for (const auto&move: innerMoves) moveString += move + ' ';
+        for (const auto& move : innerMoves)
+            moveString += move + ' ';
 
         GlobalLogger.StartLogging() << std::format("\tReady pos command:\n\tposition startpos moves {}\n", moveString);
     }
 }
 
-void MoveGenerationTester::PerformFullTest(const std::string&fenPosition, const int depth,
-                                           const std::vector<std::string>&moves) const
+void MoveGenerationTester::PerformFullTest(const std::string& fenPosition, const int depth,
+                                           const std::vector<std::string>& moves) const
 {
     bool shouldEnd = false;
     Engine eng{};
@@ -105,9 +106,10 @@ void MoveGenerationTester::PerformFullTest(const std::string&fenPosition, const 
     auto board = eng.GetUnderlyingBoardCopy();
     ChessMechanics mech{board};
     mech.IterativeBoardTraversal(
-        [&](const Board&bd)
+        [&](const Board& bd)
         {
-            if (shouldEnd) return;
+            if (shouldEnd)
+                return;
 
             const auto fenEncoding = FenTranslator::Translate(bd);
             const auto [move, dep] = PerformSingleShallowTest(fenEncoding, 1, std::vector<std::string>{});
@@ -115,12 +117,11 @@ void MoveGenerationTester::PerformFullTest(const std::string&fenPosition, const 
             if (dep != -1)
             {
                 shouldEnd = true;
-                GlobalLogger.StartLogging() << std::format("[ ERROR ] Invalid position found: {}\n And move: {}\n",
-                                                           fenEncoding, move);
+                GlobalLogger.StartLogging()
+                    << std::format("[ ERROR ] Invalid position found: {}\n And move: {}\n", fenEncoding, move);
             }
         },
-        depth - 1
-    );
+        depth - 1);
 
     if (shouldEnd == false)
     {
@@ -130,22 +131,22 @@ void MoveGenerationTester::PerformFullTest(const std::string&fenPosition, const 
 
 void MoveGenerationTester::PerformSeriesOfDeepTests(const std::vector<std::pair<std::string, int>>& testPositions) const
 {
-    for(const auto& [position, depth] : testPositions)
+    for (const auto& [position, depth] : testPositions)
     {
-        GlobalLogger.StartLogging() << std::format("Starting deep debug test on position:\n\t{}\n\tWith depth: {}\n", position, depth);
+        GlobalLogger.StartLogging() << std::format("Starting deep debug test on position:\n\t{}\n\tWith depth: {}\n",
+                                                   position, depth);
         PerformDeepTest(position, depth, std::vector<std::string>());
     }
 }
 
 bool MoveGenerationTester::PerformSeriesOfDeepTestFromFile(const std::string& path) const
 {
-    const auto tests = CsvOperator::ReadPosDepthCsv(path.empty()
-                                                        ? DefaultTestPath
-                                                        : path == "/"
-                                                              ? DefaultTestPath1
-                                                              : path);
+    const auto tests = CsvOperator::ReadPosDepthCsv(path.empty()  ? DefaultTestPath
+                                                    : path == "/" ? DefaultTestPath1
+                                                                  : path);
 
-    if (tests.empty()) return false;
+    if (tests.empty())
+        return false;
 
     PerformSeriesOfDeepTests(tests);
 
@@ -155,20 +156,19 @@ bool MoveGenerationTester::PerformSeriesOfDeepTestFromFile(const std::string& pa
 bool MoveGenerationTester::PerformPerformanceTest(const std::string& inputTestPath, const std::string& output) const
 {
     // reading csv file
-    auto tests = CsvOperator::ReadPosDepthCsv(inputTestPath.empty()
-                              ? DefaultCompTestPath
-                              : inputTestPath);
-    if (tests.empty()) return false;
-
+    auto tests = CsvOperator::ReadPosDepthCsv(inputTestPath.empty() ? DefaultCompTestPath : inputTestPath);
+    if (tests.empty())
+        return false;
 
     // performing tests
     std::vector<std::tuple<std::string, int, double, double, double>> results{};
     double internalSum{};
     double externalSum{};
 
-    GlobalLogger.StartLogging() << "All results are displayed in following manner:\n\t Internal Engine time in ms, External Engine time in ms, ratio (external/internal)\n";
+    GlobalLogger.StartLogging() << "All results are displayed in following manner:\n\t Internal Engine time in ms, "
+                                   "External Engine time in ms, ratio (external/internal)\n";
 
-    for (const auto& [pos, dep]: tests)
+    for (const auto& [pos, dep] : tests)
     {
         double internalTime = _performEngineSpeedTest(pos, dep);
         double externalTime = _performExternalEngineSpeedTest(pos, dep);
@@ -179,21 +179,20 @@ bool MoveGenerationTester::PerformPerformanceTest(const std::string& inputTestPa
 
         results.emplace_back(pos, dep, internalTime, externalTime, ratio);
 
-        GlobalLogger.StartLogging() << std::format("Performed test on position with depth {}:\n\t{}\nAcquired results: {}, {}, {}\n",
-            dep, pos, internalTime, externalTime, ratio);
+        GlobalLogger.StartLogging() << std::format(
+            "Performed test on position with depth {}:\n\t{}\nAcquired results: {}, {}, {}\n", dep, pos, internalTime,
+            externalTime, ratio);
     }
 
     // last summary note
     const double tCount = tests.size();
-    results.emplace_back("Average results based on test count:", tCount, internalSum/tCount, externalSum/tCount, externalSum/internalSum);
-    GlobalLogger.StartLogging() << std::format("Final average results: {}, {}, {}\n",
-        internalSum/tCount, externalSum/tCount, externalSum/internalSum);
+    results.emplace_back("Average results based on test count:", tCount, internalSum / tCount, externalSum / tCount,
+                         externalSum / internalSum);
+    GlobalLogger.StartLogging() << std::format("Final average results: {}, {}, {}\n", internalSum / tCount,
+                                               externalSum / tCount, externalSum / internalSum);
 
     // writiing to desired csv file
-    std::ofstream csvWrite(output.empty()
-                                        ? DefaultSaveFile
-                                        : output
-    );
+    std::ofstream csvWrite(output.empty() ? DefaultSaveFile : output);
     _saveResultToCsv(results, csvWrite);
 
     return true;
@@ -203,7 +202,7 @@ void MoveGenerationTester::_saveResultToCsv(
     const std::vector<std::tuple<std::string, int, double, double, double>>& results, std::ofstream& stream)
 {
     stream << "Fen Position, depth, internal engine time, external engine time, ratio (external/internal)\n";
-    for(const auto& [i1, i2, i3, i4, i5] : results)
+    for (const auto& [i1, i2, i3, i4, i5] : results)
         stream << std::format("{}, {}, {}, {}, {}\n", i1, i2, i3, i4, i5);
 }
 
@@ -213,7 +212,7 @@ double MoveGenerationTester::_performExternalEngineSpeedTest(const std::string& 
 
     const auto t1 = std::chrono::steady_clock::now();
 
-    const auto[ communcationChannel, process ] = _getExternalEngineProcess();
+    const auto [communcationChannel, process] = _getExternalEngineProcess();
     _startUpPerft(fenPostion, depth, std::vector<std::string>(), communcationChannel[WritePipe]);
     waitpid(process, nullptr, 0);
 
@@ -222,7 +221,7 @@ double MoveGenerationTester::_performExternalEngineSpeedTest(const std::string& 
 
     const auto t2 = std::chrono::steady_clock::now();
 
-    return static_cast<double>((t2 - t1).count())*1e-6 - BootupDelay;
+    return static_cast<double>((t2 - t1).count()) * 1e-6 - BootupDelay;
 }
 
 double MoveGenerationTester::_performEngineSpeedTest(const std::string& fenPosition, const int depth)
@@ -234,32 +233,35 @@ double MoveGenerationTester::_performEngineSpeedTest(const std::string& fenPosit
     return eng.GoPerft<false>(depth);
 }
 
-void MoveGenerationTester::_deepTestRecu(const std::string&fenPosition, const int depth,
-                                         std::vector<std::string>&moves, std::string&chainOut) const
+void MoveGenerationTester::_deepTestRecu(const std::string& fenPosition, const int depth,
+                                         std::vector<std::string>& moves, std::string& chainOut) const
 {
-    if (depth == 0) return;
+    if (depth == 0)
+        return;
 
     // Performing calculation on actual layer
     auto [move, errDep] = PerformSingleShallowTest(fenPosition, depth, moves, true);
 
     // skipping deeper search when moves does not differ
-    if (errDep == -1) return;
+    if (errDep == -1)
+        return;
 
     // otherwise adding move to the chain
     chainOut += move + " ==> ";
     moves.push_back(move);
 
     // if error occured on actual layer stop adding moves to the chain
-    if (errDep == 0) return;
+    if (errDep == 0)
+        return;
 
     // otherwise add other moves
     _deepTestRecu(fenPosition, depth - 1, moves, chainOut);
 }
 
-std::map<std::string, uint64_t> MoveGenerationTester::_generateCorrectMoveCounts(const std::string&fenPosition,
-    const int depth, const std::vector<std::string>&moves) const
+std::map<std::string, uint64_t> MoveGenerationTester::_generateCorrectMoveCounts(
+    const std::string& fenPosition, const int depth, const std::vector<std::string>& moves) const
 {
-    const auto[ communcationChannel, process ] = _getExternalEngineProcess();
+    const auto [communcationChannel, process] = _getExternalEngineProcess();
 
     _startUpPerft(fenPosition, depth, moves, communcationChannel[WritePipe]);
     auto moveMap = _getCorrectMovesMap(communcationChannel[ReadPipe]);
@@ -272,37 +274,31 @@ std::map<std::string, uint64_t> MoveGenerationTester::_generateCorrectMoveCounts
     return moveMap;
 }
 
-size_t MoveGenerationTester::_chessSubstrEnd(const std::string&str)
+size_t MoveGenerationTester::_chessSubstrEnd(const std::string& str)
 {
-    auto isNotAlpCord = [](const int c)
-    {
-        return c > 'H' || c < 'A';
-    };
+    auto isNotAlpCord = [](const int c) { return c > 'H' || c < 'A'; };
 
-    auto isNotNumCord = [](const int c)
-    {
-        return c > '8' || c < '1';
-    };
+    auto isNotNumCord = [](const int c) { return c > '8' || c < '1'; };
 
-    if (str.length() < 4) return 0;
+    if (str.length() < 4)
+        return 0;
 
-    if (isNotAlpCord(std::toupper(str[0]))
-        || isNotNumCord(str[1])
-        || isNotAlpCord(std::toupper(str[2]))
-        || isNotNumCord(str[3]))
+    if (isNotAlpCord(std::toupper(str[0])) || isNotNumCord(str[1]) || isNotAlpCord(std::toupper(str[2])) ||
+        isNotNumCord(str[3]))
         return 0;
 
     static constexpr auto upgradeFigs = "RNBQ";
     if (str.length() > 4)
     {
         for (size_t i = 0; i < 4; ++i)
-            if (upgradeFigs[i] == std::toupper(str[4])) return 5;
+            if (upgradeFigs[i] == std::toupper(str[4]))
+                return 5;
     }
 
     return 4;
 }
 
-void MoveGenerationTester::_processLine(std::map<std::string, uint64_t>&out, const std::string&line)
+void MoveGenerationTester::_processLine(std::map<std::string, uint64_t>& out, const std::string& line)
 {
     // string preparation
     const auto trimmed = ParseTools::GetTrimmed(line);
@@ -327,7 +323,8 @@ void MoveGenerationTester::_processLine(std::map<std::string, uint64_t>&out, con
         wordBuffer.clear();
     }
 
-    if (pos == 0) return;
+    if (pos == 0)
+        return;
 
     while ((pos = ParseTools::ExtractNextWord(trimmed, wordBuffer, pos)) != 0)
     {
@@ -342,7 +339,8 @@ void MoveGenerationTester::_processLine(std::map<std::string, uint64_t>&out, con
         wordBuffer.clear();
     }
 
-    if (pos == 0) return;
+    if (pos == 0)
+        return;
 
     if (out.contains(positionEncoding))
         throw std::runtime_error(std::format(
@@ -381,8 +379,8 @@ std::map<std::string, uint64_t> MoveGenerationTester::_getCorrectMovesMap(const 
     return moveMap;
 }
 
-void MoveGenerationTester::_startUpPerft(const std::string&fenPosition, const int depth,
-                                         const std::vector<std::string>&moves, const int writeFileDesc)
+void MoveGenerationTester::_startUpPerft(const std::string& fenPosition, const int depth,
+                                         const std::vector<std::string>& moves, const int writeFileDesc)
 {
     static constexpr auto quitCommand = "quit\n";
     const std::string perftCommand = std::format("go perft {}\n", depth);
@@ -392,7 +390,7 @@ void MoveGenerationTester::_startUpPerft(const std::string&fenPosition, const in
     if (!moves.empty())
     {
         fenCommand += " moves ";
-        for (const auto&move: moves)
+        for (const auto& move : moves)
             fenCommand += move + ' ';
     }
 
@@ -464,5 +462,5 @@ std::pair<std::array<int, 2>, pid_t> MoveGenerationTester::_getExternalEnginePro
     close(outPipeFileDesc[ReadPipe]);
     close(inPipeFileDesc[WritePipe]);
 
-    return { { inPipeFileDesc[ReadPipe], outPipeFileDesc[WritePipe] }, proc};
+    return {{inPipeFileDesc[ReadPipe], outPipeFileDesc[WritePipe]}, proc};
 }

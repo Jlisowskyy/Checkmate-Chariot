@@ -4,12 +4,11 @@
 
 #include "../include/OpeningBook/OpeningBook.h"
 
-#include <fstream>
 #include <format>
+#include <fstream>
 
-#include "../include/ParseTools.h"
 #include "../include/Interface/Logger.h"
-
+#include "../include/ParseTools.h"
 
 // OpenningBook::OpenningBook(const std::string& bookPath, const bookFileType type):
 //     _moveTrie(std::move(type == bookFileType::text_uci ? _readTextBook(bookPath) : _readBinaryBook(bookPath)))
@@ -17,41 +16,43 @@
 
 OpeningBook::OpeningBook(const std::string& bookPath, const bookFileType type)
 {
-    try{
+    try
+    {
         switch (type)
         {
             case bookFileType::binary:
                 _readBinaryBook(bookPath);
-            break;
+                break;
             case bookFileType::text_uci:
                 _readTextBook(bookPath);
-            break;
+                break;
         }
         _isCorrectlyLoaded = true;
     }
     catch (const std::exception& exc)
     {
         GlobalLogger.StartErrLogging() << std::format(
-            "[ ERROR ] Book with path: {} was not correctly loaded due to following fact:\n\t{}\n", bookPath, exc.what());
+            "[ ERROR ] Book with path: {} was not correctly loaded due to following fact:\n\t{}\n", bookPath,
+            exc.what());
         _isCorrectlyLoaded = false;
     }
 }
 
-void OpeningBook::SaveToBinary([[maybe_unused]]const std::string&outputPath) const
+void OpeningBook::SaveToBinary([[maybe_unused]] const std::string& outputPath) const
 {
     throw std::runtime_error("[ ERROR ] Not yet implemented!");
 }
 
-bool OpeningBook::IsLoadedCorrectly() const
-{return _isCorrectlyLoaded;}
+bool OpeningBook::IsLoadedCorrectly() const { return _isCorrectlyLoaded; }
 
-const std::string& OpeningBook::GetRandomNextMove(const std::vector<std::string>&moves) const
+const std::string& OpeningBook::GetRandomNextMove(const std::vector<std::string>& moves) const
 {
     static std::string _emptyStr{};
     static std::mt19937_64 randEng((std::chrono::steady_clock::now().time_since_epoch().count()));
 
     const auto& nextMoves = _moveTrie.FindNextMoves(moves);
-    if (nextMoves.empty()) return _emptyStr;
+    if (nextMoves.empty())
+        return _emptyStr;
 
     return nextMoves[randEng() % nextMoves.size()];
 }
@@ -61,17 +62,18 @@ const std::vector<std::string>& OpeningBook::GetAllPossibleNextMoves(const std::
     return _moveTrie.FindNextMoves(moves);
 }
 
-void OpeningBook::_readBinaryBook([[maybe_unused]]const std::string&bookPath)
+void OpeningBook::_readBinaryBook([[maybe_unused]] const std::string& bookPath)
 {
     throw std::runtime_error("[ ERROR ] Not yet implemented!");
 }
 
-void OpeningBook::_readTextBook(const std::string&bookPath)
+void OpeningBook::_readTextBook(const std::string& bookPath)
 {
     std::ifstream stream(bookPath);
 
     if (!stream)
-        throw std::runtime_error(std::format("[ ERROR ] Not able to correctly open book from passed path:\n\t{}\n", bookPath));
+        throw std::runtime_error(
+            std::format("[ ERROR ] Not able to correctly open book from passed path:\n\t{}\n", bookPath));
 
     for (std::string lineBuff{}; std::getline(stream, lineBuff);)
     {

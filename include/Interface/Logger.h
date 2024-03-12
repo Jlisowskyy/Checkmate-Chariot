@@ -5,37 +5,37 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <mutex>
 
 class Logger
 {
-public:
+   public:
     Logger() = default;
 
     Logger(const Logger&) = delete;
 
     Logger& operator=(const Logger&) = delete;
 
-    void Log(const std::string&logMessage);
+    void Log(const std::string& logMessage);
 
     std::ostream& StartLogging();
 
     std::ostream& StartErrLogging();
 
-    void LogError(const std::string&logMessage);
+    void LogError(const std::string& logMessage);
 
-    bool ChangeLogStream(const std::string&FileName);
+    bool ChangeLogStream(const std::string& FileName);
 
-    void ChangeLogStream(std::ostream&stream);
+    void ChangeLogStream(std::ostream& stream);
 
     void CloseFStream();
 
     // ------------------------------
     // class fields
     // ------------------------------
-private:
+   private:
     std::mutex logGuard{};
     std::ofstream loggingFstream{};
     std::ostream* errLoggingStream = &std::cerr;
@@ -44,4 +44,4 @@ private:
 
 extern Logger GlobalLogger;
 
-#endif //LOGGER_H
+#endif  // LOGGER_H

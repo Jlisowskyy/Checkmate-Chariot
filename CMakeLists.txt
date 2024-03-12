@@ -75,6 +75,8 @@ add_executable(Checkmate-Chariot main.cpp
         include/ThreadManagement/SearchThreadManager.h
         src/SearchThreadManager.cpp
         include/Evaluation/MoveSortEval.h
+        include/Search/TranspositionTables.h
+        include/Search/ZobristHash.h
 )
 
 find_package(OpenMP)

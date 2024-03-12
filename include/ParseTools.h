@@ -5,9 +5,9 @@
 #ifndef PARSETOOLS_H
 #define PARSETOOLS_H
 
+#include <fstream>
 #include <string>
 #include <vector>
-#include <fstream>
 
 #include "compilationConstants.h"
 
@@ -29,36 +29,40 @@ struct ParseTools
     // returns position after the end of parsed word.
     // If returned position is equal to 0, then no word was detected.
 
-    template<
-        int (*crit)(int) = isblank
-    >static size_t ExtractNextWord(const std::string&str, std::string&wordOut, size_t startPos)
+    template <int (*crit)(int) = isblank>
+    static size_t ExtractNextWord(const std::string& str, std::string& wordOut, size_t startPos)
     {
-        while (startPos < str.length() && isblank(str[startPos])) { ++startPos; }
+        while (startPos < str.length() && isblank(str[startPos]))
+        {
+            ++startPos;
+        }
         const size_t beg = startPos;
-        while (startPos < str.length() && !crit(str[startPos])) { ++startPos; }
+        while (startPos < str.length() && !crit(str[startPos]))
+        {
+            ++startPos;
+        }
         const size_t end = startPos;
 
-        if (beg == end) return 0;
+        if (beg == end)
+            return 0;
 
         wordOut = str.substr(beg, end - beg);
         return end;
     }
 
     // Returns last character present in outBuffer + 1
-    static size_t ExtractNextLine(size_t startPos, size_t maxPos, const char* inBuffer, std::string&outBuffer);
+    static size_t ExtractNextLine(size_t startPos, size_t maxPos, const char* inBuffer, std::string& outBuffer);
 
-    static lli ParseTolli(const std::string&str);
+    static lli ParseTolli(const std::string& str);
 
-    static size_t TrimLeft(const std::string&str);
+    static size_t TrimLeft(const std::string& str);
 
-    static size_t TrimRight(const std::string&str);
+    static size_t TrimRight(const std::string& str);
 
-    static std::string GetTrimmed(const std::string&str);
+    static std::string GetTrimmed(const std::string& str);
 
-
-    template<
-        int (*crit)(int) = isblank
-    > [[nodiscard]] static std::vector<std::string> Split(const std::string& text, size_t pos = 0)
+    template <int (*crit)(int) = isblank>
+    [[nodiscard]] static std::vector<std::string> Split(const std::string& text, size_t pos = 0)
     {
         std::vector<std::string> splittedWords{};
         std::string wordBuffer{};
@@ -71,11 +75,11 @@ struct ParseTools
 
     static ssize_t GetLineCountFromFile(std::fstream& stream)
         // returns number of '\n' + 1 when stream is good to read otherwise returns -1
-    ;
+        ;
 
     // ------------------------------
     // Class fields
     // ------------------------------
 };
 
-#endif //PARSETOOLS_H
+#endif  // PARSETOOLS_H

@@ -14,22 +14,16 @@ class BlackPawnMap
     // ------------------------------
     // Class creation
     // ------------------------------
-public:
+   public:
     BlackPawnMap() = delete;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr size_t GetBoardIndex([[maybe_unused]] const int color)
-    {
-        return bPawnsIndex;
-    }
+    [[nodiscard]] static constexpr size_t GetBoardIndex([[maybe_unused]] const int color) { return bPawnsIndex; }
 
-    [[nodiscard]] static constexpr size_t GetEnemyPawnBoardIndex()
-    {
-        return wPawnsIndex;
-    }
+    [[nodiscard]] static constexpr size_t GetEnemyPawnBoardIndex() { return wPawnsIndex; }
 
     [[nodiscard]] static constexpr uint64_t GetAttackFields(const uint64_t pawnBits)
     {
@@ -80,7 +74,7 @@ public:
     // Mask with ones only on "x7" line
     static constexpr uint64_t StartMask = GenMask(48, 56, 1);
 
-private:
+   private:
     // Mask with ones only on 'Ax" line
     static constexpr uint64_t LeftMask = ~GenMask(0, 57, 8);
 
@@ -88,4 +82,4 @@ private:
     static constexpr uint64_t RightMask = ~GenMask(7, 64, 8);
 };
 
-#endif //BLACKPAWNMAP_H
+#endif  // BLACKPAWNMAP_H

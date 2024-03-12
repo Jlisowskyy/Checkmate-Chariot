@@ -12,7 +12,8 @@
 #include "../EngineTypeDefs.h"
 
 [[nodiscard]] constexpr std::array<uint64_t, Board::BoardFields> GenStaticMoves(const size_t maxMovesCount,
-    const int* movesCords, const int* rowCords)
+                                                                                const int* movesCords,
+                                                                                const int* rowCords)
 {
     std::array<uint64_t, Board::BoardFields> movesRet{};
 
@@ -41,9 +42,7 @@
     return movesRet;
 }
 
-template<
-    class NeighborCountingFuncT
->
+template <class NeighborCountingFuncT>
 [[nodiscard]] constexpr size_t CalculateTotalOfPossibleHashMapElements(NeighborCountingFuncT func)
 {
     size_t sum{};
@@ -67,9 +66,7 @@ inline void DisplayMasks(const uint64_t* masks, const char** names, const size_t
     }
 }
 
-template<
-    class ComparisonMethodT
->
+template <class ComparisonMethodT>
 [[nodiscard]] constexpr uint64_t GenMask(const int barrier, int boardIndex, const int offset, ComparisonMethodT comp)
 {
     uint64_t mask = 0;
@@ -83,27 +80,22 @@ template<
 [[nodiscard]] constexpr uint64_t GenMask(const int startInd, const int boarderIndex, const int offset)
 {
     uint64_t ret = 0;
-    for (int i = startInd; i < boarderIndex; i += offset) ret |= (1LLU << i);
+    for (int i = startInd; i < boarderIndex; i += offset)
+        ret |= (1LLU << i);
     return ret;
 }
 
 [[nodiscard]] constexpr size_t MyCeil(const double x)
 {
-    return (static_cast<double>(static_cast<size_t>(x)) == x)
-               ? static_cast<size_t>(x)
-               : static_cast<size_t>(x) + ((x > 0) ? 1 : 0);
+    return (static_cast<double>(static_cast<size_t>(x)) == x) ? static_cast<size_t>(x)
+                                                              : static_cast<size_t>(x) + ((x > 0) ? 1 : 0);
 }
 
-[[nodiscard]] constexpr size_t GetRoundedSizePow(const size_t x)
-{
-    return std::countr_zero(std::bit_ceil(x));
-}
+[[nodiscard]] constexpr size_t GetRoundedSizePow(const size_t x) { return std::countr_zero(std::bit_ceil(x)); }
 
-template<
-    class BoundryCheckFuncT
->
-constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd,
-                                   const int offset, BoundryCheckFuncT boundryCheck)
+template <class BoundryCheckFuncT>
+constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd, const int offset,
+                                   BoundryCheckFuncT boundryCheck)
 {
     uint64_t ret = 0;
     int actPos = bInd;
@@ -113,19 +105,15 @@ constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd,
         const uint64_t curMove = 1LLU << actPos;
         ret |= curMove;
 
-        if ((curMove & neighbors) != 0) break;
+        if ((curMove & neighbors) != 0)
+            break;
     }
 
     return ret;
 }
 
-template<
-    class MoveGeneratorT,
-    class NeighborGeneratorT,
-    class NeigborStripT,
-    class MapT
->
-constexpr void MoveInitializer(MapT&map, MoveGeneratorT mGen, NeighborGeneratorT nGen, NeigborStripT nStrip,
+template <class MoveGeneratorT, class NeighborGeneratorT, class NeigborStripT, class MapT>
+constexpr void MoveInitializer(MapT& map, MoveGeneratorT mGen, NeighborGeneratorT nGen, NeigborStripT nStrip,
                                const int bInd)
 {
     const auto [possibilities, posSize] = nGen(bInd, map.masks);
@@ -139,4 +127,4 @@ constexpr void MoveInitializer(MapT&map, MoveGeneratorT mGen, NeighborGeneratorT
     }
 }
 
-#endif //MOVEGENERATION_H
+#endif  // MOVEGENERATION_H

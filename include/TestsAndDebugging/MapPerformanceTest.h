@@ -5,12 +5,12 @@
 #ifndef MAPPERFORMANCETEST_H
 #define MAPPERFORMANCETEST_H
 
-#include <string>
-#include <fstream>
-#include <format>
-#include <iostream>
-#include <vector>
 #include <chrono>
+#include <format>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
 
 #include "../BitOperations.h"
 
@@ -34,7 +34,7 @@ class MapPerformanceTester
     // ------------------------------
     // Class creation
     // ------------------------------
-public:
+   public:
     MapPerformanceTester() = default;
 
     ~MapPerformanceTester() = default;
@@ -43,12 +43,12 @@ public:
     // Class interaction
     // ------------------------------
 
-    template<class MapT>
-    static double PerformTest(const std::string&filename, const MapT&map) noexcept(false)
+    template <class MapT>
+    static double PerformTest(const std::string &filename, const MapT &map) noexcept(false)
     {
         auto [recordCount, fullMaps, figureMaps] = _readTestFile(filename);
         uint64_t mapReads{};
-        uint64_t trulyNotRandomNumber{}; // was unsure about optimisations done when there was no use of read value
+        uint64_t trulyNotRandomNumber{};  // was unsure about optimisations done when there was no use of read value
 
         const auto timeStart = std::chrono::steady_clock::now();
 
@@ -73,10 +73,11 @@ public:
         const double timeSpentMs = (timeStop - timeStart).count() * 1e-6;
         const double readPerMs = mapReads / timeSpentMs;
 
-        std::cout << std::format(
-                    "During the test there was {} reads in total.\nAll done in {}ms.\nWhich outputs {} reads per ms\n",
-                    mapReads, timeSpentMs, readPerMs)
-                << std::format("Aquired test number: {}\n", trulyNotRandomNumber);
+        std::cout
+            << std::format(
+                   "During the test there was {} reads in total.\nAll done in {}ms.\nWhich outputs {} reads per ms\n",
+                   mapReads, timeSpentMs, readPerMs)
+            << std::format("Aquired test number: {}\n", trulyNotRandomNumber);
 
         return readPerMs;
     }
@@ -84,7 +85,7 @@ public:
     // ------------------------------
     // Private class methods
     // ------------------------------
-private:
+   private:
     static RecordsPack _readTestFile(std::string filename)
     {
         std::ifstream stream(filename, std::ios::binary | std::ios::in);
@@ -122,4 +123,4 @@ private:
     }
 };
 
-#endif //MAPPERFORMANCETEST_H
+#endif  // MAPPERFORMANCETEST_H

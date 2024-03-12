@@ -4,15 +4,14 @@
 
 #include "../include/TestsAndDebugging/BookTester.h"
 
-#include <fstream>
 #include <algorithm>
 #include <format>
+#include <fstream>
 
 #include "../include/Interface/Logger.h"
 
-
 void BookTester::PerformRandomAccessTest(const OpeningBook& book, const std::string& textBookPath,
-    const uint64_t testPositionCount)
+                                         const uint64_t testPositionCount)
 {
     std::fstream stream(textBookPath, std::ios::in);
 
@@ -24,10 +23,11 @@ void BookTester::PerformRandomAccessTest(const OpeningBook& book, const std::str
 
     std::string lineBuff{};
     // retreiving wanted records from file
-    for (uint64_t lineNum{}; auto line: testRecordsLines)
+    for (uint64_t lineNum{}; auto line : testRecordsLines)
     {
         // skipping unwanted lines
-        while (lineNum++ != line) std::getline(stream, lineBuff);
+        while (lineNum++ != line)
+            std::getline(stream, lineBuff);
 
         // getting wanted line
         std::getline(stream, lineBuff);
@@ -41,12 +41,13 @@ void BookTester::PerformRandomAccessTest(const OpeningBook& book, const std::str
 
 void BookTester::_testSequence(const OpeningBook& book, const std::vector<std::string>& moves, const std::string& buff)
 {
-    for(size_t i = 1; i < moves.size(); ++i)
+    for (size_t i = 1; i < moves.size(); ++i)
     {
-        const std::vector vect(moves.begin(), moves.begin()+1);
+        const std::vector vect(moves.begin(), moves.begin() + 1);
 
         if (book.GetRandomNextMove(vect).empty())
-            GlobalLogger.StartLogging() << std::format("[ ERROR ] Internal consistency of structure was not met!\n\tOn moves: {}\n", buff);
+            GlobalLogger.StartLogging() << std::format(
+                "[ ERROR ] Internal consistency of structure was not met!\n\tOn moves: {}\n", buff);
     }
 }
 
@@ -56,7 +57,7 @@ std::vector<uint64_t> BookTester::_generateTestRecordsNums(const uint64_t testPo
         std::max(1.0, std::floor(static_cast<double>(lineCount) / static_cast<double>(testPositionCount))));
 
     std::vector<uint64_t> positions{};
-    for(uint64_t pos = _getOffset(averageOffset); pos < lineCount; pos += _getOffset(averageOffset))
+    for (uint64_t pos = _getOffset(averageOffset); pos < lineCount; pos += _getOffset(averageOffset))
         positions.push_back(pos);
 
     return positions;

@@ -10,12 +10,12 @@ void BestMoveSearch::_insertionSort(std::vector<std::pair<int, int>>& list, cons
     {
         size_t j = i - 1;
         const auto val = list[i];
-        while(list[j].second < val.second)
+        while (list[j].second < val.second)
         {
-            list[j+1] = list[j];
+            list[j + 1] = list[j];
             j--;
         }
-        list[j+1] = val;
+        list[j + 1] = val;
     }
 }
 
@@ -25,11 +25,11 @@ void BestMoveSearch::_heapSortMoves(MoveGenerator::payload moves)
     {
         ssize_t j = i - 1;
         const auto val = moves[i];
-        while(j >= 0 && moves[j].GetEval() < val.GetEval())
+        while (j >= 0 && moves[j].GetEval() < val.GetEval())
         {
-            moves.data[j+1] = moves[j];
+            moves.data[j + 1] = moves[j];
             j--;
         }
-        moves.data[j+1] = val;
+        moves.data[j + 1] = val;
     }
 }

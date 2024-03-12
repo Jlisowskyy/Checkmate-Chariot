@@ -6,16 +6,16 @@
 #define SIMPLEBISHOPMAP_H
 
 #include "../EngineTypeDefs.h"
+#include "../MoveGeneration/BishopMapGenerator.h"
 #include "../movesHashMap.h"
 #include "HashFunctions.h"
-#include "../MoveGeneration/BishopMapGenerator.h"
 
 class SimpleBishopMap
 {
     using _hashFuncT = BaseHashFunction<true>;
     using _underlyingMapT = movesHashMap<_hashFuncT>;
 
-public:
+   public:
     constexpr SimpleBishopMap()
     {
         for (int i = 0; i < Board::BoardFields; ++i)
@@ -23,18 +23,12 @@ public:
             const int boardIndex = ConvertToReversedPos(i);
 
             _maps[i] = _underlyingMapT(BishopMapGenerator::InitMasks(boardIndex), funcs[i]);
-            MoveInitializer(_maps[i],
-                            [](const uint64_t n, const int ind) constexpr
-                            {
-                                return BishopMapGenerator::GenMoves(n, ind);
-                            },
-                            [](const int ind, const BishopMapGenerator::MasksT&m) constexpr
-                            {
-                                return BishopMapGenerator::GenPossibleNeighborsWoutOverlap(ind, m);
-                            },
-                            [](const uint64_t b, const BishopMapGenerator::MasksT&m) constexpr { return b; },
-                            boardIndex
-            );
+            MoveInitializer(
+                _maps[i],
+                [](const uint64_t n, const int ind) constexpr { return BishopMapGenerator::GenMoves(n, ind); },
+                [](const int ind, const BishopMapGenerator::MasksT& m) constexpr
+                { return BishopMapGenerator::GenPossibleNeighborsWoutOverlap(ind, m); },
+                [](const uint64_t b, const BishopMapGenerator::MasksT& m) constexpr { return b; }, boardIndex);
         }
     }
 
@@ -49,27 +43,21 @@ public:
     {
         _underlyingMapT::FindCollidingIndices(
             funcs,
-            [](const int ind, const BishopMapGenerator::MasksT&m)
-            {
-                return BishopMapGenerator::GenPossibleNeighborsWoutOverlap(ind, m);
-            },
-            [](const int bInd) { return BishopMapGenerator::InitMasks(bInd); }
-        );
+            [](const int ind, const BishopMapGenerator::MasksT& m)
+            { return BishopMapGenerator::GenPossibleNeighborsWoutOverlap(ind, m); },
+            [](const int bInd) { return BishopMapGenerator::InitMasks(bInd); });
         _underlyingMapT::FindHashParameters(
             funcs,
-            [](const int ind, const BishopMapGenerator::MasksT&m)
-            {
-                return BishopMapGenerator::GenPossibleNeighborsWoutOverlap(ind, m);
-            },
-            [](const int bInd) { return BishopMapGenerator::InitMasks(bInd); }
-        );
+            [](const int ind, const BishopMapGenerator::MasksT& m)
+            { return BishopMapGenerator::GenPossibleNeighborsWoutOverlap(ind, m); },
+            [](const int bInd) { return BishopMapGenerator::InitMasks(bInd); });
     }
 
     // ------------------------------
     // class fields
     // ------------------------------
 
-private:
+   private:
     static constexpr _hashFuncT funcs[Board::BoardFields]{
         _hashFuncT(std::make_tuple(2540615534426442431LLU, 18161687812890534152LLU, 11, 8)),
         _hashFuncT(std::make_tuple(11237402613493751323LLU, 8003405968917746827LLU, 11, 8)),
@@ -140,4 +128,4 @@ private:
     std::array<_underlyingMapT, Board::BoardFields> _maps;
 };
 
-#endif //SIMPLEBISHOPMAP_H
+#endif  // SIMPLEBISHOPMAP_H

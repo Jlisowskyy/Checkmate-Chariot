@@ -15,7 +15,7 @@ class RookMap
 
     using _underlyingMap = FancyMagicRookMap;
 
-public:
+   public:
     // ---------------------------------------
     // Class creation and initialization
     // ---------------------------------------
@@ -52,10 +52,10 @@ public:
     // ------------------------------
     // Class fields
     // ------------------------------
-private:
+   private:
     static constexpr const char* names[] = {"lMask", "rMask", "uMask", "dMask"};
 
     static constexpr _underlyingMap _map{};
 };
 
-#endif //ROOKMAP_H
+#endif  // ROOKMAP_H
