@@ -128,8 +128,8 @@ private:
 public:
     using CostArrayT = std::array<std::array<int32_t, Board::BoardFields>, Board::BoardsCount>;
 
-    static constexpr int32_t CoveredWPawnBonus = 20;
-    static constexpr int32_t CoveredBPawnBonus = -20;
+    static constexpr int32_t CoveredWPawnBonus = 50;
+    static constexpr int32_t CoveredBPawnBonus = -50;
     static constexpr int32_t CoveredWKingBonus = 15;
     static constexpr int32_t CoveredBKingBonus = -15;
 
@@ -202,12 +202,12 @@ public:
     {
         -200, -100, -100, -50, -50, -100, -100, -200,
         -100,    0,    0,   0,   0,    0,    0, -100,
-        -100,    0,   50,  50,  50,   50,    0, -100,
-         -50,    0,   50,  50,  50,   50,    0,  -50,
-           0,    0,   50,  50,  50,   50,    0,  -50,
-        -100,   50,   50,  50,  50,   50,    0, -100,
+           0,   25,   25,  25,  25,   25,   25,    0,
+           0,   25,   25,  50,  50,   25,   25,    0,
+           0,   25,   50,  50,  50,   50,   25,    0,
+           0,   50,   50,  50,  50,   50,   50,    0,
         -100,    0,   50,   0,   0,    0,    0, -100,
-        -200, -100, -100, -50, -50, -100, -100, -200
+        -200, -100, -100,   1,   1, -100, -100, -200
     };
 
     static constexpr int32_t BasicBlackKingPositionValues[]

@@ -55,7 +55,7 @@ template<
             // list iteration
             for (size_t i = 1; i <= moves.size; ++i) {
                 Move::MakeMove(moves[sortedMoveList[i].first], _board);
-                int eval = -_alphaBeta(evalF, _board, NegativeInfinity, -alpha, depth);
+                int eval = -_alphaBetaID(evalF, _board, NegativeInfinity, -alpha, depth);
                 Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
 
                 alpha = std::max(alpha, eval);
@@ -123,6 +123,51 @@ private:
 
         _stack.PopAggregate(moves);
         return alpha;
+    }
+
+    template<
+       class FullBoardEvalFuncT
+   > [[nodiscard]] int _alphaBetaID(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, const int depth)
+    {
+        if (depth < 4) return _alphaBeta(evalF, bd, alpha, beta, depth);
+
+        MoveGenerator generator(bd, _stack);
+        const auto moves = generator.GetMovesFast();
+        std::vector<std::pair<int, int>> sortedMoveList(moves.size + 1);
+
+        // sentinel guarded
+        for (size_t i = 1 ; i <= moves.size; ++i)
+            sortedMoveList[i] = std::make_pair(i-1, 0);
+        //sentinel
+        sortedMoveList[0] = std::make_pair(-1, PositiveInfinity);
+
+        for (int dep = 1; dep < depth-1; ++dep){
+            // resetting alpha
+            int inAlph = alpha;
+
+            // saving old params
+            const auto oldCastlings = _board.Castlings;
+            const auto oldElPassant = _board.elPassantField;
+
+            // list iteration
+            for (size_t i = 1; i <= moves.size; ++i) {
+                Move::MakeMove(moves[sortedMoveList[i].first], _board);
+                int eval = -_alphaBetaID(evalF, _board, -beta, -inAlph, dep);
+                Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
+
+                if (eval >= beta)
+                    break;
+
+                inAlph = std::max(inAlph, eval);
+                sortedMoveList[i].second = eval;
+            }
+
+            // move sorting
+            _insertionSort(sortedMoveList);
+        }
+
+        _stack.PopAggregate(moves);
+        return sortedMoveList[1].second;
     }
 
     template<
