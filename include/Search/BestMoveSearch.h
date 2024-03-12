@@ -63,7 +63,7 @@ template<
             }
 
             // move sorting
-            _insertionSort(sortedMoveList);
+            _insertionSort(sortedMoveList, moves.size);
             *output = moves[sortedMoveList[1].first];
 
             if constexpr (WriteInfo){
@@ -141,6 +141,7 @@ private:
         //sentinel
         sortedMoveList[0] = std::make_pair(-1, PositiveInfinity);
 
+        size_t cutOffIndex = moves.size;
         for (int dep = 1; dep < depth-1; ++dep){
             // resetting alpha
             int inAlph = alpha;
@@ -156,14 +157,19 @@ private:
                 Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
 
                 if (eval >= beta)
+                {
+                    sortedMoveList[i].second = beta;
+                    cutOffIndex = i;
                     break;
+                }
 
                 inAlph = std::max(inAlph, eval);
                 sortedMoveList[i].second = eval;
             }
 
             // move sorting
-            _insertionSort(sortedMoveList);
+            _insertionSort(sortedMoveList, cutOffIndex);
+            cutOffIndex = moves.size;
         }
 
         _stack.PopAggregate(moves);
@@ -206,7 +212,7 @@ private:
         return alpha;
     }
 
-    static void _insertionSort(std::vector<std::pair<int, int>>& list);
+    static void _insertionSort(std::vector<std::pair<int, int>>& list, size_t range);
     static void _heapSortMoves(MoveGenerator::payload moves);
 
     // ------------------------------

@@ -4,9 +4,9 @@
 
 #include "../include/Search/BestMoveSearch.h"
 
-void BestMoveSearch::_insertionSort(std::vector<std::pair<int, int>>& list)
+void BestMoveSearch::_insertionSort(std::vector<std::pair<int, int>>& list, const size_t range)
 {
-    for (size_t i = 2; i < list.size(); ++i)
+    for (size_t i = 2; i <= range; ++i)
     {
         size_t j = i - 1;
         const auto val = list[i];
