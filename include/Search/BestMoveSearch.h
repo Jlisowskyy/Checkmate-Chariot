@@ -12,6 +12,7 @@
 
 #include "../EngineTypeDefs.h"
 #include "../MoveGeneration/MoveGenerator.h"
+#include "TranspositionTable.h"
 
 struct BestMoveSearch
 {

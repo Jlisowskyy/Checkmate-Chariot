@@ -6,7 +6,6 @@
 #define MOVE_H
 
 #include <array>
-#include <cinttypes>
 
 #include "../EngineTypeDefs.h"
 
@@ -92,7 +91,7 @@ class Move
         bd.elPassantField = maxMsbPossible >> mv.GetElPassantField();
 
         // applying addidtional castling operation
-        auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
+        const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
         bd.boards[boardIndex] |= field;
 
         bd.ChangePlayingColor();
@@ -119,7 +118,7 @@ class Move
         bd.elPassantField = oldElPassant;
 
         // reverting castling operation
-        auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
+        const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
         bd.boards[boardIndex] ^= field;
     }
 
@@ -217,13 +216,14 @@ class Move
     // ------------------------------
     // Class fields
     // ------------------------------
-   private:
+private:
     static constexpr uint64_t Bit4 = 0b1111LLU;
     static constexpr uint64_t Bit6 = 0b111111LLU;
     static constexpr uint64_t Bit3 = 0b111LLU;
 
     uint64_t _storage{};
 
+public:
     static constexpr std::pair<size_t, uint64_t> CastlingActions[] = {
         {Board::SentinelBoardIndex, 0LLU},
         {wRooksIndex, Board::CastlingNewRookMaps[0]},
