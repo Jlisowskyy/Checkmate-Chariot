@@ -7,6 +7,7 @@
 
 #include <cinttypes>
 #include <cstdlib>
+#include <bit>
 
 /*
  *  Class represents transposition table which is used
@@ -37,13 +38,9 @@ struct TranspositionTable
     // Class creation
     // ------------------------------
 
-    TranspositionTable(): _map{static_cast<HashRecord *>(calloc(TableSize, sizeof(HashRecord)))} {
-        _checkForCorrectAlloc();
-    }
+    TranspositionTable();
 
-    ~TranspositionTable() {
-        free(_map);
-    }
+    ~TranspositionTable();
 
     TranspositionTable(const TranspositionTable&) = delete;
 
@@ -63,21 +60,36 @@ struct TranspositionTable
 
     void ClearTable();
 
+    // IMPORTANT: function should only be used before any search was concluded, because is fully cleared when resizing
+    ssize_t ResizeTable(size_t sizeMB);
+
+    [[nodiscard]] size_t GetContainedElements() const;
+
     // ------------------------------
     // private methods
     // ------------------------------
+private:
+    void _checkForCorrectAlloc(size_t size) const;
 
-    void _checkForCorrectAlloc() const;
+    static size_t _getPow2ModuloMask(const size_t pow2Num)
+    {
+        return pow2Num - 1;
+    }
 
     // ------------------------------
     // Class fields
     // ------------------------------
+public:
+
+    static constexpr size_t MaxSizeMB = 1024 * 256;
+    static constexpr size_t StartTableSizeMB = 16;
+    static constexpr size_t MB = 1024 * 1024;
+    static constexpr size_t StartTableSize = StartTableSizeMB * MB / sizeof(HashRecord);
 
 private:
-    static constexpr size_t TableSizeGB = 16;
-    static constexpr size_t GB = 1024 * 1024 * 1024;
-    static constexpr size_t TableSize = TableSizeGB * GB / sizeof(HashRecord);
-
+    size_t _containedRecords{};
+    size_t _tableSize{};
+    size_t _hashMaks{};
     HashRecord* _map{};
 };
 
