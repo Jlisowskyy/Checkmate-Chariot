@@ -13,6 +13,7 @@
 #include "../EngineTypeDefs.h"
 #include "../MoveGeneration/MoveGenerator.h"
 #include "TranspositionTable.h"
+#include "ZobristHash.h"
 
 struct BestMoveSearch
 {
@@ -41,6 +42,8 @@ struct BestMoveSearch
         // sentinel
         sortedMoveList[0] = std::make_pair(-1, PositiveInfinity);
 
+        uint64_t zHash = ZHasher.GenerateHash(_board);
+
         int depth = 1;
         int alpha = NegativeInfinity;
         while (alpha != PositiveInfinity && depth <= maxDepth - 1)
@@ -56,7 +59,9 @@ struct BestMoveSearch
             for (size_t i = 1; i <= moves.size; ++i)
             {
                 Move::MakeMove(moves[sortedMoveList[i].first], _board);
-                int eval = -_alphaBetaID(evalF, _board, NegativeInfinity, -alpha, depth);
+                zHash = ZHasher.UpdateHash(zHash, moves[sortedMoveList[i].first], oldElPassant, oldCastlings);
+                int eval = -_alphaBeta(evalF, _board, NegativeInfinity, -alpha, depth, zHash);
+                zHash = ZHasher.UpdateHash(zHash, moves[sortedMoveList[i].first], oldElPassant, oldCastlings);
                 Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
 
                 alpha = std::max(alpha, eval);
@@ -86,11 +91,34 @@ struct BestMoveSearch
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimazing player
     template <class FullBoardEvalFuncT>
-    [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, const int depth)
+    [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, const int depth, uint64_t zHash)
     {
         if (depth == 0)
         {
-            return _alphaBetaCaptures(evalF, bd, alpha, beta);
+            return _alphaBetaCaptures(evalF, bd, alpha, beta, zHash);
+        }
+
+        const auto oldCastlings = bd.Castlings;
+        const auto oldElPassant = bd.elPassantField;
+
+        const auto prevSearchRes = TTable.GetRecord(zHash);
+        if (prevSearchRes.ZobristHash == zHash)
+        {
+            Move::MakeMove(prevSearchRes.MadeMove, bd);
+            zHash = ZHasher.UpdateHash(zHash, prevSearchRes.MadeMove, oldElPassant, oldCastlings);
+            const int moveValue = -_alphaBeta(evalF, bd, -beta, -alpha, depth - 1, zHash);
+            zHash = ZHasher.UpdateHash(zHash, prevSearchRes.MadeMove, oldElPassant, oldCastlings);
+            Move::UnmakeMove(prevSearchRes.MadeMove, bd, oldCastlings, oldElPassant);
+
+            if (moveValue >= beta)
+            {
+                TranspositionTable::HashRecord record{};
+                record.Depth = depth;
+                record.ZobristHash = zHash;
+                record.MadeMove = prevSearchRes.MadeMove;
+                TTable.Add(record);
+                return beta;
+            }
         }
 
         MoveGenerator mechanics(bd, _stack);
@@ -102,34 +130,48 @@ struct BestMoveSearch
             return mechanics.IsCheck() ? NegativeInfinity : 0;
         }
 
-        const auto oldCastlings = bd.Castlings;
-        const auto oldElPassant = bd.elPassantField;
-
         _heapSortMoves(moves);
+        size_t bestMove = 0;
         for (size_t i = 0; i < moves.size; ++i)
         {
             Move::MakeMove(moves[i], bd);
-            const int moveValue = -_alphaBeta(evalF, bd, -beta, -alpha, depth - 1);
+            zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+            const int moveValue = -_alphaBeta(evalF, bd, -beta, -alpha, depth - 1, zHash);
+            zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
             Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
             if (moveValue >= beta)
             {
                 _stack.PopAggregate(moves);
+                TranspositionTable::HashRecord record{};
+                record.Depth = depth;
+                record.ZobristHash = zHash;
+                record.MadeMove = moves[i];
+                TTable.Add(record);
                 return beta;
             }
 
-            alpha = std::max(alpha, moveValue);
+            if (moveValue > alpha)
+            {
+                alpha = moveValue;
+                bestMove = i;
+            }
         }
 
         _stack.PopAggregate(moves);
+        TranspositionTable::HashRecord record{};
+        record.Depth = depth;
+        record.ZobristHash = zHash;
+        record.MadeMove = moves[bestMove];
+        TTable.Add(record);
         return alpha;
     }
 
     template <class FullBoardEvalFuncT>
-    [[nodiscard]] int _alphaBetaID(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, const int depth)
+    [[nodiscard]] int _alphaBetaID(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, const int depth, uint64_t zHash)
     {
         if (depth < 4)
-            return _alphaBeta(evalF, bd, alpha, beta, depth);
+            return _alphaBeta(evalF, bd, alpha, beta, depth, zHash);
 
         MoveGenerator generator(bd, _stack);
         const auto moves = generator.GetMovesFast();
@@ -155,7 +197,9 @@ struct BestMoveSearch
             for (size_t i = 1; i <= moves.size; ++i)
             {
                 Move::MakeMove(moves[sortedMoveList[i].first], _board);
+                zHash = ZHasher.UpdateHash(zHash, moves[sortedMoveList[i].first], oldElPassant, oldCastlings);
                 int eval = -_alphaBetaID(evalF, _board, -beta, -inAlph, dep);
+                zHash = ZHasher.UpdateHash(zHash, moves[sortedMoveList[i].first], oldElPassant, oldCastlings);
                 Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
 
                 if (eval >= beta)
@@ -177,7 +221,9 @@ struct BestMoveSearch
         for (size_t i = 1; i <= moves.size; ++i)
         {
             Move::MakeMove(moves[sortedMoveList[i].first], _board);
+            zHash = ZHasher.UpdateHash(zHash, moves[sortedMoveList[i].first], oldElPassant, oldCastlings);
             int moveValue = -_alphaBetaID(evalF, _board, -beta, -alpha, depth - 1);
+            zHash = ZHasher.UpdateHash(zHash, moves[sortedMoveList[i].first], oldElPassant, oldCastlings);
             Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
 
             if (moveValue >= beta)
@@ -194,7 +240,7 @@ struct BestMoveSearch
     }
 
     template <class FullBoardEvalFuncT>
-    [[nodiscard]] int _alphaBetaCaptures(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta)
+    [[nodiscard]] int _alphaBetaCaptures(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, uint64_t zHash)
     {
         const int eval = evalF(bd, bd.movColor);
 
@@ -212,7 +258,9 @@ struct BestMoveSearch
         for (size_t i = 0; i < moves.size; ++i)
         {
             Move::MakeMove(moves[i], bd);
-            const int moveValue = -_alphaBetaCaptures(evalF, bd, -beta, -alpha);
+            zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+            const int moveValue = -_alphaBetaCaptures(evalF, bd, -beta, -alpha, zHash);
+            zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
             Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
             if (moveValue >= beta)

@@ -26,11 +26,15 @@ TranspositionTable::~TranspositionTable()
 }
 
 void TranspositionTable::Add(const HashRecord& record) {
+    // TODO: adapt replacement policy
 
+    const size_t pos =  record.ZobristHash & _hashMaks;
+    _map[pos] = record;
 }
 
 TranspositionTable::HashRecord TranspositionTable::GetRecord(const uint64_t zHash) const {
-    return {};
+    const size_t pos =  zHash & _hashMaks;
+    return _map[pos];
 }
 
 void TranspositionTable::ClearTable() {
