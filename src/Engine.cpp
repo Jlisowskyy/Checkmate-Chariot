@@ -6,7 +6,7 @@
 #include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/OpeningBook/OpeningBook.h"
-#include "../include/Search/BestMoveSearch.h"
+#include "../include/Search/TranspositionTable.h"
 
 void Engine::Initialize()
 {
@@ -182,6 +182,13 @@ bool Engine::_applyMove(Board& board, const std::string& move, const uint64_t ol
 void Engine::_changeDebugState([[maybe_unused]] Engine& eng, std::string& nPath)
 {
     GlobalLogger.ChangeLogStream(nPath);
+}
+
+void Engine::_changeHashSize([[maybe_unused]]Engine& eng, const lli size)
+{
+    if (TTable.ResizeTable(size) == -1)
+        GlobalLogger.StartErrLogging()
+            << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
 }
 
 void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves)

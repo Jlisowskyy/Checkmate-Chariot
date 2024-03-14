@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <bit>
 
+#include "../MoveGeneration/Move.h"
+
 /*
  *  Class represents transposition table which is used
  *  to store globally calculated position evaluation results and metadata.
@@ -29,10 +31,15 @@ struct TranspositionTable
      */
 
     struct alignas(32) HashRecord {
-        uint64_t ZobristHash;
-        uint8_t Depth;
-
+        uint64_t ZobristHash; // 8 bytes
+        uint8_t Depth; // 1 byte
+        Move Move; // 8 Bytes
+        uint8_t Age; // 1 byte
+        int Eval; // 4 bytes
+        int Value; // 4 bytes
     };
+
+    // Total sum = 8 + 8 + 4 + 4 + 1 + 1 = 26 bytes => 6 byte padded <- try to improve memory management in future
 
     // ------------------------------
     // Class creation
@@ -56,7 +63,7 @@ struct TranspositionTable
 
     void Add(const HashRecord& record);
 
-    const HashRecord& GetRecord(uint64_t zHash)  const;
+    HashRecord GetRecord(uint64_t zHash)  const;
 
     void ClearTable();
 
@@ -87,6 +94,9 @@ public:
     static constexpr size_t StartTableSize = StartTableSizeMB * MB / sizeof(HashRecord);
 
 private:
+
+    static constexpr size_t _entryAlignment = 32;
+
     size_t _containedRecords{};
     size_t _tableSize{};
     size_t _hashMaks{};

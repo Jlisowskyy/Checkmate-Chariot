@@ -72,10 +72,13 @@ class Engine
 
     static void _changeDebugState(Engine& eng, std::string& nPath);
 
+    static void _changeHashSize([[maybe_unused]]Engine& eng, lli size);\
+
     static void _changeThreadCount([[maybe_unused]] Engine& eng, const lli tCount)
     {
         std::cout << "New thread count: " << tCount << '\n';
     }
+
 
     // ------------------------------
     // private fields
@@ -102,14 +105,16 @@ class Engine
     // Options available in engine
     inline static const OptionT<Option::OptionType::spin> Threads{"Threads", _changeThreadCount, 1, 1024, 1};
     inline static const OptionT<Option::OptionType::string> DebugLogFile{"Debug Log File", _changeDebugState, ""};
+    inline static const OptionT<Option::OptionType::spin> HashSize{"Hash", _changeHashSize, 16, 524289, 16};
 
     inline static const EngineInfo engineInfo = {
         .author = "Jakub Lisowski, Warsaw University of Technology",
         .name = "ChessEngine development version 0.05",
-        .options = std::map<std::string, const Option*>({
-            std::make_pair("Threads", &Threads),
-            std::make_pair("Debug Log File", &DebugLogFile),
-        }),
+        .options = std::map<std::string, const Option*>{
+            std::make_pair<std::string, const Option*>("Threads", &Threads),
+            std::make_pair<std::string, const Option*>("Debug Log File", &DebugLogFile),
+            std::make_pair<std::string, const Option*>("Hash", &HashSize)
+        },
     };
 };
 
