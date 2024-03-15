@@ -35,10 +35,10 @@ struct TranspositionTable
         [[nodiscard]] Move GetMove() const { return _madeMove; }
         [[nodiscard]] int GetEval() const { return _eval; }
         [[nodiscard]] int GetStatVal() const { return _value; }
-        [[nodiscard]] uint8_t GetDepth() const { return  _depth; }
+        [[nodiscard]] int GetDepth() const { return  _depth; }
         [[nodiscard]] bool IsPvNode() const { return (_type & PvNode) != 0; }
 
-        HashRecord(const uint64_t hash, const Move mv, const int eval, const int statVal, const uint8_t depth, const uint8_t pvSpec):
+        HashRecord(const uint64_t hash, const Move mv, const int eval, const int statVal, const int depth, const uint8_t pvSpec):
             _zobristHash(hash),
             _madeMove(mv),
             _eval(eval),
@@ -61,8 +61,8 @@ struct TranspositionTable
         Move _madeMove; // 8 Bytes
         int _eval; // 4 bytes
         int _value; // 4 bytes
+        int _depth; // 4 byte
         // uint8_t _age; // 1 byte
-        uint8_t _depth; // 1 byte
         uint8_t _type{}; // 1 byte
 
         friend TranspositionTable;

@@ -24,7 +24,7 @@ bool SearchThreadManager::goInfinite(const Board& bd)
     if (_isSearchOn == true)
         return false;
 
-    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, INT_MAX);
+    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, 50);
     _isSearchOn = true;
 
     return true;
