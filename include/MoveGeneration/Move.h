@@ -61,6 +61,9 @@ class Move
     // Class interaction
     // ------------------------------
 
+
+    friend bool operator==(const Move a, const Move b) { return a._storage == b._storage; }
+
     [[nodiscard]] std::string GetLongAlgebraicNotation() const
     {
         static constexpr std::string FigTypeMap[] = {"", "n", "b", "r", "q"};

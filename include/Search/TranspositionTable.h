@@ -7,7 +7,7 @@
 
 #include <cinttypes>
 #include <cstdlib>
-#include <bit>
+#include <climits>
 
 #include "../MoveGeneration/Move.h"
 
@@ -31,12 +31,41 @@ struct TranspositionTable
      */
 
     struct alignas(32) HashRecord {
-        uint64_t ZobristHash; // 8 bytes
-        Move MadeMove; // 8 Bytes
-        int Eval; // 4 bytes
-        int Value; // 4 bytes
-        uint8_t Age; // 1 byte
-        uint8_t Depth; // 1 byte
+        [[nodiscard]] uint64_t GetHash() const { return _zobristHash; }
+        [[nodiscard]] Move GetMove() const { return _madeMove; }
+        [[nodiscard]] int GetEval() const { return _eval; }
+        [[nodiscard]] int GetStatVal() const { return _value; }
+        [[nodiscard]] uint8_t GetDepth() const { return  _depth; }
+        [[nodiscard]] bool IsPvNode() const { return (_type & PvNode) != 0; }
+
+        HashRecord(const uint64_t hash, const Move mv, const int eval, const int statVal, const uint8_t depth, const uint8_t pvSpec):
+            _zobristHash(hash),
+            _madeMove(mv),
+            _eval(eval),
+            _value(statVal),
+            _depth(depth)
+        {
+            _type |= pvSpec;
+        }
+
+        void SetStatVal(const int statEval) { _value = statEval; }
+        void SetEvalVal(const int eval) { _eval = eval; }
+
+        static constexpr int NoStatEval = INT_MAX;
+        static constexpr int NoEval = INT_MAX;
+        static constexpr uint8_t PvNode = 0x1;
+        static constexpr uint8_t NoPvNode = 0;
+
+    private:
+        uint64_t _zobristHash; // 8 bytes
+        Move _madeMove; // 8 Bytes
+        int _eval; // 4 bytes
+        int _value; // 4 bytes
+        // uint8_t _age; // 1 byte
+        uint8_t _depth; // 1 byte
+        uint8_t _type{}; // 1 byte
+
+        friend TranspositionTable;
     };
 
     // Total sum = 8 + 8 + 4 + 4 + 1 + 1 = 26 bytes => 6 byte padded <- try to improve memory management in future
@@ -61,9 +90,9 @@ struct TranspositionTable
     // Class interaction
     // ------------------------------
 
-    void Add(const HashRecord& record);
+    void Add(const HashRecord& record) const;
 
-    HashRecord GetRecord(uint64_t zHash)  const;
+    [[nodiscard]] HashRecord GetRecord(uint64_t zHash)  const;
 
     void ClearTable();
 

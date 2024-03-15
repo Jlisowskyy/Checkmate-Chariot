@@ -8,6 +8,7 @@
 #include <format>
 #include <cstring>
 #include <cstdlib>
+#include <bit>
 
 TranspositionTable TTable{};
 
@@ -25,10 +26,11 @@ TranspositionTable::~TranspositionTable()
     free(_map);
 }
 
-void TranspositionTable::Add(const HashRecord& record) {
+void TranspositionTable::Add(const HashRecord& record) const
+{
     // TODO: adapt replacement policy
 
-    const size_t pos =  record.ZobristHash & _hashMaks;
+    const size_t pos =  record._zobristHash & _hashMaks;
     _map[pos] = record;
 }
 

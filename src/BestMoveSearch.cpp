@@ -19,7 +19,7 @@ void BestMoveSearch::_insertionSort(std::vector<std::pair<int, int>>& list, cons
     }
 }
 
-void BestMoveSearch::_heapSortMoves(const MoveGenerator::payload moves)
+void BestMoveSearch::_heuristicSort(const MoveGenerator::payload moves)
 {
     for (ssize_t i = 1; i < static_cast<ssize_t>(moves.size); ++i)
     {

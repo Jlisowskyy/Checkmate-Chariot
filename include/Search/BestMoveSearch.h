@@ -30,7 +30,7 @@ struct BestMoveSearch
     // ------------------------------
 
     template <class FullBoardEvalFuncT, bool WriteInfo = true>
-    void IterativeDeepening(FullBoardEvalFuncT evalF, Move* output, const int maxDepth)
+    void IterativeDeepening(FullBoardEvalFuncT evalF, Move* output, const uint8_t maxDepth)
     {
         MoveGenerator generator(_board, _stack);
         const auto moves = generator.GetMovesFast();
@@ -44,7 +44,7 @@ struct BestMoveSearch
 
         uint64_t zHash = ZHasher.GenerateHash(_board);
 
-        int depth = 1;
+        uint8_t depth = 1;
         int alpha = NegativeInfinity;
         while (alpha != PositiveInfinity && depth <= maxDepth - 1)
         {
@@ -56,11 +56,12 @@ struct BestMoveSearch
             const auto oldElPassant = _board.elPassantField;
 
             // list iteration
+            int eval{};
             for (size_t i = 1; i <= moves.size; ++i)
             {
                 Move::MakeMove(moves[sortedMoveList[i].first], _board);
                 zHash = ZHasher.UpdateHash(zHash, moves[sortedMoveList[i].first], oldElPassant, oldCastlings);
-                int eval = -_alphaBeta(evalF, _board, NegativeInfinity, -alpha, depth, zHash);
+                eval = -_alphaBeta(evalF, _board, NegativeInfinity, -alpha, depth, zHash);
                 zHash = ZHasher.UpdateHash(zHash, moves[sortedMoveList[i].first], oldElPassant, oldCastlings);
                 Move::UnmakeMove(moves[sortedMoveList[i].first], _board, oldCastlings, oldElPassant);
 
@@ -74,8 +75,8 @@ struct BestMoveSearch
 
             if constexpr (WriteInfo)
             {
-                GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}\n", depth + 1,
-                                                           moves[sortedMoveList[1].first].GetLongAlgebraicNotation());
+                GlobalLogger.StartLogging() << std::format("[ INFO ] Depth: {}, best move: {}, with eval: {}\n", depth + 1,
+                                                           moves[sortedMoveList[1].first].GetLongAlgebraicNotation(), (double)eval/1000.0);
             }
 
             ++depth;
@@ -91,80 +92,128 @@ struct BestMoveSearch
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimazing player
     template <class FullBoardEvalFuncT>
-    [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, const int depth, uint64_t zHash)
+    [[nodiscard]] int _alphaBeta(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, const uint8_t depthLeft, uint64_t zHash)
     {
-        if (depth == 0)
+        Move bestMove;
+        Move prevMove;
+
+        // last depth static eval needed or prev pv node value
+        if (depthLeft == 0)
         {
             return _alphaBetaCaptures(evalF, bd, alpha, beta, zHash);
         }
 
+        // saving old parameters for later usage
         const auto oldCastlings = bd.Castlings;
         const auto oldElPassant = bd.elPassantField;
 
+        // reading Transposition table for previous score
         const auto prevSearchRes = TTable.GetRecord(zHash);
-        if (prevSearchRes.ZobristHash == zHash)
-        {
-            Move::MakeMove(prevSearchRes.MadeMove, bd);
-            zHash = ZHasher.UpdateHash(zHash, prevSearchRes.MadeMove, oldElPassant, oldCastlings);
-            const int moveValue = -_alphaBeta(evalF, bd, -beta, -alpha, depth - 1, zHash);
-            zHash = ZHasher.UpdateHash(zHash, prevSearchRes.MadeMove, oldElPassant, oldCastlings);
-            Move::UnmakeMove(prevSearchRes.MadeMove, bd, oldCastlings, oldElPassant);
 
+        // We got a hit -> process old results
+        if (prevSearchRes.GetHash() == zHash)
+        {
+            // TODO: if previous results is a pv-node and depth of search
+            if (prevSearchRes.IsPvNode() == true && prevSearchRes.GetDepth() >= depthLeft)
+                return prevSearchRes.GetEval();
+
+            // reading previous move
+            prevMove = prevSearchRes.GetMove();
+
+            // processing move
+            Move::MakeMove(prevMove, bd);
+            zHash = ZHasher.UpdateHash(zHash, prevMove, oldElPassant, oldCastlings);
+            const int moveValue = -_alphaBeta(evalF, bd, -beta, -alpha, depthLeft - 1, zHash);
+            zHash = ZHasher.UpdateHash(zHash, prevMove, oldElPassant, oldCastlings);
+            Move::UnmakeMove(prevMove, bd, oldCastlings, oldElPassant);
+
+            // we got a cut-off
             if (moveValue >= beta)
             {
-                TranspositionTable::HashRecord record{};
-                record.Depth = depth;
-                record.ZobristHash = zHash;
-                record.MadeMove = prevSearchRes.MadeMove;
-                TTable.Add(record);
+                // replacing old record when we have better depth
+                if (depthLeft >= prevSearchRes.GetDepth())
+                {
+                    const TranspositionTable::HashRecord record{zHash, prevMove,
+                        moveValue, prevSearchRes.GetStatVal(), depthLeft, TranspositionTable::HashRecord::NoPvNode };
+                    TTable.Add(record);
+                }
 
                 return beta;
             }
+
+            // updating alpha
+            if (moveValue > alpha)
+            {
+                alpha = moveValue;
+                bestMove = prevMove;
+            }
         }
 
+        // generate moves
         MoveGenerator mechanics(bd, _stack);
         const auto moves = mechanics.GetMovesFast();
 
+        // signalize checks and draws
         if (moves.size == 0)
         {
             _stack.PopAggregate(moves);
             return mechanics.IsCheck() ? NegativeInfinity : 0;
         }
 
-        _heapSortMoves(moves);
-        ssize_t bestMove = 0;
+        // sorting moves with simple heuristics
+        _heuristicSort(moves);
+
+        // processsing each move
         for (size_t i = 0; i < moves.size; ++i)
         {
+            // skipping move found in transposition table
+            if (moves[i] == prevMove) continue;
+
+            // processing move
             Move::MakeMove(moves[i], bd);
             zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
-            const int moveValue = -_alphaBeta(evalF, bd, -beta, -alpha, depth - 1, zHash);
+            const int moveValue = -_alphaBeta(evalF, bd, -beta, -alpha, depthLeft - 1, zHash);
             zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
             Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
+            // cut-off found
             if (moveValue >= beta)
             {
+                // cleaning stack
                 _stack.PopAggregate(moves);
-                TranspositionTable::HashRecord record{};
-                record.Depth = depth;
-                record.ZobristHash = zHash;
-                record.MadeMove = moves[i];
-                TTable.Add(record);
+
+                // if profitable add move to table
+                if (depthLeft >= prevSearchRes.GetDepth())
+                {
+                    const int statVal = prevSearchRes.GetHash() == zHash ? prevSearchRes.GetStatVal() : TranspositionTable::HashRecord::NoEval;
+                    const TranspositionTable::HashRecord record{zHash, moves[i],
+                        moveValue, statVal, depthLeft, TranspositionTable::HashRecord::NoPvNode };
+                    TTable.Add(record);
+                }
+
                 return beta;
             }
 
+            // updating alpha
             if (moveValue > alpha)
             {
                 alpha = moveValue;
-                bestMove = i;
+                bestMove = moves[i];
             }
         }
 
+        //clean up
         _stack.PopAggregate(moves);
-        TranspositionTable::HashRecord record{};
-        record.Depth = depth;
-        record.ZobristHash = zHash;
-        record.MadeMove = moves[bestMove];
-        TTable.Add(record);
+
+        // updating if profitable
+        if (depthLeft >= prevSearchRes.GetDepth())
+        {
+            const int statVal = prevSearchRes.GetHash() == zHash ? prevSearchRes.GetStatVal() : TranspositionTable::HashRecord::NoEval;
+            const TranspositionTable::HashRecord record{zHash, bestMove,
+                alpha, statVal, depthLeft, TranspositionTable::HashRecord::PvNode };
+            TTable.Add(record);
+        }
+
         return alpha;
     }
 
@@ -176,6 +225,13 @@ struct BestMoveSearch
 
         MoveGenerator generator(bd, _stack);
         const auto moves = generator.GetMovesFast();
+
+        if (moves.size == 0)
+        {
+            _stack.PopAggregate(moves);
+            return generator.IsCheck() ? NegativeInfinity : 0;
+        }
+
         std::vector<std::pair<int, int>> sortedMoveList(moves.size + 1);
 
         // sentinel guarded
@@ -243,6 +299,18 @@ struct BestMoveSearch
     template <class FullBoardEvalFuncT>
     [[nodiscard]] int _alphaBetaCaptures(FullBoardEvalFuncT evalF, Board& bd, int alpha, const int beta, uint64_t zHash)
     {
+        const auto prevSearchRes = TTable.GetRecord(zHash);
+
+        // int eval;
+        // if (zHash == prevSearchRes.GetHash())
+        // {
+        //     if (prevSearchRes.GetStatVal() != TranspositionTable::HashRecord::NoEval)
+        //         eval = prevSearchRes.GetStatVal();
+        //     else
+        //         eval = evalF(bd, bd.movColor);
+        // }
+        // else eval = evalF(bd, bd.movColor);
+
         const int eval = evalF(bd, bd.movColor);
 
         if (eval >= beta)
@@ -255,7 +323,7 @@ struct BestMoveSearch
         const auto oldCastlings = bd.Castlings;
         const auto oldElPassant = bd.elPassantField;
 
-        _heapSortMoves(moves);
+        _heuristicSort(moves);
         for (size_t i = 0; i < moves.size; ++i)
         {
             Move::MakeMove(moves[i], bd);
@@ -278,7 +346,7 @@ struct BestMoveSearch
     }
 
     static void _insertionSort(std::vector<std::pair<int, int>>& list, size_t range);
-    static void _heapSortMoves(MoveGenerator::payload moves);
+    static void _heuristicSort(MoveGenerator::payload moves);
 
     // ------------------------------
     // Class fields
