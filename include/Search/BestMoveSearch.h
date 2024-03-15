@@ -117,6 +117,7 @@ struct BestMoveSearch
                 record.ZobristHash = zHash;
                 record.MadeMove = prevSearchRes.MadeMove;
                 TTable.Add(record);
+
                 return beta;
             }
         }
@@ -131,7 +132,7 @@ struct BestMoveSearch
         }
 
         _heapSortMoves(moves);
-        size_t bestMove = 0;
+        ssize_t bestMove = 0;
         for (size_t i = 0; i < moves.size; ++i)
         {
             Move::MakeMove(moves[i], bd);

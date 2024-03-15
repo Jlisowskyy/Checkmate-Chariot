@@ -38,7 +38,7 @@ TranspositionTable::HashRecord TranspositionTable::GetRecord(const uint64_t zHas
 }
 
 void TranspositionTable::ClearTable() {
-    memset(_map, 0, _tableSize * sizeof(int));
+    memset(_map, 0, _tableSize * sizeof(HashRecord));
     _containedRecords = 0;
 }
 
@@ -47,22 +47,23 @@ ssize_t TranspositionTable::ResizeTable(const size_t sizeMB)
     free(_map);
     const size_t ceiledSizeMB = std::bit_floor(sizeMB);
     const size_t objSize = ceiledSizeMB*MB/sizeof(HashRecord);
-    _map = static_cast<HashRecord *>(std::aligned_alloc(_entryAlignment, StartTableSize*sizeof(HashRecord)));
-    ClearTable();
-    _containedRecords = 0;
+    _map = static_cast<HashRecord *>(std::aligned_alloc(_entryAlignment, ceiledSizeMB*MB));
 
     if (_map == nullptr)
     {
         _map = static_cast<HashRecord *>(std::aligned_alloc(_entryAlignment, StartTableSize*sizeof(HashRecord)));
-        ClearTable();
         _tableSize = StartTableSize;
         _hashMaks = _getPow2ModuloMask(StartTableSize);
         _checkForCorrectAlloc(StartTableSize);
+        ClearTable();
+
         return -1;
     }
 
     _tableSize = objSize;
     _hashMaks = _getPow2ModuloMask(objSize);
+    ClearTable();
+
     return static_cast<ssize_t>(ceiledSizeMB);
 }
 

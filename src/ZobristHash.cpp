@@ -6,7 +6,7 @@
 
 #include <random>
 
-ZobristHasher ZHasher{};
+ZobristHasher ZHasher{ZobristHasher::BaseSeed};
 
 ZobristHasher::ZobristHasher(const uint64_t engineSeed) {
     std::mt19937_64 randEngine{engineSeed};
@@ -65,10 +65,10 @@ uint64_t ZobristHasher::GenerateHash(const Board& board) const {
 
 uint64_t ZobristHasher::UpdateHash(uint64_t oldHash, const Move mv, const uint64_t oldElPassant,
                                    const std::bitset<Board::CastlingCount + 1> oldCastlings) const {
-    oldHash ^= _colorHash;
-    oldHash ^= _mainHashes[mv.GetStartField()][mv.GetStartBoardIndex()]; // placing figure on target square
-    oldHash ^= _mainHashes[mv.GetTargetField()][mv.GetTargetBoardIndex()]; // removing figure from start square
-    oldHash ^= _mainHashes[mv.GetKilledFigureField()][mv.GetKilledBoardIndex()]; // removing killed figure from board
+    oldHash ^= _colorHash; //swapping collor
+    oldHash ^= _mainHashes[mv.GetStartBoardIndex()][mv.GetStartField()]; // placing figure on target square
+    oldHash ^= _mainHashes[mv.GetTargetBoardIndex()][mv.GetTargetField()]; // removing figure from start square
+    oldHash ^= _mainHashes[mv.GetKilledBoardIndex()][mv.GetKilledFigureField()]; // removing killed figure from board
 
     // TODO: Reconsider and test if usage of lines below is actually needed:
 

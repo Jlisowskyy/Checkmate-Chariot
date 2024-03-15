@@ -21,7 +21,7 @@ struct ZobristHasher
     // Class creation
     // ------------------------------
 
-    explicit ZobristHasher(uint64_t engineSeed = Seed);
+    explicit ZobristHasher(uint64_t engineSeed);
 
     // ------------------------------
     // Class interaction
@@ -39,8 +39,9 @@ struct ZobristHasher
     // ------------------------------
     // Class fields
     // ------------------------------
+
+    static constexpr uint64_t BaseSeed = 0x42731294812LLU;
 private:
-    static constexpr uint64_t Seed = 0x42731294812LLU; // Hard coded seed to enforce reproducability
     static constexpr size_t CastlingHashesCount = 32; // 2^(4 + 1) each castling property can be either 1 or 0
                                                         // and additional sentinel
 
