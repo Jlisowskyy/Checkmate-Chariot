@@ -226,6 +226,25 @@ struct ChessMechanics
         _processPlainKingMoves(action, depth, blockedFigMap, allyMap, enemyMap);
     }
 
+    static std::pair<uint64_t, uint8_t> _getRookBlockedMap(uint64_t rookMap, const uint64_t fullMapWoutKing, const uint64_t kingMap)
+    {
+        uint64_t blockedTiles{};
+        uint8_t checks{};
+
+        while(rookMap)
+        {
+            int msbPos = ExtractMsbPos(rookMap);
+
+            const uint64_t moves = RookMap::GetMoves(msbPos, fullMapWoutKing);
+            blockedTiles |= moves;
+            checks += ((moves & kingMap) != 0);
+
+            rookMap ^= maxMsbPossible >> msbPos;
+        }
+
+        return {blockedTiles, checks};
+    }
+
     template <class ActionT, class MapT, bool isCheck = false>
     void _processPawnMoves(ActionT action, const int depth, uint64_t& figMap, const uint64_t enemyMap,
                            const uint64_t allyMap, const uint64_t pinnedFigMap,

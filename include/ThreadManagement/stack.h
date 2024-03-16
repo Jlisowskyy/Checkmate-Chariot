@@ -31,7 +31,9 @@ struct stack
             ++size;
         }
 
-        ItemT operator[](size_t ind) const { return data[ind]; }
+        const ItemT& operator[](size_t ind) const { return data[ind]; }
+        ItemT& operator[](size_t ind) { return data[ind]; }
+
     };
 
     struct stackPayloadConst
@@ -41,7 +43,8 @@ struct stack
         ItemT* data;
         const size_t size;
 
-        ItemT operator[](size_t ind) const { return data[ind]; }
+        const ItemT& operator[](size_t ind) const { return data[ind]; }
+        ItemT& operator[](size_t ind) { return data[ind]; }
     };
 
     // ------------------------------

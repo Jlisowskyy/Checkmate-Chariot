@@ -75,14 +75,12 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     // King attacks generation.
     const uint64_t kingBlockedMap = KingMap::GetMoves(board.GetKingMsbPos(enemyCol));
 
-    // Rook attacks generation.
-    const uint64_t rookBlockedMap =
-        _blockIterativeGenerator(board.boards[enemyFigInd + rooksIndex] | board.boards[enemyFigInd + queensIndex],
-                                 [=](const int pos) { return RookMap::GetMoves(pos, fullMapWoutKing); });
+    // Rook attacks generation. Needs special treatment to correctly detect double check, especially with pawn promotion
+    const auto [rookBlockedMap, checkCountRook] =
+        _getRookBlockedMap(board.boards[enemyFigInd + rooksIndex] | board.boards[enemyFigInd + queensIndex], fullMapWoutKing, allyKingMap);
 
-    // = 1 or 0 depending whether hits or not
-    const uint8_t wasCheckedByRookFlag = (rookBlockedMap & allyKingMap) >> allyKingShift;
-    checksCount += wasCheckedByRookFlag;
+    // = 0, 1 or eventually 2 when promotion to rook like type happens
+    checksCount += checkCountRook;
 
     // Bishop attacks generation.
     const uint64_t bishopBlockedMap =

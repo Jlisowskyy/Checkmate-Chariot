@@ -4,7 +4,7 @@
 
 #include "../include/Search/BestMoveSearch.h"
 
-void BestMoveSearch::_embeddedMoveSort(const MoveGenerator::payload moves, const size_t range)
+void BestMoveSearch::_embeddedMoveSort(MoveGenerator::payload moves, const size_t range)
 {
     for (ssize_t i = 1; i < static_cast<ssize_t>(range); ++i)
     {
@@ -19,7 +19,7 @@ void BestMoveSearch::_embeddedMoveSort(const MoveGenerator::payload moves, const
     }
 }
 
-void BestMoveSearch::_pullMoveToFront(const MoveGenerator::payload moves, const Move mv)
+void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Move mv)
 {
     // preparing sentinel
     const Move sentinelOld = moves.data[moves.size];

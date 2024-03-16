@@ -34,14 +34,14 @@ struct BestMoveSearch
     void IterativeDeepening(FullBoardEvalFuncT evalF, Move* output, const int maxDepth)
     {
         MoveGenerator generator(_board, _stack);
-        const auto moves = generator.GetMovesFast();
+        auto moves = generator.GetMovesFast();
 
         // saving old params
         const auto oldCastlings = _board.Castlings;
         const auto oldElPassant = _board.elPassantField;
 
         uint64_t zHash = ZHasher.GenerateHash(_board);
-        for (int depth = 1; depth < maxDepth; ++depth)
+        for (int depth = 0; depth < maxDepth; ++depth)
         {
             // measuring time
             [[maybe_unused]]auto t1 = std::chrono::steady_clock::now();
@@ -74,7 +74,7 @@ struct BestMoveSearch
                 const uint64_t nps = 1000LLU * _visitedNodes / spentMs;
 
                 GlobalLogger.StartLogging() << std::format("info depth: {}, best move: {}, eval: {}, time: {}, nodes: {}, nodes per sec: {}, tt entries: {}\n", depth + 1,
-                                                           moves[0].GetLongAlgebraicNotation(), static_cast<double>(eval)/100.0,
+                                                           moves[0].GetLongAlgebraicNotation(), static_cast<double>(moves[0].GetEval())/100.0,
                                                            spentMs, _visitedNodes, nps, TTable.GetContainedElements());
             }
         }
@@ -115,15 +115,13 @@ struct BestMoveSearch
 
         // generate moves
         MoveGenerator mechanics(bd, _stack);
-        const auto moves = mechanics.GetMovesFast();
+        auto moves = mechanics.GetMovesFast();
 
         // signalize checks and draws
         if (moves.size == 0)
         {
             _stack.PopAggregate(moves);
-            return mechanics.IsCheck() == false ?  0 :
-                           bd.movColor == WHITE ?  NegativeInfinity :
-                                                   PositiveInfinity;
+            return mechanics.IsCheck() ? NegativeInfinity : 0;
         }
 
         // sorting moves with simple heuristics
@@ -207,7 +205,7 @@ struct BestMoveSearch
 
         // generating moves
         MoveGenerator generator(bd, _stack);
-        const auto moves = generator.GetMovesFast();
+        auto moves = generator.GetMovesFast();
 
         if (moves.size == 0)
         {
@@ -330,7 +328,7 @@ struct BestMoveSearch
 
         // generating moves
         MoveGenerator mechanics(bd, _stack);
-        const auto moves = mechanics.GetMovesFast<true>();
+        auto moves = mechanics.GetMovesFast<true>();
 
         // sorting moves
         _embeddedMoveSort(moves, moves.size);
@@ -396,8 +394,8 @@ struct BestMoveSearch
     // Class fields
     // ------------------------------
 
-    static constexpr int NegativeInfinity = INT16_MIN + 1;
-    static constexpr int PositiveInfinity = INT16_MAX;
+    static constexpr int NegativeInfinity = INT16_MIN + 100;
+    static constexpr int PositiveInfinity = INT16_MAX - 100;
 
     static constexpr uint16_t QuisenceAgeDiffToReplace = 16;
     static constexpr uint16_t SearchAgeDiffToReplace = 8;
