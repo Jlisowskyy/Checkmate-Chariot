@@ -5,6 +5,8 @@
 #ifndef BOARDEVALUATOR_H
 #define BOARDEVALUATOR_H
 
+#include <iomanip>
+
 #include "../EngineTypeDefs.h"
 #include "../MoveGeneration/BlackPawnMap.h"
 #include "../MoveGeneration/KingMap.h"
@@ -107,6 +109,21 @@ struct BoardEvaluator
         return eval;
     }
 
+    void static DisplayCosts()
+    {
+        for (size_t bd = 0 ; bd < Board::BoardsCount; ++bd)
+        {
+            for (int pos = 0; pos < Board::BoardFields; ++pos)
+            {
+                if (pos % 8 == 0) std::cout << std::endl;
+
+                std::cout << std::setw(6) << CostsWithPositionsIncluded[bd][pos] << " , ";
+            }
+
+            std::cout << std::endl;
+        }
+    }
+
     // ------------------------------
     // Private class methods
     // ------------------------------
@@ -196,15 +213,15 @@ struct BoardEvaluator
         constexpr size_t BlackIndex = BLACK * Board::BoardsPerCol;
         for (size_t i = 0; i <= kingIndex; ++i)
         {
-            for (size_t j = 0; j < Board::BoardFields; ++j)
-                arr[BlackIndex + i][j] = -(BasicFigureValues[i] + BasicBlackPositionValues[i][j]);
+            for (int j = 0; j < static_cast<int>(Board::BoardFields); ++j)
+                arr[BlackIndex + i][j] = -(BasicFigureValues[i] + BasicBlackPositionValues[i][ConvertToReversedPos(j)]);
         }
 
         constexpr size_t WhiteIndex = WHITE * Board::BoardsPerCol;
         for (size_t i = 0; i <= kingIndex; ++i)
         {
-            for (int j = 0; j < static_cast<int>(Board::BoardFields); ++j)
-                arr[WhiteIndex + i][j] = BasicFigureValues[i] + BasicBlackPositionValues[i][ConvertToReversedPos(j)];
+            for (size_t j = 0; j < Board::BoardFields; ++j)
+                arr[WhiteIndex + i][j] = BasicFigureValues[i] + BasicBlackPositionValues[i][j];
         }
 
         return arr;

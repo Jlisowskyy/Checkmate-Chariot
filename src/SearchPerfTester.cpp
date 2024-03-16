@@ -49,12 +49,20 @@ double SearchPerfTester::_performTestCase(const std::string& testCase, const int
 {
     Board bd;
     FenTranslator::Translate(testCase, bd);
-    BestMoveSearch searcher(bd, stack);
+    BestMoveSearch searcher(bd, stack, 1);
+
+    TTable.ClearTable();
 
     const auto tStart = std::chrono::steady_clock::now();
     [[maybe_unused]] Move mv{};
-    searcher.IterativeDeepening<decltype(BoardEvaluator::DefaultFullEvalFunction), false>(
-        BoardEvaluator::DefaultFullEvalFunction, &mv, depth);
+    if (depth > 0)
+        searcher.IterativeDeepening<decltype(BoardEvaluator::DefaultFullEvalFunction)>(
+            BoardEvaluator::DefaultFullEvalFunction, &mv, depth);
+    else
+    {
+        const int eval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
+        GlobalLogger.StartLogging() << std::format("[ INFO ] Evaluation result: {} on position:\n\t{}\n", eval, testCase);
+    }
     const auto tStop = std::chrono::steady_clock::now();
 
     return (double)std::chrono::duration_cast<std::chrono::milliseconds>(tStop - tStart).count();

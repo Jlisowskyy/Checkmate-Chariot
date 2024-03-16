@@ -26,11 +26,12 @@ TranspositionTable::~TranspositionTable()
     free(_map);
 }
 
-void TranspositionTable::Add(const HashRecord& record) const
+void TranspositionTable::Add(const HashRecord& record)
 {
     // TODO: adapt replacement policy
 
     const size_t pos =  record._zobristHash & _hashMaks;
+    _containedRecords += _map[pos].IsEmpty();
     _map[pos] = record;
 }
 

@@ -100,6 +100,11 @@ class Move
         bd.ChangePlayingColor();
     }
 
+    [[nodiscard]] bool IsAttackingMove() const
+    {
+        return GetKilledBoardIndex() != Board::SentinelBoardIndex;
+    }
+
     static void UnmakeMove(const Move mv, Board& bd, const std::bitset<Board::CastlingCount + 1> castlings,
                            const uint64_t oldElPassant)
     {

@@ -60,6 +60,9 @@ std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
 
 void Engine::SetFenPosition(const std::string& fenStr)
 {
+    // restarting position age
+    _age = 1;
+
     if (fenStr.length() >= _startposPrefix.length() && fenStr.substr(0, _startposPrefix.length()) == _startposPrefix)
     {
         _isStartPosPlayed = true;
@@ -78,6 +81,9 @@ void Engine::SetFenPosition(const std::string& fenStr)
 
 void Engine::SetStartpos()
 {
+    // restarting position age
+    _age = 1;
+
     _isStartPosPlayed = true;
     _board = FenTranslator::GetDefault();
     _startingBoard = _board;
@@ -100,14 +106,26 @@ bool Engine::ApplyMoves(const std::vector<std::string>& UCIMoves)
     }
 
     _board = workBoard;
+
+    // applying corresponding age
+    _age = UCIMoves.size() + 1;
     return true;
 }
 
 void Engine::RestartEngine()
 {
+    // enabling book plays
     _isStartPosPlayed = true;
+
+    // loding default board
     _board = FenTranslator::GetDefault();
     _startingBoard = _board;
+
+    // cleaning tt
+    TTable.ClearTable();
+
+    // resetting age
+    _age = 1;
 }
 
 Board Engine::GetUnderlyingBoardCopy() const { return _board; }
@@ -200,7 +218,7 @@ void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves)
             return;
         }
 
-    auto bestMove = TManager.goMoveTime(_board, time);
+    auto bestMove = TManager.goMoveTime(_board, time, _age);
 
     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
 }
@@ -214,7 +232,7 @@ void Engine::GoDepth(const int depth, const std::vector<std::string>& moves)
             return;
         }
 
-    auto bestMove = TManager.goDepth(_board, depth);
+    auto bestMove = TManager.goDepth(_board, depth, _age);
 
     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
 }
@@ -225,4 +243,4 @@ void Engine::StopSearch()
         GlobalLogger.StartLogging() << std::format("bestmove {}\n", res);
 }
 
-void Engine::GoInfinite() { TManager.goInfinite(_board); }
+void Engine::GoInfinite() { TManager.goInfinite(_board, _age); }

@@ -19,12 +19,12 @@ SearchThreadManager::~SearchThreadManager()
         delete thread;
 }
 
-bool SearchThreadManager::goInfinite(const Board& bd)
+bool SearchThreadManager::goInfinite(const Board& bd, const uint16_t age)
 {
     if (_isSearchOn == true)
         return false;
 
-    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, 50);
+    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, 100, age);
     _isSearchOn = true;
 
     return true;
@@ -40,22 +40,22 @@ std::string SearchThreadManager::stop()
     return _seachResult.GetLongAlgebraicNotation();
 }
 
-std::string SearchThreadManager::goMoveTime(const Board& bd, long long msecs)
+std::string SearchThreadManager::goMoveTime(const Board& bd, const long long msecs, const uint16_t age)
 {
     if (_isSearchOn == true)
         return "";
 
-    goInfinite(bd);
+    goInfinite(bd, age);
     std::this_thread::sleep_for(std::chrono::milliseconds(msecs));
     return stop();
 }
 
-std::string SearchThreadManager::goDepth(const Board& bd, int depth)
+std::string SearchThreadManager::goDepth(const Board& bd, int depth, const uint16_t age)
 {
     if (_isSearchOn == true)
         return "";
 
-    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, depth);
+    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, depth, age);
     _threads[0]->join();
 
     delete _threads[0];
@@ -66,14 +66,14 @@ std::string SearchThreadManager::goDepth(const Board& bd, int depth)
 }
 
 void SearchThreadManager::_threadSearchJob(const Board* bd, stack<Move, DefaultStackSize>* s, Move* output,
-                                           const int depth)
+                                           const int depth, const uint16_t age)
 {
 #ifdef __unix__
     if (_sethandler(_sigusr1_exit, SIGUSR1))
         exit(EXIT_FAILURE);
 #endif  // __unix__
 
-    BestMoveSearch searcher{*bd, *s};
+    BestMoveSearch searcher{*bd, *s, age};
     searcher.IterativeDeepening(BoardEvaluator::DefaultFullEvalFunction, output, depth);
 }
 

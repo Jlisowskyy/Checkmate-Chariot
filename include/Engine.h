@@ -89,6 +89,7 @@ class Engine
     OpeningBook _book{"uci_ready_long", OpeningBook::bookFileType::text_uci};
 
     bool _isStartPosPlayed = true;
+    uint16_t _age = 1;
     static constexpr std::string_view _startposPrefix = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
 
    public:

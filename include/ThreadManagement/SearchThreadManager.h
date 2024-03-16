@@ -34,19 +34,19 @@ class SearchThreadManager
 
     [[nodiscard]] stack<Move, DefaultStackSize>& GetDefaultStack() { return _stacks[0]; }
 
-    bool goInfinite(const Board& bd);
+    bool goInfinite(const Board& bd, uint16_t age);
 
     std::string stop();
 
-    std::string goMoveTime(const Board& bd, long long msecs);
+    std::string goMoveTime(const Board& bd, long long msecs, uint16_t age);
 
-    std::string goDepth(const Board& bd, int depth);
+    std::string goDepth(const Board& bd, int depth, uint16_t age);
 
     // ------------------------------
     // Private class methods
     // ------------------------------
    private:
-    static void _threadSearchJob(const Board* bd, stack<Move, DefaultStackSize>* s, Move* output, int depth);
+    static void _threadSearchJob(const Board* bd, stack<Move, DefaultStackSize>* s, Move* output, int depth, uint16_t age);
 
     void _cancelThread(size_t threadInd);
 
