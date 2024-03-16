@@ -63,6 +63,7 @@ class Move
 
 
     friend bool operator==(const Move a, const Move b) { return a._storage == b._storage; }
+    friend bool operator!=(const Move a, const Move b) { return !(a == b); }
 
     [[nodiscard]] std::string GetLongAlgebraicNotation() const
     {
@@ -105,6 +106,11 @@ class Move
         return GetKilledBoardIndex() != Board::SentinelBoardIndex;
     }
 
+    [[nodiscard]] bool IsEmpty() const
+    {
+        return _storage == 0;
+    }
+
     static void UnmakeMove(const Move mv, Board& bd, const std::bitset<Board::CastlingCount + 1> castlings,
                            const uint64_t oldElPassant)
     {
@@ -130,12 +136,17 @@ class Move
         bd.boards[boardIndex] ^= field;
     }
 
-    void SetEval(const uint16_t eval) { _storage |= eval; }
+    void SetEval(const int16_t eval) { _storage |= 0xFFFFLLU & static_cast<uint64_t>(eval); }
 
-    [[nodiscard]] uint64_t GetEval() const
+    void ReplaceEval(const int16_t eval)
+    {
+        _storage = (_storage & ~0xFFFFLLU) | (0xFFFFLLU & static_cast<uint64_t>(eval));
+    }
+
+    [[nodiscard]] int16_t GetEval() const
     {
         static constexpr uint64_t EvalMask = 0xFFFFLLU;
-        return _storage & EvalMask;
+        return static_cast<int16_t>(_storage & EvalMask);
     }
 
     void SetStartField(const uint64_t startField) { _storage |= startField << 16; }

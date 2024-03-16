@@ -51,8 +51,6 @@ double SearchPerfTester::_performTestCase(const std::string& testCase, const int
     FenTranslator::Translate(testCase, bd);
     BestMoveSearch searcher(bd, stack, 1);
 
-    TTable.ClearTable();
-
     const auto tStart = std::chrono::steady_clock::now();
     [[maybe_unused]] Move mv{};
     if (depth > 0)
@@ -64,6 +62,9 @@ double SearchPerfTester::_performTestCase(const std::string& testCase, const int
         GlobalLogger.StartLogging() << std::format("[ INFO ] Evaluation result: {} on position:\n\t{}\n", eval, testCase);
     }
     const auto tStop = std::chrono::steady_clock::now();
+
+    // cleaning up after test
+    TTable.ClearTable();
 
     return (double)std::chrono::duration_cast<std::chrono::milliseconds>(tStop - tStart).count();
 }

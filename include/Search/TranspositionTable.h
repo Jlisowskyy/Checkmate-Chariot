@@ -38,6 +38,7 @@ struct TranspositionTable
         [[nodiscard]] int GetDepth() const { return  _depth; }
         [[nodiscard]] bool IsPvNode() const { return (_type & PvNode) != 0; }
         [[nodiscard]] bool IsEmpty() const { return _age == 0; }
+        [[nodiscard]] uint16_t GetAge() const { return _age; }
 
         HashRecord(const uint64_t hash, const Move mv, const int eval, const int statVal, const int depth, const uint8_t pvSpec, const uint16_t age):
             _zobristHash(hash),
