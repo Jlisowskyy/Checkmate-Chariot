@@ -19,6 +19,14 @@
  *  were obtained by different sequence of moves, which is quit frequent situation in chess.
  */
 
+enum nodeType: uint8_t
+{
+    pvNode,
+    lowerBound,
+    upperBound,
+    shallowNode
+};
+
 struct TranspositionTable
 {
     // ------------------------------
@@ -39,24 +47,24 @@ struct TranspositionTable
         [[nodiscard]] bool IsPvNode() const { return (_type & PvNode) != 0; }
         [[nodiscard]] bool IsEmpty() const { return _age == 0; }
         [[nodiscard]] uint16_t GetAge() const { return _age; }
+        [[nodiscard]] nodeType GetNodeType() const { return _type; }
 
-        HashRecord(const uint64_t hash, const Move mv, const int eval, const int statVal, const int depth, const uint8_t pvSpec, const uint16_t age):
+        HashRecord(const uint64_t hash, const Move mv, const int eval, const int statVal, const int depth, const nodeType nType, const uint16_t age):
             _zobristHash(hash),
             _madeMove(mv),
             _eval(eval),
             _value(statVal),
             _depth(depth),
-            _age(age)
-        {
-            _type |= pvSpec;
-        }
+            _age(age),
+            _type(nType)
+        {}
 
         void SetStatVal(const int statEval) { _value = statEval; }
         void SetEvalVal(const int eval) { _eval = eval; }
 
         static constexpr int NoStatEval = INT_MAX;
         static constexpr int NoEval = INT_MAX;
-        static constexpr uint8_t PvNode = 0x1;
+        static constexpr uint8_t PvNode = 0b1;
         static constexpr uint8_t NoPvNode = 0;
 
     private:
@@ -66,7 +74,7 @@ struct TranspositionTable
         int _value; // 4 bytes
         int _depth; // 4 byte
         uint16_t _age; // 2 byte
-        uint8_t _type{}; // 1 byte
+        nodeType _type{}; // 1 byte
 
         friend TranspositionTable;
     };

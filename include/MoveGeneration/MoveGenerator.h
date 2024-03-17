@@ -437,7 +437,7 @@ struct MoveGenerator
                     const auto TargetBoard = _board.movColor * Board::BoardsPerCol + i;
 
                     Move mv{};
-                    uint16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
+                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
                                                                           startField, moveBoard);
                     eval = MoveSortEval::ApplyPromotionEffects(eval, TargetBoard);
                     mv.SetEval(eval);
@@ -474,7 +474,7 @@ struct MoveGenerator
             // simple figure case
             {
                 Move mv{};
-                uint16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
+                int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
                                                                       startField, moveBoard);
                 eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
                 mv.SetEval(eval);
@@ -498,7 +498,7 @@ struct MoveGenerator
                     const auto targetBoard = _board.movColor * Board::BoardsPerCol + i;
 
                     Move mv{};
-                    uint16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
+                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
                                                                           startField, moveBoard);
                     eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
                     eval = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
