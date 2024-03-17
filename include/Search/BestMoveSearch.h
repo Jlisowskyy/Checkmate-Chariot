@@ -5,7 +5,6 @@
 #ifndef BESTMOVESEARCH_H
 #define BESTMOVESEARCH_H
 
-#include <climits>
 #include <format>
 #include <string>
 #include <vector>
@@ -73,9 +72,9 @@ struct BestMoveSearch
                 const uint64_t spentMs = std::max(1LU, (t2-t1).count()/MSEC);
                 const uint64_t nps = 1000LLU * _visitedNodes / spentMs;
 
-                GlobalLogger.StartLogging() << std::format("info depth: {}, best move: {}, eval: {}, time: {}, nodes: {}, nodes per sec: {}, tt entries: {}, at age: {}\n", depth + 1,
+                GlobalLogger.StartLogging() << std::format("info depth: {}, best move: {}, eval: {}, time: {}, nodes: {}, cut-off nodes: {},  nodes per sec: {}, tt entries: {}, at age: {}\n", depth + 1,
                                                            moves[0].GetLongAlgebraicNotation(), static_cast<double>(moves[0].GetEval())/100.0,
-                                                           spentMs, _visitedNodes, nps, TTable.GetContainedElements(), _age);
+                                                           spentMs, _visitedNodes, _cutoffNodes,  nps, TTable.GetContainedElements(), _age);
             }
         }
 
@@ -124,7 +123,10 @@ struct BestMoveSearch
                 }
 
                 if (alpha > beta)
+                {
+                    ++_cutoffNodes;
                     return prevSearchRes.GetEval();
+                }
             }
         }
 
@@ -163,14 +165,6 @@ struct BestMoveSearch
             zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
             Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
-            // cut-off found
-            if (moveEval >= beta)
-            {
-                // cleaning stack
-                _stack.PopAggregate(moves);
-                return beta;
-            }
-
             // updating alpha
             alpha = std::max(alpha, moveEval);
 
@@ -178,6 +172,13 @@ struct BestMoveSearch
             {
                 bestEval = moveEval;
                 bestMove = moves[i];
+            }
+
+            // cut-off found
+            if (moveEval >= beta)
+            {
+                ++_cutoffNodes;
+                break;
             }
         }
 
@@ -197,7 +198,7 @@ struct BestMoveSearch
             TTable.Add(record);
         }
 
-        return alpha;
+        return bestEval;
     }
 
     template <class FullBoardEvalFuncT>
@@ -235,7 +236,10 @@ struct BestMoveSearch
             }
 
             if (alpha > beta)
+            {
+                ++_cutoffNodes;
                 return prevSearchRes.GetEval();
+            }
 
             if (prevSearchRes.GetStatVal() != TranspositionTable::HashRecord::NoEval)
                 eval = prevSearchRes.GetStatVal();
@@ -244,7 +248,10 @@ struct BestMoveSearch
         else eval = evalF(bd, bd.movColor);
 
         if (eval >= beta)
+        {
+            ++_cutoffNodes;
             return beta;
+        }
         alpha = std::max(alpha, eval);
 
         // generating moves
@@ -275,13 +282,6 @@ struct BestMoveSearch
             zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
             Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
-            if (moveValue >= beta)
-            {
-                // clean up
-                _stack.PopAggregate(moves);
-                return beta;
-            }
-
             if (moveValue > bestEval)
             {
                 bestMove = moves[i];
@@ -289,6 +289,12 @@ struct BestMoveSearch
             }
 
             alpha = std::max(alpha, moveValue);
+
+            if (moveValue >= beta)
+            {
+                ++ _cutoffNodes;
+                break;
+            }
         }
 
         // clean up
@@ -307,7 +313,7 @@ struct BestMoveSearch
             TTable.Add(record);
         }
 
-        return alpha;
+        return bestEval;
     }
 
     static void _embeddedMoveSort(MoveGenerator::payload moves, size_t range);
@@ -327,6 +333,7 @@ struct BestMoveSearch
     Board _board;
     const uint16_t _age;
     uint64_t _visitedNodes = 0;
+    uint64_t _cutoffNodes = 0;
 };
 
 template<class FullBoardEvalFuncT>
