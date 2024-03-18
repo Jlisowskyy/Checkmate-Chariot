@@ -115,7 +115,7 @@ class movesHashMap
         for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
             maps[i] = movesHashMap(mInit(ConvertToReversedPos(i)), funcs[i]);
 
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
         {
             const int bInd = ConvertToReversedPos(i);

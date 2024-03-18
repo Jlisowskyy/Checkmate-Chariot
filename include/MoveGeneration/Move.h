@@ -62,8 +62,14 @@ class Move
     // ------------------------------
 
 
-    friend bool operator==(const Move a, const Move b) { return a._storage == b._storage; }
+    friend bool operator==(const Move a, const Move b) { return (EvalMaskInverted & a._storage) == (EvalMaskInverted& b._storage); }
     friend bool operator!=(const Move a, const Move b) { return !(a == b); }
+
+    [[nodiscard]] bool IsQuietMove() const
+    {
+        // TODO: encode that during move gen?
+        return GetKilledBoardIndex() == Board::SentinelBoardIndex && (GetStartBoardIndex() == GetTargetBoardIndex());
+    }
 
     [[nodiscard]] std::string GetLongAlgebraicNotation() const
     {
@@ -136,16 +142,17 @@ class Move
         bd.boards[boardIndex] ^= field;
     }
 
-    void SetEval(const int16_t eval) { _storage |= 0xFFFFLLU & static_cast<uint64_t>(eval); }
+    static constexpr uint64_t EvalMask = 0xFFFFLLU;
+    static constexpr uint64_t EvalMaskInverted = ~EvalMask;
+    void SetEval(const int16_t eval) { _storage |= EvalMask & static_cast<uint64_t>(eval); }
 
     void ReplaceEval(const int16_t eval)
     {
-        _storage = (_storage & ~0xFFFFLLU) | (0xFFFFLLU & static_cast<uint64_t>(eval));
+        _storage = (_storage & EvalMaskInverted) | (EvalMask & static_cast<uint64_t>(eval));
     }
 
     [[nodiscard]] int16_t GetEval() const
     {
-        static constexpr uint64_t EvalMask = 0xFFFFLLU;
         return static_cast<int16_t>(_storage & EvalMask);
     }
 

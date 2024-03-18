@@ -7,6 +7,8 @@
 
 #include <cinttypes>
 
+#include "KillerTable.h"
+
 /*              LIST OF SORTING RULES:
  *  1) Avoid fields that are attacked by enemy pawn
  *  2) Focus moves that are realeasing enemy pawn pressure on them
@@ -41,6 +43,11 @@ struct MoveSortEval
         return eval + FigureEval[killedFig] - FigureEval[attackFig];
     }
 
+    static int16_t ApplyKillerMoveEffect(const int16_t eval, const KillerTable& kTable, const Move mv, const int depthLeft)
+    {
+        return eval + KillerMovePrize * kTable.IsKillerMove(mv, depthLeft);
+    }
+
     // ------------------------------
     // Class fiels
     // ------------------------------
@@ -62,7 +69,7 @@ struct MoveSortEval
 
     static constexpr int16_t AttackedFigurePenalty = -50;
     static constexpr int16_t RunAwayPrize = 50;
-    static constexpr int16_t KilledFigWhenCheckedPrize = 1000;
+    static constexpr int16_t KillerMovePrize = 150;
 };
 
 #endif  // MOVESORTEVAL_H

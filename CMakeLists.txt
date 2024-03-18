@@ -69,7 +69,6 @@ add_executable(Checkmate-Chariot main.cpp
         include/MoveGeneration/Move.h
         include/Board.h
         src/Board.cpp
-        src/MoveGenerator.cpp
         include/MoveGeneration/MoveGenerator.h
         include/ThreadManagement/stack.h
         include/ThreadManagement/SearchThreadManager.h
@@ -79,6 +78,7 @@ add_executable(Checkmate-Chariot main.cpp
         include/Search/ZobristHash.h
         src/ZobristHash.cpp
         src/TranspositionTable.cpp
+        include/Evaluation/KillerTable.h
 )
 
 find_package(OpenMP)

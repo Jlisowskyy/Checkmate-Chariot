@@ -22,7 +22,8 @@ struct BestMoveSearch
     // ------------------------------
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board& board, stack<Move, DefaultStackSize>& s, const uint16_t age) : _stack(s), _board(board), _age(age) {}
+    BestMoveSearch(const Board& board, stack<Move, DefaultStackSize>& s, const uint16_t age) :
+        _stack(s), _board(board), _age(age) {}
     ~BestMoveSearch() = default;
 
     // ------------------------------
@@ -32,7 +33,7 @@ struct BestMoveSearch
     template <class FullBoardEvalFuncT, bool WriteInfo = true>
     void IterativeDeepening(FullBoardEvalFuncT evalF, Move* output, const int maxDepth)
     {
-        MoveGenerator generator(_board, _stack);
+        MoveGenerator generator(_board, _stack, _kTable);
         auto moves = generator.GetMovesFast();
 
         // saving old params
@@ -45,12 +46,16 @@ struct BestMoveSearch
             // measuring time
             [[maybe_unused]]auto t1 = std::chrono::steady_clock::now();
 
-            // setting up current depth search
+            // preparing variables used to display statistics
             _currRootDepth = depth;
+            _visitedNodes = 0;
+            _cutoffNodes = 0;
+            int eval{};
+
+            // cleaning tables used in iteration
+            _kTable.ClearPlyFloor(depth);
 
             // move list iteration
-            _visitedNodes = 0;
-            int eval{};
             for (size_t i = 0; i < moves.size; ++i)
             {
                 Move::MakeMove(moves[i], _board);
@@ -138,7 +143,7 @@ struct BestMoveSearch
         }
 
         // generate moves
-        MoveGenerator mechanics(bd, _stack);
+        MoveGenerator mechanics(bd, _stack, _kTable);
         auto moves = mechanics.GetMovesFast();
 
         // signalize checks and draws
@@ -164,6 +169,7 @@ struct BestMoveSearch
             // processing move
             Move::MakeMove(moves[i], bd);
             zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+            _kTable.ClearPlyFloor(depthLeft - 1);
             const int moveEval = -_alphaBeta(evalF, bd, -beta, -alpha, depthLeft - 1, zHash);
             zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
             Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
@@ -180,6 +186,9 @@ struct BestMoveSearch
             // cut-off found
             if (moveEval >= beta)
             {
+                if (moves[i].IsQuietMove())
+                    _kTable.SaveKillerMove(moves[i], depthLeft);
+
                 ++_cutoffNodes;
                 break;
             }
@@ -216,7 +225,7 @@ struct BestMoveSearch
             return _alphaBetaCaptures(evalF, bd, alpha, beta, zHash);
 
         // generate moves
-        MoveGenerator mechanics(bd, _stack);
+        MoveGenerator mechanics(bd, _stack, _kTable);
         auto moves = mechanics.GetMovesFast();
 
         // signalize checks and draws
@@ -328,7 +337,7 @@ struct BestMoveSearch
         else return _alphaBetaNoTTLookup(evalF, bd, alpha, beta, depthLeft, zHash);
 
         // generate moves
-        MoveGenerator mechanics(bd, _stack);
+        MoveGenerator mechanics(bd, _stack, _kTable);
         auto moves = mechanics.GetMovesFast();
 
         // sorting moves with simple heuristics
@@ -460,7 +469,7 @@ struct BestMoveSearch
         alpha = std::max(alpha, eval);
 
         // generating moves
-        MoveGenerator mechanics(bd, _stack);
+        MoveGenerator mechanics(bd, _stack, _kTable);
         auto moves = mechanics.GetMovesFast<true>();
 
         // end of path
@@ -542,6 +551,7 @@ struct BestMoveSearch
     uint64_t _visitedNodes = 0;
     uint64_t _cutoffNodes = 0;
     int _currRootDepth = 0;
+    KillerTable _kTable{};
 };
 
 #endif  // BESTMOVESEARCH_H

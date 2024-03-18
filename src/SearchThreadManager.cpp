@@ -24,7 +24,7 @@ bool SearchThreadManager::goInfinite(const Board& bd, const uint16_t age)
     if (_isSearchOn == true)
         return false;
 
-    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, 100, age);
+    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, MaxSearchDepth, age);
     _isSearchOn = true;
 
     return true;
@@ -55,7 +55,7 @@ std::string SearchThreadManager::goDepth(const Board& bd, int depth, const uint1
     if (_isSearchOn == true)
         return "";
 
-    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, depth, age);
+    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, std::min(depth, MaxSearchDepth), age);
     _threads[0]->join();
 
     delete _threads[0];

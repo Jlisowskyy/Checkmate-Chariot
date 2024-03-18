@@ -10,6 +10,7 @@
 
 #include "../BitOperations.h"
 #include "../EngineTypeDefs.h"
+#include "../Interface/Logger.h"
 
 [[nodiscard]] constexpr std::array<uint64_t, Board::BoardFields> GenStaticMoves(const size_t maxMovesCount,
                                                                                 const int* movesCords,
@@ -61,7 +62,7 @@ inline void DisplayMasks(const uint64_t* masks, const char** names, const size_t
 {
     for (size_t i = 0; i < maskCount; ++i)
     {
-        std::cout << "Mask name: " << names[i] << std::endl;
+        GlobalLogger.StartLogging() << "Mask name: " << names[i] << std::endl;
         DisplayMask(masks[i]);
     }
 }

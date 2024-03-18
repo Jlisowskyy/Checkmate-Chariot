@@ -10,6 +10,7 @@
 #include "../BitOperations.h"
 #include "../EngineTypeDefs.h"
 #include "../Evaluation/MoveSortEval.h"
+#include "../Evaluation/KillerTable.h"
 #include "../ThreadManagement/stack.h"
 #include "BishopMap.h"
 #include "BlackPawnMap.h"
@@ -21,8 +22,10 @@
 #include "RookMap.h"
 #include "WhitePawnMap.h"
 
-struct MoveGenerator
+class MoveGenerator
 {
+    inline static KillerTable dummyTable{};
+public:
     using stck = stack<Move, DefaultStackSize>;
     using payload = stck::stackPayload;
 
@@ -42,7 +45,8 @@ struct MoveGenerator
 
     MoveGenerator() = delete;
 
-    explicit MoveGenerator(Board& bd, stack<Move, DefaultStackSize>& s) : _mechanics(bd), _threadStack(s), _board(bd) {}
+    explicit MoveGenerator(Board& bd, stack<Move, DefaultStackSize>& s, KillerTable& kt = dummyTable, const int depthLeft = 0) :
+        _mechanics(bd), _threadStack(s), _board(bd), _kTable(kt), _depthLeft(depthLeft) {}
 
     MoveGenerator(MoveGenerator& other) = delete;
 
@@ -277,9 +281,8 @@ struct MoveGenerator
                     continue;
                 }
 
-            // preparing and sending move
+            // preparing basic move information
             Move mv{};
-            mv.SetEval(MoveSortEval::ApplyAttackFieldEffects(0, 0, pawnMap, moveMap));
             mv.SetStartField(ExtractMsbPos(pawnMap));
             mv.SetStartBoardIndex(MapT::GetBoardIndex(0));
             mv.SetTargetField(ExtractMsbPos(moveMap));
@@ -288,6 +291,11 @@ struct MoveGenerator
             mv.SetKilledFigureField(ExtractMsbPos(_board.elPassantField));
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(_board.Castlings);
+
+            // preparing heuristic evaluation
+            int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, 0, pawnMap, moveMap);
+            eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+            mv.SetEval(eval);
 
             results.Push(_threadStack, mv);
 
@@ -406,13 +414,14 @@ struct MoveGenerator
             // simple figure case
             {
                 Move mv{};
-                mv.SetEval(MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField,
-                                                                 moveBoard));
+
+                // preparing basic move info
                 mv.SetStartField(ExtractMsbPos(startField));
                 mv.SetStartBoardIndex(figBoardIndex);
                 mv.SetTargetField(movePos);
                 mv.SetTargetBoardIndex(figBoardIndex);
                 mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
+
                 // if el passant line is passed when figure moved to these line flag will turned on
                 if constexpr (elPassantFieldDeducer != nullptr)
                 {
@@ -426,6 +435,11 @@ struct MoveGenerator
                     mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
 
+                // preparing heuristic evaluation
+                int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
+                eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+                mv.SetEval(eval);
+
                 results.Push(_threadStack, mv);
             }
             if constexpr (promotePawns)
@@ -437,10 +451,8 @@ struct MoveGenerator
                     const auto TargetBoard = _board.movColor * Board::BoardsPerCol + i;
 
                     Move mv{};
-                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
-                                                                          startField, moveBoard);
-                    eval = MoveSortEval::ApplyPromotionEffects(eval, TargetBoard);
-                    mv.SetEval(eval);
+
+                    // preparing basic move info
                     mv.SetStartField(ExtractMsbPos(startField));
                     mv.SetStartBoardIndex(figBoardIndex);
                     mv.SetTargetField(movePos);
@@ -448,6 +460,13 @@ struct MoveGenerator
                     mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
                     mv.SetElPassantField(Board::InvalidElPassantField);
                     mv.SetCasltingRights(castlings);
+
+                    // preparing heuristic eval info
+                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
+                                                                          startField, moveBoard);
+                    eval = MoveSortEval::ApplyPromotionEffects(eval, TargetBoard);
+                    eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+                    mv.SetEval(eval);
 
                     results.Push(_threadStack, mv);
                 }
@@ -474,10 +493,8 @@ struct MoveGenerator
             // simple figure case
             {
                 Move mv{};
-                int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
-                                                                      startField, moveBoard);
-                eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
-                mv.SetEval(eval);
+
+                // preparing basic move info
                 mv.SetStartField(ExtractMsbPos(startField));
                 mv.SetStartBoardIndex(figBoardIndex);
                 mv.SetTargetField(movePos);
@@ -486,6 +503,13 @@ struct MoveGenerator
                 mv.SetKilledFigureField(movePos);
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
+
+                // preparing heuristic eval info
+                int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
+                                                      startField, moveBoard);
+                eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
+                eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+                mv.SetEval(eval);
 
                 results.Push(_threadStack, mv);
             }
@@ -498,11 +522,8 @@ struct MoveGenerator
                     const auto targetBoard = _board.movColor * Board::BoardsPerCol + i;
 
                     Move mv{};
-                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
-                                                                          startField, moveBoard);
-                    eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
-                    eval = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
-                    mv.SetEval(eval);
+
+                    // preparing basic move info
                     mv.SetStartField(ExtractMsbPos(startField));
                     mv.SetStartBoardIndex(figBoardIndex);
                     mv.SetTargetField(movePos);
@@ -511,6 +532,14 @@ struct MoveGenerator
                     mv.SetKilledFigureField(movePos);
                     mv.SetElPassantField(Board::InvalidElPassantField);
                     mv.SetCasltingRights(castlings);
+
+                    // prapring heuristic eval info
+                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
+                                                      startField, moveBoard);
+                    eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
+                    eval = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
+                    eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+                    mv.SetEval(eval);
 
                     results.Push(_threadStack, mv);
                 }
@@ -547,6 +576,8 @@ struct MoveGenerator
                 const int newPos = ExtractMsbPos(nonAttackingMoves);
 
                 Move mv{};
+
+                // preparing basic move info
                 mv.SetStartField(oldKingPos);
                 mv.SetStartBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
                 mv.SetTargetField(newPos);
@@ -554,6 +585,10 @@ struct MoveGenerator
                 mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
+
+                // preparing heuristic eval info
+                mv.SetEval(MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft));
+
                 results.Push(_threadStack, mv);
 
                 nonAttackingMoves ^= (maxMsbPossible >> newPos);
@@ -571,6 +606,8 @@ struct MoveGenerator
                 _mechanics.GetIndexOfContainingBoard(newKingBoard, SwapColor(_board.movColor));
 
             Move mv{};
+
+            // preparing basic move info
             mv.SetStartField(oldKingPos);
             mv.SetStartBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
             mv.SetTargetField(newPos);
@@ -579,6 +616,12 @@ struct MoveGenerator
             mv.SetKilledFigureField(newPos);
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(castlings);
+
+            // preparing heuristic eval info
+            int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+            eval += MoveSortEval::FigureEval[attackedFigBoardIndex]; // adding value of killed figure
+            mv.SetEval(eval);
+
             results.Push(_threadStack, mv);
 
             attackingMoves ^= newKingBoard;
@@ -602,6 +645,8 @@ struct MoveGenerator
                 castlings[_board.movColor * Board::CastlingsPerColor + QueenCastlingIndex] = false;
 
                 Move mv{};
+
+                // preparing basic move info
                 mv.SetStartField(ExtractMsbPos(Board::DefaultKingBoards[_board.movColor]));
                 mv.SetStartBoardIndex(_board.movColor * Board::BoardsPerCol + kingIndex);
                 mv.SetTargetField(Board::CastlingNewKingPos[castlingIndex]);
@@ -611,6 +656,11 @@ struct MoveGenerator
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
                 mv.SetCastlingType(1 + castlingIndex);
+
+                // preapring heuristic eval
+                const int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                mv.SetEval(eval);
+
                 results.Push(_threadStack, mv);
             }
     }
@@ -622,6 +672,8 @@ struct MoveGenerator
     ChessMechanics _mechanics;
     stack<Move, DefaultStackSize>& _threadStack;
     Board& _board;
+    KillerTable& _kTable;
+    int _depthLeft;
 };
 
 #endif  // MOVEGENERATOR_H

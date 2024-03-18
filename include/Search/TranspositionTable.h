@@ -56,8 +56,15 @@ struct TranspositionTable
             _value(statVal),
             _depth(depth),
             _age(age),
-            _type(nType)
+
+        _type(nType)
         {}
+
+        HashRecord(const HashRecord&) = default;
+        HashRecord(HashRecord&&) = default;
+
+        HashRecord& operator=(const HashRecord&) = default;
+        HashRecord& operator=(HashRecord&&) = default;
 
         void SetStatVal(const int statEval) { _value = statEval; }
         void SetEvalVal(const int eval) { _eval = eval; }

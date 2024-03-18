@@ -6,7 +6,6 @@
 #define ENGINETYPEDEFS_H
 
 #include <cstdint>
-#include <iostream>
 #include <unordered_map>
 
 #include "Board.h"
@@ -137,6 +136,7 @@ std::pair<uint64_t, uint64_t> ExtractPositionsFromEncoding(const std::string& en
 // global defined stack capacity used to store generated moves per thread
 static constexpr size_t MB = 1024 * 1024;
 static constexpr size_t DefaultStackSize = 32 * MB / sizeof(uint64_t);
+static constexpr int MaxSearchDepth = 256;
 
 extern const std::unordered_map<size_t, Descriptors> figToDescMap;
 extern const std::unordered_map<size_t, char> descToFigMap;

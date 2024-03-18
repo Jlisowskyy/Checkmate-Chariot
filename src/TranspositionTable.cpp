@@ -10,6 +10,10 @@
 #include <cstdlib>
 #include <bit>
 
+#ifdef __AVX2__
+#include <immintrin.h>
+#endif // __AVX2__
+
 TranspositionTable TTable{};
 
 TranspositionTable::TranspositionTable():
@@ -33,11 +37,29 @@ void TranspositionTable::Add(const HashRecord& record)
     const size_t pos =  record._zobristHash & _hashMaks;
     _containedRecords += _map[pos].IsEmpty();
     _map[pos] = record;
+
+// #ifdef __AVX__
+//     // _mm256_stream_si256(reinterpret_cast<__m256i *>(_map + pos), *reinterpret_cast<const __m256i *>(&record));
+//     _map[pos] = record;
+//
+// #else
+//     _map[pos] = record;
+// #endif
 }
 
 TranspositionTable::HashRecord TranspositionTable::GetRecord(const uint64_t zHash) const {
     const size_t pos =  zHash & _hashMaks;
     return _map[pos];
+
+
+// #ifdef __AVX2__
+//     __m256i loaded = _mm256_stream_load_si256(reinterpret_cast<__m256i *>(_map + pos));
+//     void* rv = &loaded;
+//     return *reinterpret_cast<HashRecord *>(rv);
+//     // return _map[pos];
+// #else
+//     return _map[pos];
+// #endif // __AVX2__
 }
 
 void TranspositionTable::ClearTable() {

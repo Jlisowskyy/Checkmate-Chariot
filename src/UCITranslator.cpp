@@ -344,7 +344,7 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
         "   - \"go searchPerf\" - will run tests on searchTests.csv";
 
     GlobalLogger.StartLogging() << "Help content:\n\n"
-                                << "TODO MAIN HELP\n\n"
+                                << "TODO MAIN HELP\n\n" // TODO
                                 << CustomCommands;
 
     return UCICommand::helpCommand;
