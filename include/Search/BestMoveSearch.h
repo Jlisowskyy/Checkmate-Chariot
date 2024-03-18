@@ -309,23 +309,23 @@ struct BestMoveSearch
                 }
             }
 
-            // updating alpha
-            alpha = std::max(alpha, moveEval);
-
             if (moveEval > bestEval)
             {
+                // updating alpha
+                alpha = std::max(alpha, moveEval);
+
                 bestEval = moveEval;
                 bestMove = moves[i];
-            }
 
-            // cut-off found
-            if (moveEval >= beta)
-            {
-                if (moves[i].IsQuietMove())
-                    _kTable.SaveKillerMove(moves[i], depthLeft);
+                // cut-off found
+                if (moveEval >= beta)
+                {
+                    if (moves[i].IsQuietMove())
+                        _kTable.SaveKillerMove(moves[i], depthLeft);
 
-                ++_cutoffNodes;
-                break;
+                    ++_cutoffNodes;
+                    break;
+                }
             }
         }
 
@@ -333,7 +333,7 @@ struct BestMoveSearch
         _stack.PopAggregate(moves);
 
         // updating if profitable
-        if (depthLeft >= prevSearchRes.GetDepth())
+        if (depthLeft >= prevSearchRes.GetDepth() || (wasTTHit == false && _age - prevSearchRes.GetAge() >= SearchAgeDiffToReplace))
         {
             const nodeType nType = bestEval <= alphaStart ? upperBound :
                                     bestEval >= beta      ? lowerBound :
@@ -364,6 +364,7 @@ struct BestMoveSearch
         {
             wasTTHit = true;
 
+            // TODO: probably bug prone due lack of depth check?
             switch (prevSearchRes.GetNodeType())
             {
                 case pvNode:
@@ -429,14 +430,14 @@ struct BestMoveSearch
             {
                 bestMove = moves[i];
                 bestEval = moveValue;
-            }
 
-            alpha = std::max(alpha, moveValue);
+                alpha = std::max(alpha, moveValue);
 
-            if (moveValue >= beta)
-            {
-                ++ _cutoffNodes;
-                break;
+                if (moveValue >= beta)
+                {
+                    ++ _cutoffNodes;
+                    break;
+                }
             }
         }
 
