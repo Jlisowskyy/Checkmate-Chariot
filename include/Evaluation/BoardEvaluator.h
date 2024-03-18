@@ -113,7 +113,7 @@ struct BoardEvaluator
     {
         for (size_t bd = 0 ; bd < Board::BoardsCount; ++bd)
         {
-            for (int pos = 0; pos < Board::BoardFields; ++pos)
+            for (size_t pos = 0; pos < Board::BoardFields; ++pos)
             {
                 if (pos % 8 == 0) std::cout << std::endl;
 

@@ -34,5 +34,19 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Move m
 
     // if move found swapping
     if (ind != moves.size)
-        std::swap(moves.data[0], moves.data[ind]);
+    {
+        // moving moves to preserve sorted order
+        while (ind != 0)
+        {
+            moves.data[ind] = moves.data[ind - 1];
+            ind--;
+        }
+        moves.data[0] = mv;
+    }
+}
+
+int BestMoveSearch::_getMateValue(const int depthLeft) const
+{
+    const int distToRoot = _currRootDepth - depthLeft;
+    return NegativeInfinity + distToRoot;
 }

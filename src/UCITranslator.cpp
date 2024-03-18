@@ -257,6 +257,7 @@ UCITranslator::UCICommand UCITranslator::_ucinewgameResponse([[maybe_unused]] co
 {
     _engine.RestartEngine();
     _appliedMoves.clear();
+    TTable.ClearTable();
     return UCICommand::ucinewgameCommand;
 }
 
