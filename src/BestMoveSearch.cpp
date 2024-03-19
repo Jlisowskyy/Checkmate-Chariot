@@ -7,7 +7,7 @@
 #include "../include/Evaluation/BoardEvaluator.h"
 
 
-int BestMoveSearch::_alphaBeta(Board& bd, int alpha, int beta, const int depthLeft, uint64_t zHash)
+int BestMoveSearch::_alphaBeta(Board& bd, int alpha, int beta, const int depthLeft, uint64_t zHash, const Move prevMove)
 {
     // prefetching table record
     TTable.Prefetch(zHash);
@@ -62,7 +62,7 @@ int BestMoveSearch::_alphaBeta(Board& bd, int alpha, int beta, const int depthLe
     }
 
     // generate moves
-    MoveGenerator mechanics(bd, _stack, _kTable);
+    MoveGenerator mechanics(bd, _stack, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField());
     auto moves = mechanics.GetMovesFast();
 
     // signalize checks and draws
@@ -85,7 +85,7 @@ int BestMoveSearch::_alphaBeta(Board& bd, int alpha, int beta, const int depthLe
         Move::MakeMove(moves[i], bd);
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         _kTable.ClearPlyFloor(depthLeft - 1);
-        const int moveEval = -_alphaBeta(bd, -beta, -alpha, depthLeft - 1, zHash);
+        const int moveEval = -_alphaBeta(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i]);
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
@@ -97,8 +97,14 @@ int BestMoveSearch::_alphaBeta(Board& bd, int alpha, int beta, const int depthLe
             // cut-off found
             if (moveEval >= beta)
             {
-                if (moves[i].IsQuietMove())
-                    _kTable.SaveKillerMove(moves[i], depthLeft);
+                if (moves[i].IsAttackingMove() == false)
+                {
+                    if (moves[i].IsQuietMove())
+                        _kTable.SaveKillerMove(moves[i], depthLeft);
+
+                    _cmTable.SaveCounterMove(moves[i].GetPackedMove(), prevMove);
+                }
+
                 nType = lowerBound;
 
                 ++_cutoffNodes;
@@ -128,7 +134,7 @@ int BestMoveSearch::_alphaBeta(Board& bd, int alpha, int beta, const int depthLe
     return bestEval;
 }
 
-int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLeft, uint64_t zHash)
+int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLeft, uint64_t zHash, const Move prevMove)
 {
     TTable.Prefetch(zHash);
 
@@ -140,8 +146,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
 
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
-        // return _alphaBetaCaptures(bd, alpha, beta, zHash);
-            return BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
+        return _quiescenceSearch(bd, alpha, beta, zHash);
     // incrementing nodes counter;
     ++_visitedNodes;
 
@@ -181,7 +186,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
     }
 
     // generate moves
-    MoveGenerator mechanics(bd, _stack, _kTable);
+    MoveGenerator mechanics(bd, _stack, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField());
     auto moves = mechanics.GetMovesFast();
 
     // processsing each move
@@ -200,19 +205,19 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
         {
             // processing assumed pvs move
             _kTable.ClearPlyFloor(depthLeft - 1);
-            moveEval = -_negaScout(bd, -beta, -alpha, depthLeft - 1, zHash);
+            moveEval = -_negaScout(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i]);
         }
         else
         {
             // performing checks wheter assumed thesis holds
             _kTable.ClearPlyFloor(depthLeft - 1);
-            moveEval = -_negaScout(bd, -alpha - 1, -alpha, depthLeft - 1, zHash);
+            moveEval = -_negaScout(bd, -alpha - 1, -alpha, depthLeft - 1, zHash, moves[i]);
 
             // if not research move
             if (alpha < moveEval && moveEval < beta)
             {
                 _kTable.ClearPlyFloor(depthLeft - 1);
-                moveEval = -_negaScout(bd, -beta, -alpha, depthLeft - 1, zHash);
+                moveEval = -_negaScout(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i]);
             }
         }
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
@@ -226,8 +231,13 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
             // cut-off found
             if (moveEval >= beta)
             {
-                if (moves[i].IsQuietMove())
-                    _kTable.SaveKillerMove(moves[i], depthLeft);
+                if (moves[i].IsAttackingMove() == false)
+                {
+                    if (moves[i].IsQuietMove())
+                        _kTable.SaveKillerMove(moves[i], depthLeft);
+
+                    _cmTable.SaveCounterMove(moves[i].GetPackedMove(), prevMove);
+                }
                 nType = lowerBound;
 
                 ++_cutoffNodes;
@@ -268,7 +278,7 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t z
     alpha = std::max(alpha, eval);
 
     // generating moves
-    MoveGenerator mechanics(bd, _stack, _kTable);
+    MoveGenerator mechanics(bd, _stack);
     auto moves = mechanics.GetMovesFast<true>();
 
     // end of path

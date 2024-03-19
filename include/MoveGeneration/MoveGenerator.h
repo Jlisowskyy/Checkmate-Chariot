@@ -45,8 +45,21 @@ public:
 
     MoveGenerator() = delete;
 
-    explicit MoveGenerator(Board& bd, stack<Move, DefaultStackSize>& s, KillerTable& kt = dummyTable, const int depthLeft = 0) :
-        _mechanics(bd), _threadStack(s), _board(bd), _kTable(kt), _depthLeft(depthLeft) {}
+    explicit MoveGenerator(
+        Board& bd,
+        stack<Move, DefaultStackSize>& s,
+        KillerTable& kt = dummyTable,
+        const PackedMove counterMove = {},
+        const int depthLeft = 0,
+        const int mostRecentMovedSquare = 0
+    ) :
+        _mechanics(bd),
+        _threadStack(s),
+        _board(bd),
+        _counterMove(counterMove),
+        _kTable(kt),
+        _depthLeft(depthLeft),
+        _mostRecentSq(mostRecentMovedSquare){}
 
     MoveGenerator(MoveGenerator& other) = delete;
 
@@ -296,6 +309,8 @@ public:
             // preparing heuristic evaluation
             int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, 0, pawnMap, moveMap);
             eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+            eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
+            eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, ExtractMsbPos(moveMap));
             mv.SetEval(eval);
 
             results.Push(_threadStack, mv);
@@ -439,6 +454,7 @@ public:
                 // preparing heuristic evaluation
                 int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
                 eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+                eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 mv.SetEval(eval);
 
                 results.Push(_threadStack, mv);
@@ -468,6 +484,7 @@ public:
                                                                           startField, moveBoard);
                     eval = MoveSortEval::ApplyPromotionEffects(eval, TargetBoard);
                     eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+                    eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                     mv.SetEval(eval);
 
                     results.Push(_threadStack, mv);
@@ -512,6 +529,8 @@ public:
                                                       startField, moveBoard);
                 eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
                 eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+                eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
+                eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
                 mv.SetEval(eval);
 
                 results.Push(_threadStack, mv);
@@ -543,6 +562,8 @@ public:
                     eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
                     eval = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
                     eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+                    eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
+                    eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
                     mv.SetEval(eval);
 
                     results.Push(_threadStack, mv);
@@ -591,7 +612,9 @@ public:
                 mv.SetCasltingRights(castlings);
 
                 // preparing heuristic eval info
-                mv.SetEval(MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft));
+                int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
+                mv.SetEval(eval);
 
                 results.Push(_threadStack, mv);
 
@@ -625,6 +648,8 @@ public:
             // preparing heuristic eval info
             int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
             eval += MoveSortEval::FigureEval[attackedFigBoardIndex]; // adding value of killed figure
+            eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
+            eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, newPos);
             mv.SetEval(eval);
 
             results.Push(_threadStack, mv);
@@ -664,7 +689,8 @@ public:
                 mv.SetMoveType(PackedMove::CastlingBit);
 
                 // preapring heuristic eval
-                const int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 mv.SetEval(eval);
 
                 results.Push(_threadStack, mv);
@@ -675,11 +701,16 @@ public:
     // Class fields
     // ------------------------------
 
+    // Move generation componentss
     ChessMechanics _mechanics;
     stack<Move, DefaultStackSize>& _threadStack;
     Board& _board;
+
+    // Heuristic evaluation components
+    const PackedMove _counterMove;
     KillerTable& _kTable;
     int _depthLeft;
+    int _mostRecentSq;
 };
 
 #endif  // MOVEGENERATOR_H

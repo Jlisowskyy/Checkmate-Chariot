@@ -14,6 +14,7 @@
 #include "../MoveGeneration/MoveGenerator.h"
 #include "TranspositionTable.h"
 #include "ZobristHash.h"
+#include "../Evaluation/CounterMoveTable.h"
 
 struct BestMoveSearch
 {
@@ -60,7 +61,7 @@ struct BestMoveSearch
             {
                 Move::MakeMove(moves[i], _board);
                 zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
-                eval = -_negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash);
+                eval = -_negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, moves[i]);
                 zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
                 Move::UnmakeMove(moves[i], _board, oldCastlings, oldElPassant);
 
@@ -95,9 +96,9 @@ struct BestMoveSearch
    private:
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimazing player
-    [[nodiscard]] int _alphaBeta(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash);
+    [[nodiscard]] int _alphaBeta(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove);
 
-    [[nodiscard]] int _negaScout(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash);
+    [[nodiscard]] int _negaScout(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove);
     [[nodiscard]] int _quiescenceSearch(Board& bd, int alpha, int beta, uint64_t zHash);
 
     static void _embeddedMoveSort(MoveGenerator::payload moves, size_t range);
@@ -124,6 +125,7 @@ struct BestMoveSearch
     uint64_t _cutoffNodes = 0;
     int _currRootDepth = 0;
     KillerTable _kTable{};
+    CounterMoveTable _cmTable{};
 };
 
 #endif  // BESTMOVESEARCH_H

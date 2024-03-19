@@ -48,6 +48,17 @@ struct MoveSortEval
         return eval + KillerMovePrize * kTable.IsKillerMove(mv, depthLeft);
     }
 
+    static int16_t ApplyCounterMoveEffect(const int16_t eval, const PackedMove counterMove, const Move move)
+    {
+        return eval + CounterMovePrize * (move.GetPackedMove() == counterMove);
+    }
+
+    static int16_t ApplyCaptureMostRecentSquareEffect(const int16_t eval, const int mostRecentSquareMsb, const int moveSquare)
+    {
+        return eval + MostRecentSquarePrize * (mostRecentSquareMsb == moveSquare);
+    }
+
+
     // ------------------------------
     // Class fiels
     // ------------------------------
@@ -70,6 +81,8 @@ struct MoveSortEval
     static constexpr int16_t AttackedFigurePenalty = -50;
     static constexpr int16_t RunAwayPrize = 50;
     static constexpr int16_t KillerMovePrize = 150;
+    static constexpr int16_t CounterMovePrize = 200;
+    static constexpr int16_t MostRecentSquarePrize = 900;
 };
 
 #endif  // MOVESORTEVAL_H

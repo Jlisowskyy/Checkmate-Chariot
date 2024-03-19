@@ -9,6 +9,8 @@
 
 #include "../EngineTypeDefs.h"
 
+// TOOD: repair description
+
 /*      Class encodes chess move and heuristic evaluation
  *  togethr inside some uint64_t value. Encoding corresponds to value below:
  *  (bit indexed from lsb to msb manner)
@@ -346,10 +348,10 @@ private:
     static constexpr uint16_t Bit6 = 0b111111;
     static constexpr uint16_t Bit3 = 0b111;
 
-    int16_t _eval;
-    PackedMove _packedMove;
-    uint16_t _packedIndexes;
-    uint16_t _packedMisc;
+    int16_t _eval{};
+    PackedMove _packedMove{};
+    uint16_t _packedIndexes{};
+    uint16_t _packedMisc{};
 public:
     static constexpr std::pair<size_t, uint64_t> CastlingActions[] = {
         {Board::SentinelBoardIndex, 0LLU},
