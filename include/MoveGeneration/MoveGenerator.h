@@ -103,9 +103,9 @@ public:
 
         for (size_t i = 0; i < moves.size; ++i)
         {
-            Move::MakeMove(moves[i], _board);
+            moves[i].MakeMove(_board, oldCastling, oldElPassant);
             sum += CountMoves(depth - 1);
-            Move::UnmakeMove(moves[i], _board, oldCastling, oldElPassant);
+            moves[i].UnmakeMove(_board, oldCastling, oldElPassant);
         }
 
         _threadStack.PopAggregate(moves);

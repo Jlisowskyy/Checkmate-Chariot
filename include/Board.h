@@ -78,6 +78,7 @@ struct Board
     uint64_t elPassantField = maxMsbPossible >> InvalidElPassantField;
     int movColor = WHITE;
     uint64_t boards[BoardsCount + 1] = {};  // addiitonal sentinel board
+    uint64_t zobristHash{};
 };
 
 #endif  // BOARD_H

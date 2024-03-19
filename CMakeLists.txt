@@ -79,6 +79,7 @@ add_executable(Checkmate-Chariot main.cpp
         src/ZobristHash.cpp
         src/TranspositionTable.cpp
         include/Evaluation/KillerTable.h
+        src/Move.cpp
 )
 
 find_package(OpenMP)

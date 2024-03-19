@@ -49,9 +49,9 @@ std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
     const auto oldElPassant = startingBoard.elPassantField;
     for (size_t i = 0; i < moves.size; ++i)
     {
-        Move::MakeMove(moves[i], startingBoard);
+        moves[i].MakeMove(startingBoard, oldCastling, oldElPassant);
         moveMap[moves[i].GetLongAlgebraicNotation()] = game.CountMoves(depth - 1);
-        Move::UnmakeMove(moves[i], startingBoard, oldCastling, oldElPassant);
+        moves[i].UnmakeMove(startingBoard, oldCastling, oldElPassant);
     }
 
     TManager.GetDefaultStack().PopAggregate(moves);

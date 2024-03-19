@@ -40,7 +40,7 @@ struct BestMoveSearch
         const auto oldCastlings = _board.Castlings;
         const auto oldElPassant = _board.elPassantField;
 
-        uint64_t zHash = ZHasher.GenerateHash(_board);
+        _board.zobristHash = ZHasher.GenerateHash(_board);
         for (int depth = 0; depth < maxDepth; ++depth)
         {
             // measuring time
@@ -58,11 +58,9 @@ struct BestMoveSearch
             // move list iteration
             for (size_t i = 0; i < moves.size; ++i)
             {
-                Move::MakeMove(moves[i], _board);
-                zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
-                eval = -_negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash);
-                zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
-                Move::UnmakeMove(moves[i], _board, oldCastlings, oldElPassant);
+                moves[i].MakeMove(_board, oldCastlings, oldElPassant);
+                eval = -_negaScout(_board, NegativeInfinity, PositiveInfinity, depth);
+                moves[i].UnmakeMove(_board, oldCastlings, oldElPassant);
 
                 moves[i].ReplaceEval(static_cast<int16_t>(eval));
             }
@@ -95,10 +93,10 @@ struct BestMoveSearch
    private:
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimazing player
-    [[nodiscard]] int _alphaBeta(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash);
+    [[nodiscard]] int _alphaBeta(Board& bd, int alpha, int beta, int depthLeft);
 
-    [[nodiscard]] int _negaScout(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash);
-    [[nodiscard]] int _alphaBetaCaptures(Board& bd, int alpha, int beta, uint64_t zHash);
+    [[nodiscard]] int _negaScout(Board& bd, int alpha, int beta, int depthLeft);
+    [[nodiscard]] int _alphaBetaCaptures(Board& bd, int alpha, int beta);
 
     static void _embeddedMoveSort(MoveGenerator::payload moves, size_t range);
     static void _pullMoveToFront(MoveGenerator::payload moves, Move mv);
