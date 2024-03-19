@@ -308,8 +308,6 @@ public:
 
             // preparing heuristic evaluation
             int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, 0, pawnMap, moveMap);
-            eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
-            eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
             eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, ExtractMsbPos(moveMap));
             mv.SetEval(eval);
 
@@ -483,8 +481,6 @@ public:
                     int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
                                                                           startField, moveBoard);
                     eval = MoveSortEval::ApplyPromotionEffects(eval, TargetBoard);
-                    eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
-                    eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                     mv.SetEval(eval);
 
                     results.Push(_threadStack, mv);
@@ -528,8 +524,6 @@ public:
                 int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
                                                       startField, moveBoard);
                 eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
-                eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
-                eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
                 mv.SetEval(eval);
 
@@ -561,8 +555,6 @@ public:
                                                       startField, moveBoard);
                     eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
                     eval = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
-                    eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
-                    eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                     eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
                     mv.SetEval(eval);
 
@@ -646,10 +638,8 @@ public:
             mv.SetMoveType(PackedMove::CaptureBit);
 
             // preparing heuristic eval info
-            int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+            int16_t eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(0, _mostRecentSq, newPos);
             eval += MoveSortEval::FigureEval[attackedFigBoardIndex]; // adding value of killed figure
-            eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
-            eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, newPos);
             mv.SetEval(eval);
 
             results.Push(_threadStack, mv);

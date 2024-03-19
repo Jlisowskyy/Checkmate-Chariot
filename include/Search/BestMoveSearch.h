@@ -80,10 +80,11 @@ struct BestMoveSearch
                 static constexpr uint64_t MSEC = 1000 * 1000; // in nsecs
                 const uint64_t spentMs = std::max(1LU, (t2-t1).count()/MSEC);
                 const uint64_t nps = 1000LLU * _visitedNodes / spentMs;
+                const double cutOffPerc = static_cast<double>(_cutoffNodes)/static_cast<double>(_visitedNodes);
 
-                GlobalLogger.StartLogging() << std::format("info depth: {}, best move: {}, eval: {}, time: {}, nodes: {}, cut-off nodes: {},  nodes per sec: {}, tt entries: {}, at age: {}\n", depth + 1,
+                GlobalLogger.StartLogging() << std::format("info depth: {}, best move: {}, eval: {}, time: {}, nodes: {}, cut-off nodes: {}, with succeess rate: {}, nodes per sec: {}, tt entries: {}, at age: {}\n", depth + 1,
                                                            moves[0].GetLongAlgebraicNotation(), static_cast<double>(moves[0].GetEval())/100.0,
-                                                           spentMs, _visitedNodes, _cutoffNodes,  nps, TTable.GetContainedElements(), _age);
+                                                           spentMs, _visitedNodes, _cutoffNodes, cutOffPerc,  nps, TTable.GetContainedElements(), _age);
             }
         }
 

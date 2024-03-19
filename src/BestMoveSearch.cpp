@@ -147,6 +147,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
         return _quiescenceSearch(bd, alpha, beta, zHash);
+            // return BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
     // incrementing nodes counter;
     ++_visitedNodes;
 
@@ -266,24 +267,20 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
 
 int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t zHash)
 {
-    int bestEval = NegativeInfinity;
     ++_visitedNodes;
+    int bestEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
 
-    const int eval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
-    if (eval >= beta)
+    if (bestEval >= beta)
     {
         ++_cutoffNodes;
-        return beta;
+        return bestEval;
     }
-    alpha = std::max(alpha, eval);
+    alpha = std::max(alpha, bestEval);
 
     // generating moves
     MoveGenerator mechanics(bd, _stack);
     auto moves = mechanics.GetMovesFast<true>();
 
-    // end of path
-    if (moves.size == 0)
-        return eval;
 
     // saving old params
     const auto oldCastlings = bd.Castlings;
@@ -295,7 +292,19 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t z
         _fetchBestMove(moves, i);
 
         Move::MakeMove(moves[i], bd);
-        const int moveValue = -_quiescenceSearch( bd, -beta, -alpha, zHash);
+        int moveValue;
+        if (i == 0)
+            // processing assumed pvs move
+            moveValue = -_quiescenceSearch( bd, -beta, -alpha, zHash);
+        else
+        {
+            // performing checks wheter assumed thesis holds
+            moveValue = -_quiescenceSearch( bd, -alpha - 1, -alpha, zHash);
+
+            // if not research move
+            if (alpha < moveValue && moveValue < beta)
+                moveValue = -_quiescenceSearch( bd, -beta, -alpha, zHash);
+        }
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
         if (moveValue > bestEval)
@@ -347,16 +356,7 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Move m
 
     // if move found swapping
     if (ind != moves.size)
-    {
-        // // moving moves to preserve sorted order
-        // while (ind != 0)
-        // {
-        //     moves.data[ind] = moves.data[ind - 1];
-        //     ind--;
-        // }
-        // moves.data[0] = mv;
         std::swap(moves.data[ind], moves.data[0]);
-    }
 }
 
 void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t targetPos)
