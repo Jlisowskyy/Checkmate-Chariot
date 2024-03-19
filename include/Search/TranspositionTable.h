@@ -112,6 +112,8 @@ struct TranspositionTable
 
     [[nodiscard]] HashRecord GetRecord(uint64_t zHash)  const;
 
+    void Prefetch(uint64_t zHash) const;
+
     void ClearTable();
 
     // IMPORTANT: function should only be used before any search was concluded, because is fully cleared when resizing

@@ -62,6 +62,12 @@ TranspositionTable::HashRecord TranspositionTable::GetRecord(const uint64_t zHas
 // #endif // __AVX2__
 }
 
+void TranspositionTable::Prefetch(const uint64_t zHash) const
+{
+    const size_t pos =  zHash & _hashMaks;
+    __builtin_prefetch(static_cast<const void *>(_map + pos));
+}
+
 void TranspositionTable::ClearTable() {
     memset(_map, 0, _tableSize * sizeof(HashRecord));
     _containedRecords = 0;

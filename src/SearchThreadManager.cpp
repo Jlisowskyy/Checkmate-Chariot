@@ -74,7 +74,7 @@ void SearchThreadManager::_threadSearchJob(const Board* bd, stack<Move, DefaultS
 #endif  // __unix__
 
     BestMoveSearch searcher{*bd, *s, age};
-    searcher.IterativeDeepening(BoardEvaluator::DefaultFullEvalFunction, output, depth);
+    searcher.IterativeDeepening(output, depth);
 }
 
 void SearchThreadManager::_cancelThread(const size_t threadInd)
