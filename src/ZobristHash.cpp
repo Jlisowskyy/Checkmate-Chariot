@@ -62,21 +62,3 @@ uint64_t ZobristHasher::GenerateHash(const Board& board) const {
 
     return hash;
 }
-
-uint64_t ZobristHasher::UpdateHash(uint64_t oldHash, const Move mv, const uint64_t oldElPassant,
-                                   const std::bitset<Board::CastlingCount + 1> oldCastlings) const {
-    oldHash ^= _colorHash; //swapping collor
-    oldHash ^= _mainHashes[mv.GetStartBoardIndex()][mv.GetStartField()]; // placing figure on target square
-    oldHash ^= _mainHashes[mv.GetTargetBoardIndex()][mv.GetTargetField()]; // removing figure from start square
-    oldHash ^= _mainHashes[mv.GetKilledBoardIndex()][mv.GetKilledFigureField()]; // removing killed figure from board
-
-    // TODO: Reconsider and test if usage of lines below is actually needed:
-
-    oldHash ^= _elPassantHashes[ExtractMsbPos(oldElPassant)]; // removing old elPassantField
-    oldHash ^= _elPassantHashes[mv.GetElPassantField()]; // placing new elPassantFiled
-
-    oldHash ^= _castlingHashes[oldCastlings.to_ullong()]; // removing old castlings
-    oldHash ^= _castlingHashes[mv.GetCastlingRights().to_ullong()]; // placing new ones
-
-    return oldHash;
-}

@@ -108,11 +108,24 @@ struct TranspositionTable
     // Class interaction
     // ------------------------------
 
-    void Add(const HashRecord& record);
+    void __attribute__((always_inline)) Add(const HashRecord& record)
+    {
+        const size_t pos =  record._zobristHash & _hashMaks;
+        _containedRecords += _map[pos].IsEmpty();
+        _map[pos] = record;
+    }
 
-    [[nodiscard]] HashRecord GetRecord(uint64_t zHash)  const;
+    [[nodiscard]] HashRecord __attribute__((always_inline)) GetRecord(const uint64_t zHash)  const
+    {
+        const size_t pos =  zHash & _hashMaks;
+        return _map[pos];
+    }
 
-    void Prefetch(uint64_t zHash) const;
+    void __attribute__((always_inline)) Prefetch(const uint64_t zHash) const
+    {
+        const size_t pos =  zHash & _hashMaks;
+        __builtin_prefetch(static_cast<const void *>(_map + pos));
+    }
 
     void ClearTable();
 
