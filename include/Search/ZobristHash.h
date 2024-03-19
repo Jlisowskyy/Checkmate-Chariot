@@ -54,7 +54,8 @@ struct ZobristHasher
     // Class fields
     // ------------------------------
 
-    static constexpr uint64_t BaseSeed = 0x42731294812LLU;
+    // static constexpr uint64_t BaseSeed = 0x42731294812LLU;
+    static constexpr uint64_t BaseSeed = 0x194814141LLU;
 private:
     static constexpr size_t CastlingHashesCount = 32; // 2^(4 + 1) each castling property can be either 1 or 0
                                                         // and additional sentinel
