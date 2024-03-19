@@ -41,6 +41,94 @@
  *  ON BY DEFAULT INITIALIZED OBJECTS EVERY ONE OF THEM WORKS ONCE
  */
 
+class Move;
+
+struct PackedMove
+{
+    // ------------------------------
+    // Class creation
+    // ------------------------------
+
+    PackedMove() = default;
+    ~PackedMove() = default;
+
+    PackedMove(const PackedMove& other) = default;
+    PackedMove& operator=(const PackedMove& other) = default;
+
+    PackedMove(PackedMove&& other) = default;
+    PackedMove& operator=(PackedMove&& other) = default;
+
+    // ------------------------------
+    // Class interaction
+    // ------------------------------
+
+    friend bool operator==(const PackedMove a, const PackedMove b) { return a._packedMove == b._packedMove; }
+    friend bool operator!=(const PackedMove a, const PackedMove b) { return !(a == b); }
+
+    void SetStartField(const uint16_t startField) { _packedMove |= startField; }
+
+    [[nodiscard]] uint16_t GetStartField() const
+    {
+        static constexpr uint16_t StartFieldMask = Bit6;
+        return StartFieldMask & _packedMove;
+    }
+
+    void SetTargetField(const uint16_t targetField) { _packedMove |= targetField << 6; }
+
+    [[nodiscard]] uint16_t GetTargetField() const
+    {
+        static constexpr uint16_t TargetFieldMask = Bit6 << 6;
+        return (_packedMove & TargetFieldMask) >> 6;
+    }
+
+    [[nodiscard]] bool IsEmpty() const
+    {
+        return _packedMove == 0;
+    }
+
+    [[nodiscard]] bool IsQuiet() const
+    {
+        return (_packedMove & MoveTypeBits) == 0;
+    }
+
+    [[nodiscard]] bool IsCapture() const
+    {
+        return (_packedMove & CaptureBit) != 0;
+    }
+
+    [[nodiscard]] bool IsPromo() const
+    {
+        return (_packedMove & PromoBit) != 0;
+    }
+
+    void SetMoveType(const uint16_t MoveType)
+    {
+        _packedMove |= MoveType << 12;
+    }
+
+    [[nodiscard]] uint16_t GetMoveType() const
+    {
+        return (_packedMove & MoveTypeBits) >> 12;
+    }
+
+    // ------------------------------
+    // Class fields
+    // ------------------------------
+
+    static constexpr uint16_t PromoBit = 0x1 << 12;
+    static constexpr uint16_t CaptureBit = 0x1 << 13;
+    static constexpr uint16_t CastlingBit = 0x1 << 14;
+
+
+private:
+    static constexpr uint16_t MoveTypeBits = 0xF << 12;
+    static constexpr uint16_t Bit6 = 0b111111;
+
+    friend Move;
+
+    uint16_t _packedMove;
+};
+
 class Move
 {
    public:
@@ -61,14 +149,27 @@ class Move
     // Class interaction
     // ------------------------------
 
-
-    friend bool operator==(const Move a, const Move b) { return (EvalMaskInverted & a._storage) == (EvalMaskInverted& b._storage); }
+    friend bool operator==(const Move a, const Move b) { return a._packedMove == b._packedMove; }
     friend bool operator!=(const Move a, const Move b) { return !(a == b); }
+
+    [[nodiscard]] PackedMove GetPackedMove() const
+    {
+        return _packedMove;
+    }
+
+    void SetMoveType(const uint16_t MoveType)
+    {
+        _packedMove.SetMoveType(MoveType);
+    }
+
+    [[nodiscard]] uint16_t GetMoveType() const
+    {
+        return _packedMove.GetMoveType();
+    }
 
     [[nodiscard]] bool IsQuietMove() const
     {
-        // TODO: encode that during move gen?
-        return GetKilledBoardIndex() == Board::SentinelBoardIndex && (GetStartBoardIndex() == GetTargetBoardIndex());
+        return _packedMove.IsQuiet();
     }
 
     [[nodiscard]] std::string GetLongAlgebraicNotation() const
@@ -109,12 +210,12 @@ class Move
 
     [[nodiscard]] bool IsAttackingMove() const
     {
-        return GetKilledBoardIndex() != Board::SentinelBoardIndex;
+        return _packedMove.IsCapture();
     }
 
     [[nodiscard]] bool IsEmpty() const
     {
-        return _storage == 0;
+        return  _packedMove.IsEmpty();
     }
 
     static void UnmakeMove(const Move mv, Board& bd, const std::bitset<Board::CastlingCount + 1> castlings,
@@ -142,98 +243,96 @@ class Move
         bd.boards[boardIndex] ^= field;
     }
 
-    static constexpr uint64_t EvalMask = 0xFFFFLLU;
-    static constexpr uint64_t EvalMaskInverted = ~EvalMask;
-    void SetEval(const int16_t eval) { _storage |= EvalMask & static_cast<uint64_t>(eval); }
+    void SetEval(const int16_t eval) { _eval = eval; }
 
     void ReplaceEval(const int16_t eval)
     {
-        _storage = (_storage & EvalMaskInverted) | (EvalMask & static_cast<uint64_t>(eval));
+        SetEval(eval);
     }
 
     [[nodiscard]] int16_t GetEval() const
     {
-        return static_cast<int16_t>(_storage & EvalMask);
+        return _eval;
     }
 
-    void SetStartField(const uint64_t startField) { _storage |= startField << 16; }
+    void SetStartField(const uint16_t startField) { _packedMove.SetStartField(startField); }
 
-    [[nodiscard]] uint64_t GetStartField() const
+    [[nodiscard]] uint16_t GetStartField() const
     {
-        static constexpr uint64_t StartFieldMask = 0x3FLLU << 16;
-        return (_storage & StartFieldMask) >> 16;
+        return _packedMove.GetStartField();
     }
 
-    void SetStartBoardIndex(const uint64_t startBoard) { _storage |= (startBoard << 22); }
+    void SetTargetField(const uint16_t targetField) { _packedMove.SetTargetField(targetField); }
 
-    [[nodiscard]] uint64_t GetStartBoardIndex() const
+    [[nodiscard]] uint16_t GetTargetField() const
     {
-        static constexpr uint64_t StartBoardMask = 0xFLLU << 22;
-        return (_storage & StartBoardMask) >> 22;
+        return _packedMove.GetTargetField();
     }
 
-    void SetTargetField(const uint64_t targetField) { _storage |= targetField << 26; }
+    void SetStartBoardIndex(const uint16_t startBoard) { _packedIndexes |= startBoard; }
 
-    [[nodiscard]] uint64_t GetTargetField() const
+    [[nodiscard]] uint16_t GetStartBoardIndex() const
     {
-        static constexpr uint64_t TargetFieldMask = 0x3FLLU << 26;
-        return (_storage & TargetFieldMask) >> 26;
+        static constexpr uint16_t StartBoardMask = Bit4;
+        return _packedIndexes & StartBoardMask;
     }
 
-    void SetTargetBoardIndex(const uint64_t targetBoardIndex) { _storage |= targetBoardIndex << 32; }
 
-    [[nodiscard]] uint64_t GetTargetBoardIndex() const
+    void SetTargetBoardIndex(const uint16_t targetBoardIndex) { _packedIndexes |= targetBoardIndex << 4; }
+
+    [[nodiscard]] uint16_t GetTargetBoardIndex() const
     {
-        static constexpr uint64_t TargetBoardIndexMask = 0xFLLU << 32;
-        return (_storage & TargetBoardIndexMask) >> 32;
+        static constexpr uint16_t TargetBoardIndexMask = Bit4 << 4;
+        return (_packedIndexes & TargetBoardIndexMask) >> 4;
     }
 
-    void SetKilledBoardIndex(const uint64_t killedBoardIndex) { _storage |= killedBoardIndex << 36; }
+    void SetKilledBoardIndex(const uint16_t killedBoardIndex) { _packedIndexes |= killedBoardIndex << 8; }
 
-    [[nodiscard]] uint64_t GetKilledBoardIndex() const
+    [[nodiscard]] uint16_t GetKilledBoardIndex() const
     {
-        static constexpr uint64_t KilledBoardIndexMask = 0xFLLU << 36;
-        return (_storage & KilledBoardIndexMask) >> 36;
+        static constexpr uint16_t KilledBoardIndexMask = Bit4 << 8;
+        return (_packedIndexes & KilledBoardIndexMask) >> 8;
     }
 
-    void SetKilledFigureField(const uint64_t killedFigureField) { _storage |= killedFigureField << 40; }
+    void SetCastlingType(const uint16_t castlingType) { _packedIndexes |= castlingType << 12; }
 
-    [[nodiscard]] uint64_t GetKilledFigureField() const
+    [[nodiscard]] uint16_t GetCastlingType() const
     {
-        static constexpr uint64_t KilledFigureFieldMask = 0x3FLLU << 40;
-        return (_storage & KilledFigureFieldMask) >> 40;
+        static constexpr uint16_t CastlingTypeMask = Bit3 << 12;
+        return (_packedIndexes & CastlingTypeMask) >> 12;
     }
 
-    void SetElPassantField(const uint64_t elPassantField) { _storage |= elPassantField << 46; }
+    void SetKilledFigureField(const uint16_t killedFigureField) { _packedMisc |= killedFigureField; }
 
-    [[nodiscard]] uint64_t GetElPassantField() const
+    [[nodiscard]] uint16_t GetKilledFigureField() const
     {
-        static constexpr uint64_t ElPassantFieldMask = 0x3FLLU << 46;
-        return (_storage & ElPassantFieldMask) >> 46;
+        static constexpr uint16_t KilledFigureFieldMask = Bit6;
+        return _packedMisc & KilledFigureFieldMask;
+    }
+
+    void SetElPassantField(const uint16_t elPassantField) { _packedMisc |= elPassantField << 6; }
+
+    [[nodiscard]] uint16_t GetElPassantField() const
+    {
+        static constexpr uint16_t ElPassantFieldMask = Bit6 << 6;
+        return (_packedMisc & ElPassantFieldMask) >> 6;
     }
 
     void SetCasltingRights(const std::bitset<Board::CastlingCount + 1> arr)
     {
-        const uint64_t rights = arr.to_ullong() & 0xFLLU;
-        _storage |= rights << 52;
+        const uint16_t rights = arr.to_ullong() & 0xFLLU;
+        _packedMisc |= rights << 12;
     }
 
     [[nodiscard]] std::bitset<Board::CastlingCount + 1> GetCastlingRights() const
     {
-        static constexpr uint64_t CastlingMask = 0xFLLU << 52;
-        const uint64_t rights = (_storage & CastlingMask) >> 52;
+        static constexpr uint16_t CastlingMask = Bit4 << 12;
+        const uint16_t rights = (_packedMisc & CastlingMask) >> 12;
         const std::bitset<Board::CastlingCount + 1> arr{rights};
 
         return arr;
     }
 
-    void SetCastlingType(const uint64_t castlingType) { _storage |= castlingType << 56; }
-
-    [[nodiscard]] uint64_t GetCastlingType() const
-    {
-        static constexpr uint64_t CastlingTypeMask = 0x7LLU << 56;
-        return (_storage & CastlingTypeMask) >> 56;
-    }
 
     // ------------------------------
     // Private class methods
@@ -243,12 +342,14 @@ class Move
     // Class fields
     // ------------------------------
 private:
-    static constexpr uint64_t Bit4 = 0b1111LLU;
-    static constexpr uint64_t Bit6 = 0b111111LLU;
-    static constexpr uint64_t Bit3 = 0b111LLU;
+    static constexpr uint16_t Bit4 = 0b1111;
+    static constexpr uint16_t Bit6 = 0b111111;
+    static constexpr uint16_t Bit3 = 0b111;
 
-    uint64_t _storage{};
-
+    int16_t _eval;
+    PackedMove _packedMove;
+    uint16_t _packedIndexes;
+    uint16_t _packedMisc;
 public:
     static constexpr std::pair<size_t, uint64_t> CastlingActions[] = {
         {Board::SentinelBoardIndex, 0LLU},

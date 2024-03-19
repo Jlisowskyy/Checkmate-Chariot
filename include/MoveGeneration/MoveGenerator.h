@@ -291,6 +291,7 @@ public:
             mv.SetKilledFigureField(ExtractMsbPos(_board.elPassantField));
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(_board.Castlings);
+            mv.SetMoveType(PackedMove::CaptureBit);
 
             // preparing heuristic evaluation
             int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, 0, pawnMap, moveMap);
@@ -460,6 +461,7 @@ public:
                     mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
                     mv.SetElPassantField(Board::InvalidElPassantField);
                     mv.SetCasltingRights(castlings);
+                    mv.SetMoveType(PromotingMove);
 
                     // preparing heuristic eval info
                     int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
@@ -503,6 +505,7 @@ public:
                 mv.SetKilledFigureField(movePos);
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
+                mv.SetMoveType(PackedMove::CaptureBit);
 
                 // preparing heuristic eval info
                 int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
@@ -532,6 +535,7 @@ public:
                     mv.SetKilledFigureField(movePos);
                     mv.SetElPassantField(Board::InvalidElPassantField);
                     mv.SetCasltingRights(castlings);
+                    mv.SetMoveType(PackedMove::CaptureBit | PackedMove::PromoBit);
 
                     // prapring heuristic eval info
                     int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
@@ -616,6 +620,7 @@ public:
             mv.SetKilledFigureField(newPos);
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(castlings);
+            mv.SetMoveType(PackedMove::CaptureBit);
 
             // preparing heuristic eval info
             int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
@@ -656,6 +661,7 @@ public:
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
                 mv.SetCastlingType(1 + castlingIndex);
+                mv.SetMoveType(PackedMove::CastlingBit);
 
                 // preapring heuristic eval
                 const int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);

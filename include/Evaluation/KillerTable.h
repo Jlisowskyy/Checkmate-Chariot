@@ -59,25 +59,6 @@ private:
     // Inner types
     // ------------------------------
 
-    struct _packedMove_t
-    {
-        _packedMove_t() = default;
-
-        void Save(const Move mv)
-        {
-            from = mv.GetStartField();
-            to = mv.GetTargetField();
-        }
-
-        [[nodiscard]] bool IsEqual(const Move mv) const
-        {
-            return from == mv.GetStartField() && to == mv.GetTargetField();
-        }
-
-        uint8_t from : 5;
-        uint8_t to : 5;
-    };
-
     struct _killerFloor_t
     {
         _killerFloor_t() = default;
@@ -89,21 +70,21 @@ private:
 
             // ensuring that no same moves are stored twice
             for(size_t i = 0; i < last; ++i)
-                if (_killerMovesTable[i].IsEqual(mv)) return;
+                if (_killerMovesTable[i] == mv.GetPackedMove()) return;
 
             // saving move
-            _killerMovesTable[last++].Save(mv);
+            _killerMovesTable[last++] = mv.GetPackedMove();
         }
 
         [[nodiscard]] bool Contains(const Move mv) const
         {
             for (size_t i = 0; i < MovesPerPly; ++i)
-                if (_killerMovesTable[i].IsEqual(mv))
+                if (_killerMovesTable[i] == mv.GetPackedMove())
                     return true;
             return false;
         }
 
-        _packedMove_t _killerMovesTable[MovesPerPly]{};
+        PackedMove _killerMovesTable[MovesPerPly]{};
         uint8_t last{};
     };
 
