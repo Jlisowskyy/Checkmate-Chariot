@@ -4,6 +4,8 @@
 
 #include "../include/Search/BestMoveSearch.h"
 
+#include <assert.h>
+
 #include "../include/Evaluation/BoardEvaluator.h"
 
 
@@ -138,6 +140,8 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
 {
     TTable.Prefetch(zHash);
 
+    assert(alpha < beta);
+
     const int alphaStart = alpha;
     Move bestMove;
     int bestEval = NegativeInfinity;
@@ -147,7 +151,6 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
         return _quiescenceSearch(bd, alpha, beta, zHash);
-            // return BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
     // incrementing nodes counter;
     ++_visitedNodes;
 
@@ -166,8 +169,10 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
         {
             switch (prevSearchRes.GetNodeType())
             {
-                case pvNode:
+                case pvNode: {
+                    ++_cutoffNodes;
                     return prevSearchRes.GetEval();
+                }
                 case lowerBound:
                     alpha = std::max(alpha, prevSearchRes.GetEval());
                     break;
@@ -212,7 +217,9 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
         {
             // performing checks wheter assumed thesis holds
             _kTable.ClearPlyFloor(depthLeft - 1);
-            moveEval = -_negaScout(bd, -alpha - 1, -alpha, depthLeft - 1, zHash, moves[i]);
+            moveEval = -_zwSearch(bd, -alpha -1, depthLeft - 1, zHash, moves[i]);
+            // moveEval = -_negaScout(bd, -alpha - 1, -alpha, depthLeft - 1, zHash, moves[i]);
+
 
             // if not research move
             if (alpha < moveEval && moveEval < beta)
@@ -265,6 +272,101 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
     return bestEval;
 }
 
+[[nodiscard]] int BestMoveSearch::_zwSearch(Board& bd, const int alpha, const int depthLeft, uint64_t zHash, const Move prevMove) {
+    TTable.Prefetch(zHash);
+
+    const int beta = alpha + 1;
+    int bestEval = NegativeInfinity;
+    bool wasTTHit = false;
+
+    // last depth static eval needed or prev pv node value
+    if (depthLeft == 0)
+        return _quiescenceSearch(bd, alpha, beta, zHash);
+
+    // incrementing nodes counter;
+    ++_visitedNodes;
+
+    // saving old params
+    const auto oldCastlings = bd.Castlings;
+    const auto oldElPassant = bd.elPassantField;
+
+    // reading Transposition table for previous score
+    const auto prevSearchRes = TTable.GetRecord(zHash);
+
+    // We got a hit
+    if (prevSearchRes.GetHash() == zHash)
+    {
+        wasTTHit = true;
+
+        if (prevSearchRes.GetDepth() >= depthLeft)
+        {
+            switch (prevSearchRes.GetNodeType()) {
+                case pvNode: {
+                    ++_cutoffNodes;
+                    return prevSearchRes.GetEval();
+                }
+                case lowerBound:
+                    if (prevSearchRes.GetEval() > alpha) {
+                        ++_cutoffNodes;
+                        return prevSearchRes.GetEval();
+                    }
+                case upperBound:
+                    if (prevSearchRes.GetEval() <= alpha) {
+                        ++_cutoffNodes;
+                        return prevSearchRes.GetEval();
+                    }
+                default:
+                    break;
+            }
+        }
+    }
+
+    // generate moves
+    MoveGenerator mechanics(bd, _stack, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField());
+    auto moves = mechanics.GetMovesFast();
+
+    // processsing each move
+    for (size_t i = 0; i < moves.size; ++i)
+    {
+        // load best move from TT if possible
+        if (i == 0 && wasTTHit)
+            _pullMoveToFront(moves, prevSearchRes.GetMove());
+        else
+            _fetchBestMove(moves, i);
+
+        Move::MakeMove(moves[i], bd);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+        _kTable.ClearPlyFloor(depthLeft - 1);
+        const int moveEval = -_zwSearch(bd, -beta, depthLeft - 1, zHash, moves[i]);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+        Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
+
+        if (moveEval > bestEval)
+        {
+            bestEval = moveEval;
+
+            // cut-off found
+            if (moveEval >= beta)
+            {
+                if (moves[i].IsAttackingMove() == false)
+                {
+                    if (moves[i].IsQuietMove())
+                        _kTable.SaveKillerMove(moves[i], depthLeft);
+
+                    _cmTable.SaveCounterMove(moves[i].GetPackedMove(), prevMove);
+                }
+
+                ++_cutoffNodes;
+                break;
+            }
+        }
+    }
+
+    //clean up
+    _stack.PopAggregate(moves);
+    return bestEval;
+}
+
 int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t zHash)
 {
     ++_visitedNodes;
@@ -281,7 +383,6 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t z
     MoveGenerator mechanics(bd, _stack);
     auto moves = mechanics.GetMovesFast<true>();
 
-
     // saving old params
     const auto oldCastlings = bd.Castlings;
     const auto oldElPassant = bd.elPassantField;
@@ -293,18 +394,7 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t z
 
         Move::MakeMove(moves[i], bd);
         int moveValue;
-        if (i == 0)
-            // processing assumed pvs move
-            moveValue = -_quiescenceSearch( bd, -beta, -alpha, zHash);
-        else
-        {
-            // performing checks wheter assumed thesis holds
-            moveValue = -_quiescenceSearch( bd, -alpha - 1, -alpha, zHash);
-
-            // if not research move
-            if (alpha < moveValue && moveValue < beta)
-                moveValue = -_quiescenceSearch( bd, -beta, -alpha, zHash);
-        }
+        moveValue = -_quiescenceSearch( bd, -beta, -alpha, zHash);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
         if (moveValue > bestEval)

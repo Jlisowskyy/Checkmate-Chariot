@@ -98,8 +98,8 @@ struct BestMoveSearch
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimazing player
     [[nodiscard]] int _alphaBeta(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove);
-
     [[nodiscard]] int _negaScout(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove);
+    [[nodiscard]] int _zwSearch(Board& bd, int alpha, int depthLeft, uint64_t zHash, Move prevMove);
     [[nodiscard]] int _quiescenceSearch(Board& bd, int alpha, int beta, uint64_t zHash);
 
     static void _embeddedMoveSort(MoveGenerator::payload moves, size_t range);
