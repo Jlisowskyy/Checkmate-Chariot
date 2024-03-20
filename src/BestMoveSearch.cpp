@@ -4,7 +4,7 @@
 
 #include "../include/Search/BestMoveSearch.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "../include/Evaluation/BoardEvaluator.h"
 
@@ -13,6 +13,8 @@ int BestMoveSearch::_alphaBeta(Board& bd, int alpha, int beta, const int depthLe
 {
     // prefetching table record
     TTable.Prefetch(zHash);
+
+    assert(beta > alpha);
 
     const int alphaStart = alpha;
     Move bestMove;
@@ -150,7 +152,8 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
 
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
-        return _quiescenceSearch(bd, alpha, beta, zHash);
+        return _scoutingQuiescenceSearch(bd, alpha, beta, zHash);
+
     // incrementing nodes counter;
     ++_visitedNodes;
 
@@ -218,8 +221,6 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
             // performing checks wheter assumed thesis holds
             _kTable.ClearPlyFloor(depthLeft - 1);
             moveEval = -_zwSearch(bd, -alpha -1, depthLeft - 1, zHash, moves[i]);
-            // moveEval = -_negaScout(bd, -alpha - 1, -alpha, depthLeft - 1, zHash, moves[i]);
-
 
             // if not research move
             if (alpha < moveEval && moveEval < beta)
@@ -281,7 +282,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
 
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
-        return _quiescenceSearch(bd, alpha, beta, zHash);
+        return _zwQuiescenceSearch(bd, alpha, zHash);
 
     // incrementing nodes counter;
     ++_visitedNodes;
@@ -416,6 +417,113 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t z
     return bestEval;
 }
 
+int BestMoveSearch::_scoutingQuiescenceSearch(Board& bd, int alpha, int beta, uint64_t zHash)
+{
+    ++_visitedNodes;
+    int bestEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
+
+    assert(beta > alpha);
+
+    if (bestEval >= beta)
+    {
+        ++_cutoffNodes;
+        return bestEval;
+    }
+    alpha = std::max(alpha, bestEval);
+
+    // generating moves
+    MoveGenerator mechanics(bd, _stack);
+    auto moves = mechanics.GetMovesFast<true>();
+
+    // saving old params
+    const auto oldCastlings = bd.Castlings;
+    const auto oldElPassant = bd.elPassantField;
+
+    // iterating through moves
+    for (size_t i = 0; i < moves.size; ++i)
+    {
+        _fetchBestMove(moves, i);
+
+        int moveEval;
+        Move::MakeMove(moves[i], bd);
+        if (i == 0)
+            moveEval = -_scoutingQuiescenceSearch(bd, -beta, -alpha, zHash);
+        else
+        {
+            moveEval = -_zwQuiescenceSearch(bd, -alpha -1, zHash);
+
+            // if not research move
+            if (alpha < moveEval && moveEval < beta)
+                moveEval = -_scoutingQuiescenceSearch(bd, -beta, -alpha, zHash);
+        }
+        Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
+
+        if (moveEval > bestEval)
+        {
+            bestEval = moveEval;
+
+            if (moveEval >= beta)
+            {
+                ++ _cutoffNodes;
+                break;
+            }
+
+            alpha = std::max(alpha, moveEval);
+        }
+    }
+
+    // clean up
+    _stack.PopAggregate(moves);
+    return bestEval;
+}
+
+int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHash)
+{
+    const int beta = alpha + 1;
+
+    ++_visitedNodes;
+    int bestEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
+
+    if (bestEval >= beta)
+    {
+        ++_cutoffNodes;
+        return bestEval;
+    }
+
+    // generating moves
+    MoveGenerator mechanics(bd, _stack);
+    auto moves = mechanics.GetMovesFast<true>();
+
+    // saving old params
+    const auto oldCastlings = bd.Castlings;
+    const auto oldElPassant = bd.elPassantField;
+
+    // iterating through moves
+    for (size_t i = 0; i < moves.size; ++i)
+    {
+        _fetchBestMove(moves, i);
+
+        Move::MakeMove(moves[i], bd);
+        const int moveValue = -_zwQuiescenceSearch( bd, -beta, zHash);
+        Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
+
+        if (moveValue > bestEval)
+        {
+            bestEval = moveValue;
+            if (moveValue >= beta)
+            {
+                ++ _cutoffNodes;
+                break;
+            }
+
+        }
+    }
+
+    // clean up
+    _stack.PopAggregate(moves);
+    return bestEval;
+}
+
 void BestMoveSearch::_embeddedMoveSort(MoveGenerator::payload moves, const size_t range)
 {
     for (ssize_t i = 1; i < static_cast<ssize_t>(range); ++i)
@@ -447,6 +555,8 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Move m
     // if move found swapping
     if (ind != moves.size)
         std::swap(moves.data[ind], moves.data[0]);
+
+    assert(ind != moves.size);
 }
 
 void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t targetPos)

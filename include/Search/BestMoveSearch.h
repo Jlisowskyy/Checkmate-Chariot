@@ -101,6 +101,8 @@ struct BestMoveSearch
     [[nodiscard]] int _negaScout(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove);
     [[nodiscard]] int _zwSearch(Board& bd, int alpha, int depthLeft, uint64_t zHash, Move prevMove);
     [[nodiscard]] int _quiescenceSearch(Board& bd, int alpha, int beta, uint64_t zHash);
+    [[nodiscard]] int _scoutingQuiescenceSearch(Board& bd, int alpha, int beta, uint64_t zHash);
+    [[nodiscard]] int _zwQuiescenceSearch(Board& bd, int alpha, uint64_t zHash);
 
     static void _embeddedMoveSort(MoveGenerator::payload moves, size_t range);
     static void _pullMoveToFront(MoveGenerator::payload moves, Move mv);
