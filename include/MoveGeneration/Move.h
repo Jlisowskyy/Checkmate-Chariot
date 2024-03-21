@@ -113,6 +113,17 @@ struct PackedMove
         return (_packedMove & MoveTypeBits) >> 12;
     }
 
+    [[nodiscard]] bool IsValidMove() const
+    {
+        return !IsEmpty();
+    }
+
+    // debugging tool
+    [[nodiscard]] bool IsOkeyMove() const
+    {
+        return !IsEmpty() && GetTargetField() != GetStartField();
+    }
+
     // ------------------------------
     // Class fields
     // ------------------------------
@@ -172,6 +183,17 @@ class Move
     [[nodiscard]] bool IsQuietMove() const
     {
         return _packedMove.IsQuiet();
+    }
+
+    [[nodiscard]] bool IsValidMove() const
+    {
+        return _packedMove.IsValidMove();
+    }
+
+    // debugging tool
+    [[nodiscard]] bool IsOkeyMove() const
+    {
+        return _packedMove.IsOkeyMove();
     }
 
     [[nodiscard]] std::string GetLongAlgebraicNotation() const
