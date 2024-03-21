@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <bit>
 
+
 TranspositionTable TTable{};
 
 TranspositionTable::TranspositionTable():

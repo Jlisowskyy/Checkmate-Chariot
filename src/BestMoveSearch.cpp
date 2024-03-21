@@ -5,6 +5,7 @@
 #include "../include/Search/BestMoveSearch.h"
 
 #include <cassert>
+#include <climits>
 
 #include "../include/Evaluation/BoardEvaluator.h"
 
@@ -13,7 +14,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
     assert(alpha < beta);
 
     nodeType nType = upperBound;
-    Move bestMove{};
+    PackedMove bestMove{};
 
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
@@ -71,7 +72,8 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
             if (depthLeft >= prevSearchRes.GetDepth()
                 || (prevSearchRes.GetHash() != zHash && _age - prevSearchRes.GetAge() >= SearchAgeDiffToReplace))
             {
-                const TranspositionTable::HashRecord record{zHash, moves[0], bestEval, prevSearchRes.GetStatVal(), depthLeft, lowerBound, _age };
+                const TranspositionTable::HashRecord record{zHash, moves[0].GetPackedMove(),
+                    bestEval, prevSearchRes.GetStatVal(), depthLeft, lowerBound, _age };
                 TTable.Add(record);
             }
 
@@ -80,7 +82,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
         }
 
         alpha = bestEval;
-        bestMove = moves[0];
+        bestMove = moves[0].GetPackedMove();
     }
 
     // processsing each move
@@ -109,7 +111,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
 
                 if (moveEval >= alpha)
                 {
-                    bestMove = moves[i];
+                    bestMove = moves[i].GetPackedMove();
 
                     // cut-off found
                     if (moveEval >= beta)
@@ -155,7 +157,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
     const int beta = alpha + 1;
     int bestEval = NegativeInfinity;
     nodeType nType = upperBound;
-    Move bestMove {};
+    PackedMove bestMove {};
 
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
@@ -163,10 +165,6 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
 
     // incrementing nodes counter;
     ++_visitedNodes;
-
-    // saving old params
-    const auto oldCastlings = bd.Castlings;
-    const auto oldElPassant = bd.elPassantField;
 
     // reading Transposition table for previous score
     const auto prevSearchRes = TTable.GetRecord(zHash);
@@ -182,6 +180,10 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
             return prevSearchRes.GetEval();
         }
     }
+
+    // saving old params
+    const auto oldCastlings = bd.Castlings;
+    const auto oldElPassant = bd.elPassantField;
 
     // generate moves
     MoveGenerator mechanics(bd, _stack, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField());
@@ -223,7 +225,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
                 }
 
                 nType = lowerBound;
-                bestMove = moves[i];
+                bestMove = moves[i].GetPackedMove();
                 ++_cutoffNodes;
                 break;
             }
@@ -246,15 +248,40 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t z
 {
     assert(beta > alpha);
 
+    int statEval;
+    PackedMove bestMove{};
+    nodeType nType = upperBound;
     ++_visitedNodes;
-    int bestEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
 
-    if (bestEval >= beta)
+    // reading Transposition table for best move
+    const auto prevSearchRes = TTable.GetRecord(zHash);
+
+    // We got a hit
+    if (prevSearchRes.GetHash() == zHash && prevSearchRes.GetStatVal() != TranspositionTable::HashRecord::NoEval)
+        statEval = prevSearchRes.GetStatVal();
+    else
+        statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
+
+    int bestEval = statEval;
+
+    if (bestEval >= alpha)
     {
-        ++_cutoffNodes;
-        return bestEval;
+        if (bestEval >= beta)
+        {
+            ++_cutoffNodes;
+
+            if (prevSearchRes.GetHash() == zHash && prevSearchRes.GetStatVal() == TranspositionTable::HashRecord::NoEval)
+            {
+                auto record = prevSearchRes;
+                record.SetStatVal(statEval);
+
+                TTable.Add(record);
+            }
+            return bestEval;
+        }
+
+        alpha = bestEval;
     }
-    alpha = std::max(alpha, bestEval);
 
     // generating moves
     MoveGenerator mechanics(bd, _stack);
@@ -267,28 +294,47 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t z
     // iterating through moves
     for (size_t i = 0; i < moves.size; ++i)
     {
-        _fetchBestMove(moves, i);
+        if (i == 0 && prevSearchRes.GetHash() == zHash && prevSearchRes.GetNodeType() != upperBound &&
+            prevSearchRes.GetMove().IsCapture())
+            _pullMoveToFront(moves, prevSearchRes.GetMove());
+        else
+            _fetchBestMove(moves, i);
 
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+        TTable.Prefetch(zHash);
         Move::MakeMove(moves[i], bd);
         const int moveValue = -_quiescenceSearch( bd, -beta, -alpha, zHash);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
         if (moveValue > bestEval)
         {
             bestEval = moveValue;
 
-            if (moveValue >= beta)
+            if (moveValue >= alpha)
             {
-                ++ _cutoffNodes;
-                break;
-            }
+                if (moveValue >= beta)
+                {
+                    ++ _cutoffNodes;
 
-            alpha = std::max(alpha, moveValue);
+                    nType = lowerBound;
+                    bestMove = moves[i].GetPackedMove();
+                    break;
+                }
+
+                alpha = moveValue;
+            }
         }
     }
 
     // clean up
     _stack.PopAggregate(moves);
+
+    if (prevSearchRes.GetDepth() == 0 || _age - prevSearchRes.GetAge() >= QuisenceAgeDiffToReplace)
+    {
+        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age };
+        TTable.Add(record);
+    }
     return bestEval;
 }
 
@@ -296,12 +342,48 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
 {
     const int beta = alpha + 1;
 
+    int statEval = INT_MAX;
+    nodeType nType = upperBound;
+    PackedMove bestMove{};
+
     ++_visitedNodes;
-    int bestEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
+
+    // reading Transposition table for best move
+    const auto prevSearchRes = TTable.GetRecord(zHash);
+
+    // We got a hit
+    if (prevSearchRes.GetHash() == zHash)
+    {
+        const nodeType expectedType = prevSearchRes.GetEval() >= beta ? lowerBound : upperBound;
+
+        if (expectedType == prevSearchRes.GetNodeType() || prevSearchRes.GetNodeType() == pvNode)
+        {
+            ++_cutoffNodes;
+            return prevSearchRes.GetEval();
+        }
+
+        if (prevSearchRes.GetStatVal() != TranspositionTable::HashRecord::NoEval)
+            statEval = prevSearchRes.GetStatVal();
+    }
+
+    if (statEval == INT_MAX)
+        statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
+
+    int bestEval = statEval;
+
 
     if (bestEval >= beta)
     {
         ++_cutoffNodes;
+
+        if (prevSearchRes.GetHash() == zHash && prevSearchRes.GetStatVal() == TranspositionTable::HashRecord::NoEval)
+        {
+            auto record = prevSearchRes;
+            record.SetStatVal(statEval);
+
+            TTable.Add(record);
+        }
+
         return bestEval;
     }
 
@@ -316,11 +398,17 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
     // iterating through moves
     for (size_t i = 0; i < moves.size; ++i)
     {
-        _fetchBestMove(moves, i);
+        if (i == 0 && prevSearchRes.GetHash() == zHash && prevSearchRes.GetNodeType() != upperBound &&
+            prevSearchRes.GetMove().IsCapture())
+            _pullMoveToFront(moves, prevSearchRes.GetMove());
+        else _fetchBestMove(moves, i);
 
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+        TTable.Prefetch(zHash);
         Move::MakeMove(moves[i], bd);
         const int moveValue = -_zwQuiescenceSearch( bd, -beta, zHash);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
 
         if (moveValue > bestEval)
         {
@@ -328,10 +416,19 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
             if (moveValue >= beta)
             {
                 ++ _cutoffNodes;
+
+                nType = lowerBound;
+                bestMove = moves[i].GetPackedMove();
                 break;
             }
 
         }
+    }
+
+    if (prevSearchRes.GetDepth() == 0 || _age - prevSearchRes.GetAge() >= QuisenceAgeDiffToReplace)
+    {
+        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age };
+        TTable.Add(record);
     }
 
     // clean up
@@ -354,17 +451,17 @@ void BestMoveSearch::_embeddedMoveSort(MoveGenerator::payload moves, const size_
     }
 }
 
-void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Move mv)
+void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const PackedMove mv)
 {
     assert(mv.IsOkeyMove());
 
     // preparing sentinel
     const Move sentinelOld = moves.data[moves.size];
-    moves.data[moves.size] = mv;
+    moves.data[moves.size] = Move(mv);
 
     // finding stopping index
     size_t ind = 0;
-    while(moves.data[ind] != mv) ind++;
+    while(moves.data[ind] != Move(mv)) ind++;
 
     // replacing old element
     moves.data[moves.size] = sentinelOld;
@@ -391,7 +488,7 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
     }
 
     std::swap(moves.data[maxInd], moves.data[targetPos]);
-    assert(maxInd != targetPos || moves.data[targetPos].GetEval() >= moves.data[targetPos+1].GetEval());
+    assert(maxInd == targetPos || moves.data[targetPos].GetEval() >= moves.data[targetPos+1].GetEval());
 }
 
 int BestMoveSearch::_getMateValue(const int depthLeft) const

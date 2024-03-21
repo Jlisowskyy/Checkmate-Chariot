@@ -103,7 +103,7 @@ struct BestMoveSearch
     [[nodiscard]] int _zwQuiescenceSearch(Board& bd, int alpha, uint64_t zHash);
 
     static void _embeddedMoveSort(MoveGenerator::payload moves, size_t range);
-    static void _pullMoveToFront(MoveGenerator::payload moves, Move mv);
+    static void _pullMoveToFront(MoveGenerator::payload moves, PackedMove mv);
     static void _fetchBestMove(MoveGenerator::payload moves, size_t targetPos);
 
     [[nodiscard]] int _getMateValue(int depthLeft) const;
@@ -116,8 +116,8 @@ struct BestMoveSearch
     static constexpr int NegativeInfinity = INT16_MIN + 100;
     static constexpr int PositiveInfinity = INT16_MAX - 100;
 
-    static constexpr uint16_t QuisenceAgeDiffToReplace = 12;
-    static constexpr uint16_t SearchAgeDiffToReplace = 8;
+    static constexpr uint16_t QuisenceAgeDiffToReplace = 16;
+    static constexpr uint16_t SearchAgeDiffToReplace = 10;
 
     stack<Move, DefaultStackSize>& _stack;
     Board _board;

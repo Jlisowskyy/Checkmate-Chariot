@@ -149,6 +149,9 @@ class Move
     // Class creation
     // ------------------------------
 
+    // This construction does not initialize crutial fields what must be done
+    explicit Move(const PackedMove mv): _packedMove(mv) {}
+
     Move() = default;
     ~Move() = default;
 

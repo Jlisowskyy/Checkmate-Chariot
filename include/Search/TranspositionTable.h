@@ -7,7 +7,6 @@
 
 #include <cinttypes>
 #include <cstdlib>
-#include <climits>
 
 #include "../MoveGeneration/Move.h"
 
@@ -23,8 +22,7 @@ enum nodeType: uint8_t
 {
     pvNode,
     lowerBound,
-    upperBound,
-    shallowNode
+    upperBound
 };
 
 struct TranspositionTable
@@ -40,24 +38,22 @@ struct TranspositionTable
 
     struct alignas(32) HashRecord {
         [[nodiscard]] uint64_t GetHash() const { return _zobristHash; }
-        [[nodiscard]] Move GetMove() const { return _madeMove; }
+        [[nodiscard]] PackedMove GetMove() const { return _madeMove; }
         [[nodiscard]] int GetEval() const { return _eval; }
         [[nodiscard]] int GetStatVal() const { return _value; }
         [[nodiscard]] int GetDepth() const { return  _depth; }
-        [[nodiscard]] bool IsPvNode() const { return (_type & PvNode) != 0; }
         [[nodiscard]] bool IsEmpty() const { return _age == 0; }
         [[nodiscard]] uint16_t GetAge() const { return _age; }
         [[nodiscard]] nodeType GetNodeType() const { return _type; }
 
-        HashRecord(const uint64_t hash, const Move mv, const int eval, const int statVal, const int depth, const nodeType nType, const uint16_t age):
+        HashRecord(const uint64_t hash, const PackedMove mv, const int eval, const int statVal, const int depth, const nodeType nType, const uint16_t age):
             _zobristHash(hash),
             _madeMove(mv),
-            _eval(eval),
-            _value(statVal),
-            _depth(depth),
+            _eval(static_cast<int16_t>(eval)),
+            _value(static_cast<int16_t>(statVal)),
+            _depth(static_cast<uint8_t>(depth)),
             _age(age),
-
-        _type(nType)
+            _type(nType)
         {}
 
         HashRecord(const HashRecord&) = default;
@@ -66,27 +62,22 @@ struct TranspositionTable
         HashRecord& operator=(const HashRecord&) = default;
         HashRecord& operator=(HashRecord&&) = default;
 
-        void SetStatVal(const int statEval) { _value = statEval; }
-        void SetEvalVal(const int eval) { _eval = eval; }
+        void SetStatVal(const int statEval) { _value = static_cast<int16_t>(statEval); }
+        void SetEvalVal(const int eval) { _eval = static_cast<int16_t>(eval); }
 
-        static constexpr int NoStatEval = INT_MAX;
-        static constexpr int NoEval = INT_MAX;
-        static constexpr uint8_t PvNode = 0b1;
-        static constexpr uint8_t NoPvNode = 0;
+        static constexpr int NoEval = INT16_MAX;
 
     private:
         uint64_t _zobristHash; // 8 bytes
-        Move _madeMove; // 8 Bytes
-        int _eval; // 4 bytes
-        int _value; // 4 bytes
-        int _depth; // 4 byte
-        uint16_t _age; // 2 byte
-        nodeType _type{}; // 1 byte
+        PackedMove _madeMove; // 2 Bytes
+        int16_t _eval; // 2 bytes
+        int16_t _value; // 2 bytes
+        uint8_t _depth; // 1 byte
+        uint16_t _age; // 2 byte  // TODO: PACK IT
+        nodeType _type; // 1 byte // TODO: PACK IT
 
         friend TranspositionTable;
     };
-
-    // Total sum = 8 + 8 + 4 + 4 + 1 + 1 = 26 bytes => 6 byte padded <- try to improve memory management in future
 
     // ------------------------------
     // Class creation
