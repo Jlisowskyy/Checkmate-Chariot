@@ -34,15 +34,8 @@ struct BestMoveSearch
     template <bool WriteInfo = true>
     void IterativeDeepening(Move* output, const int maxDepth)
     {
-        MoveGenerator generator(_board, _stack, _kTable);
-        auto moves = generator.GetMovesFast();
-
-        // saving old params
-        const auto oldCastlings = _board.Castlings;
-        const auto oldElPassant = _board.elPassantField;
-
-        uint64_t zHash = ZHasher.GenerateHash(_board);
-        for (int depth = 0; depth < maxDepth; ++depth)
+        const uint64_t zHash = ZHasher.GenerateHash(_board);
+        for (int depth = 1; depth < maxDepth; ++depth)
         {
             // measuring time
             [[maybe_unused]]auto t1 = std::chrono::steady_clock::now();
@@ -55,25 +48,14 @@ struct BestMoveSearch
 
             // cleaning tables used in iteration
             _kTable.ClearPlyFloor(depth);
-
-            // move list iteration
-            for (size_t i = 0; i < moves.size; ++i)
-            {
-                Move::MakeMove(moves[i], _board);
-                zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
-                eval = -_negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, moves[i]);
-                zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
-                Move::UnmakeMove(moves[i], _board, oldCastlings, oldElPassant);
-
-                moves[i].ReplaceEval(static_cast<int16_t>(eval));
-            }
+            eval = -_negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {});
 
             // measurment end
             [[maybe_unused]]auto t2 = std::chrono::steady_clock::now();
 
             // move sorting
-            _embeddedMoveSort(moves, moves.size);
-            *output = moves[0];
+            auto record = TTable.GetRecord(zHash);
+            *output = record.GetMove();
 
             if constexpr (WriteInfo)
             {
@@ -83,12 +65,10 @@ struct BestMoveSearch
                 const double cutOffPerc = static_cast<double>(_cutoffNodes)/static_cast<double>(_visitedNodes);
 
                 GlobalLogger.StartLogging() << std::format("info depth: {}, best move: {}, eval: {}, time: {}, nodes: {}, cut-off nodes: {}, with succeess rate: {}, nodes per sec: {}, tt entries: {}, at age: {}\n", depth + 1,
-                                                           moves[0].GetLongAlgebraicNotation(), static_cast<double>(moves[0].GetEval())/100.0,
+                                                           output->GetLongAlgebraicNotation(), static_cast<double>(eval)/100.0,
                                                            spentMs, _visitedNodes, _cutoffNodes, cutOffPerc,  nps, TTable.GetContainedElements(), _age);
             }
         }
-
-        _stack.PopAggregate(moves);
     }
 
     // ------------------------------

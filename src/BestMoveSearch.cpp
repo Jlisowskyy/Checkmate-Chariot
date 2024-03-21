@@ -14,7 +14,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
     assert(alpha < beta);
 
     nodeType nType = upperBound;
-    PackedMove bestMove{};
+    Move bestMove{};
 
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
@@ -35,7 +35,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
 
     // We got a hit
     if (prevSearchRes.GetHash() == zHash && prevSearchRes.GetNodeType() != upperBound)
-        _pullMoveToFront(moves, prevSearchRes.GetMove());
+        _pullMoveToFront(moves, prevSearchRes.GetMove().GetPackedMove());
     else
         _fetchBestMove(moves, 0);
 
@@ -72,7 +72,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
             if (depthLeft >= prevSearchRes.GetDepth()
                 || (prevSearchRes.GetHash() != zHash && _age - prevSearchRes.GetAge() >= SearchAgeDiffToReplace))
             {
-                const TranspositionTable::HashRecord record{zHash, moves[0].GetPackedMove(),
+                const TranspositionTable::HashRecord record{zHash, moves[0],
                     bestEval, prevSearchRes.GetStatVal(), depthLeft, lowerBound, _age };
                 TTable.Add(record);
             }
@@ -82,7 +82,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
         }
 
         alpha = bestEval;
-        bestMove = moves[0].GetPackedMove();
+        bestMove = moves[0];
     }
 
     // processsing each move
@@ -111,7 +111,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
 
                 if (moveEval >= alpha)
                 {
-                    bestMove = moves[i].GetPackedMove();
+                    bestMove = moves[i];
 
                     // cut-off found
                     if (moveEval >= beta)
@@ -157,7 +157,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
     const int beta = alpha + 1;
     int bestEval = NegativeInfinity;
     nodeType nType = upperBound;
-    PackedMove bestMove {};
+    Move bestMove {};
 
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
@@ -197,7 +197,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
     {
         // load best move from TT if possible
         if (i == 0 && prevSearchRes.GetHash() == zHash && prevSearchRes.GetNodeType() != upperBound)
-            _pullMoveToFront(moves, prevSearchRes.GetMove());
+            _pullMoveToFront(moves, prevSearchRes.GetMove().GetPackedMove());
         else
             _fetchBestMove(moves, i);
 
@@ -225,7 +225,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
                 }
 
                 nType = lowerBound;
-                bestMove = moves[i].GetPackedMove();
+                bestMove = moves[i];
                 ++_cutoffNodes;
                 break;
             }
@@ -249,7 +249,7 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t z
     assert(beta > alpha);
 
     int statEval;
-    PackedMove bestMove{};
+    Move bestMove{};
     nodeType nType = upperBound;
     ++_visitedNodes;
 
@@ -295,8 +295,8 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t z
     for (size_t i = 0; i < moves.size; ++i)
     {
         if (i == 0 && prevSearchRes.GetHash() == zHash && prevSearchRes.GetNodeType() != upperBound &&
-            prevSearchRes.GetMove().IsCapture())
-            _pullMoveToFront(moves, prevSearchRes.GetMove());
+            prevSearchRes.GetMove().IsAttackingMove())
+            _pullMoveToFront(moves, prevSearchRes.GetMove().GetPackedMove());
         else
             _fetchBestMove(moves, i);
 
@@ -318,7 +318,7 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, int beta, uint64_t z
                     ++ _cutoffNodes;
 
                     nType = lowerBound;
-                    bestMove = moves[i].GetPackedMove();
+                    bestMove = moves[i];
                     break;
                 }
 
@@ -344,7 +344,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
 
     int statEval = INT_MAX;
     nodeType nType = upperBound;
-    PackedMove bestMove{};
+    Move bestMove{};
 
     ++_visitedNodes;
 
@@ -399,8 +399,8 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
     for (size_t i = 0; i < moves.size; ++i)
     {
         if (i == 0 && prevSearchRes.GetHash() == zHash && prevSearchRes.GetNodeType() != upperBound &&
-            prevSearchRes.GetMove().IsCapture())
-            _pullMoveToFront(moves, prevSearchRes.GetMove());
+            prevSearchRes.GetMove().IsAttackingMove())
+            _pullMoveToFront(moves, prevSearchRes.GetMove().GetPackedMove());
         else _fetchBestMove(moves, i);
 
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
@@ -418,7 +418,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
                 ++ _cutoffNodes;
 
                 nType = lowerBound;
-                bestMove = moves[i].GetPackedMove();
+                bestMove = moves[i];
                 break;
             }
 

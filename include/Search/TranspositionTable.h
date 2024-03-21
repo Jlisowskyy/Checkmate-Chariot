@@ -38,7 +38,7 @@ struct TranspositionTable
 
     struct alignas(32) HashRecord {
         [[nodiscard]] uint64_t GetHash() const { return _zobristHash; }
-        [[nodiscard]] PackedMove GetMove() const { return _madeMove; }
+        [[nodiscard]] Move GetMove() const { return _madeMove; }
         [[nodiscard]] int GetEval() const { return _eval; }
         [[nodiscard]] int GetStatVal() const { return _value; }
         [[nodiscard]] int GetDepth() const { return  _depth; }
@@ -46,7 +46,7 @@ struct TranspositionTable
         [[nodiscard]] uint16_t GetAge() const { return _age; }
         [[nodiscard]] nodeType GetNodeType() const { return _type; }
 
-        HashRecord(const uint64_t hash, const PackedMove mv, const int eval, const int statVal, const int depth, const nodeType nType, const uint16_t age):
+        HashRecord(const uint64_t hash, const Move mv, const int eval, const int statVal, const int depth, const nodeType nType, const uint16_t age):
             _zobristHash(hash),
             _madeMove(mv),
             _eval(static_cast<int16_t>(eval)),
@@ -69,7 +69,7 @@ struct TranspositionTable
 
     private:
         uint64_t _zobristHash; // 8 bytes
-        PackedMove _madeMove; // 2 Bytes
+        Move _madeMove; // 2 Bytes
         int16_t _eval; // 2 bytes
         int16_t _value; // 2 bytes
         uint8_t _depth; // 1 byte
