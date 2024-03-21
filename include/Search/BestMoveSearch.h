@@ -14,6 +14,7 @@
 #include "../MoveGeneration/MoveGenerator.h"
 #include "TranspositionTable.h"
 #include "ZobristHash.h"
+#include "../Evaluation/BoardEvaluator.h"
 #include "../Evaluation/CounterMoveTable.h"
 
 struct BestMoveSearch
@@ -35,6 +36,8 @@ struct BestMoveSearch
     void IterativeDeepening(Move* output, const int maxDepth)
     {
         const uint64_t zHash = ZHasher.GenerateHash(_board);
+        int eval{};
+
         for (int depth = 1; depth < maxDepth; ++depth)
         {
             // measuring time
@@ -44,11 +47,39 @@ struct BestMoveSearch
             _currRootDepth = depth;
             _visitedNodes = 0;
             _cutoffNodes = 0;
-            int eval{};
 
             // cleaning tables used in iteration
-            _kTable.ClearPlyFloor(depth);
-            eval = -_negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {});
+
+            if (depth < 4)
+            {
+                _kTable.ClearPlyFloor(depth);
+                eval = _negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {});
+            }
+            else
+            {
+                int delta = BoardEvaluator::BasicFigureValues[wPawnsIndex] / 4;
+                int alpha = eval - delta;
+                int beta = eval + delta;
+
+                while (true)
+                {
+                    _kTable.ClearPlyFloor(depth);
+                    eval = _negaScout(_board, alpha, beta, depth, zHash, {});
+
+                    if (eval <= alpha)
+                    {
+                        beta = (alpha + beta) / 2;
+                        alpha = std::max(eval - delta, NegativeInfinity);
+                    }
+                    else if (eval >= beta)
+                        beta = std::min(eval + delta, PositiveInfinity);
+                    else
+                        break;
+
+                    delta += delta;
+                }
+
+            }
 
             // measurment end
             [[maybe_unused]]auto t2 = std::chrono::steady_clock::now();
