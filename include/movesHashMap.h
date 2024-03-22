@@ -146,7 +146,7 @@ class movesHashMap
             guard.lock();
             ParameterSearchLogger.Log(
                 std::format("Starting hash function parameters search on index: {} and field: {}\n", i,
-                            fieldStrMap.at(static_cast<Field>(1LLU << bInd))));
+                            ConvertToStrPos(bInd)));
             guard.unlock();
 
             // Main Thread job - parameter searching loop

@@ -5,8 +5,6 @@
 #ifndef MOVEGENERATOR_H
 #define MOVEGENERATOR_H
 
-#include <array>
-
 #include "../BitOperations.h"
 #include "../EngineTypeDefs.h"
 #include "../Evaluation/MoveSortEval.h"
@@ -21,6 +19,10 @@
 #include "QueenMap.h"
 #include "RookMap.h"
 #include "WhitePawnMap.h"
+
+#include <array>
+#include <exception>
+#include <map>
 
 struct  MoveGenerator
 {
@@ -56,8 +58,8 @@ struct  MoveGenerator
         _threadStack(s),
         _board(bd),
         _counterMove(counterMove),
-        _hTable(ht),
         _kTable(kt),
+        _hTable(ht),
         _depthLeft(depthLeft),
         _mostRecentSq(mostRecentMovedSquare){}
 
@@ -91,39 +93,17 @@ struct  MoveGenerator
             case 2:
                 _doubleCheckGen<GenOnlyAttackMoves>(results, blockedFigMap);
                 break;
+#ifndef NDEBUG
+            default:
+                throw std::runtime_error("[ ERROR ] GetMovesFast didnt detect correct checks count!");
+#endif
         }
 
         return results;
     }
 
-    uint64_t CountMoves(const int depth)
-    {
-        if (depth == 0)
-            return 1;
-
-        const auto moves = GetMovesFast();
-
-        if (depth == 1)
-        {
-            _threadStack.PopAggregate(moves);
-            return moves.size;
-        }
-
-        uint64_t sum{};
-
-        const auto oldCastling = _board.Castlings;
-        const auto oldElPassant = _board.elPassantField;
-
-        for (size_t i = 0; i < moves.size; ++i)
-        {
-            Move::MakeMove(moves[i], _board);
-            sum += CountMoves(depth - 1);
-            Move::UnmakeMove(moves[i], _board, oldCastling, oldElPassant);
-        }
-
-        _threadStack.PopAggregate(moves);
-        return sum;
-    }
+    std::map<std::string, uint64_t> GetCountedMoves(int depth);
+    uint64_t CountMoves(int depth);
 
     // ------------------------------
     // private methods
@@ -304,7 +284,7 @@ struct  MoveGenerator
             mv.SetKilledFigureField(ExtractMsbPos(_board.elPassantField));
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(_board.Castlings);
-            mv.SetMoveType(PackedMove::CaptureBit);
+            mv.SetMoveType(PackedMove::CaptureFlag);
 
             // preparing heuristic evaluation
             int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, 0, pawnMap, moveMap);
@@ -476,7 +456,7 @@ struct  MoveGenerator
                     mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
                     mv.SetElPassantField(Board::InvalidElPassantField);
                     mv.SetCasltingRights(castlings);
-                    mv.SetMoveType(PromotingMove);
+                    mv.SetMoveType(PromotingMove | PromoFlags[i]);
 
                     // preparing heuristic eval info
                     int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
@@ -519,7 +499,7 @@ struct  MoveGenerator
                 mv.SetKilledFigureField(movePos);
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
-                mv.SetMoveType(PackedMove::CaptureBit);
+                mv.SetMoveType(PackedMove::CaptureFlag);
 
                 // preparing heuristic eval info
                 int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
@@ -549,7 +529,7 @@ struct  MoveGenerator
                     mv.SetKilledFigureField(movePos);
                     mv.SetElPassantField(Board::InvalidElPassantField);
                     mv.SetCasltingRights(castlings);
-                    mv.SetMoveType(PackedMove::CaptureBit | PackedMove::PromoBit);
+                    mv.SetMoveType(PackedMove::CaptureFlag | PackedMove::PromoFlag | PromoFlags[i]);
 
                     // prapring heuristic eval info
                     int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
@@ -637,7 +617,7 @@ struct  MoveGenerator
             mv.SetKilledFigureField(newPos);
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(castlings);
-            mv.SetMoveType(PackedMove::CaptureBit);
+            mv.SetMoveType(PackedMove::CaptureFlag);
 
             // preparing heuristic eval info
             int16_t eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(0, _mostRecentSq, newPos);
@@ -678,7 +658,7 @@ struct  MoveGenerator
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
                 mv.SetCastlingType(1 + castlingIndex);
-                mv.SetMoveType(PackedMove::CastlingBit);
+                mv.SetMoveType(PackedMove::CastlingFlag);
 
                 // preapring heuristic eval
                 int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
@@ -693,6 +673,15 @@ struct  MoveGenerator
     // ------------------------------
     // Class fields
     // ------------------------------
+
+    static constexpr uint16_t PromoFlags[]
+    {
+        0,
+        PackedMove::KnightFlag,
+        PackedMove::BishopFlag,
+        PackedMove::RookFlag,
+        PackedMove::QueenFlag,
+    };
 
     // Move generation componentss
     ChessMechanics _mechanics;

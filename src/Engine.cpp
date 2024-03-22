@@ -18,23 +18,9 @@ void Engine::writeBoard() const { DisplayBoard(_board); }
 
 std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
 {
-    ChessMechanics game(_board);
-    const Board startingBoard = _board;
-    std::map<std::string, uint64_t> moveMap{};
-
-    game.IterativeBoardTraversal(
-        [&](const Board& bd)
-        {
-            const auto moveStr = GetLongAlgebraicMoveEncoding(startingBoard, bd);
-
-            uint64_t localSum{};
-            game.IterativeBoardTraversal([&]([[maybe_unused]] Board& unused) { ++localSum; }, depth - 1);
-
-            moveMap[moveStr] = localSum;
-        },
-        1);
-
-    return moveMap;
+    Board startingBoard = _board;
+    MoveGenerator game(startingBoard, TManager.GetDefaultStack());
+    return game.GetCountedMoves(depth);
 }
 
 std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)

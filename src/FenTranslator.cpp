@@ -4,7 +4,6 @@
 
 #include "../include/Interface/FenTranslator.h"
 
-#include "../include/BitOperations.h"
 #include "../include/Interface/Logger.h"
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
@@ -14,10 +13,10 @@ const Board& FenTranslator::GetDefault() { return StartBoard; }
 bool FenTranslator::Translate(const std::string& fenPos, Board& bd)
 {
     Board workBoard{};
-    size_t pos = 0;
 
     try
     {
+        size_t pos = 0;
         pos = _skipBlanks(pos, fenPos);
         pos = _processPositions(workBoard, pos, fenPos);
         pos = _skipBlanks(pos, fenPos);
@@ -50,13 +49,13 @@ std::string FenTranslator::Translate(const Board& board)
     fenPos += ' ';
 
     // inner representation points to position made with long pawn move
-    auto FenCompatibleElPassantPosition = board.movColor == WHITE
-                                              ? WhitePawnMap::GetElPassantMoveField(board.elPassantField)
-                                              : BlackPawnMap::GetElPassantMoveField(board.elPassantField);
+    const auto FenCompatibleElPassantPosition = board.movColor == WHITE
+                                                    ? WhitePawnMap::GetElPassantMoveField(board.elPassantField)
+                                                    : BlackPawnMap::GetElPassantMoveField(board.elPassantField);
 
     fenPos += board.elPassantField == Board::InvalidElPassantBoard
                   ? "-"
-                  : fieldStrMap.at(static_cast<Field>(FenCompatibleElPassantPosition));
+                  : ConvertToStrPos(FenCompatibleElPassantPosition);
 
     // skpping moves counters - not supported
     fenPos += " 0 1";
@@ -172,10 +171,12 @@ size_t FenTranslator::_processElPassant(Board& bd, const size_t pos, const std::
         throw std::runtime_error("[ ERROR ] Invalid field description detected on ElPassant field!\n");
 
     const auto field = fenPos.substr(pos, 2);
-    if (!strFieldMap.contains(field))
+    const uint64_t boardPos = ExtractPosFromStr(field[0], field[1]);
+
+    if (boardPos == 0)
         throw std::runtime_error("[ ERROR ] Invalid field description detected on ElPassant field!\n");
 
-    bd.elPassantField = strFieldMap.at(field);
+    bd.elPassantField = boardPos;
 
     // inner representation points to position made with long pawn move
     bd.elPassantField = bd.movColor == WHITE ? BlackPawnMap::GetElPassantMoveField(bd.elPassantField)
@@ -293,13 +294,17 @@ size_t FenTranslator::_processPositions(Board& bd, size_t pos, const std::string
 
 void FenTranslator::_addFigure(const std::string& pos, char fig, Board& bd)
 {
-    const auto field = static_cast<uint64_t>(strFieldMap.at(pos));
+    const auto field = ExtractPosFromStr(pos[0], pos[1]);
 
-    if (!figToDescMap.contains(fig))
+    if (field == 0)
+        throw std::runtime_error(
+            std::format("[ ERROR ] Encountered invalid character ({0})inside fen position description!\n", pos));
+
+    if (!FigCharToIndexMap.contains(fig))
         throw std::runtime_error(
             std::format("[ ERROR ] Encountered invalid character ({0})inside fen position description!\n", fig));
 
-    bd.boards[figToDescMap.at(fig)] |= field;
+    bd.boards[FigCharToIndexMap.at(fig)] |= field;
 }
 
 size_t FenTranslator::_skipBlanks(size_t pos, const std::string& fenPos)

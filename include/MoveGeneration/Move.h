@@ -124,18 +124,41 @@ struct PackedMove
         return !IsEmpty() && GetTargetField() != GetStartField();
     }
 
+    [[nodiscard]] std::string GetLongAlgebraicNotation() const
+    {
+        static constexpr char PromoFigs[] = { 'q', 'r', 'b', 'n' };
+        std::string rv;
+
+        auto [c1, c2] = ConvertToCharPos((int)GetStartField());
+        rv += c1; rv += c2;
+        auto [c3, c4] = ConvertToCharPos((int)GetTargetField());
+        rv += c3; rv += c4;
+
+        if (IsPromo())
+            rv += PromoFigs[GetMoveType() & PromoSpecBits];
+
+        return rv;
+    }
+
     // ------------------------------
     // Class fields
     // ------------------------------
 
-    static constexpr uint16_t PromoBit = 0x1 << 12;
-    static constexpr uint16_t CaptureBit = 0x1 << 13;
-    static constexpr uint16_t CastlingBit = 0x1 << 14;
-
+    static constexpr uint16_t PromoFlag = 0b1000;
+    static constexpr uint16_t CaptureFlag = 0b100;
+    static constexpr uint16_t CastlingFlag = 0b10;
+    static constexpr uint16_t QueenFlag = 0;
+    static constexpr uint16_t RookFlag = 0b1;
+    static constexpr uint16_t BishopFlag = 0b10;
+    static constexpr uint16_t KnightFlag = 0b11;
+    static constexpr uint16_t PromoSpecBits = 0b11;
 
 private:
     static constexpr uint16_t MoveTypeBits = 0xF << 12;
     static constexpr uint16_t Bit6 = 0b111111;
+
+    static constexpr uint16_t PromoBit = 0b1000 << 12;
+    static constexpr uint16_t CaptureBit = 0b100 << 12;
 
     friend Move;
 
@@ -201,14 +224,7 @@ class Move
 
     [[nodiscard]] std::string GetLongAlgebraicNotation() const
     {
-        static constexpr std::string FigTypeMap[] = {"", "n", "b", "r", "q"};
-        std::string promotionMark;
-
-        if (GetStartBoardIndex() != GetTargetBoardIndex())
-            promotionMark = FigTypeMap[GetTargetBoardIndex() % Board::BoardsPerCol];
-
-        return fieldStrMap.at(static_cast<Field>(maxMsbPossible >> GetStartField())) +
-               fieldStrMap.at(static_cast<Field>(maxMsbPossible >> GetTargetField())) + promotionMark;
+        return _packedMove.GetLongAlgebraicNotation();
     }
 
     static void MakeMove(const Move mv, Board& bd)
