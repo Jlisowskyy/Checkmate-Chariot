@@ -75,7 +75,7 @@ struct  MoveGenerator
 
     [[nodiscard]] bool IsCheck() const { return _mechanics.IsCheck(); }
 
-    template <bool GenOnlyAttackMoves = false>
+    template <bool GenOnlyAttackMoves = false, bool ApplyHeuristicEval = true>
     payload GetMovesFast()
     {
         const uint64_t fullMap = _mechanics.GetFullMap();
@@ -85,13 +85,13 @@ struct  MoveGenerator
         switch (checksCount)
         {
             case 0:
-                _noCheckGen<GenOnlyAttackMoves>(results, fullMap, blockedFigMap);
+                _noCheckGen<GenOnlyAttackMoves, ApplyHeuristicEval>(results, fullMap, blockedFigMap);
                 break;
             case 1:
-                _singleCheckGen<GenOnlyAttackMoves>(results, fullMap, blockedFigMap, checkType);
+                _singleCheckGen<GenOnlyAttackMoves, ApplyHeuristicEval>(results, fullMap, blockedFigMap, checkType);
                 break;
             case 2:
-                _doubleCheckGen<GenOnlyAttackMoves>(results, blockedFigMap);
+                _doubleCheckGen<GenOnlyAttackMoves, ApplyHeuristicEval>(results, blockedFigMap);
                 break;
 #ifndef NDEBUG
             default:
@@ -109,7 +109,7 @@ struct  MoveGenerator
     // private methods
     // ------------------------------
    private:
-    template <bool GenOnlyAttackMoves>
+    template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval>
     void _noCheckGen(payload& results, const uint64_t fullMap, const uint64_t blockedFigMap)
     {
         const uint64_t pinnedFigsMap = _mechanics.GetPinnedFigsMapWoutCheck(_board.movColor, fullMap);
@@ -123,26 +123,26 @@ struct  MoveGenerator
                 : WhitePawnMap::GetAttackFields(
                       _board.boards[Board::BoardsPerCol * SwapColor(_board.movColor) + pawnsIndex]);
 
-        _processFigMoves<GenOnlyAttackMoves, KnightMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
+        _processFigMoves<GenOnlyAttackMoves, ApplyHeuristicEval, KnightMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
 
-        _processFigMoves<GenOnlyAttackMoves, BishopMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
+        _processFigMoves<GenOnlyAttackMoves, ApplyHeuristicEval, BishopMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
 
-        _processFigMoves<GenOnlyAttackMoves, RookMap, true>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
+        _processFigMoves<GenOnlyAttackMoves, ApplyHeuristicEval, RookMap, true>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
 
-        _processFigMoves<GenOnlyAttackMoves, QueenMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
+        _processFigMoves<GenOnlyAttackMoves, ApplyHeuristicEval, QueenMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
 
         if (_board.movColor == WHITE)
-            _processPawnMoves<GenOnlyAttackMoves, WhitePawnMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
+            _processPawnMoves<GenOnlyAttackMoves, ApplyHeuristicEval, WhitePawnMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
         else
-            _processPawnMoves<GenOnlyAttackMoves, BlackPawnMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
+            _processPawnMoves<GenOnlyAttackMoves, ApplyHeuristicEval, BlackPawnMap>(results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap);
 
-        _processPlainKingMoves<GenOnlyAttackMoves>(results, blockedFigMap, allyMap, enemyMap);
+        _processPlainKingMoves<GenOnlyAttackMoves, ApplyHeuristicEval>(results, blockedFigMap, allyMap, enemyMap);
 
         if constexpr (GenOnlyAttackMoves == false)
-            _processKingCastlings(results, blockedFigMap, fullMap);
+            _processKingCastlings<ApplyHeuristicEval>(results, blockedFigMap, fullMap);
     }
 
-    template <bool GenOnlyAttackMoves>
+    template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval>
     void _singleCheckGen(payload& results, const uint64_t fullMap, const uint64_t blockedFigMap, const int checkType)
     {
         static constexpr uint64_t UNUSED = 0;
@@ -169,37 +169,37 @@ struct  MoveGenerator
                       _board.boards[Board::BoardsPerCol * SwapColor(_board.movColor) + pawnsIndex]);
 
         // Specific figure processing
-        _processFigMoves<GenOnlyAttackMoves, KnightMap, false, false, false, true>(
+        _processFigMoves<GenOnlyAttackMoves, ApplyHeuristicEval, KnightMap, false, false, false, true>(
             results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap, UNUSED, allowedTilesMap);
 
-        _processFigMoves<GenOnlyAttackMoves, BishopMap, false, false, false, true>(
+        _processFigMoves<GenOnlyAttackMoves, ApplyHeuristicEval, BishopMap, false, false, false, true>(
             results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap, UNUSED, allowedTilesMap);
 
-        _processFigMoves<GenOnlyAttackMoves, RookMap, true, false, false, true>(results, pawnAttacks, enemyMap, allyMap,
+        _processFigMoves<GenOnlyAttackMoves, ApplyHeuristicEval, RookMap, true, false, false, true>(results, pawnAttacks, enemyMap, allyMap,
                                                                                 pinnedFigsMap, UNUSED, allowedTilesMap);
 
-        _processFigMoves<GenOnlyAttackMoves, QueenMap, false, false, false, true>(
+        _processFigMoves<GenOnlyAttackMoves, ApplyHeuristicEval, QueenMap, false, false, false, true>(
             results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap, UNUSED, allowedTilesMap);
 
         if (_board.movColor == WHITE)
-            _processPawnMoves<GenOnlyAttackMoves, WhitePawnMap, true>(results, pawnAttacks, enemyMap, allyMap,
+            _processPawnMoves<GenOnlyAttackMoves, ApplyHeuristicEval, WhitePawnMap, true>(results, pawnAttacks, enemyMap, allyMap,
                                                                       pinnedFigsMap, allowedTilesMap);
         else
-            _processPawnMoves<GenOnlyAttackMoves, BlackPawnMap, true>(results, pawnAttacks, enemyMap, allyMap,
+            _processPawnMoves<GenOnlyAttackMoves, ApplyHeuristicEval, BlackPawnMap, true>(results, pawnAttacks, enemyMap, allyMap,
                                                                       pinnedFigsMap, allowedTilesMap);
 
-        _processPlainKingMoves<GenOnlyAttackMoves>(results, blockedFigMap, allyMap, enemyMap);
+        _processPlainKingMoves<GenOnlyAttackMoves, ApplyHeuristicEval>(results, blockedFigMap, allyMap, enemyMap);
     }
 
-    template <bool GenOnlyAttackMoves>
+    template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval>
     void _doubleCheckGen(payload& results, const uint64_t blockedFigMap) const
     {
         const uint64_t allyMap = _mechanics.GetColMap(_board.movColor);
         const uint64_t enemyMap = _mechanics.GetColMap(SwapColor(_board.movColor));
-        _processPlainKingMoves<GenOnlyAttackMoves>(results, blockedFigMap, allyMap, enemyMap);
+        _processPlainKingMoves<GenOnlyAttackMoves, ApplyHeuristicEval>(results, blockedFigMap, allyMap, enemyMap);
     }
 
-    template <bool GenOnlyAttackMoves, class MapT, bool isCheck = false>
+    template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval, class MapT, bool isCheck = false>
     void _processPawnMoves(payload& results, const uint64_t pawnAttacks, const uint64_t enemyMap,
                            const uint64_t allyMap, const uint64_t pinnedFigMap,
                            [[maybe_unused]] const uint64_t allowedMoveFillter = 0)
@@ -207,18 +207,18 @@ struct  MoveGenerator
         const uint64_t promotingPawns = _board.boards[MapT::GetBoardIndex(0)] & MapT::PromotingMask;
         const uint64_t nonPromotingPawns = _board.boards[MapT::GetBoardIndex(0)] ^ promotingPawns;
 
-        _processFigMoves<GenOnlyAttackMoves, MapT, false, false, true, isCheck, MapT::GetElPassantField>(
+        _processFigMoves<GenOnlyAttackMoves, ApplyHeuristicEval, MapT, false, false, true, isCheck, MapT::GetElPassantField>(
             results, pawnAttacks, enemyMap, allyMap, pinnedFigMap, nonPromotingPawns, allowedMoveFillter);
 
         if (promotingPawns)
-            _processFigMoves<GenOnlyAttackMoves, MapT, false, true, true, isCheck>(
+            _processFigMoves<GenOnlyAttackMoves, ApplyHeuristicEval, MapT, false, true, true, isCheck>(
                 results, pawnAttacks, enemyMap, allyMap, pinnedFigMap, promotingPawns, allowedMoveFillter);
 
-        _processElPassantMoves<MapT, isCheck>(results, allyMap | enemyMap, pinnedFigMap, allowedMoveFillter);
+        _processElPassantMoves<ApplyHeuristicEval, MapT, isCheck>(results, allyMap | enemyMap, pinnedFigMap, allowedMoveFillter);
     }
 
     // TODO: Consider different soluition?
-    template <class MapT, bool isCheck = false>
+    template <bool ApplyHeuristicEval, class MapT, bool isCheck = false>
     void _processElPassantMoves(payload& results, const uint64_t fullMap, const uint64_t pinnedFigMap,
                                 [[maybe_unused]] const uint64_t allowedMoveFillter = 0)
     {
@@ -287,9 +287,13 @@ struct  MoveGenerator
             mv.SetMoveType(PackedMove::CaptureFlag);
 
             // preparing heuristic evaluation
-            int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, 0, pawnMap, moveMap);
-            eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, ExtractMsbPos(moveMap));
-            mv.SetEval(eval);
+
+            if constexpr (ApplyHeuristicEval)
+            {
+                int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, 0, pawnMap, moveMap);
+                eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, ExtractMsbPos(moveMap));
+                mv.SetEval(eval);
+            }
 
             results.Push(_threadStack, mv);
 
@@ -299,7 +303,7 @@ struct  MoveGenerator
 
     // TODO: Compare with simple if searching loop
     // TODO: propagate checkForCastling?
-    template <bool GenOnlyAttackMoves, class MapT, bool checkForCastling = false, bool promotePawns = false,
+    template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval, class MapT, bool checkForCastling = false, bool promotePawns = false,
               bool selectFigures = false, bool isCheck = false,
               uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr>
     void _processFigMoves(payload& results, const uint64_t pawnAttacks, const uint64_t enemyMap, const uint64_t allyMap,
@@ -347,11 +351,11 @@ struct  MoveGenerator
             // processing move consequneces
 
             if constexpr (GenOnlyAttackMoves == false)
-                _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(results, pawnAttacks, nonAttackingMoves,
+                _processNonAttackingMoves<ApplyHeuristicEval, promotePawns, elPassantFieldDeducer>(results, pawnAttacks, nonAttackingMoves,
                                                                                MapT::GetBoardIndex(_board.movColor),
                                                                                figBoard, updatedCastlings);
 
-            _processAttackingMoves<promotePawns>(results, pawnAttacks, attackMoves,
+            _processAttackingMoves<ApplyHeuristicEval, promotePawns>(results, pawnAttacks, attackMoves,
                                                  MapT::GetBoardIndex(_board.movColor), figBoard, updatedCastlings);
 
             unpinnedOnes ^= figBoard;
@@ -380,12 +384,12 @@ struct  MoveGenerator
             // processing move consequences
 
             if constexpr (GenOnlyAttackMoves == false)
-                _processNonAttackingMoves<promotePawns, elPassantFieldDeducer>(results, pawnAttacks, nonAttackingMoves,
+                _processNonAttackingMoves<ApplyHeuristicEval, promotePawns, elPassantFieldDeducer>(results, pawnAttacks, nonAttackingMoves,
                                                                                MapT::GetBoardIndex(_board.movColor),
                                                                                figBoard, _board.Castlings);
 
             // TODO: There is exactly one move possible
-            _processAttackingMoves<promotePawns>(results, pawnAttacks, attackMoves,
+            _processAttackingMoves<ApplyHeuristicEval, promotePawns>(results, pawnAttacks, attackMoves,
                                                  MapT::GetBoardIndex(_board.movColor), figBoard, _board.Castlings);
 
             pinnedOnes ^= figBoard;
@@ -393,7 +397,7 @@ struct  MoveGenerator
     }
 
     // TODO: improve readability of code below
-    template <bool promotePawns, uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr>
+    template <bool ApplyHeuristicEval, bool promotePawns, uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr>
     void _processNonAttackingMoves(payload& results, const uint64_t pawnAttacks, uint64_t nonAttackingMoves,
                                    const size_t figBoardIndex, const uint64_t startField,
                                    const std::bitset<Board::CastlingCount + 1> castlings) const
@@ -430,11 +434,15 @@ struct  MoveGenerator
                 mv.SetCasltingRights(castlings);
 
                 // preparing heuristic evaluation
-                int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
-                eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
-                eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
-                eval = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
-                mv.SetEval(eval);
+
+                if constexpr (ApplyHeuristicEval)
+                {
+                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
+                    eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+                    eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
+                    eval = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
+                    mv.SetEval(eval);
+                }
 
                 results.Push(_threadStack, mv);
             }
@@ -459,10 +467,13 @@ struct  MoveGenerator
                     mv.SetMoveType(PromotingMove | PromoFlags[i]);
 
                     // preparing heuristic eval info
-                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
+                    if constexpr (ApplyHeuristicEval)
+                    {
+                        int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
                                                                           startField, moveBoard);
-                    eval = MoveSortEval::ApplyPromotionEffects(eval, TargetBoard);
-                    mv.SetEval(eval);
+                        eval = MoveSortEval::ApplyPromotionEffects(eval, TargetBoard);
+                        mv.SetEval(eval);
+                    }
 
                     results.Push(_threadStack, mv);
                 }
@@ -472,7 +483,7 @@ struct  MoveGenerator
         }
     }
 
-    template <bool promotePawns>
+    template <bool ApplyHeuristicEval, bool promotePawns>
     void _processAttackingMoves(payload& results, const uint64_t pawnAttacks, uint64_t attackingMoves,
                                 const size_t figBoardIndex, const uint64_t startField,
                                 const std::bitset<Board::CastlingCount + 1> castlings) const
@@ -502,11 +513,14 @@ struct  MoveGenerator
                 mv.SetMoveType(PackedMove::CaptureFlag);
 
                 // preparing heuristic eval info
-                int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
-                                                      startField, moveBoard);
-                eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
-                eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
-                mv.SetEval(eval);
+                if constexpr (ApplyHeuristicEval)
+                {
+                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
+                                                       startField, moveBoard);
+                    eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
+                    eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
+                    mv.SetEval(eval);
+                }
 
                 results.Push(_threadStack, mv);
             }
@@ -532,12 +546,16 @@ struct  MoveGenerator
                     mv.SetMoveType(PackedMove::CaptureFlag | PackedMove::PromoFlag | PromoFlags[i]);
 
                     // prapring heuristic eval info
-                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
+
+                    if constexpr (ApplyHeuristicEval)
+                    {
+                        int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks,
                                                       startField, moveBoard);
-                    eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
-                    eval = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
-                    eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
-                    mv.SetEval(eval);
+                        eval = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
+                        eval = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
+                        eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
+                        mv.SetEval(eval);
+                    }
 
                     results.Push(_threadStack, mv);
                 }
@@ -548,7 +566,7 @@ struct  MoveGenerator
     }
 
     // TODO: test copying all old castlings
-    template <bool GenOnlyAttackMoves>
+    template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval>
     void _processPlainKingMoves(payload& results, const uint64_t blockedFigMap, const uint64_t allyMap,
                                 const uint64_t enemyMap) const
     {
@@ -585,10 +603,14 @@ struct  MoveGenerator
                 mv.SetCasltingRights(castlings);
 
                 // preparing heuristic eval info
-                int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
-                eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
-                eval = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
-                mv.SetEval(eval);
+
+                if constexpr (ApplyHeuristicEval)
+                {
+                    int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                    eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
+                    eval = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
+                    mv.SetEval(eval);
+                }
 
                 results.Push(_threadStack, mv);
 
@@ -620,9 +642,13 @@ struct  MoveGenerator
             mv.SetMoveType(PackedMove::CaptureFlag);
 
             // preparing heuristic eval info
-            int16_t eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(0, _mostRecentSq, newPos);
-            eval += MoveSortEval::FigureEval[attackedFigBoardIndex]; // adding value of killed figure
-            mv.SetEval(eval);
+
+            if constexpr (ApplyHeuristicEval)
+            {
+                int16_t eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(0, _mostRecentSq, newPos);
+                eval += MoveSortEval::FigureEval[attackedFigBoardIndex]; // adding value of killed figure
+                mv.SetEval(eval);
+            }
 
             results.Push(_threadStack, mv);
 
@@ -632,6 +658,7 @@ struct  MoveGenerator
 
     // TODO: simplify ifs??
     // TODO: cleanup left castling available when rook is dead then propagate no castling checking?
+    template<bool ApplyHeuristicEval>
     void _processKingCastlings(payload& results, const uint64_t blockedFigMap, const uint64_t fullMap) const
     {
         for (size_t i = 0; i < Board::CastlingsPerColor; ++i)
@@ -661,10 +688,14 @@ struct  MoveGenerator
                 mv.SetMoveType(PackedMove::CastlingFlag);
 
                 // preapring heuristic eval
-                int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
-                eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
-                eval = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
-                mv.SetEval(eval);
+
+                if constexpr (ApplyHeuristicEval)
+                {
+                    int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                    eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
+                    eval = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
+                    mv.SetEval(eval);
+                }
 
                 results.Push(_threadStack, mv);
             }

@@ -11,7 +11,7 @@ std::map<std::string, uint64_t> MoveGenerator::GetCountedMoves(const int depth)
     const auto oldCastling = _board.Castlings;
     const auto oldElPassant = _board.elPassantField;
 
-    auto moves = GetMovesFast();
+    auto moves = GetMovesFast<false, false>();
     for (size_t i = 0 ; i < moves.size; ++i)
     {
         Move::MakeMove(moves[i], _board);
@@ -30,7 +30,7 @@ uint64_t MoveGenerator::CountMoves(const int depth)
     if (depth == 0)
         return 1;
 
-    const auto moves = GetMovesFast();
+    const auto moves = GetMovesFast<false, false>();
 
     if (depth == 1)
     {

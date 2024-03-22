@@ -117,7 +117,7 @@ bool Engine::_applyMove(Board& board, const std::string& move)
     MoveGenerator mech(board, TManager.GetDefaultStack());
 
     // generating moves
-    auto moves = mech.GetMovesFast();
+    auto moves = mech.GetMovesFast<false, false>();
 
     for (size_t i = 0 ; i < moves.size; ++i)
         if (move == moves[i].GetLongAlgebraicNotation())
