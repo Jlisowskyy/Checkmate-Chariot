@@ -132,26 +132,6 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str)
         const MoveGenerationTester tester;
         tester.PerformDeepTest(_fenPosition, depth, _appliedMoves);
     }
-    else if (workStr == "fullDebug")
-    {
-        std::string depthStr{};
-        pos = ParseTools::ExtractNextWord(str, depthStr, pos);
-        if (pos == 0)
-            return UCICommand::InvalidCommand;
-
-        int depth;
-        try
-        {
-            depth = std::stoi(depthStr);
-        }
-        catch (const std::exception& exc)
-        {
-            return UCICommand::InvalidCommand;
-        }
-
-        const MoveGenerationTester tester;
-        tester.PerformFullTest(_fenPosition, depth, _appliedMoves);
-    }
     else if (workStr == "file")
     {
         std::string path{};
@@ -324,9 +304,6 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
         "- go deepDebug \"depth\" - debugging tool, which is used to possibly identify invalid move chains which "
         "produces\n"
         "                 buggy result.\n"
-        "- go fullDebug \"depth\" - traverses whole tree and invokes simple debug test on each leaf parent to check\n"
-        "                 move correctnes on lowest level possible. Insanly slow - use only for lower search. Could be "
-        "optimised.\n"
         "- fen - simply displays fen encoding of current map\n"
         "- go perfComp \"input file\" \"output file\" - generates csv file to \"output file\" which contains "
         "information\n"

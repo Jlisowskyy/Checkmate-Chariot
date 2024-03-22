@@ -68,7 +68,7 @@ class Engine
     // private methods
     // ------------------------------
    private:
-    static bool _applyMove(Board& board, const std::string& move, uint64_t oldPos, uint64_t newPos);
+    bool _applyMove(Board& board, const std::string& move);
 
     static void _changeDebugState(Engine& eng, std::string& nPath);
 

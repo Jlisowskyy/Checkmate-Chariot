@@ -95,40 +95,6 @@ void MoveGenerationTester::PerformDeepTest(const std::string& fenPosition, const
     }
 }
 
-void MoveGenerationTester::PerformFullTest(const std::string& fenPosition, const int depth,
-                                           const std::vector<std::string>& moves) const
-{
-    bool shouldEnd = false;
-    Engine eng{};
-    eng.SetFenPosition(fenPosition);
-    eng.ApplyMoves(moves);
-
-    auto board = eng.GetUnderlyingBoardCopy();
-    ChessMechanics mech{board};
-    mech.IterativeBoardTraversal(
-        [&](const Board& bd)
-        {
-            if (shouldEnd)
-                return;
-
-            const auto fenEncoding = FenTranslator::Translate(bd);
-            const auto [move, dep] = PerformSingleShallowTest(fenEncoding, 1, std::vector<std::string>{});
-
-            if (dep != -1)
-            {
-                shouldEnd = true;
-                GlobalLogger.StartLogging()
-                    << std::format("[ ERROR ] Invalid position found: {}\n And move: {}\n", fenEncoding, move);
-            }
-        },
-        depth - 1);
-
-    if (shouldEnd == false)
-    {
-        GlobalLogger.StartLogging() << "[  OK  ] No invalid positions found!\n";
-    }
-}
-
 void MoveGenerationTester::PerformSeriesOfDeepTests(const std::vector<std::pair<std::string, int>>& testPositions) const
 {
     for (const auto& [position, depth] : testPositions)

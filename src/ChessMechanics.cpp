@@ -175,16 +175,24 @@ uint64_t ChessMechanics::GetAllowedTilesWhenCheckedByNonSliding() const
     return allowedTiles;
 }
 
-std::vector<Board> ChessMechanics::GetPossibleMoveSlow()
+std::pair<uint64_t, uint8_t> ChessMechanics::_getRookBlockedMap(uint64_t rookMap, const uint64_t fullMapWoutKing,
+    const uint64_t kingMap)
 {
-    static constexpr size_t averageMoveCount = 40;
+    uint64_t blockedTiles{};
+    uint8_t checks{};
 
-    std::vector<Board> moveVect{};
-    moveVect.reserve(averageMoveCount);
+    while(rookMap)
+    {
+        int msbPos = ExtractMsbPos(rookMap);
 
-    IterativeBoardTraversal([&](Board& board) { moveVect.emplace_back(board); }, 1);
+        const uint64_t moves = RookMap::GetMoves(msbPos, fullMapWoutKing);
+        blockedTiles |= moves;
+        checks += ((moves & kingMap) != 0);
 
-    return moveVect;
+        rookMap ^= maxMsbPossible >> msbPos;
+    }
+
+    return {blockedTiles, checks};
 }
 
 // TODO: pretty fking stupid but ok could be optimised after tests:
