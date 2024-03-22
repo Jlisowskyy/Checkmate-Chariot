@@ -59,7 +59,6 @@ struct ZobristHasher
 private:
     static constexpr size_t CastlingHashesCount = 32; // 2^(4 + 1) each castling property can be either 1 or 0
                                                         // and additional sentinel
-
     uint64_t _mainHashes[Board::BoardsCount+1][Board::BoardFields]{};
     uint64_t _colorHash{};
     uint64_t _castlingHashes[CastlingHashesCount]{};

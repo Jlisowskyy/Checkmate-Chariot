@@ -16,6 +16,7 @@
 #include "ZobristHash.h"
 #include "../Evaluation/BoardEvaluator.h"
 #include "../Evaluation/CounterMoveTable.h"
+#include "../Evaluation/HistoricTable.h"
 
 struct BestMoveSearch
 {
@@ -95,9 +96,8 @@ struct BestMoveSearch
                 const uint64_t nps = 1000LLU * _visitedNodes / spentMs;
                 const double cutOffPerc = static_cast<double>(_cutoffNodes)/static_cast<double>(_visitedNodes);
 
-                GlobalLogger.StartLogging() << std::format("info depth: {}, best move: {}, eval: {}, time: {}, nodes: {}, cut-off nodes: {}, with succeess rate: {}, nodes per sec: {}, tt entries: {}, at age: {}\n", depth + 1,
-                                                           output->GetLongAlgebraicNotation(), static_cast<double>(eval)/100.0,
-                                                           spentMs, _visitedNodes, _cutoffNodes, cutOffPerc,  nps, TTable.GetContainedElements(), _age);
+                GlobalLogger.StartLogging() << std::format("info depth {} time {} nodes {} nps {} score {} cp currmove {} hashfull {} cut-offs perc {:.2f}\n",
+                    depth + 1, spentMs, _visitedNodes, nps, eval,  output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc);
             }
         }
     }
@@ -138,6 +138,7 @@ struct BestMoveSearch
     int _currRootDepth = 0;
     KillerTable _kTable{};
     CounterMoveTable _cmTable{};
+    HistoricTable _histTable{};
 };
 
 #endif  // BESTMOVESEARCH_H

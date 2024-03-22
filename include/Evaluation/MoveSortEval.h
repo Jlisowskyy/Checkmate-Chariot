@@ -7,6 +7,7 @@
 
 #include <cinttypes>
 
+#include "HistoricTable.h"
 #include "KillerTable.h"
 
 /*              LIST OF SORTING RULES:
@@ -36,11 +37,11 @@ struct MoveSortEval
         return eval;
     }
 
-    static int16_t ApplyPromotionEffects(const int16_t eval, const size_t nFig) { return FigureEval[nFig] + eval; }
+    static int16_t ApplyPromotionEffects(const int16_t eval, const size_t nFig) { return FigureEval[nFig] + eval + PromotionBonus; }
 
     static int16_t ApplyKilledFigEffect(const int16_t eval, const size_t attackFig, const size_t killedFig)
     {
-        return eval + FigureEval[killedFig] - FigureEval[attackFig];
+        return eval + FigureEval[killedFig] - FigureEval[attackFig] + CaptureBonus;
     }
 
     static int16_t ApplyKillerMoveEffect(const int16_t eval, const KillerTable& kTable, const Move mv, const int depthLeft)
@@ -56,6 +57,10 @@ struct MoveSortEval
     static int16_t ApplyCaptureMostRecentSquareEffect(const int16_t eval, const int mostRecentSquareMsb, const int moveSquare)
     {
         return eval + MostRecentSquarePrize * (mostRecentSquareMsb == moveSquare);
+    }
+
+    static int16_t ApplyHistoryTableBonus(const int16_t eval, const Move mv, const HistoricTable& hTable) {
+        return eval + hTable.GetBonusMove(mv);
     }
 
 
@@ -83,6 +88,8 @@ struct MoveSortEval
     static constexpr int16_t KillerMovePrize = 150;
     static constexpr int16_t CounterMovePrize = 200;
     static constexpr int16_t MostRecentSquarePrize = 900;
+    static constexpr int16_t CaptureBonus = 2500;
+    static constexpr int16_t PromotionBonus = 4000;
 };
 
 #endif  // MOVESORTEVAL_H

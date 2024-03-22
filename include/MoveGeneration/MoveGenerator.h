@@ -22,10 +22,8 @@
 #include "RookMap.h"
 #include "WhitePawnMap.h"
 
-class MoveGenerator
+struct  MoveGenerator
 {
-    inline static KillerTable dummyTable{};
-public:
     using stck = stack<Move, DefaultStackSize>;
     using payload = stck::stackPayload;
 
@@ -48,7 +46,8 @@ public:
     explicit MoveGenerator(
         Board& bd,
         stack<Move, DefaultStackSize>& s,
-        KillerTable& kt = dummyTable,
+        const HistoricTable& ht = {},
+        const KillerTable& kt = {},
         const PackedMove counterMove = {},
         const int depthLeft = 0,
         const int mostRecentMovedSquare = 0
@@ -57,6 +56,7 @@ public:
         _threadStack(s),
         _board(bd),
         _counterMove(counterMove),
+        _hTable(ht),
         _kTable(kt),
         _depthLeft(depthLeft),
         _mostRecentSq(mostRecentMovedSquare){}
@@ -453,6 +453,7 @@ public:
                 int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
                 eval = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
                 eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
+                eval = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
                 mv.SetEval(eval);
 
                 results.Push(_threadStack, mv);
@@ -606,6 +607,7 @@ public:
                 // preparing heuristic eval info
                 int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
                 eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
+                eval = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
                 mv.SetEval(eval);
 
                 results.Push(_threadStack, mv);
@@ -681,6 +683,7 @@ public:
                 // preapring heuristic eval
                 int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
                 eval = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
+                eval = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
                 mv.SetEval(eval);
 
                 results.Push(_threadStack, mv);
@@ -698,7 +701,8 @@ public:
 
     // Heuristic evaluation components
     const PackedMove _counterMove;
-    KillerTable& _kTable;
+    const KillerTable& _kTable;
+    const HistoricTable& _hTable;
     int _depthLeft;
     int _mostRecentSq;
 };

@@ -24,7 +24,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
     ++_visitedNodes;
 
     // generate moves
-    MoveGenerator mechanics(bd, _stack, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField());
+    MoveGenerator mechanics(bd, _stack, _histTable, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField());
     auto moves = mechanics.GetMovesFast();
 
     if (moves.size == 0)
@@ -116,12 +116,11 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
                     // cut-off found
                     if (moveEval >= beta)
                     {
-                        if (moves[i].IsAttackingMove() == false)
+                        if (moves[i].IsQuietMove())
                         {
-                            if (moves[i].IsQuietMove())
-                                _kTable.SaveKillerMove(moves[i], depthLeft);
-
+                            _kTable.SaveKillerMove(moves[i], depthLeft);
                             _cmTable.SaveCounterMove(moves[i].GetPackedMove(), prevMove);
+                            _histTable.SetBonusMove(moves[i], depthLeft);
                         }
                         nType = lowerBound;
 
@@ -186,7 +185,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
     const auto oldElPassant = bd.elPassantField;
 
     // generate moves
-    MoveGenerator mechanics(bd, _stack, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField());
+    MoveGenerator mechanics(bd, _stack, _histTable, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField());
     auto moves = mechanics.GetMovesFast();
 
     if (moves.size == 0)
@@ -216,12 +215,11 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, int beta, const int depthLe
             // cut-off found
             if (moveEval >= beta)
             {
-                if (moves[i].IsAttackingMove() == false)
+                if (moves[i].IsQuietMove())
                 {
-                    if (moves[i].IsQuietMove())
-                        _kTable.SaveKillerMove(moves[i], depthLeft);
-
+                    _kTable.SaveKillerMove(moves[i], depthLeft);
                     _cmTable.SaveCounterMove(moves[i].GetPackedMove(), prevMove);
+                    _histTable.SetBonusMove(moves[i], depthLeft);
                 }
 
                 nType = lowerBound;

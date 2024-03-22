@@ -185,7 +185,7 @@ class Move
 
     [[nodiscard]] bool IsQuietMove() const
     {
-        return _packedMove.IsQuiet();
+        return !_packedMove.IsCapture() && !_packedMove.IsPromo();
     }
 
     [[nodiscard]] bool IsValidMove() const

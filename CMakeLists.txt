@@ -80,6 +80,7 @@ add_executable(Checkmate-Chariot main.cpp
         src/TranspositionTable.cpp
         include/Evaluation/KillerTable.h
         include/Evaluation/CounterMoveTable.h
+        include/Evaluation/HistoricTable.h
 )
 
 find_package(OpenMP)
