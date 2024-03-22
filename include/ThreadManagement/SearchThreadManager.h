@@ -8,7 +8,6 @@
 #include <string>
 #include <thread>
 
-#include "../Evaluation/BoardEvaluator.h"
 #include "../MoveGeneration/Move.h"
 #include "../Search/BestMoveSearch.h"
 #include "stack.h"
@@ -46,7 +45,7 @@ class SearchThreadManager
     // Private class methods
     // ------------------------------
    private:
-    static void _threadSearchJob(const Board* bd, stack<Move, DefaultStackSize>* s, Move* output, int depth, uint16_t age);
+    static void _threadSearchJob(const Board* bd, stack<Move, DefaultStackSize>* s, PackedMove* output, int depth, uint16_t age);
 
     void _cancelThread(size_t threadInd);
 
@@ -62,7 +61,7 @@ class SearchThreadManager
     // ------------------------------
 
     bool _isSearchOn{false};
-    Move _seachResult{};
+    PackedMove _seachResult{};
 
     stack<Move, DefaultStackSize> _stacks[20 + 1]{};
     std::thread* _threads[20 + 1]{};

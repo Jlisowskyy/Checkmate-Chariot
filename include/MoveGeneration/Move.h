@@ -5,9 +5,10 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include <array>
-
 #include "../EngineTypeDefs.h"
+
+#include <array>
+#include <cassert>
 
 // TOOD: repair description
 
@@ -229,6 +230,8 @@ class Move
 
     static void MakeMove(const Move mv, Board& bd)
     {
+        assert(mv.IsOkeyMove());
+
         // removing old piece from board
         bd.boards[mv.GetStartBoardIndex()] ^= maxMsbPossible >> mv.GetStartField();
 
@@ -264,6 +267,8 @@ class Move
     static void UnmakeMove(const Move mv, Board& bd, const std::bitset<Board::CastlingCount + 1> castlings,
                            const uint64_t oldElPassant)
     {
+        assert(mv.IsOkeyMove());
+
         bd.ChangePlayingColor();
 
         // placing piece on old board

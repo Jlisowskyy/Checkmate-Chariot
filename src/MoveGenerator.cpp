@@ -4,8 +4,12 @@
 
 #include "../include/MoveGeneration/MoveGenerator.h"
 
+#include <cassert>
+
 std::map<std::string, uint64_t> MoveGenerator::GetCountedMoves(const int depth)
 {
+    assert(depth >= 1);
+
     std::map<std::string, uint64_t> rv{};
 
     const auto oldCastling = _board.Castlings;

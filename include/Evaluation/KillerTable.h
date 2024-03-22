@@ -17,7 +17,7 @@
 
 class KillerTable
 {
-    static constexpr size_t MovesPerPly = 4;
+    static constexpr size_t MovesPerPly = 3;
 public:
     // ------------------------------
     // Class creation

@@ -65,7 +65,7 @@ std::string SearchThreadManager::goDepth(const Board& bd, int depth, const uint1
     return _seachResult.GetLongAlgebraicNotation();
 }
 
-void SearchThreadManager::_threadSearchJob(const Board* bd, stack<Move, DefaultStackSize>* s, Move* output,
+void SearchThreadManager::_threadSearchJob(const Board* bd, stack<Move, DefaultStackSize>* s, PackedMove* output,
                                            const int depth, const uint16_t age)
 {
 #ifdef __unix__

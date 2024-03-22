@@ -15,7 +15,7 @@ TranspositionTable TTable{};
 
 TranspositionTable::TranspositionTable():
     _tableSize(StartTableSize),
-    _hashMaks(_getPow2ModuloMask(StartTableSize)),
+    _hashMask(_getPow2ModuloMask(StartTableSize)),
     _map{static_cast<HashRecord *>(std::aligned_alloc(_entryAlignment, sizeof(HashRecord)*StartTableSize))}
 {
     _checkForCorrectAlloc(StartTableSize);
@@ -44,7 +44,7 @@ ssize_t TranspositionTable::ResizeTable(const size_t sizeMB)
     {
         _map = static_cast<HashRecord *>(std::aligned_alloc(_entryAlignment, StartTableSize*sizeof(HashRecord)));
         _tableSize = StartTableSize;
-        _hashMaks = _getPow2ModuloMask(StartTableSize);
+        _hashMask = _getPow2ModuloMask(StartTableSize);
         _checkForCorrectAlloc(StartTableSize);
         ClearTable();
 
@@ -52,7 +52,7 @@ ssize_t TranspositionTable::ResizeTable(const size_t sizeMB)
     }
 
     _tableSize = objSize;
-    _hashMaks = _getPow2ModuloMask(objSize);
+    _hashMask = _getPow2ModuloMask(objSize);
     ClearTable();
 
     return static_cast<ssize_t>(ceiledSizeMB);

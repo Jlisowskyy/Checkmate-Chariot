@@ -5,17 +5,11 @@
 #ifndef CHESSMECHANICS_H
 #define CHESSMECHANICS_H
 
-#include <array>
-
 #include "../BitOperations.h"
 #include "../EngineTypeDefs.h"
-#include "BishopMap.h"
-#include "BlackPawnMap.h"
-#include "KingMap.h"
-#include "KnightMap.h"
-#include "QueenMap.h"
 #include "RookMap.h"
-#include "WhitePawnMap.h"
+
+#include <cassert>
 
 /*              General optimizations TODO:
  *     - test all msb and lsb extractions
@@ -121,6 +115,8 @@ struct ChessMechanics
     [[nodiscard]] uint64_t _getPinnedFigsWoutCheckGenerator(uint64_t suspectedFigs, const uint64_t fullMap,
                                                             const size_t allyCord, const int allyKingShift) const
     {
+        assert(fullMap != 0);
+
         uint64_t pinnedFigMap{};
 
         while (suspectedFigs != 0)

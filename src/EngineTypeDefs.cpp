@@ -114,7 +114,7 @@ void DisplayBoard(const Board&bd)
         GlobalLogger.StartLogging() << castlingNames[i] << ": " << bd.Castlings[i] << std::endl;
     }
 
-    GlobalLogger.StartLogging() << "El passand field: "
+    GlobalLogger.StartLogging() << "El passant field: "
             << (bd.elPassantField == Board::InvalidElPassantBoard
                     ? "-"
                     : ConvertToStrPos(bd.elPassantField))

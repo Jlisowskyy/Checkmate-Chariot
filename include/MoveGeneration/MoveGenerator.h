@@ -21,7 +21,6 @@
 #include "WhitePawnMap.h"
 
 #include <array>
-#include <exception>
 #include <map>
 
 struct  MoveGenerator
@@ -80,6 +79,9 @@ struct  MoveGenerator
     {
         const uint64_t fullMap = _mechanics.GetFullMap();
         const auto [blockedFigMap, checksCount, checkType] = _mechanics.GetBlockedFieldMap(fullMap);
+
+        assert(blockedFigMap != 0 && checksCount <= 2);
+
         payload results = _threadStack.GetPayload();
 
         switch (checksCount)
@@ -112,6 +114,8 @@ struct  MoveGenerator
     template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval>
     void _noCheckGen(payload& results, const uint64_t fullMap, const uint64_t blockedFigMap)
     {
+        assert(fullMap != 0);
+
         const uint64_t pinnedFigsMap = _mechanics.GetPinnedFigsMapWoutCheck(_board.movColor, fullMap);
         const uint64_t enemyMap = _mechanics.GetColMap(SwapColor(_board.movColor));
         const uint64_t allyMap = _mechanics.GetColMap(_board.movColor);
@@ -145,6 +149,9 @@ struct  MoveGenerator
     template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval>
     void _singleCheckGen(payload& results, const uint64_t fullMap, const uint64_t blockedFigMap, const int checkType)
     {
+        assert(fullMap != 0);
+        assert(checkType == simpleFigCheck || checkType == slidingFigCheck);
+
         static constexpr uint64_t UNUSED = 0;
 
         // simplifying figure search by distinguishing check types
@@ -222,6 +229,8 @@ struct  MoveGenerator
     void _processElPassantMoves(payload& results, const uint64_t fullMap, const uint64_t pinnedFigMap,
                                 [[maybe_unused]] const uint64_t allowedMoveFillter = 0)
     {
+        assert(fullMap != 0);
+
         if (_board.elPassantField == Board::InvalidElPassantBoard)
             return;
 
@@ -310,6 +319,9 @@ struct  MoveGenerator
                           const uint64_t pinnedFigMap, [[maybe_unused]] const uint64_t figureSelector = 0,
                           [[maybe_unused]] const uint64_t allowedMovesSelector = 0)
     {
+        assert(enemyMap != 0);
+        assert(allyMap != 0);
+
         const uint64_t fullMap = enemyMap | allyMap;
         uint64_t pinnedOnes = pinnedFigMap & _board.boards[MapT::GetBoardIndex(_board.movColor)];
         uint64_t unpinnedOnes = _board.boards[MapT::GetBoardIndex(_board.movColor)] ^ pinnedOnes;
@@ -402,6 +414,8 @@ struct  MoveGenerator
                                    const size_t figBoardIndex, const uint64_t startField,
                                    const std::bitset<Board::CastlingCount + 1> castlings) const
     {
+        assert(figBoardIndex < Board::BoardsCount);
+
         while (nonAttackingMoves)
         {
             // extracting moves
@@ -488,6 +502,8 @@ struct  MoveGenerator
                                 const size_t figBoardIndex, const uint64_t startField,
                                 const std::bitset<Board::CastlingCount + 1> castlings) const
     {
+        assert(figBoardIndex < Board::BoardsCount);
+
         while (attackingMoves)
         {
             // extracting moves
@@ -570,6 +586,9 @@ struct  MoveGenerator
     void _processPlainKingMoves(payload& results, const uint64_t blockedFigMap, const uint64_t allyMap,
                                 const uint64_t enemyMap) const
     {
+        assert(allyMap != 0);
+        assert(enemyMap != 0);
+
         static constexpr size_t CastlingPerColor = 2;
 
         // generating moves
@@ -661,6 +680,8 @@ struct  MoveGenerator
     template<bool ApplyHeuristicEval>
     void _processKingCastlings(payload& results, const uint64_t blockedFigMap, const uint64_t fullMap) const
     {
+        assert(fullMap != 0);
+
         for (size_t i = 0; i < Board::CastlingsPerColor; ++i)
             if (const size_t castlingIndex = _board.movColor * Board::CastlingsPerColor + i;
                 _board.Castlings[castlingIndex] &&

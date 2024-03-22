@@ -34,7 +34,7 @@ struct BestMoveSearch
     // ------------------------------
 
     template <bool WriteInfo = true>
-    void IterativeDeepening(Move* output, const int maxDepth)
+    void IterativeDeepening(PackedMove* output, const int maxDepth)
     {
         const uint64_t zHash = ZHasher.GenerateHash(_board);
         int eval{};
@@ -61,8 +61,9 @@ struct BestMoveSearch
                 int delta = BoardEvaluator::BasicFigureValues[wPawnsIndex] / 4;
                 int alpha = eval - delta;
                 int beta = eval + delta;
+                int tries{};
 
-                while (true)
+                while (tries++ <= MaxAspWindowTries)
                 {
                     _kTable.ClearPlyFloor(depth);
                     eval = _negaScout(_board, alpha, beta, depth, zHash, {});
@@ -77,9 +78,15 @@ struct BestMoveSearch
                     else
                         break;
 
-                    delta += delta;
+                    delta += 2*delta;
                 }
 
+                // final retry with fulll window
+                if (tries == MaxAspWindowTries + 1)
+                {
+                    _kTable.ClearPlyFloor(depth);
+                    eval = _negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {});
+                }
             }
 
             // measurment end
@@ -129,6 +136,8 @@ struct BestMoveSearch
 
     static constexpr uint16_t QuisenceAgeDiffToReplace = 16;
     static constexpr uint16_t SearchAgeDiffToReplace = 10;
+
+    static constexpr int MaxAspWindowTries = 4;
 
     stack<Move, DefaultStackSize>& _stack;
     Board _board;

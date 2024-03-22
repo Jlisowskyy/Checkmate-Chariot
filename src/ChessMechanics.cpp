@@ -4,6 +4,15 @@
 
 #include "../include/MoveGeneration/ChessMechanics.h"
 
+#include "../include/MoveGeneration/BishopMap.h"
+#include "../include/MoveGeneration/BlackPawnMap.h"
+#include "../include/MoveGeneration/KingMap.h"
+#include "../include/MoveGeneration/KnightMap.h"
+#include "../include/MoveGeneration/QueenMap.h"
+#include "../include/MoveGeneration/WhitePawnMap.h"
+
+#include <cassert>
+
 bool ChessMechanics::IsCheck() const
 {
     [[maybe_unused]] const auto [unused1, checksCount, unused2] = GetBlockedFieldMap(GetFullMap());
@@ -23,6 +32,8 @@ uint64_t ChessMechanics::GetFullMap() const
 // Gets occupancy maps, which simply indicates wheter some field is occupied or not, by desired color figures.
 uint64_t ChessMechanics::GetColMap(const int col) const
 {
+    assert(col == 1 || col == 0);
+
     uint64_t map = 0;
     for (size_t i = 0; i < Board::BoardsPerCol; ++i)
         map |= board.boards[Board::BoardsPerCol * col + i];
@@ -31,6 +42,9 @@ uint64_t ChessMechanics::GetColMap(const int col) const
 
 size_t ChessMechanics::GetIndexOfContainingBoard(const uint64_t map, const int col) const
 {
+    assert(col == 1 || col == 0);
+    assert(map != 0);
+
     const size_t range = Board::BoardsPerCol * col + kingIndex;
     const size_t startInd = Board::BoardsPerCol * col;
 
@@ -61,6 +75,8 @@ size_t ChessMechanics::GetIndexOfContainingBoard(const uint64_t map, const int c
 
 std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const uint64_t fullMap) const
 {
+    assert(fullMap != 0);
+
     uint8_t checksCount{};
     uint8_t chT{};
 
@@ -121,6 +137,9 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
 // TODO: here pinned figs could be processed first to get some slight speed up
 uint64_t ChessMechanics::GetPinnedFigsMapWoutCheck(const int col, const uint64_t fullMap) const
 {
+    assert(fullMap != 0);
+    assert(col == 1 || col == 0);
+
     const size_t enemyCord = SwapColor(col) * Board::BoardsPerCol;
     const size_t allyCord = col * Board::BoardsPerCol;
     const int allyKingShift = ConvertToReversedPos(board.GetKingMsbPos(col));
@@ -143,6 +162,9 @@ uint64_t ChessMechanics::GetPinnedFigsMapWoutCheck(const int col, const uint64_t
 // Todo: check wheter interrupting search when checking figure is found boosts up performance here
 std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMapWithCheck(const int col, const uint64_t fullMap) const
 {
+    assert(fullMap != 0);
+    assert(col == 1 || col == 0);
+
     const size_t enemyCord = SwapColor(col) * Board::BoardsPerCol;
     const size_t allyCord = col * Board::BoardsPerCol;
     const int allyKingShift = ConvertToReversedPos(board.GetKingMsbPos(col));
@@ -178,12 +200,14 @@ uint64_t ChessMechanics::GetAllowedTilesWhenCheckedByNonSliding() const
 std::pair<uint64_t, uint8_t> ChessMechanics::_getRookBlockedMap(uint64_t rookMap, const uint64_t fullMapWoutKing,
     const uint64_t kingMap)
 {
+    assert(kingMap != 0);
+
     uint64_t blockedTiles{};
     uint8_t checks{};
 
     while(rookMap)
     {
-        int msbPos = ExtractMsbPos(rookMap);
+        const int msbPos = ExtractMsbPos(rookMap);
 
         const uint64_t moves = RookMap::GetMoves(msbPos, fullMapWoutKing);
         blockedTiles |= moves;
@@ -198,6 +222,9 @@ std::pair<uint64_t, uint8_t> ChessMechanics::_getRookBlockedMap(uint64_t rookMap
 // TODO: pretty fking stupid but ok could be optimised after tests:
 uint64_t ChessMechanics::GenerateAllowedTilesForPrecisedPinnedFig(const uint64_t figBoard, const uint64_t fullMap) const
 {
+    assert(fullMap != 0);
+    assert(figBoard != 0);
+
     constexpr size_t bishopRange = PinningMasks::BishopLines + PinningMasks::PinningMaskPerLinesType;
     for (size_t i = PinningMasks::BishopLines; i < bishopRange; ++i)
         if (const uint64_t mask = KingMap::pinMasks[board.GetKingMsbPos(board.movColor)].masks[i];
