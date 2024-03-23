@@ -8,7 +8,6 @@
 #include <array>
 #include <format>
 #include <mutex>
-#include <random>
 #include <vector>
 
 #include "BitOperations.h"
@@ -67,152 +66,15 @@ class movesHashMap
 
     template <class NeighborGeneratorT, uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr,
               bool ShouldSignal = false>
-    std::pair<bool, size_t> IntegrityTest(NeighborGeneratorT func, const int boardIndex)
-    {
-        const auto [possibilities, posSize] = func(boardIndex, masks);
-
-        size_t maxSize{};
-        bool collisionDetected{false};
-
-        clear();
-        for (size_t i = 0; i < posSize; ++i)
-        {
-            uint64_t record;
-
-            if constexpr (stripFunction)
-                record = stripFunction(possibilities[i], masks);
-            else
-                record = possibilities[i];
-
-            if (const uint64_t oldRecord = (*this)[possibilities[i]]; oldRecord != EmptyField && oldRecord != record)
-            {
-                if constexpr (ShouldSignal)
-                    ParameterSearchLogger.LogError(std::format("[ ERROR ] Integrity failed on index: {}", i));
-
-                collisionDetected = true;
-                break;
-            }
-
-            (*this)[possibilities[i]] = record;
-            if (const size_t ind = HFunc(possibilities[i]); ind > maxSize)
-                maxSize = ind;
-        }
-
-        return {collisionDetected == false, maxSize * sizeof(uint64_t)};
-    }
+    std::pair<bool, size_t> IntegrityTest(NeighborGeneratorT func, int boardIndex);
 
     template <class NeighborGeneratorT, class MaskInitT,
               uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr>
-    static void FindHashParameters(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit)
-    {
-        movesHashMap maps[Board::BoardFields]{};
-        std::vector finishedMaps(Board::BoardFields, false);
-        std::mutex guard{};
-        size_t fullSize{};
-        size_t correctMaps{};
-
-        // Preparing temp map to perform calculations
-        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
-            maps[i] = movesHashMap(mInit(ConvertToReversedPos(i)), funcs[i]);
-
-        #pragma omp parallel for
-        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
-        {
-            const int bInd = ConvertToReversedPos(i);
-
-            // Possible neighbors generation.
-            const auto [possibilities, posSize] = nGen(bInd, maps[i].masks);
-            auto getNeighbors =
-                [&]([[maybe_unused]] const int unused1, [[maybe_unused]] const std::array<uint64_t, 4>& unused2)
-            { return std::make_pair(std::ref(possibilities), posSize); };
-
-            // First inital check for correctnes
-            auto [result, size] =
-                maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
-
-            // If map is correct go to the next one
-            if (result)
-            {
-                guard.lock();
-                fullSize += size;
-                ++correctMaps;
-                finishedMaps[i] = true;
-                guard.unlock();
-
-                continue;
-            };
-
-            // Anounce thread start
-            guard.lock();
-            ParameterSearchLogger.Log(
-                std::format("Starting hash function parameters search on index: {} and field: {}\n", i,
-                            ConvertToStrPos(bInd)));
-            guard.unlock();
-
-            // Main Thread job - parameter searching loop
-            bool wasCollision;
-            size_t nSize;
-            do
-            {
-                guard.lock();
-                maps[i].HFunc.RollParameters();
-                guard.unlock();
-
-                const auto [rehashResult, rehashedSize] =
-                    maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
-
-                wasCollision = !rehashResult;
-                nSize = rehashedSize;
-            } while (wasCollision);
-
-            // Saving results
-            guard.lock();
-            finishedMaps[i] = true;
-            fullSize += nSize;
-            ++correctMaps;
-
-            // Printing actual parameters
-            ParameterSearchLogger.Log("Actual rehashing result:\n{");
-            for (size_t j = 0; j < Board::BoardFields; ++j)
-                ParameterSearchLogger.StartLogging()
-                    << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
-            ParameterSearchLogger.Log(
-                std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps, fullSize));
-
-            guard.unlock();
-        }
-
-        // Print final looking table
-        ParameterSearchLogger.Log("Actual rehashing result:\n{");
-        for (size_t j = 0; j < Board::BoardFields; ++j)
-            ParameterSearchLogger.StartLogging()
-                << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
-        ParameterSearchLogger.Log(
-            std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps, fullSize));
-    }
+    static void FindHashParameters(const HashFuncT* funcs, NeighborGeneratorT nGen, MaskInitT mInit);
 
     template <class NeighborGeneratorT, class MaskInitT,
               uint64_t (*stripFunction)(uint64_t, const std::array<uint64_t, 4>&) = nullptr>
-    static void FindCollidingIndices(const HashFuncT* const funcs, NeighborGeneratorT nGen, MaskInitT mInit)
-    {
-        ParameterSearchLogger.StartLogging() << "Collision detected on indices:\n\t{ ";
-        size_t invalidIndices{};
-
-        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
-        {
-            const int bInd = ConvertToReversedPos(i);
-
-            auto map = movesHashMap(mInit(bInd), funcs[i]);
-            auto [result, _] = map.template IntegrityTest<NeighborGeneratorT, stripFunction>(nGen, bInd);
-
-            if (result == false)
-            {
-                ParameterSearchLogger.StartLogging() << std::format("{}, ", i);
-                ++invalidIndices;
-            }
-        }
-        ParameterSearchLogger.Log(std::format("}}\nNumber of invalid indices: {}\n", invalidIndices));
-    }
+    static void FindCollidingIndices(const HashFuncT* funcs, NeighborGeneratorT nGen, MaskInitT mInit);
 
     // ------------------------------
     // Class fields
@@ -227,5 +89,158 @@ class movesHashMap
 
     std::array<uint64_t, mapAllocSize> _map{};
 };
+
+template<class HashFuncT, size_t mapAllocSize>
+template<class NeighborGeneratorT, uint64_t(* stripFunction)(uint64_t, const std::array<uint64_t, 4>&), bool
+    ShouldSignal>
+std::pair<bool, size_t> movesHashMap<HashFuncT, mapAllocSize>::IntegrityTest(NeighborGeneratorT func,
+    const int boardIndex)
+{
+    const auto [possibilities, posSize] = func(boardIndex, masks);
+
+    size_t maxSize{};
+    bool collisionDetected{false};
+
+    clear();
+    for (size_t i = 0; i < posSize; ++i)
+    {
+        uint64_t record;
+
+        if constexpr (stripFunction)
+            record = stripFunction(possibilities[i], masks);
+        else
+            record = possibilities[i];
+
+        if (const uint64_t oldRecord = (*this)[possibilities[i]]; oldRecord != EmptyField && oldRecord != record)
+        {
+            if constexpr (ShouldSignal)
+                ParameterSearchLogger.LogError(std::format("[ ERROR ] Integrity failed on index: {}", i));
+
+            collisionDetected = true;
+            break;
+        }
+
+        (*this)[possibilities[i]] = record;
+        if (const size_t ind = HFunc(possibilities[i]); ind > maxSize)
+            maxSize = ind;
+    }
+
+    return {collisionDetected == false, maxSize * sizeof(uint64_t)};
+}
+
+template<class HashFuncT, size_t mapAllocSize>
+template<class NeighborGeneratorT, class MaskInitT, uint64_t(* stripFunction)(uint64_t, const std::array<uint64_t, 4>&)>
+void movesHashMap<HashFuncT, mapAllocSize>::FindHashParameters(const HashFuncT* const funcs, NeighborGeneratorT nGen,
+    MaskInitT mInit)
+{
+    movesHashMap maps[Board::BoardFields]{};
+    std::vector finishedMaps(Board::BoardFields, false);
+    std::mutex guard{};
+    size_t fullSize{};
+    size_t correctMaps{};
+
+    // Preparing the temp map to perform calculations
+    for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
+        maps[i] = movesHashMap(mInit(ConvertToReversedPos(i)), funcs[i]);
+
+#pragma omp parallel for
+    for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
+    {
+        const int bInd = ConvertToReversedPos(i);
+
+        // Possible neighbors generation.
+        const auto [possibilities, posSize] = nGen(bInd, maps[i].masks);
+        auto getNeighbors =
+                [&]([[maybe_unused]] const int unused1, [[maybe_unused]] const std::array<uint64_t, 4>& unused2)
+        { return std::make_pair(std::ref(possibilities), posSize); };
+
+        // First initial check for correctness
+        auto [result, size] =
+                maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
+
+        // If the map is correct, go to the next one
+        if (result)
+        {
+            guard.lock();
+            fullSize += size;
+            ++correctMaps;
+            finishedMaps[i] = true;
+            guard.unlock();
+
+            continue;
+        };
+
+        // Announce thread start
+        guard.lock();
+        ParameterSearchLogger.Log(
+            std::format("Starting hash function parameters search on index: {} and field: {}\n", i,
+                        ConvertToStrPos(bInd)));
+        guard.unlock();
+
+        // Main Thread job - parameter searching loop
+        bool wasCollision;
+        size_t nSize;
+        do
+        {
+            guard.lock();
+            maps[i].HFunc.RollParameters();
+            guard.unlock();
+
+            const auto [rehashResult, rehashedSize] =
+                    maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
+
+            wasCollision = !rehashResult;
+            nSize = rehashedSize;
+        } while (wasCollision);
+
+        // Saving results
+        guard.lock();
+        finishedMaps[i] = true;
+        fullSize += nSize;
+        ++correctMaps;
+
+        // Printing actual parameters
+        ParameterSearchLogger.Log("Actual rehashing result:\n{");
+        for (size_t j = 0; j < Board::BoardFields; ++j)
+            ParameterSearchLogger.StartLogging()
+                    << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
+        ParameterSearchLogger.Log(
+            std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps, fullSize));
+
+        guard.unlock();
+    }
+
+    // Print final looking table
+    ParameterSearchLogger.Log("Actual rehashing result:\n{");
+    for (size_t j = 0; j < Board::BoardFields; ++j)
+        ParameterSearchLogger.StartLogging()
+                << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
+    ParameterSearchLogger.Log(
+        std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps, fullSize));
+}
+
+template<class HashFuncT, size_t mapAllocSize>
+template<class NeighborGeneratorT, class MaskInitT, uint64_t(* stripFunction)(uint64_t, const std::array<uint64_t, 4>&)>
+void movesHashMap<HashFuncT, mapAllocSize>::FindCollidingIndices(const HashFuncT* const funcs, NeighborGeneratorT nGen,
+    MaskInitT mInit)
+{
+    ParameterSearchLogger.StartLogging() << "Collision detected on indices:\n\t{ ";
+    size_t invalidIndices{};
+
+    for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
+    {
+        const int bInd = ConvertToReversedPos(i);
+
+        auto map = movesHashMap(mInit(bInd), funcs[i]);
+        auto [result, _] = map.template IntegrityTest<NeighborGeneratorT, stripFunction>(nGen, bInd);
+
+        if (result == false)
+        {
+            ParameterSearchLogger.StartLogging() << std::format("{}, ", i);
+            ++invalidIndices;
+        }
+    }
+    ParameterSearchLogger.Log(std::format("}}\nNumber of invalid indices: {}\n", invalidIndices));
+}
 
 #endif  // HASHMAP_H

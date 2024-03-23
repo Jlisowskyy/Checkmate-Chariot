@@ -5,13 +5,12 @@
 #ifndef BOARDEVALUATOR_H
 #define BOARDEVALUATOR_H
 
-#include "../EngineTypeDefs.h"
-#include "../MoveGeneration/KingMap.h"
+#include "../Board.h"
 
-/*      Collection of evaluation function
+/*      Collection of evaluation functions
  *
  *  Additional notes:
- *  - currently only full board evalution is possible
+ *  - currently only full board evaluation is possible
  */
 
 /*          Description of evaluation rules currently used:
@@ -39,11 +38,7 @@ public:
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static int32_t DefaultFullEvalFunction(const Board&bd, const int color)
-    {
-        const int whiteEval = Evaluation1(bd);
-        return color == WHITE ? whiteEval : -whiteEval;
-    }
+    [[nodiscard]] static int32_t DefaultFullEvalFunction(const Board&bd, int color);
 
     // function uses only material to evaluate passed board
     [[nodiscard]] static int32_t PlainMaterialEvaluation(const Board&bd);
@@ -72,22 +67,7 @@ private:
     static int16_t _getTapperedValue(int16_t phase, int16_t min, int16_t max);
 
     template<class EvalF>
-    static int16_t _getSimpleFieldEval(EvalF evaluator, uint64_t figs)
-    {
-        int16_t eval{};
-
-        while (figs)
-        {
-            const int figPos = ExtractMsbPos(figs);
-
-            eval += evaluator(figPos);
-
-            // remove processed figures
-            figs ^= maxMsbPossible >> figPos;
-        }
-
-        return eval;
-    }
+    static int16_t _getSimpleFieldEval(EvalF evaluator, uint64_t figs);
 
     static int16_t _getNotTaperedEval(const Board& bd);
     static int16_t _getTapperedEval(const Board& bd, int16_t phase);
@@ -98,7 +78,7 @@ private:
 public:
     using CostArrayT = std::array<std::array<int16_t, Board::BoardFields>, Board::BoardsCount>;
 
-    // for each color and each figure including lack of figure /pawn/knigh/bishop/rook/queen/
+    // for each color and each figure including lack of figure /pawn/knight/bishop/rook/queen/
     static constexpr size_t MaterialTableSize = 9 * 9 * 3 * 3 * 3 * 3 * 3 * 3 * 2 * 2;
 
     static constexpr size_t BlackPawnCoef = MaterialTableSize / 9;
@@ -198,12 +178,12 @@ public:
     static constexpr int16_t BasicBlackPawnPositionEndValues[]
     {
         0, 0, 0, 0, 0, 0, 0, 0,
-        50, 50, 50, 50, 50, 50, 50, 50,
-        10, 10, 20, 30, 30, 20, 10, 10,
-        10, 10, 20, 25, 25, 10, 10, 10,
-        5, 7, 10, 20, 20, 10, 7, 5,
-        5, 5, 5, 0, 0, 5, 5, 5,
-        5, 8, 8, -20, -20, 8, 8, 5,
+        80, 80, 80, 80, 80, 80, 80, 80,
+        40, 40, 50, 60, 60, 50, 40, 40,
+        30, 30, 40, 45, 45, 40, 30, 30,
+        15, 17, 20, 30, 30, 20, 17, 15,
+        -5, -5, -5, 0, 0, -5, -5, -5,
+        -20, -20, -30, -30, -30, -20, -20, -20,
         0, 0, 0, 0, 0, 0, 0, 0
     };
 
@@ -334,7 +314,7 @@ public:
         return arr;
     } ();
 
-    static inline MaterialArrayT _materialTable = []
+    static constexpr MaterialArrayT _materialTable = [] () constexpr -> MaterialArrayT
     {
         auto _reverseMaterialIndex = [](const size_t index) -> FigureCountsArrayT
         {
@@ -389,7 +369,7 @@ public:
             if (figArr[BlackFigStartIndex + bishopsIndex] == 2)
                 materialValue -= BishopPairBonus - (static_cast<int>(totalPawnCount)*2 - BishopPairDelta);
 
-            // Applying Knight pair penalty -> Knighs are losing value when less pawns are on board
+            // Applying Knight pair penalty -> Knights are losing value when less pawns are on board
             if (figArr[knightsIndex] == 2)
                 materialValue += KnightPairPenalty + (static_cast<int>(totalPawnCount)*2);
 
@@ -420,5 +400,23 @@ public:
         return arr;
     }();
 };
+
+template<class EvalF>
+int16_t BoardEvaluator::_getSimpleFieldEval(EvalF evaluator, uint64_t figs)
+{
+    int16_t eval{};
+
+    while (figs)
+    {
+        const int figPos = ExtractMsbPos(figs);
+
+        eval += evaluator(figPos);
+
+        // remove processed figures
+        figs ^= maxMsbPossible >> figPos;
+    }
+
+    return eval;
+}
 
 #endif  // BOARDEVALUATOR_H

@@ -9,7 +9,7 @@
 #include <thread>
 
 #include "../MoveGeneration/Move.h"
-#include "../Search/BestMoveSearch.h"
+#include "../EngineTypeDefs.h"
 #include "stack.h"
 
 class SearchThreadManager

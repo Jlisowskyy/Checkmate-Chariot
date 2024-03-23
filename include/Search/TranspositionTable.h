@@ -13,8 +13,8 @@
 /*
  *  Class represents transposition table which is used
  *  to store globally calculated position evaluation results and metadata.
- *  Improves general performance of ab procedure as well as improves paralellism implementation.
- *  Allows to not recalcullate so called 'transposition' positions, what means same position which
+ *  Improves general performance of ab procedure as well as improves parallelism implementation.
+ *  It Allows not recalculating so-called 'transposition' positions, what means same positions that
  *  were obtained by different sequence of moves, which is quit frequent situation in chess.
  */
 
@@ -32,8 +32,8 @@ struct TranspositionTable
     // ------------------------------
 
     /*
-     *  IMPORTANT size of hashrecord should be any number that is power of 2,
-     *  to allow fast hashing function do its job here.
+     *  IMPORTANT: the size of hash record should be any number that is power of 2,
+     *  to allow fast hashing function to do its job here.
      */
 
     struct alignas(16) HashRecord {

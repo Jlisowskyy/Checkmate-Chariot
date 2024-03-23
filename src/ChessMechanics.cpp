@@ -7,9 +7,8 @@
 #include "../include/MoveGeneration/BishopMap.h"
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/KingMap.h"
-#include "../include/MoveGeneration/KnightMap.h"
-#include "../include/MoveGeneration/QueenMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
+#include "../include/MoveGeneration/RookMap.h"
 
 #include <cassert>
 

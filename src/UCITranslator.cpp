@@ -9,6 +9,7 @@
 #include "../include/ParseTools.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/TestsAndDebugging/SearchPerfTester.h"
+#include "../include/Search/TranspositionTable.h"
 
 UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream& input)
 {
@@ -139,7 +140,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str)
         const MoveGenerationTester tester;
         const bool result = tester.PerformSeriesOfDeepTestFromFile(path);
 
-        if (result == false)
+        if (!result)
             return UCICommand::InvalidCommand;
     }
     else if (workStr == "infinite")
@@ -176,7 +177,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str)
 
         const MoveGenerationTester tester;
         bool result = tester.PerformPerformanceTest(file1Str, file2Str);
-        if (result == false)
+        if (!result)
             return UCICommand::InvalidCommand;
     }
     else if (workStr == "searchPerf")
@@ -188,7 +189,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str)
             ParseTools::ExtractNextWord(str, file2Str, pos);
 
         bool result = SearchPerfTester::PerformSearchPerfTest(file1Str, file2Str, _engine.TManager.GetDefaultStack());
-        if (result == false)
+        if (!result)
             return UCICommand::InvalidCommand;
     }
 

@@ -7,12 +7,11 @@
 
 #include <cinttypes>
 
-#include "../EngineTypeDefs.h"
 #include "../MoveGeneration/Move.h"
 
-/*  Class responsible for hashing whole board into
+/*  Class responsible for hashing the whole board into
  *  unique number, which special property that similar
- *  position recevies completly distrinct numbers
+ *  position receives completely distinct numbers
  */
 
 struct ZobristHasher
@@ -32,10 +31,10 @@ struct ZobristHasher
     [[nodiscard]] uint64_t __attribute__((always_inline)) UpdateHash(uint64_t oldHash, const Move mv, const uint64_t oldElPassant,
                                       const std::bitset<Board::CastlingCount+1> oldCastlings) const
     {
-        oldHash ^= _colorHash; //swapping collor
-        oldHash ^= _mainHashes[mv.GetStartBoardIndex()][mv.GetStartField()]; // placing figure on target square
-        oldHash ^= _mainHashes[mv.GetTargetBoardIndex()][mv.GetTargetField()]; // removing figure from start square
-        oldHash ^= _mainHashes[mv.GetKilledBoardIndex()][mv.GetKilledFigureField()]; // removing killed figure from board
+        oldHash ^= _colorHash; //swapping color
+        oldHash ^= _mainHashes[mv.GetStartBoardIndex()][mv.GetStartField()]; // placing a figure on target square
+        oldHash ^= _mainHashes[mv.GetTargetBoardIndex()][mv.GetTargetField()]; // removing a figure from start square
+        oldHash ^= _mainHashes[mv.GetKilledBoardIndex()][mv.GetKilledFigureField()]; // removing a killed figure from the board
 
         oldHash ^= _elPassantHashes[ExtractMsbPos(oldElPassant)]; // removing old elPassantField
         oldHash ^= _elPassantHashes[mv.GetElPassantField()]; // placing new elPassantFiled
@@ -54,7 +53,6 @@ struct ZobristHasher
     // Class fields
     // ------------------------------
 
-    // static constexpr uint64_t BaseSeed = 0x42731294812LLU;
     static constexpr uint64_t BaseSeed = 0x194814141LLU;
 private:
     static constexpr size_t CastlingHashesCount = 32; // 2^(4 + 1) each castling property can be either 1 or 0

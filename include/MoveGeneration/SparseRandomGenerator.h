@@ -5,7 +5,6 @@
 #ifndef SPARSERANDOMGENERATOR_H
 #define SPARSERANDOMGENERATOR_H
 
-#include <cinttypes>
 #include <random>
 
 template <class Base64GeneratorT = std::mt19937_64>
@@ -29,14 +28,7 @@ struct SparseRandomGenerator
     // Class interaction
     // ------------------------------
 
-    uint64_t operator()()
-    {
-        const uint64_t rand1 = _underlyingRandEngine();
-        const uint64_t rand2 = _underlyingRandEngine();
-        const uint64_t rand3 = _underlyingRandEngine();
-
-        return rand1 & rand2 & rand3;
-    }
+    uint64_t operator()();
 
     // ------------------------------
     // class fields
@@ -44,5 +36,15 @@ struct SparseRandomGenerator
    private:
     Base64GeneratorT _underlyingRandEngine{};
 };
+
+template<class Base64GeneratorT>
+uint64_t SparseRandomGenerator<Base64GeneratorT>::operator()()
+{
+    const uint64_t rand1 = _underlyingRandEngine();
+    const uint64_t rand2 = _underlyingRandEngine();
+    const uint64_t rand3 = _underlyingRandEngine();
+
+    return rand1 & rand2 & rand3;
+}
 
 #endif  // SPARSERANDOMGENERATOR_H

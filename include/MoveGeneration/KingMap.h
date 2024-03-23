@@ -8,7 +8,6 @@
 #include <array>
 #include <cstdint>
 
-#include "../EngineTypeDefs.h"
 #include "MoveGeneration.h"
 #include "PinningMask.h"
 
@@ -26,54 +25,24 @@ struct KingMap
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr size_t GetBoardIndex(const int color)
-    {
-        return Board::BoardsPerCol * color + kingIndex;
-    }
+    [[nodiscard]] static constexpr size_t GetBoardIndex(int color);
 
-    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd) { return movesMap[msbInd]; }
+    [[nodiscard]] static constexpr uint64_t GetMoves(int msbInd);
 
     // genarates tiles on which pawns currently attacks king
-    [[nodiscard]] static constexpr uint64_t GetSimpleFigCheckPawnAllowedTiles(const Board& bd)
-    {
-        const uint64_t detectionFields =
-            bd.movColor == WHITE ? _getWhiteKingDetectionTiles(bd) : _getBlackKingDetectionTiles(bd);
+    [[nodiscard]] static constexpr uint64_t GetSimpleFigCheckPawnAllowedTiles(const Board& bd);
 
-        return detectionFields & bd.boards[Board::BoardsPerCol * SwapColor(bd.movColor) + pawnsIndex];
-    }
-
-    [[nodiscard]] static constexpr uint64_t GetSimpleFigCheckKnightsAllowedTiles(const Board& bd)
-    {
-        const uint64_t detectionFields = KnightMap::GetMoves(bd.GetKingMsbPos(bd.movColor));
-
-        return detectionFields & bd.boards[Board::BoardsPerCol * SwapColor(bd.movColor) + knightsIndex];
-    }
+    [[nodiscard]] static constexpr uint64_t GetSimpleFigCheckKnightsAllowedTiles(const Board& bd);
 
     // ------------------------------
     // Private methods
     // ------------------------------
    private:
     // genarates possibles tiles on which enemy pawn could attack king
-    [[nodiscard]] static constexpr uint64_t _getWhiteKingDetectionTiles(const Board& bd)
-    {
-        const uint64_t kingMap = bd.boards[Board::BoardsPerCol * WHITE + kingIndex];
-
-        const uint64_t leftDetectionTile = (kingMap & LeftPawnDetectionMask) << 7;
-        const uint64_t rightDetectionTile = (kingMap & RightPawnDetetcionMask) << 9;
-
-        return leftDetectionTile | rightDetectionTile;
-    }
+    [[nodiscard]] static constexpr uint64_t _getWhiteKingDetectionTiles(const Board& bd);
 
     // genarates possibles tiles on which enemy pawn could attack king
-    [[nodiscard]] static constexpr uint64_t _getBlackKingDetectionTiles(const Board& bd)
-    {
-        const uint64_t kingMap = bd.boards[Board::BoardsPerCol * BLACK + kingIndex];
-
-        const uint64_t rightDetectionTile = (kingMap & RightPawnDetetcionMask) >> 7;
-        const uint64_t leftDetectionTile = (kingMap & LeftPawnDetectionMask) >> 9;
-
-        return leftDetectionTile | rightDetectionTile;
-    }
+    [[nodiscard]] static constexpr uint64_t _getBlackKingDetectionTiles(const Board& bd);
 
     // ------------------------------
     // Class Fields
@@ -98,5 +67,48 @@ struct KingMap
     static constexpr uint64_t LeftPawnDetectionMask = ~GenMask(0, 57, 8);
     static constexpr uint64_t RightPawnDetetcionMask = ~GenMask(7, 64, 8);
 };
+
+constexpr size_t KingMap::GetBoardIndex(const int color)
+{
+    return Board::BoardsPerCol * color + kingIndex;
+}
+
+constexpr uint64_t KingMap::GetMoves(const int msbInd)
+{ return movesMap[msbInd]; }
+
+constexpr uint64_t KingMap::GetSimpleFigCheckPawnAllowedTiles(const Board& bd)
+{
+    const uint64_t detectionFields =
+            bd.movColor == WHITE ? _getWhiteKingDetectionTiles(bd) : _getBlackKingDetectionTiles(bd);
+
+    return detectionFields & bd.boards[Board::BoardsPerCol * SwapColor(bd.movColor) + pawnsIndex];
+}
+
+constexpr uint64_t KingMap::GetSimpleFigCheckKnightsAllowedTiles(const Board& bd)
+{
+    const uint64_t detectionFields = KnightMap::GetMoves(bd.GetKingMsbPos(bd.movColor));
+
+    return detectionFields & bd.boards[Board::BoardsPerCol * SwapColor(bd.movColor) + knightsIndex];
+}
+
+constexpr uint64_t KingMap::_getWhiteKingDetectionTiles(const Board& bd)
+{
+    const uint64_t kingMap = bd.boards[Board::BoardsPerCol * WHITE + kingIndex];
+
+    const uint64_t leftDetectionTile = (kingMap & LeftPawnDetectionMask) << 7;
+    const uint64_t rightDetectionTile = (kingMap & RightPawnDetetcionMask) << 9;
+
+    return leftDetectionTile | rightDetectionTile;
+}
+
+constexpr uint64_t KingMap::_getBlackKingDetectionTiles(const Board& bd)
+{
+    const uint64_t kingMap = bd.boards[Board::BoardsPerCol * BLACK + kingIndex];
+
+    const uint64_t rightDetectionTile = (kingMap & RightPawnDetetcionMask) >> 7;
+    const uint64_t leftDetectionTile = (kingMap & LeftPawnDetectionMask) >> 9;
+
+    return leftDetectionTile | rightDetectionTile;
+}
 
 #endif  // KINGMAP_H

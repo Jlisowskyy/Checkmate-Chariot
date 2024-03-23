@@ -26,49 +26,9 @@ struct PinningMasks
     // Class interaction
     // ------------------------------
 
-    explicit constexpr PinningMasks(const int bInd)
-    {
-        constexpr int northBarrier = 64;
-        constexpr int southBarrier = -1;
+    explicit constexpr PinningMasks(int bInd);
 
-        const int y = bInd / 8;
-        const int x = bInd % 8;
-
-        const int westBarrier = ((bInd / 8) * 8) - 1;
-        const int eastBarrier = westBarrier + 9;
-        const int nwBorder = bInd + 7 * std::min(x, 7 - y);
-        const int neBorder = bInd + 9 * std::min(7 - x, 7 - y);
-        const int swBorder = bInd - 9 * std::min(x, y);
-        const int seBorder = bInd - 7 * std::min(7 - x, y);
-
-        // Rook-like lines
-        masks[NorthMask] = GenMask(northBarrier, bInd, RookMapGenerator::NorthOffset, std::less{});
-        masks[SouthMask] = GenMask(southBarrier, bInd, RookMapGenerator::SouthOffset, std::greater{});
-        masks[EastMask] = GenMask(eastBarrier, bInd, RookMapGenerator::EastOffset, std::less{});
-        masks[WestMask] = GenMask(westBarrier, bInd, RookMapGenerator::WestOffset, std::greater{});
-
-        // Bishop-like lines
-        masks[NorthEastMask] = GenMask(neBorder, bInd, BishopMapGenerator::NEOffset, std::less_equal{});
-        masks[NorthWestMask] = GenMask(nwBorder, bInd, BishopMapGenerator::NWOffset, std::less_equal{});
-        masks[SouthEastMask] = GenMask(seBorder, bInd, BishopMapGenerator::SEOffset, std::greater_equal{});
-        masks[SouthWestMask] = GenMask(swBorder, bInd, BishopMapGenerator::SWOffset, std::greater_equal{});
-
-        for (size_t i = 0; i < PinningMasksCount / 2; ++i)
-            rookMask |= masks[i];
-        for (size_t i = PinningMasksCount / 2; i < PinningMasksCount; ++i)
-            bishopMask |= masks[i];
-        rookMask |= (1LLU << bInd);
-        bishopMask |= (1LLU << bInd);
-        fullMask = bishopMask | rookMask;
-    }
-
-    static constexpr std::array<PinningMasks, Board::BoardFields> PinningArrayFactory()
-    {
-        std::array<PinningMasks, Board::BoardFields> maskArr{};
-        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
-            maskArr[i] = PinningMasks(ConvertToReversedPos(i));
-        return maskArr;
-    }
+    static constexpr std::array<PinningMasks, Board::BoardFields> PinningArrayFactory();
 
     // ------------------------------
     // Class Fields
@@ -99,5 +59,49 @@ struct PinningMasks
         SouthWestMask,
     };
 };
+
+constexpr PinningMasks::PinningMasks(const int bInd)
+{
+    constexpr int northBarrier = 64;
+    constexpr int southBarrier = -1;
+
+    const int y = bInd / 8;
+    const int x = bInd % 8;
+
+    const int westBarrier = ((bInd / 8) * 8) - 1;
+    const int eastBarrier = westBarrier + 9;
+    const int nwBorder = bInd + 7 * std::min(x, 7 - y);
+    const int neBorder = bInd + 9 * std::min(7 - x, 7 - y);
+    const int swBorder = bInd - 9 * std::min(x, y);
+    const int seBorder = bInd - 7 * std::min(7 - x, y);
+
+    // Rook-like lines
+    masks[NorthMask] = GenMask(northBarrier, bInd, RookMapGenerator::NorthOffset, std::less{});
+    masks[SouthMask] = GenMask(southBarrier, bInd, RookMapGenerator::SouthOffset, std::greater{});
+    masks[EastMask] = GenMask(eastBarrier, bInd, RookMapGenerator::EastOffset, std::less{});
+    masks[WestMask] = GenMask(westBarrier, bInd, RookMapGenerator::WestOffset, std::greater{});
+
+    // Bishop-like lines
+    masks[NorthEastMask] = GenMask(neBorder, bInd, BishopMapGenerator::NEOffset, std::less_equal{});
+    masks[NorthWestMask] = GenMask(nwBorder, bInd, BishopMapGenerator::NWOffset, std::less_equal{});
+    masks[SouthEastMask] = GenMask(seBorder, bInd, BishopMapGenerator::SEOffset, std::greater_equal{});
+    masks[SouthWestMask] = GenMask(swBorder, bInd, BishopMapGenerator::SWOffset, std::greater_equal{});
+
+    for (size_t i = 0; i < PinningMasksCount / 2; ++i)
+        rookMask |= masks[i];
+    for (size_t i = PinningMasksCount / 2; i < PinningMasksCount; ++i)
+        bishopMask |= masks[i];
+    rookMask |= (1LLU << bInd);
+    bishopMask |= (1LLU << bInd);
+    fullMask = bishopMask | rookMask;
+}
+
+constexpr std::array<PinningMasks, Board::BoardFields> PinningMasks::PinningArrayFactory()
+{
+    std::array<PinningMasks, Board::BoardFields> maskArr{};
+    for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
+        maskArr[i] = PinningMasks(ConvertToReversedPos(i));
+    return maskArr;
+}
 
 #endif  // PINNINGMASK_H

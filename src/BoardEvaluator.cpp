@@ -7,6 +7,12 @@
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
 
+int32_t BoardEvaluator::DefaultFullEvalFunction(const Board& bd, const int color)
+{
+    const int whiteEval = Evaluation1(bd);
+    return color == WHITE ? whiteEval : -whiteEval;
+}
+
 int32_t BoardEvaluator::PlainMaterialEvaluation(const Board& bd)
 {
     int eval = 0;

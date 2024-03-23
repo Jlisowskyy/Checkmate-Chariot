@@ -6,7 +6,6 @@
 
 #include <format>
 #include <iostream>
-#include "../include/EngineTypeDefs.h"
 
 bool Board::Comp(const Board& a, const Board& b)
 {

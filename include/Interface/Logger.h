@@ -37,7 +37,7 @@ class Logger
     // ------------------------------
    private:
     std::mutex logGuard{};
-    std::ofstream loggingFstream{};
+    std::ofstream loggingFStream{};
     std::ostream* errLoggingStream = &std::cerr;
     std::ostream* loggingStream = &std::cout;
 };

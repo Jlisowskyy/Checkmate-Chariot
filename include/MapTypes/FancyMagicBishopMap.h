@@ -17,48 +17,11 @@ class FancyMagicBishopMap
     using _underlyingMapT = movesHashMap<_hashFuncT, BishopMapGenerator::MaxPossibleNeighborsWithOverlap>;
 
    public:
-    constexpr FancyMagicBishopMap()
-    {
-        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
-        {
-            const int boardIndex = ConvertToReversedPos(i);
+    constexpr FancyMagicBishopMap();
 
-            _maps[i] = _underlyingMapT(BishopMapGenerator::InitMasks(boardIndex), funcs[i]);
-            _maps[i].InitFullMask();
+    [[nodiscard]] constexpr uint64_t GetMoves(int msbInd, uint64_t fullBoard) const;
 
-            MoveInitializer(
-                _maps[i],
-                [](const uint64_t n, const int ind) constexpr { return BishopMapGenerator::GenMoves(n, ind); },
-                []([[maybe_unused]] const int, const BishopMapGenerator::MasksT& m) constexpr
-                { return BishopMapGenerator::GenPossibleNeighborsWithOverlap(m); },
-                [](const uint64_t b, const BishopMapGenerator::MasksT& m) constexpr
-                { return BishopMapGenerator::StripBlockingNeighbors(b, m); },
-                boardIndex);
-        }
-    }
-
-    [[nodiscard]] constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullBoard) const
-    {
-        const uint64_t neighbors = fullBoard & _maps[msbInd].fullMask;
-        return _maps[msbInd][neighbors];
-    }
-
-    static void ParameterSearch()
-    {
-        auto nGen = []([[maybe_unused]] const int, const BishopMapGenerator::MasksT& m)
-        { return BishopMapGenerator::GenPossibleNeighborsWithOverlap(m); };
-        auto mInit = [](const int bInd) { return BishopMapGenerator::InitMasks(bInd); };
-
-        _underlyingMapT::FindCollidingIndices<decltype(nGen), decltype(mInit),
-                                              [](const uint64_t n, const std::array<uint64_t, 4>& m) {
-                                                  return BishopMapGenerator::StripBlockingNeighbors(n, m);
-                                              }>(funcs, nGen, mInit);
-
-        _underlyingMapT::FindHashParameters<decltype(nGen), decltype(mInit),
-                                            [](const uint64_t n, const std::array<uint64_t, 4>& m) {
-                                                return BishopMapGenerator::StripBlockingNeighbors(n, m);
-                                            }>(funcs, nGen, mInit);
-    }
+    static void ParameterSearch();
 
     // ------------------------------
     // class fields
@@ -133,5 +96,31 @@ class FancyMagicBishopMap
     };
     std::array<_underlyingMapT, Board::BoardFields> _maps;
 };
+
+constexpr FancyMagicBishopMap::FancyMagicBishopMap()
+{
+    for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
+    {
+        const int boardIndex = ConvertToReversedPos(i);
+
+        _maps[i] = _underlyingMapT(BishopMapGenerator::InitMasks(boardIndex), funcs[i]);
+        _maps[i].InitFullMask();
+
+        MoveInitializer(
+            _maps[i],
+            [](const uint64_t n, const int ind) constexpr { return BishopMapGenerator::GenMoves(n, ind); },
+            []([[maybe_unused]] const int, const BishopMapGenerator::MasksT& m) constexpr
+            { return BishopMapGenerator::GenPossibleNeighborsWithOverlap(m); },
+            [](const uint64_t b, const BishopMapGenerator::MasksT& m) constexpr
+            { return BishopMapGenerator::StripBlockingNeighbors(b, m); },
+            boardIndex);
+    }
+}
+
+constexpr uint64_t FancyMagicBishopMap::GetMoves(const int msbInd, const uint64_t fullBoard) const
+{
+    const uint64_t neighbors = fullBoard & _maps[msbInd].fullMask;
+    return _maps[msbInd][neighbors];
+}
 
 #endif  // FANCYMAGICBISHOPMAP_H

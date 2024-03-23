@@ -70,7 +70,7 @@ constexpr void GenerateBitPermutationsRecursion(const uint64_t number, const int
 {
     if (bitPos == -1 || number == 0)
         return;
-    uint64_t nextBit;
+    uint64_t nextBit{};
 
     for (int i = bitPos; i >= 0; --i)
         if (const uint64_t bitMap = 1LLU << i; (bitMap & number) != 0)

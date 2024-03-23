@@ -17,15 +17,15 @@
  *  - go deepDebug "depth" - debugging tool, which is used to possibly identify invalid move chains which produces
  *                       buggy result.
  *  - go fullDebug "depth" - traverses whole tree and invokes simple debug test on each leaf parent to check
- *                       move correctnes on lowest level possible. Insanly slow - use only for lower search. Could be
+ *                       move correctness on lowest level possible. Incredibly slow - use only for lower search. Could be
  * optimised.
  *  - fen - simply displays fen encoding of current map
  *  - go perfComp "input file" "output file" - generates csv file to "output file" which contains information
  *                       about results of simple comparison tests, which uses external engine times to get results
- *  - go file "input file" - performs series of deepDebug on each positions saved inside input file. For simplicity
- *                       "input file" must be containg csv records in given manner: "fen position", "depth"
+ *  - go file "input file" - performs series of deepDebug on each position saved inside input file. For simplicity
+ *                       "input file" must be containing csv records in the given manner: "fen position", "depth"
  *
- *  Where "depth" is integer value indicating layers of traversed move tree.
+ *  Where "depth" is integer value indicating layers of a traversed move tree.
  */
 
 class UCITranslator

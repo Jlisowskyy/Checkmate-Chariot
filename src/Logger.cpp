@@ -31,9 +31,9 @@ bool Logger::ChangeLogStream(const std::string& FileName)
 
     logGuard.lock();
     CloseFStream();
-    loggingFstream = std::ofstream{FileName};
-    errLoggingStream = &loggingFstream;
-    loggingStream = &loggingFstream;
+    loggingFStream = std::ofstream{FileName};
+    errLoggingStream = &loggingFStream;
+    loggingStream = &loggingFStream;
     logGuard.unlock();
 
     return true;
@@ -50,6 +50,6 @@ void Logger::ChangeLogStream(std::ostream& stream)
 
 void Logger::CloseFStream()
 {
-    if (loggingFstream)
-        loggingFstream.close();
+    if (loggingFStream)
+        loggingFStream.close();
 }

@@ -5,27 +5,27 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include "../EngineTypeDefs.h"
-
 #include <array>
 #include <cassert>
 
-// TOOD: repair description
+#include "../Board.h"
+
+// TODO: repair description
 
 /*      Class encodes chess move and heuristic evaluation
- *  togethr inside some uint64_t value. Encoding corresponds to value below:
+ *  together inside some uint64_t value. Encoding corresponds to value below:
  *  (bit indexed from lsb to msb manner)
- *  - bits 0-16 encodes heristic evaluation of current move (16 bits)
- *                      Note: additionaly to allow simple evaluation on run
+ *  - bits 0-16 encodes heuristic evaluation of current move (16 bits)
+ *                      Note: additionally to allow simple evaluation on run
  *  - bits 16-22 - encodes field from which figure moved (6 bits) - "StartField" - OBLIG IMPORTANT: should always be
  * filled
  *  - bits 22-26 - encodes board index from which figure moved (4 bits) - "StartBoardIndex" - OBLIG IMPORTANT: should
  * always be filled
  *  - bits 26-32 - encodes field to which figure moved (6 bits) - "TargetField" - OBLIG IMPORTANT: should always be
  * filled
- *  - bits 32-36 - encodes board index to which figure moved - diffrent than option 2
+ *  - bits 32-36 - encodes board index to which figure moved - different than option 2
  *          only in case move encodes promotion (4 bits) - "TargetBoardIndex" - OBLIG IMPORTANT: should always be
- * filled, in case no promotion is done simply put here positoin no 3
+ * filled, in case no promotion is done simply put here position no 3
  *  - bits 36-40 - encodes board index on which figure was killed (4 bits) - used in case of
  *          attacking moves (4 bits) - "KilledFigureBoardIndex" - OBLIG IMPORTANT: if not used should be filled with
  * sentinel value
@@ -33,14 +33,14 @@
  * "KilledFigureField" - OPT WARNING: possibly unfilled when no attacking move and sentinel value is set
  *  - bits 46-52 - encodes new elPassant field (6 bits) - "ElPassantField" - OBLIG IMPORTANT: should always contain new
  * el passant field, if not used simply put here literal from board
- *  - bits 52-56 - encodes castling rights (4 bits) - "CastlingRights" - OLBIG IMPORTANT: should always be filled, in
+ *  - bits 52-56 - encodes castling rights (4 bits) - "CastlingRights" - OBLIG IMPORTANT: should always be filled, in
  * case no changes was done simply copy previous values
- *  - bits 56-59 - encodes type of performed castlins (3 bits) - "CastlingType" - OPT WARNING: possibly unfilled when no
+ *  - bits 56-59 - encodes type of performed castling (3 bits) - "CastlingType" - OPT WARNING: possibly unfilled when no
  * castling is done
  */
 
 /*      IMPORTANT NOTE:
- *  ALL SET METHODS WORKS CORRECTLY ONLY
+ *  ALL SET METHODS WORK CORRECTLY ONLY
  *  ON BY DEFAULT INITIALIZED OBJECTS EVERY ONE OF THEM WORKS ONCE
  */
 
@@ -125,21 +125,7 @@ struct PackedMove
         return !IsEmpty() && GetTargetField() != GetStartField();
     }
 
-    [[nodiscard]] std::string GetLongAlgebraicNotation() const
-    {
-        static constexpr char PromoFigs[] = { 'q', 'r', 'b', 'n' };
-        std::string rv;
-
-        auto [c1, c2] = ConvertToCharPos((int)GetStartField());
-        rv += c1; rv += c2;
-        auto [c3, c4] = ConvertToCharPos((int)GetTargetField());
-        rv += c3; rv += c4;
-
-        if (IsPromo())
-            rv += PromoFigs[GetMoveType() & PromoSpecBits];
-
-        return rv;
-    }
+    [[nodiscard]] std::string GetLongAlgebraicNotation() const;
 
     // ------------------------------
     // Class fields
@@ -173,7 +159,7 @@ class Move
     // Class creation
     // ------------------------------
 
-    // This construction does not initialize crutial fields what must be done
+    // This construction does not initialize crucial fields what must be done
     explicit Move(const PackedMove mv): _packedMove(mv) {}
 
     Move() = default;
@@ -232,13 +218,13 @@ class Move
     {
         assert(mv.IsOkeyMove());
 
-        // removing old piece from board
+        // removing the old piece from the board
         bd.boards[mv.GetStartBoardIndex()] ^= maxMsbPossible >> mv.GetStartField();
 
-        // placing figure on new field
+        // placing the figure on new field
         bd.boards[mv.GetTargetBoardIndex()] |= maxMsbPossible >> mv.GetTargetField();
 
-        // removing killed figure in case no figure is killed index should be indicatin to the sentinel
+        // removing the killed figure in case no figure is killed index should be indicating to the sentinel
         bd.boards[mv.GetKilledBoardIndex()] ^= maxMsbPossible >> mv.GetKilledFigureField();
 
         // applying new castling rights
@@ -247,7 +233,7 @@ class Move
         // applying new el passant field
         bd.elPassantField = maxMsbPossible >> mv.GetElPassantField();
 
-        // applying addidtional castling operation
+        // applying additional castling operation
         const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
         bd.boards[boardIndex] |= field;
 
@@ -271,13 +257,13 @@ class Move
 
         bd.ChangePlayingColor();
 
-        // placing piece on old board
+        // placing the piece on old board
         bd.boards[mv.GetStartBoardIndex()] |= maxMsbPossible >> mv.GetStartField();
 
-        // removing figure from new field
+        // removing the figure from the new field
         bd.boards[mv.GetTargetBoardIndex()] ^= maxMsbPossible >> mv.GetTargetField();
 
-        // placing killed figure in good place
+        // placing the killed figure in good place
         bd.boards[mv.GetKilledBoardIndex()] |= maxMsbPossible >> mv.GetKilledFigureField();
 
         // recovering old castlings

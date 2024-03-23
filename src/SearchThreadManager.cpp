@@ -3,12 +3,10 @@
 //
 
 #include "../include/ThreadManagement/SearchThreadManager.h"
-
-#include <cstring>
+#include "../include/Search/BestMoveSearch.h"
 
 #ifdef __unix__
 
-#include <unistd.h>
 #include <csignal>
 
 #endif  // __unix__

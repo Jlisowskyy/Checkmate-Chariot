@@ -14,7 +14,6 @@
 
 #include "../include/Engine.h"
 #include "../include/Interface/Logger.h"
-#include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/ParseTools.h"
 #include "../include/TestsAndDebugging/CsvOperator.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
@@ -172,14 +171,14 @@ void MoveGenerationTester::_saveResultToCsv(
         stream << std::format("{}, {}, {}, {}, {}\n", i1, i2, i3, i4, i5);
 }
 
-double MoveGenerationTester::_performExternalEngineSpeedTest(const std::string& fenPostion, int depth) const
+double MoveGenerationTester::_performExternalEngineSpeedTest(const std::string& fenPosition, int depth) const
 {
     static constexpr double BootupDelay = 100;
 
     const auto t1 = std::chrono::steady_clock::now();
 
     const auto [communcationChannel, process] = _getExternalEngineProcess();
-    _startUpPerft(fenPostion, depth, std::vector<std::string>(), communcationChannel[WritePipe]);
+    _startUpPerft(fenPosition, depth, std::vector<std::string>(), communcationChannel[WritePipe]);
     waitpid(process, nullptr, 0);
 
     close(communcationChannel[ReadPipe]);

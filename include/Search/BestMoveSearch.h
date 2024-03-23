@@ -5,18 +5,11 @@
 #ifndef BESTMOVESEARCH_H
 #define BESTMOVESEARCH_H
 
-#include <format>
-#include <string>
-#include <vector>
-#include <chrono>
-
 #include "../EngineTypeDefs.h"
-#include "../MoveGeneration/MoveGenerator.h"
-#include "TranspositionTable.h"
-#include "ZobristHash.h"
-#include "../Evaluation/BoardEvaluator.h"
 #include "../Evaluation/CounterMoveTable.h"
 #include "../Evaluation/HistoricTable.h"
+#include "../Evaluation/KillerTable.h"
+#include "../ThreadManagement/stack.h"
 
 struct BestMoveSearch
 {
@@ -33,96 +26,22 @@ struct BestMoveSearch
     // Class interaction
     // ------------------------------
 
-    template <bool WriteInfo = true>
-    void IterativeDeepening(PackedMove* output, const int maxDepth)
-    {
-        const uint64_t zHash = ZHasher.GenerateHash(_board);
-        int eval{};
-
-        for (int depth = 1; depth < maxDepth; ++depth)
-        {
-            // measuring time
-            [[maybe_unused]]auto t1 = std::chrono::steady_clock::now();
-
-            // preparing variables used to display statistics
-            _currRootDepth = depth;
-            _visitedNodes = 0;
-            _cutoffNodes = 0;
-
-            // cleaning tables used in iteration
-
-            if (depth < 4)
-            {
-                _kTable.ClearPlyFloor(depth);
-                eval = _negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {});
-            }
-            else
-            {
-                int delta = BoardEvaluator::BasicFigureValues[wPawnsIndex] / 4;
-                int alpha = eval - delta;
-                int beta = eval + delta;
-                int tries{};
-
-                while (tries++ <= MaxAspWindowTries)
-                {
-                    _kTable.ClearPlyFloor(depth);
-                    eval = _negaScout(_board, alpha, beta, depth, zHash, {});
-
-                    if (eval <= alpha)
-                    {
-                        beta = (alpha + beta) / 2;
-                        alpha = std::max(eval - delta, NegativeInfinity);
-                    }
-                    else if (eval >= beta)
-                        beta = std::min(eval + delta, PositiveInfinity);
-                    else
-                        break;
-
-                    delta += 2*delta;
-                }
-
-                // final retry with fulll window
-                if (tries == MaxAspWindowTries + 1)
-                {
-                    _kTable.ClearPlyFloor(depth);
-                    eval = _negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {});
-                }
-            }
-
-            // measurment end
-            [[maybe_unused]]auto t2 = std::chrono::steady_clock::now();
-
-            // move sorting
-            auto record = TTable.GetRecord(zHash);
-            *output = record.GetMove();
-
-            if constexpr (WriteInfo)
-            {
-                static constexpr uint64_t MSEC = 1000 * 1000; // in nsecs
-                const uint64_t spentMs = std::max(1LU, (t2-t1).count()/MSEC);
-                const uint64_t nps = 1000LLU * _visitedNodes / spentMs;
-                const double cutOffPerc = static_cast<double>(_cutoffNodes)/static_cast<double>(_visitedNodes);
-
-                GlobalLogger.StartLogging() << std::format("info depth {} time {} nodes {} nps {} score {} cp currmove {} hashfull {} cut-offs perc {:.2f}\n",
-                    depth + 1, spentMs, _visitedNodes, nps, eval,  output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc);
-            }
-        }
-    }
+    void IterativeDeepening(PackedMove* output, int maxDepth, bool writeInfo = true);
 
     // ------------------------------
     // Private class methods
     // ------------------------------
    private:
     // ALPHA - minimum score of maximizing player
-    // BETA - maximum score of minimazing player
+    // BETA - maximum score of minimizing player
     [[nodiscard]] int _negaScout(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove);
     [[nodiscard]] int _zwSearch(Board& bd, int alpha, int depthLeft, uint64_t zHash, Move prevMove);
     [[nodiscard]] int _quiescenceSearch(Board& bd, int alpha, int beta, uint64_t zHash);
     [[nodiscard]] int _zwQuiescenceSearch(Board& bd, int alpha, uint64_t zHash);
 
-    static void _embeddedMoveSort(MoveGenerator::payload moves, size_t range);
-    static void _pullMoveToFront(MoveGenerator::payload moves, PackedMove mv);
-    static void _fetchBestMove(MoveGenerator::payload moves, size_t targetPos);
+    static void _embeddedMoveSort(stack<Move, DefaultStackSize>::stackPayload moves, size_t range);
+    static void _pullMoveToFront(stack<Move, DefaultStackSize>::stackPayload moves, PackedMove mv);
+    static void _fetchBestMove(stack<Move, DefaultStackSize>::stackPayload moves, size_t targetPos);
 
     [[nodiscard]] int _getMateValue(int depthLeft) const;
 

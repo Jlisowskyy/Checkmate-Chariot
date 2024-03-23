@@ -9,8 +9,8 @@
 #include <vector>
 
 /*
- *  Possibly in future point structure will be reconsidered.
- *  Especially in situation when current one will not be
+ *  Possibly in the future, point structure will be reconsidered.
+ *  Especially in a situation when the current one will not be
  *  efficient enough.
  */
 
@@ -53,11 +53,11 @@ class MoveTRIE
         ;
 
     void OptimiseMemoryUsage()
-        // should be used after adding all move sequences to the database to optimise memory usage
+        // should be used after adding all move sequences to the database to optimize memory usage
         ;
 
     [[nodiscard]] const std::vector<std::string>& FindNextMoves(const std::vector<std::string>& moves) const
-        // used to query database about next save moves that could be added to sequence.
+        // used to query the database about next save moves that could be added to sequence.
         // return empty vector if no moves are possible
         ;
 
@@ -66,8 +66,8 @@ class MoveTRIE
     // ------------------------------
    private:
     [[nodiscard]] static ssize_t _findOnArr(const std::string& move, const std::vector<std::string>& moves)
-        // checks whether passed move is present on moves vector
-        // returns index of found element or -1 if not found.
+        // checks whether passed move is present on moves' vector
+        // returns index of the found element or -1 if not found.
         ;
 
     static void _destroy(const node* root)

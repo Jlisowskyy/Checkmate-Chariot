@@ -42,11 +42,11 @@ struct FenTranslator
     static std::string _extractCastling(const Board& bd);
 
     static void _extractFiguresEncoding(const Board& bd, std::string& fenPos)
-        // pastes occupancy of whole board straght to passed string buffer
+        // pastes occupancy of whole board straight to pass string buffer
         ;
 
     static std::tuple<FieldOccup, char, Color> _extractSingleEncoding(const Board& bd, int bInd)
-        // extracts information of occupancy on pased board indexed field
+        // extracts information of occupancy on passed board indexed field
         ;
 
     static size_t _processElPassant(Board& bd, size_t pos, const std::string& fenPos)
@@ -71,13 +71,13 @@ struct FenTranslator
         ;
 
     static void _addFigure(const std::string& pos, char fig, Board& bd)
-        // Function simply adds figure encoded in 'fig' to board using map translating
-        // character encoding to to actual figure represetntation. String 'pos' contains position
-        // encoded in string also used to retreive inner board representation using translating map.
+        // Function simply adds a figure encoded in 'fig' to board using map translating
+        // character encoding to actual figure representation. String 'pos' contains position
+        // encoded in string also used to retrieve inner board representation using translating map.
         ;
 
     static size_t _skipBlanks(size_t pos, const std::string& fenPos)
-        // Function returns first non blank character inside fenPos substring,
+        // Function returns the first non-blank character inside fenPos substring,
         // which starts at 'pos' index and ends naturally
         ;
 

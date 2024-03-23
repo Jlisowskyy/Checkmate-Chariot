@@ -17,47 +17,11 @@ class FancyMagicRookMap
     using _underlyingMapT = movesHashMap<_hashFuncT, RookMapGenerator::MaxRookPossibleNeighborsWithOverlap>;
 
    public:
-    constexpr FancyMagicRookMap()
-    {
-        for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
-        {
-            const int boardIndex = ConvertToReversedPos(i);
+    constexpr FancyMagicRookMap();
 
-            _maps[i] = _underlyingMapT(RookMapGenerator::InitMasks(boardIndex), funcs[i]);
-            _maps[i].InitFullMask();
+    [[nodiscard]] constexpr uint64_t GetMoves(int msbInd, uint64_t fullBoard) const;
 
-            MoveInitializer(
-                _maps[i], [](const uint64_t n, const int ind) constexpr { return RookMapGenerator::GenMoves(n, ind); },
-                []([[maybe_unused]] const int, const RookMapGenerator::MasksT& m) constexpr
-                { return RookMapGenerator::GenPossibleNeighborsWithOverlap(m); },
-                [](const uint64_t b, const RookMapGenerator::MasksT& m) constexpr
-                { return RookMapGenerator::StripBlockingNeighbors(b, m); },
-                boardIndex);
-        }
-    }
-
-    [[nodiscard]] constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullBoard) const
-    {
-        const uint64_t neighbors = fullBoard & _maps[msbInd].fullMask;
-        return _maps[msbInd][neighbors];
-    }
-
-    static void ParameterSearch()
-    {
-        auto nGen = []([[maybe_unused]] const int, const RookMapGenerator::MasksT& m)
-        { return RookMapGenerator::GenPossibleNeighborsWithOverlap(m); };
-        auto mInit = [](const int bInd) { return RookMapGenerator::InitMasks(bInd); };
-
-        _underlyingMapT::FindCollidingIndices<decltype(nGen), decltype(mInit),
-                                              [](const uint64_t n, const std::array<uint64_t, 4>& m) {
-                                                  return RookMapGenerator::StripBlockingNeighbors(n, m);
-                                              }>(funcs, nGen, mInit);
-
-        _underlyingMapT::FindHashParameters<decltype(nGen), decltype(mInit),
-                                            [](const uint64_t n, const std::array<uint64_t, 4>& m) {
-                                                return RookMapGenerator::StripBlockingNeighbors(n, m);
-                                            }>(funcs, nGen, mInit);
-    }
+    static void ParameterSearch();
 
     // ------------------------------
     // class fields
@@ -133,5 +97,30 @@ class FancyMagicRookMap
 
     std::array<_underlyingMapT, Board::BoardFields> _maps;
 };
+
+constexpr FancyMagicRookMap::FancyMagicRookMap()
+{
+    for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
+    {
+        const int boardIndex = ConvertToReversedPos(i);
+
+        _maps[i] = _underlyingMapT(RookMapGenerator::InitMasks(boardIndex), funcs[i]);
+        _maps[i].InitFullMask();
+
+        MoveInitializer(
+            _maps[i], [](const uint64_t n, const int ind) constexpr { return RookMapGenerator::GenMoves(n, ind); },
+            []([[maybe_unused]] const int, const RookMapGenerator::MasksT& m) constexpr
+            { return RookMapGenerator::GenPossibleNeighborsWithOverlap(m); },
+            [](const uint64_t b, const RookMapGenerator::MasksT& m) constexpr
+            { return RookMapGenerator::StripBlockingNeighbors(b, m); },
+            boardIndex);
+    }
+}
+
+constexpr uint64_t FancyMagicRookMap::GetMoves(const int msbInd, const uint64_t fullBoard) const
+{
+    const uint64_t neighbors = fullBoard & _maps[msbInd].fullMask;
+    return _maps[msbInd][neighbors];
+}
 
 #endif  // FANCYMAGICROOKMAP_H

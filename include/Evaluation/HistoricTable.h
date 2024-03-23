@@ -4,6 +4,7 @@
 
 #ifndef HISTORICTABLE_H
 #define HISTORICTABLE_H
+
 #include "../MoveGeneration/Move.h"
 
 #include <cstring>

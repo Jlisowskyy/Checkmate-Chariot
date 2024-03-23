@@ -10,6 +10,7 @@
 
 #include "../MoveGeneration/Move.h"
 #include "../ThreadManagement/stack.h"
+#include "../EngineTypeDefs.h"
 
 struct SearchPerfTester
 {

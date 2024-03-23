@@ -6,15 +6,13 @@
 #define BOOKTESTER_H
 
 #include <chrono>
-#include <random>
 #include <string>
 
 #include "../OpeningBook/OpeningBook.h"
-#include "../ParseTools.h"
 
 /*          IMPORTANT NOTES
- *  Refer to OpenningBook.h header to get information
- *  about expected file format.
+ *  Refer to OpeningBook.h header to get information
+ *   about the expected file format.
  */
 
 struct BookTester

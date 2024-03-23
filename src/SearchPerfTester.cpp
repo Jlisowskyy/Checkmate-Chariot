@@ -4,7 +4,6 @@
 
 #include "../include/TestsAndDebugging/SearchPerfTester.h"
 
-#include <chrono>
 #include <format>
 #include <fstream>
 
@@ -13,6 +12,7 @@
 #include "../include/Interface/Logger.h"
 #include "../include/Search/BestMoveSearch.h"
 #include "../include/TestsAndDebugging/CsvOperator.h"
+#include "../include/Search/TranspositionTable.h"
 
 bool SearchPerfTester::PerformSearchPerfTest(const std::string& inputTestPath, const std::string& output,
                                              stack<Move, DefaultStackSize>& stack)

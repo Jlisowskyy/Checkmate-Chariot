@@ -34,14 +34,8 @@ add_executable(Checkmate-Chariot main.cpp
         include/Interface/UCITranslator.h
         include/MoveGeneration/RookMapGenerator.h
         include/MoveGeneration/BishopMapGenerator.h
-        include/MapTypes/SimpleBishopMap.h
         include/MapTypes/HashFunctions.h
-        include/MapTypes/SimpleRookMap.h
-        include/MapTypes/ModuloFreeBishopMap.h
-        include/MapTypes/ModuloFreeRookMap.h
         include/TestsAndDebugging/MapPerformanceTest.h
-        include/MapTypes/ModuloFreeNoOffsetRookMap.h
-        include/MapTypes/ModuloFreeNoOffsetBishopMap.h
         include/TestsAndDebugging/MapCorrectnessTest.h
         include/MapTypes/FancyMagicBishopMap.h
         include/MapTypes/FancyMagicRookMap.h
@@ -82,6 +76,12 @@ add_executable(Checkmate-Chariot main.cpp
         include/Evaluation/CounterMoveTable.h
         include/Evaluation/HistoricTable.h
         src/MoveGenerator.cpp
+        src/FancyMagicRookMap.cpp
+        src/FancyMagicBishopMap.cpp
+        src/Move.cpp
+        src/KillerTable.cpp
+        src/MapCorrectnessTest.cpp
+        src/MapPerformanceTest.cpp
 )
 
 find_package(OpenMP)
@@ -90,7 +90,7 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries( Checkmate-Chariot PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-target_compile_options(Checkmate-Chariot PUBLIC -O3;-march=raptorlake;-fopenmp;-fconstexpr-ops-limit=133554432;-funroll-loops;-fno-peel-loops;-fno-tracer)
+target_compile_options(Checkmate-Chariot PUBLIC -O3;-march=raptorlake;-fopenmp;-fconstexpr-ops-limit=1335544322;-funroll-loops;-fno-peel-loops;-fno-tracer)
 #target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-ops-limit=133554432;-g;)
 
 

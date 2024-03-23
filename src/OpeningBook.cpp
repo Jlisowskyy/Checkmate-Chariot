@@ -6,13 +6,10 @@
 
 #include <format>
 #include <fstream>
+#include <random>
 
 #include "../include/Interface/Logger.h"
 #include "../include/ParseTools.h"
-
-// OpenningBook::OpenningBook(const std::string& bookPath, const bookFileType type):
-//     _moveTrie(std::move(type == bookFileType::text_uci ? _readTextBook(bookPath) : _readBinaryBook(bookPath)))
-// {}
 
 OpeningBook::OpeningBook(const std::string& bookPath, const bookFileType type)
 {

@@ -22,16 +22,19 @@ class QueenMap
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr size_t GetBoardIndex(const int color)
-    {
-        return Board::BoardsPerCol * color + queensIndex;
-    }
+    [[nodiscard]] static constexpr size_t GetBoardIndex(int color);
 
-    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullMap,
-                                                     [[maybe_unused]] const uint64_t _ = 0)
-    {
-        return BishopMap::GetMoves(msbInd, fullMap) | RookMap::GetMoves(msbInd, fullMap);
-    }
+    [[nodiscard]] static constexpr uint64_t GetMoves(int msbInd, uint64_t fullMap, [[maybe_unused]] uint64_t = 0);
 };
+
+constexpr size_t QueenMap::GetBoardIndex(const int color)
+{
+    return Board::BoardsPerCol * color + queensIndex;
+}
+
+constexpr uint64_t QueenMap::GetMoves(const int msbInd, const uint64_t fullMap, const uint64_t)
+{
+    return BishopMap::GetMoves(msbInd, fullMap) | RookMap::GetMoves(msbInd, fullMap);
+}
 
 #endif  // QUEENMAP_H

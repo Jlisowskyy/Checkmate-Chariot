@@ -12,8 +12,8 @@
 
 /*              LIST OF SORTING RULES:
  *  1) Avoid fields that are attacked by enemy pawn
- *  2) Focus moves that are realeasing enemy pawn pressure on them
- *  3) Focus profitable attacks, avoid non profitable
+ *  2) Focus moves that are releasing enemy pawn pressure on them
+ *  3) Focus profitable attacks, avoid non-profitable
  *  4) Firstly follow promotion paths
  *
  *  TODOS:
@@ -65,7 +65,7 @@ struct MoveSortEval
 
 
     // ------------------------------
-    // Class fiels
+    // Class fields
     // ------------------------------
 
     static constexpr int16_t FigureEval[] = {

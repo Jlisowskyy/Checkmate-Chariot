@@ -7,8 +7,11 @@
 #include <algorithm>
 #include <format>
 #include <fstream>
+#include <random>
 
 #include "../include/Interface/Logger.h"
+#include "../include/ParseTools.h"
+
 
 void BookTester::PerformRandomAccessTest(const OpeningBook& book, const std::string& textBookPath,
                                          const uint64_t testPositionCount)
@@ -22,7 +25,7 @@ void BookTester::PerformRandomAccessTest(const OpeningBook& book, const std::str
     std::vector<uint64_t> testRecordsLines = _generateTestRecordsNums(testPositionCount, lineCount);
 
     std::string lineBuff{};
-    // retreiving wanted records from file
+    // retrieving wanted records from file
     for (uint64_t lineNum{}; auto line : testRecordsLines)
     {
         // skipping unwanted lines

@@ -6,10 +6,6 @@
 #define OPENINGBOOK_H
 
 #include <string>
-
-#include <chrono>
-#include <random>
-
 #include "MoveTRIE.h"
 
 struct OpeningBook
@@ -18,7 +14,7 @@ struct OpeningBook
     // Class inner Types
     // ------------------------------
 
-    // used to chose which type passed file is
+    // used to choose which type passed file is
     enum class bookFileType
     {
         binary,
@@ -29,7 +25,7 @@ struct OpeningBook
     // Class creation
     // ------------------------------
 
-    // initalizing the only const field
+    // initializing the only const field
     OpeningBook(const std::string& bookPath, bookFileType type);
 
     // ------------------------------

@@ -6,8 +6,8 @@
 #define CHESSMECHANICS_H
 
 #include "../BitOperations.h"
-#include "../EngineTypeDefs.h"
-#include "RookMap.h"
+#include "../Board.h"
+
 
 #include <cassert>
 
@@ -96,86 +96,18 @@ struct ChessMechanics
     static std::pair<uint64_t, uint8_t> _getRookBlockedMap(uint64_t rookMap, uint64_t fullMapWoutKing, uint64_t kingMap);
 
     template <class MoveGeneratorT>
-    [[nodiscard]] static uint64_t _blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen)
-    {
-        uint64_t blockedMap = 0;
-
-        while (board != 0)
-        {
-            const int figPos = ExtractMsbPos(board);
-            board ^= (maxMsbPossible >> figPos);
-
-            blockedMap |= mGen(figPos);
-        }
-
-        return blockedMap;
-    }
+    [[nodiscard]] static uint64_t _blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen);
 
     template <class MoveMapT>
-    [[nodiscard]] uint64_t _getPinnedFigsWoutCheckGenerator(uint64_t suspectedFigs, const uint64_t fullMap,
-                                                            const size_t allyCord, const int allyKingShift) const
-    {
-        assert(fullMap != 0);
-
-        uint64_t pinnedFigMap{};
-
-        while (suspectedFigs != 0)
-        {
-            const int msbPos = ExtractMsbPos(suspectedFigs);
-            const uint64_t attackedFig = MoveMapT::GetMoves(msbPos, fullMap) & fullMap &
-                                         MoveMapT::GetMoves(ConvertToReversedPos(allyKingShift), fullMap);
-
-            const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
-            const uint64_t isKingAttacked = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & mapWoutAttackedFig &
-                                            board.boards[allyCord + kingIndex];
-
-            const uint64_t pinnedFigFlag = (isKingAttacked >> allyKingShift) * attackedFig;  // 0 or attackedFig
-            pinnedFigMap |= pinnedFigFlag;
-
-            suspectedFigs ^= (maxMsbPossible >> msbPos);
-        }
-
-        return pinnedFigMap;
-    }
+    [[nodiscard]] uint64_t _getPinnedFigsWoutCheckGenerator(uint64_t suspectedFigs, uint64_t fullMap,
+                                                            size_t allyCord, int allyKingShift) const;
 
     // returns [ pinnedFigMap, allowedTilesMap ]
     template <class MoveMapT>
     [[nodiscard]] std::pair<uint64_t, uint64_t> _getPinnedFigsWithCheckGenerator(uint64_t suspectedFigs,
-                                                                                 const uint64_t fullMap,
-                                                                                 const size_t allyCord,
-                                                                                 const int allyKingShift) const
-    {
-        uint64_t pinnedFigMap{};
-        uint64_t allowedTilesFigMap{};
-
-        while (suspectedFigs != 0)
-        {
-            const int msbPos = ExtractMsbPos(suspectedFigs);
-            const uint64_t suspectedFigAttackFields = MoveMapT::GetMoves(msbPos, fullMap);
-            const uint64_t kingsPerspective = MoveMapT::GetMoves(ConvertToReversedPos(allyKingShift), fullMap);
-
-            // TODO: ERROR HERE
-            if (const uint64_t attackedFig =
-                    suspectedFigAttackFields & fullMap & (kingsPerspective | board.boards[allyCord + kingIndex]);
-                attackedFig == board.boards[allyCord + kingIndex])
-            {
-                allowedTilesFigMap |= (suspectedFigAttackFields | (maxMsbPossible >> msbPos)) & kingsPerspective;
-            }
-            else
-            {
-                const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
-                const uint64_t isKingAttacked = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & mapWoutAttackedFig &
-                                                board.boards[allyCord + kingIndex];
-                const uint64_t pinnedFigFlag = (isKingAttacked >> allyKingShift) * attackedFig;
-
-                pinnedFigMap |= pinnedFigFlag;
-            }
-
-            suspectedFigs ^= (maxMsbPossible >> msbPos);
-        }
-
-        return {pinnedFigMap, allowedTilesFigMap};
-    }
+                                                                                 uint64_t fullMap,
+                                                                                 size_t allyCord,
+                                                                                 int allyKingShift) const;
 
     // ------------------------------
     // Class fields
@@ -183,5 +115,84 @@ struct ChessMechanics
 
     Board& board;
 };
+
+template<class MoveGeneratorT>
+uint64_t ChessMechanics::_blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen)
+{
+    uint64_t blockedMap = 0;
+
+    while (board != 0)
+    {
+        const int figPos = ExtractMsbPos(board);
+        board ^= (maxMsbPossible >> figPos);
+
+        blockedMap |= mGen(figPos);
+    }
+
+    return blockedMap;
+}
+
+template<class MoveMapT>
+uint64_t ChessMechanics::_getPinnedFigsWoutCheckGenerator(uint64_t suspectedFigs, const uint64_t fullMap,
+    const size_t allyCord, const int allyKingShift) const
+{
+    assert(fullMap != 0);
+
+    uint64_t pinnedFigMap{};
+
+    while (suspectedFigs != 0)
+    {
+        const int msbPos = ExtractMsbPos(suspectedFigs);
+        const uint64_t attackedFig = MoveMapT::GetMoves(msbPos, fullMap) & fullMap &
+                                     MoveMapT::GetMoves(ConvertToReversedPos(allyKingShift), fullMap);
+
+        const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
+        const uint64_t isKingAttacked = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & mapWoutAttackedFig &
+                                        board.boards[allyCord + kingIndex];
+
+        const uint64_t pinnedFigFlag = (isKingAttacked >> allyKingShift) * attackedFig;  // 0 or attackedFig
+        pinnedFigMap |= pinnedFigFlag;
+
+        suspectedFigs ^= (maxMsbPossible >> msbPos);
+    }
+
+    return pinnedFigMap;
+}
+
+template<class MoveMapT>
+std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigsWithCheckGenerator(uint64_t suspectedFigs,
+    const uint64_t fullMap, const size_t allyCord, const int allyKingShift) const
+{
+    uint64_t pinnedFigMap{};
+    uint64_t allowedTilesFigMap{};
+
+    while (suspectedFigs != 0)
+    {
+        const int msbPos = ExtractMsbPos(suspectedFigs);
+        const uint64_t suspectedFigAttackFields = MoveMapT::GetMoves(msbPos, fullMap);
+        const uint64_t kingsPerspective = MoveMapT::GetMoves(ConvertToReversedPos(allyKingShift), fullMap);
+
+        // TODO: ERROR HERE
+        if (const uint64_t attackedFig =
+                    suspectedFigAttackFields & fullMap & (kingsPerspective | board.boards[allyCord + kingIndex]);
+            attackedFig == board.boards[allyCord + kingIndex])
+        {
+            allowedTilesFigMap |= (suspectedFigAttackFields | (maxMsbPossible >> msbPos)) & kingsPerspective;
+        }
+        else
+        {
+            const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
+            const uint64_t isKingAttacked = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & mapWoutAttackedFig &
+                                            board.boards[allyCord + kingIndex];
+            const uint64_t pinnedFigFlag = (isKingAttacked >> allyKingShift) * attackedFig;
+
+            pinnedFigMap |= pinnedFigFlag;
+        }
+
+        suspectedFigs ^= (maxMsbPossible >> msbPos);
+    }
+
+    return {pinnedFigMap, allowedTilesFigMap};
+}
 
 #endif  // CHESSMECHANICS_H

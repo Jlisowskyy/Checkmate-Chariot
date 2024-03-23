@@ -6,44 +6,9 @@
 #define ENGINETYPEDEFS_H
 
 #include <cstdint>
-#include "Board.h"
 #include <unordered_map>
 
-enum MoveTypes
-{
-    NormalMove,
-    PromotingMove
-};
-
-enum Descriptors : size_t
-{
-    wPawnsIndex,
-    wKnightsIndex,
-    wBishopsIndex,
-    wRooksIndex,
-    wQueensIndex,
-    wKingIndex,
-    bPawnsIndex,
-    bKnightsIndex,
-    bBishopsIndex,
-    bRooksIndex,
-    bQueensIndex,
-    bKingIndex,
-};
-
-enum CastlingIndexes : size_t
-{
-    KingCastlingIndex,
-    QueenCastlingIndex,
-};
-
-enum CastlingPossibilities : size_t
-{
-    WhiteKingSide,
-    WhiteQueenSide,
-    BlackKingSide,
-    BlackQueenSide,
-};
+#include "Board.h"
 
 constexpr int SwapColor(const int col) { return col ^ 1; }
 
@@ -53,7 +18,7 @@ void DisplayBoard(const Board& bd);
 // returns 0 if invalid characters were passed
 uint64_t ExtractPosFromStr(int x, int y);
 
-// in case of invalid encoding returns 0 in corresponding value, if string is to short returns (0, 0).
+// in case of invalid encoding returns 0 in the corresponding value, if string is to short returns (0, 0).
 // return scheme: [ oldMap, newMap ]
 std::pair<uint64_t, uint64_t> ExtractPositionsFromEncoding(const std::string& encoding);
 

@@ -27,6 +27,36 @@ enum ColorlessDescriptors : size_t
     kingIndex,
 };
 
+enum Descriptors : size_t
+{
+    wPawnsIndex,
+    wKnightsIndex,
+    wBishopsIndex,
+    wRooksIndex,
+    wQueensIndex,
+    wKingIndex,
+    bPawnsIndex,
+    bKnightsIndex,
+    bBishopsIndex,
+    bRooksIndex,
+    bQueensIndex,
+    bKingIndex,
+};
+
+enum CastlingIndexes : size_t
+{
+    KingCastlingIndex,
+    QueenCastlingIndex,
+};
+
+enum CastlingPossibilities : size_t
+{
+    WhiteKingSide,
+    WhiteQueenSide,
+    BlackKingSide,
+    BlackQueenSide,
+};
+
 struct Board
 {
     // ------------------------------
@@ -77,7 +107,7 @@ struct Board
     std::bitset<CastlingCount + 1> Castlings{0};  // additional sentinel field
     uint64_t elPassantField = maxMsbPossible >> InvalidElPassantField;
     int movColor = WHITE;
-    uint64_t boards[BoardsCount + 1] = {};  // addiitonal sentinel board
+    uint64_t boards[BoardsCount + 1] = {};  // additional sentinel board
 };
 
 #endif  // BOARD_H

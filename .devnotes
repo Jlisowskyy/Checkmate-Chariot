@@ -4,6 +4,8 @@ Important todos:
     - fully implement cmake thread amount detection
     - implement interuptible go depth and go movetime
     - checks wtf is going on castling inside MoveGenerator especially what tf + 1 offset means
+    - TOTALLY OPTIMISE COMPILATION TIME
+    - Check for bugs in search why returns null move
 
 LAST ERROR:
 

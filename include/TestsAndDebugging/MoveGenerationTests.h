@@ -55,7 +55,7 @@ class MoveGenerationTester
     static void _saveResultToCsv(const std::vector<std::tuple<std::string, int, double, double, double>>& results,
                                  std::ofstream& stream);
 
-    [[nodiscard]] double _performExternalEngineSpeedTest(const std::string& fenPostion, int depth) const;
+    [[nodiscard]] double _performExternalEngineSpeedTest(const std::string& fenPosition, int depth) const;
 
     [[nodiscard]] static double _performEngineSpeedTest(const std::string& fenPosition, int depth);
 

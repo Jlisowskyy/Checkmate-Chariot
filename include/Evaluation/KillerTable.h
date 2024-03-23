@@ -5,14 +5,13 @@
 #ifndef KILLERTABLE_H
 #define KILLERTABLE_H
 
-#include "../EngineTypeDefs.h"
 #include "../MoveGeneration/Move.h"
-
+#include "../EngineTypeDefs.h"
 
 /*
- *      Class used to implement so called killed heuristic, which depends on observation
- *      that in same ply depth some moves remains good no matter what was previously player.
- *      KillerTable is used to save all moves which caused a beta cutoff during search in siblings nodes.
+ *      Class used to implement so-called killed heuristic, which depends on observation
+ *      that in the same ply depth some moves remain good no matter what was previously player.
+ *      KillerTable is used to save all moves that caused a beta cutoff during search in sibling's nodes.
  */
 
 class KillerTable
@@ -48,7 +47,7 @@ public:
         _kTable[depthLeft].Push(kMove);
     }
 
-    // checks wheter actual move is a "killer" move
+    // checks whether actual move is a "killer" move
     [[nodiscard]] bool IsKillerMove(const Move move, const int depthLeft) const
     {
         return _kTable[depthLeft].Contains(move);
@@ -63,26 +62,9 @@ private:
     {
         _killerFloor_t() = default;
 
-        void Push(const Move mv)
-        {
-            // all possible slots are used
-            if (last == MovesPerPly) return;
+        void Push(Move mv);
 
-            // ensuring that no same moves are stored twice
-            for(size_t i = 0; i < last; ++i)
-                if (_killerMovesTable[i] == mv.GetPackedMove()) return;
-
-            // saving move
-            _killerMovesTable[last++] = mv.GetPackedMove();
-        }
-
-        [[nodiscard]] bool Contains(const Move mv) const
-        {
-            for (size_t i = 0; i < MovesPerPly; ++i)
-                if (_killerMovesTable[i] == mv.GetPackedMove())
-                    return true;
-            return false;
-        }
+        [[nodiscard]] bool Contains(Move mv) const;
 
         PackedMove _killerMovesTable[MovesPerPly]{};
         uint8_t last{};

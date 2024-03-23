@@ -27,16 +27,9 @@ class BishopMap
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static constexpr size_t GetBoardIndex(const int color)
-    {
-        return Board::BoardsPerCol * color + bishopsIndex;
-    }
+    [[nodiscard]] static constexpr size_t GetBoardIndex(int color);
 
-    [[nodiscard]] static constexpr uint64_t GetMoves(const int msbInd, const uint64_t fullBoard,
-                                                     [[maybe_unused]] const uint64_t _ = 0)
-    {
-        return _map.GetMoves(msbInd, fullBoard);
-    }
+    [[nodiscard]] static constexpr uint64_t GetMoves(int msbInd, uint64_t fullBoard, [[maybe_unused]] uint64_t = 0);
 
     // ------------------------------
     // Class fields
@@ -46,5 +39,15 @@ class BishopMap
 
     static constexpr _underlyingMap _map{};
 };
+
+constexpr size_t BishopMap::GetBoardIndex(const int color)
+{
+    return Board::BoardsPerCol * color + bishopsIndex;
+}
+
+constexpr uint64_t BishopMap::GetMoves(const int msbInd, const uint64_t fullBoard, const uint64_t)
+{
+    return _map.GetMoves(msbInd, fullBoard);
+}
 
 #endif  // BISHOPMAP_H

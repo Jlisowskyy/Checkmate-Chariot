@@ -15,7 +15,7 @@ template <class RandomGeneratorT = std::mt19937_64>
 class Fast2PowHashFunction
 {
     /*                  Description
-     *  Hash function optimised to be used with sizes, that are the power of 2.
+     *  Hash function optimized to be used with sizes, that are the power of 2.
      *  Returns only 64-bit values and operates on bigger 128-bit integers.
      *  Thus, this class is not portable at all.
      *
@@ -194,7 +194,7 @@ class FancyMagicHashFunction
      *
      *  Works accordingly to formula:
      *  h(v) = magic * v << offset
-     *  where magic is 64 bit unsigned integer and offset is int in range 0-63.
+     *  where magic is 64-bit unsigned integer and offset is int in range 0-63.
      */
 
     // ------------------------------
@@ -268,7 +268,7 @@ class BaseHashFunction
      *
      *  Note: formula enforces usage of 2 modulo operations
      *
-     *  When optimize flag is enabled, size is expected to be power of 2,
+     *  When optimizing the flag is enabled, size is expected to be power of 2,
      *  otherwise behavior is undefined.
      *
      *  Updated formula:
@@ -393,8 +393,8 @@ class BaseHashFunction
 
     size_t _a;
     size_t _b;
-    size_t _prime{1};    // Note: to prevent invalid expression on invocation on uinited funtion
-    size_t _sizeMod{1};  // Note: to prevent invalid expression on invocation on uinited funtion
+    size_t _prime{1};    // Note: to prevent invalid expression on invocation on united funtion
+    size_t _sizeMod{1};  // Note: to prevent invalid expression on invocation on united funtion
 };
 
 struct IdentityHash
