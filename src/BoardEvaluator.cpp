@@ -72,6 +72,22 @@ int32_t BoardEvaluator::NaiveEvaluation3(const Board& bd)
     return eval;
 }
 
+int32_t BoardEvaluator::Evaluation1(const Board& bd)
+{
+    const auto [isSuccess, counts] = _countFigures(bd);
+    const int16_t phase = _calcPhase(counts);
+    const int32_t materialEval = isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation(counts, phase);
+
+    int32_t positionEval{};
+    // summing not tapered fields
+    positionEval += _getNotTaperedEval(bd);
+
+    // summing tappered eval
+    positionEval += _getTapperedEval(bd, phase);
+
+    return materialEval + positionEval + _applyBonusForCoveredPawns(bd, 0);
+}
+
 int32_t BoardEvaluator::_applyBonusForCoveredPawns(const Board& bd, int32_t eval)
 {
     const uint64_t covereWPawns = WhitePawnMap::GetAttackFields(bd.boards[wPawnsIndex]) & bd.boards[wPawnsIndex];
@@ -83,57 +99,203 @@ int32_t BoardEvaluator::_applyBonusForCoveredPawns(const Board& bd, int32_t eval
     return eval;
 }
 
-size_t BoardEvaluator::_getMaterialBoardIndex(const Board& bd)
+std::pair<bool, BoardEvaluator::FigureCountsArrayT> BoardEvaluator::_countFigures(const Board& bd)
 {
-    static constexpr int OverflowTables[] = {
-        9, 3, 3, 3, 2, 0, 9, 3, 3, 3, 2, 0
-    };
-    int counts[Board::BoardsCount];
+    static constexpr size_t OverflowTables[] = { 9, 3, 3, 3, 2 };
+    FigureCountsArrayT rv{};
     int overflows = 0;
 
-    for (size_t i = wPawnsIndex; i < wKingIndex; ++i)
+    for (size_t i = pawnsIndex; i < kingIndex; ++i)
     {
-        counts[i] = __builtin_popcountll(bd.boards[i]);
-        overflows += counts[i] >= OverflowTables[i];
+        rv[i] = CountOnesInBoard(bd.boards[i]);
+        overflows += rv[i] >= OverflowTables[i];
+    }
+
+    for (size_t i = pawnsIndex; i < kingIndex; ++i)
+    {
+        rv[i + 5] = CountOnesInBoard(bd.boards[i + bPawnsIndex]);
+        overflows += rv[i + 5] >= OverflowTables[i];
     }
 
     if (overflows != 0)
-        return SIZE_MAX;
+        return {false, rv};
 
-    for (size_t i = bPawnsIndex; i < bKingIndex; ++i)
-    {
-        counts[i] = __builtin_popcountll(bd.boards[i]);
-        overflows += counts[i] >= OverflowTables[i];
-    }
-
-    if (overflows != 0)
-        return SIZE_MAX;
-
-    return _getMaterialBoardIndex(
-        counts[bPawnsIndex],
-        counts[bKnightsIndex],
-        counts[bBishopsIndex],
-        counts[bRooksIndex],
-        counts[bQueensIndex],
-        counts[wPawnsIndex],
-        counts[wKnightsIndex],
-        counts[wBishopsIndex],
-        counts[wRooksIndex],
-        counts[wQueensIndex]
-    );
+    return {true, rv};
 }
 
-size_t BoardEvaluator::_getMaterialBoardIndex(const size_t P, const size_t N, const size_t B, const size_t R,
-    const size_t Q, const size_t p, const size_t n, const size_t b, const size_t r, const size_t q)
+size_t BoardEvaluator::_getMaterialBoardIndex(const FigureCountsArrayT& counts)
 {
-    return p * BlackPawnCoef +
-           P * WhitePawnCoef +
-           n * BlackKnightCoef +
-           N * WhiteKnightCoef +
-           b * BlackBishopCoef +
-           B * WhiteBishopCoef +
-           r * BlackRookCoef +
-           R * WhiteRookCoef +
-           q * BlackQueenCoef +
-           Q * WhiteQueenCoef;
+    size_t index{};
+
+    for (size_t i = 0; i < counts.size(); ++i)
+        index += counts[i] * FigCoefs[i];
+
+    return index;
+}
+
+int16_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT& figArr, const int actPhase)
+{
+    static constexpr size_t BlackFigStartIndex = 5;
+
+    int16_t materialValue{};
+
+    // summing up total material values
+    for (size_t j = 0; j < kingIndex; ++j)
+    {
+        const int16_t phasedFigVal = (BasicFigureValues[j]*(256-actPhase) + EndGameFigureValues[j]*actPhase) / 256;
+
+        materialValue += static_cast<int16_t>(figArr[j]) * phasedFigVal;
+        materialValue -= static_cast<int16_t>(figArr[j + BlackFigStartIndex]) * phasedFigVal;
+    }
+
+    // Applying no pawn penalty
+    if (figArr[pawnsIndex] == 0)
+        materialValue += NoPawnsPenalty;
+    if (figArr[BlackFigStartIndex + pawnsIndex] == 0)
+        materialValue -= NoPawnsPenalty;
+
+    // Applying Bishop pair bonus
+    const size_t totalPawnCount = figArr[pawnsIndex] + figArr[BlackFigStartIndex + pawnsIndex];
+    if (figArr[bishopsIndex] == 2)
+        materialValue += BishopPairBonus - (static_cast<int16_t>(totalPawnCount)*2 - BishopPairDelta);
+
+    if (figArr[BlackFigStartIndex + bishopsIndex] == 2)
+        materialValue -= BishopPairBonus - (static_cast<int16_t>(totalPawnCount)*2 - BishopPairDelta);
+
+    // Applying Knight pair penalty -> Knighs are losing value when less pawns are on board
+    if (figArr[knightsIndex] == 2)
+        materialValue += KnightPairPenalty + (static_cast<int16_t>(totalPawnCount)*2);
+
+    if (figArr[BlackFigStartIndex + knightsIndex] == 2)
+        materialValue -= KnightPairPenalty + (static_cast<int16_t>(totalPawnCount)*2);
+
+    // Applying Rook pair penalty
+    if (figArr[rooksIndex] == 2)
+        materialValue += RookPairPenalty;
+
+    if (figArr[BlackFigStartIndex + rooksIndex] == 2)
+        materialValue -= RookPairPenalty;
+
+    return materialValue;
+}
+
+int16_t BoardEvaluator::_calcPhase(const FigureCountsArrayT& figArr)
+{
+    static constexpr size_t BlackFigStartIndex = 5;
+    int16_t actPhase{};
+
+    // calculating game phase
+    for (size_t j = 0; j < kingIndex; ++j)
+        actPhase += static_cast<int16_t>(figArr[j] + figArr[BlackFigStartIndex + j]) * FigurePhases[j];
+    actPhase = (actPhase * MaxTapperedCoef + (FullPhase / 2)) / FullPhase; // FullPhase / 2 ?
+
+    return actPhase;
+}
+
+int16_t BoardEvaluator::_getTapperedValue(const int16_t phase, const int16_t min, const int16_t max)
+{
+    return (min*(MaxTapperedCoef-phase) + max*phase) / MaxTapperedCoef;
+}
+
+int16_t BoardEvaluator::_getNotTaperedEval(const Board& bd)
+{
+    int16_t eval{};
+    for (size_t i = knightsIndex ; i <= rooksIndex; ++i)
+    {
+        const uint64_t wFigs = bd.boards[i];
+        const uint64_t bFigs = bd.boards[bPawnsIndex + i];
+
+        eval += _getSimpleFieldEval(
+            [&](const int msbInd)
+            {
+                return BasicBlackPositionValues[i][msbInd];
+            }, wFigs
+        );
+
+        eval -= _getSimpleFieldEval(
+            [=](const int msbInd)
+            {
+                return BasicBlackPositionValues[i][ConvertToReversedPos(msbInd)];
+            }, bFigs
+        );
+    }
+
+    return eval;
+}
+
+int16_t BoardEvaluator::_getTapperedEval(const Board& bd, const int16_t phase)
+{
+    int16_t openinEval{};
+
+    openinEval += _getSimpleFieldEval(
+        [=](const int msbInd)
+        {
+            return BasicBlackPawnPositionValues[msbInd];
+        }, bd.boards[wPawnsIndex]
+    );
+
+    openinEval -= _getSimpleFieldEval(
+        [=](const int msbInd)
+        {
+            return BasicBlackPawnPositionValues[ConvertToReversedPos(msbInd)];
+        }, bd.boards[bPawnsIndex]
+    );
+
+    for (size_t i = queensIndex; i <= kingIndex; ++i)
+    {
+        const uint64_t wFigs = bd.boards[i];
+        const uint64_t bFigs = bd.boards[bPawnsIndex + i];
+
+        openinEval += _getSimpleFieldEval(
+            [=](const int msbInd)
+            {
+                return BasicBlackPositionValues[i][msbInd];
+            }, wFigs
+        );
+
+        openinEval -= _getSimpleFieldEval(
+            [=](const int msbInd)
+            {
+                return BasicBlackPositionValues[i][ConvertToReversedPos(msbInd)];
+            }, bFigs
+        );
+    }
+
+    int16_t endEval{};
+
+    endEval += _getSimpleFieldEval(
+        [=](const int msbInd)
+        {
+            return BasicBlackPawnPositionEndValues[msbInd];
+        }, bd.boards[wPawnsIndex]
+    );
+
+    endEval -= _getSimpleFieldEval(
+        [=](const int msbInd)
+        {
+            return BasicBlackPawnPositionEndValues[ConvertToReversedPos(msbInd)];
+        }, bd.boards[bPawnsIndex]
+    );
+
+    for (size_t i = queensIndex; i <= kingIndex; ++i)
+    {
+        const uint64_t wFigs = bd.boards[i];
+        const uint64_t bFigs = bd.boards[bPawnsIndex + i];
+
+        endEval += _getSimpleFieldEval(
+            [=](const int msbInd)
+            {
+                return BasicBlackPositionEndValues[i][msbInd];
+            }, wFigs
+        );
+
+        endEval -= _getSimpleFieldEval(
+            [=](const int msbInd)
+            {
+                return BasicBlackPositionEndValues[i][ConvertToReversedPos(msbInd)];
+            }, bFigs
+        );
+    }
+
+    return _getTapperedValue(phase, openinEval, endEval);
 }
