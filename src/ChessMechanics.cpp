@@ -159,25 +159,16 @@ std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMapWithCheck(const in
     assert(col == 1 || col == 0);
 
     const size_t enemyCord = SwapColor(col) * Board::BoardsPerCol;
-    const size_t allyCord = col * Board::BoardsPerCol;
-    const int allyKingShift = ConvertToReversedPos(board.GetKingMsbPos(col));
 
-    // Rook lines search
-    const uint64_t rookLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].rookMask;
-    const uint64_t suspectedRooks =
-        (board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]) & rookLinesOnKing;
-    const auto [figsPinnedByRookMoves, allowedTileRook] =
-        _getPinnedFigsWithCheckGenerator<RookMap>(suspectedRooks, fullMap, allyCord, allyKingShift);
+    const auto [pinnedByRooks, allowedRooks] =
+        _getPinnedFigsWithCheckGenerator<RookMap>(fullMap,
+            board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]);
 
-    // TODO: what I meant: if (!allowedTileRook) { ... }
-    // Bishop lines search
-    const uint64_t bishopLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].bishopMask;
-    const uint64_t suspectedBishops =
-        (board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]) & bishopLinesOnKing;
-    const auto [figsPinnedByBishopMoves, allowedTileBishop] =
-        _getPinnedFigsWithCheckGenerator<BishopMap>(suspectedBishops, fullMap, allyCord, allyKingShift);
+    const auto [pinnedByBishops, allowedBishops] =
+        _getPinnedFigsWithCheckGenerator<BishopMap>(fullMap,
+            board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]);
 
-    return {figsPinnedByRookMoves | figsPinnedByBishopMoves, allowedTileRook | allowedTileBishop};
+    return {pinnedByBishops | pinnedByRooks, allowedBishops | allowedRooks};
 }
 
 uint64_t ChessMechanics::GetAllowedTilesWhenCheckedByNonSliding() const

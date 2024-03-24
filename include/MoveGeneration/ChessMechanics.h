@@ -103,10 +103,7 @@ struct ChessMechanics
 
     // returns [ pinnedFigMap, allowedTilesMap ]
     template <class MoveMapT>
-    [[nodiscard]] std::pair<uint64_t, uint64_t> _getPinnedFigsWithCheckGenerator(uint64_t suspectedFigs,
-                                                                                 uint64_t fullMap,
-                                                                                 size_t allyCord,
-                                                                                 int allyKingShift) const;
+    [[nodiscard]] std::pair<uint64_t, uint64_t> _getPinnedFigsWithCheckGenerator(uint64_t fullMap, uint64_t possiblePinningFigs) const;
 
     // ------------------------------
     // Class fields
@@ -138,11 +135,18 @@ uint64_t ChessMechanics::_getPinnedFigsWoutCheckGenerator(const uint64_t fullMap
 
     uint64_t pinnedFigMap{};
     const int kingPos = board.GetKingMsbPos(board.movColor);
+
+    // generating figs seen from king's rook perpective
     const uint64_t kingFigPerspectiveAttackedFigs = MoveMapT::GetMoves(kingPos, fullMap) & fullMap;
+
+    // removing figs seen by king
     const uint64_t cleanedMap = fullMap ^ kingFigPerspectiveAttackedFigs;
+
+    // generating figs, which stayed behid first ones and are actually pinnig ones
     const uint64_t kingSecondRookPerspective = MoveMapT::GetMoves(kingPos, cleanedMap);
     uint64_t pinningFigs = possiblePinningFigs & kingSecondRookPerspective;
 
+    // generating fields which are both seen by king and pinning figure = field on which pinned figure stays
     while(pinningFigs != 0)
     {
         const int msbPos = ExtractMsbPos(pinningFigs);
@@ -154,36 +158,38 @@ uint64_t ChessMechanics::_getPinnedFigsWoutCheckGenerator(const uint64_t fullMap
 }
 
 template<class MoveMapT>
-std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigsWithCheckGenerator(uint64_t suspectedFigs,
-    const uint64_t fullMap, const size_t allyCord, const int allyKingShift) const
+std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigsWithCheckGenerator(const uint64_t fullMap, const uint64_t possiblePinningFigs) const
 {
-    uint64_t pinnedFigMap{};
     uint64_t allowedTilesFigMap{};
+    uint64_t pinnedFigMap{};
 
-    while (suspectedFigs != 0)
+    const int kingPos = board.GetKingMsbPos(board.movColor);
+    // generating figs seen from king's rook perpective
+    const uint64_t kingFigPerspectiveAttackedFields = MoveMapT::GetMoves(kingPos, fullMap);
+    const uint64_t kingFigPerspectiveAttackedFigs = kingFigPerspectiveAttackedFields & fullMap;
+
+    // this functions should be called only in case of single check so the value below can only be either null or the map of checking figure
+    if (const uint64_t kingSeenEnemyFigs = kingFigPerspectiveAttackedFigs & possiblePinningFigs; kingSeenEnemyFigs != 0)
     {
-        const int msbPos = ExtractMsbPos(suspectedFigs);
-        const uint64_t suspectedFigAttackFields = MoveMapT::GetMoves(msbPos, fullMap);
-        const uint64_t kingsPerspective = MoveMapT::GetMoves(ConvertToReversedPos(allyKingShift), fullMap);
+        const int msbPos = ExtractMsbPos(kingSeenEnemyFigs);
+        const uint64_t moves = MoveMapT::GetMoves(msbPos, fullMap);
 
-        // TODO: ERROR HERE
-        if (const uint64_t attackedFig =
-                    suspectedFigAttackFields & fullMap & (kingsPerspective | board.boards[allyCord + kingIndex]);
-            attackedFig == board.boards[allyCord + kingIndex])
-        {
-            allowedTilesFigMap |= (suspectedFigAttackFields | (maxMsbPossible >> msbPos)) & kingsPerspective;
-        }
-        else
-        {
-            const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
-            const uint64_t isKingAttacked = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & mapWoutAttackedFig &
-                                            board.boards[allyCord + kingIndex];
-            const uint64_t pinnedFigFlag = (isKingAttacked >> allyKingShift) * attackedFig;
+        allowedTilesFigMap = (moves & kingFigPerspectiveAttackedFields) | kingSeenEnemyFigs;
+    }
 
-            pinnedFigMap |= pinnedFigFlag;
-        }
+    // removing figs seen by king
+    const uint64_t cleanedMap = fullMap ^ kingFigPerspectiveAttackedFigs;
 
-        suspectedFigs ^= (maxMsbPossible >> msbPos);
+    // generating figs, which stayed behid first ones and are actually pinnig ones
+    const uint64_t kingSecondRookPerspective = MoveMapT::GetMoves(kingPos, cleanedMap);
+    uint64_t pinningFigs = possiblePinningFigs & kingSecondRookPerspective;
+
+    // generating fields which are both seen by king and pinning figure = field on which pinned figure stays
+    while(pinningFigs != 0)
+    {
+        const int msbPos = ExtractMsbPos(pinningFigs);
+        pinnedFigMap |= MoveMapT::GetMoves(msbPos, fullMap) & kingFigPerspectiveAttackedFigs;
+        pinningFigs ^= maxMsbPossible >> msbPos;
     }
 
     return {pinnedFigMap, allowedTilesFigMap};
