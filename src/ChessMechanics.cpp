@@ -140,22 +140,16 @@ uint64_t ChessMechanics::GetPinnedFigsMapWoutCheck(const int col, const uint64_t
     assert(col == 1 || col == 0);
 
     const size_t enemyCord = SwapColor(col) * Board::BoardsPerCol;
-    const size_t allyCord = col * Board::BoardsPerCol;
-    const int allyKingShift = ConvertToReversedPos(board.GetKingMsbPos(col));
 
-    const uint64_t rookLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].rookMask;
-    const uint64_t suspectedRooks =
-        (board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]) & rookLinesOnKing;
-    const uint64_t figsPinnedByRookMoves =
-        _getPinnedFigsWoutCheckGenerator<RookMap>(suspectedRooks, fullMap, allyCord, allyKingShift);
+    const uint64_t pinnedByRooks =
+        _getPinnedFigsWoutCheckGenerator<RookMap>(fullMap,
+            board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]);
 
-    const uint64_t bishopLinesOnKing = KingMap::pinMasks[board.GetKingMsbPos(col)].bishopMask;
-    const uint64_t suspectedBishops =
-        (board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]) & bishopLinesOnKing;
-    const uint64_t figsPinnedByBishopMoves =
-        _getPinnedFigsWoutCheckGenerator<BishopMap>(suspectedBishops, fullMap, allyCord, allyKingShift);
+    const uint64_t pinnedByBishops =
+        _getPinnedFigsWoutCheckGenerator<BishopMap>(fullMap,
+            board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]);
 
-    return figsPinnedByRookMoves | figsPinnedByBishopMoves;
+    return pinnedByRooks | pinnedByBishops;
 }
 
 // Todo: check wheter interrupting search when checking figure is found boosts up performance here

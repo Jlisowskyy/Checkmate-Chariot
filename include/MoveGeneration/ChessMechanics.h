@@ -99,8 +99,7 @@ struct ChessMechanics
     [[nodiscard]] static uint64_t _blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen);
 
     template <class MoveMapT>
-    [[nodiscard]] uint64_t _getPinnedFigsWoutCheckGenerator(uint64_t suspectedFigs, uint64_t fullMap,
-                                                            size_t allyCord, int allyKingShift) const;
+    [[nodiscard]] uint64_t _getPinnedFigsWoutCheckGenerator(uint64_t fullMap, uint64_t possiblePinningFigs) const;
 
     // returns [ pinnedFigMap, allowedTilesMap ]
     template <class MoveMapT>
@@ -133,27 +132,22 @@ uint64_t ChessMechanics::_blockIterativeGenerator(uint64_t board, MoveGeneratorT
 }
 
 template<class MoveMapT>
-uint64_t ChessMechanics::_getPinnedFigsWoutCheckGenerator(uint64_t suspectedFigs, const uint64_t fullMap,
-    const size_t allyCord, const int allyKingShift) const
+uint64_t ChessMechanics::_getPinnedFigsWoutCheckGenerator(const uint64_t fullMap, const uint64_t possiblePinningFigs) const
 {
     assert(fullMap != 0);
 
     uint64_t pinnedFigMap{};
+    const int kingPos = board.GetKingMsbPos(board.movColor);
+    const uint64_t kingFigPerspectiveAttackedFigs = MoveMapT::GetMoves(kingPos, fullMap) & fullMap;
+    const uint64_t cleanedMap = fullMap ^ kingFigPerspectiveAttackedFigs;
+    const uint64_t kingSecondRookPerspective = MoveMapT::GetMoves(kingPos, cleanedMap);
+    uint64_t pinningFigs = possiblePinningFigs & kingSecondRookPerspective;
 
-    while (suspectedFigs != 0)
+    while(pinningFigs != 0)
     {
-        const int msbPos = ExtractMsbPos(suspectedFigs);
-        const uint64_t attackedFig = MoveMapT::GetMoves(msbPos, fullMap) & fullMap &
-                                     MoveMapT::GetMoves(ConvertToReversedPos(allyKingShift), fullMap);
-
-        const uint64_t mapWoutAttackedFig = fullMap ^ attackedFig;
-        const uint64_t isKingAttacked = MoveMapT::GetMoves(msbPos, mapWoutAttackedFig) & mapWoutAttackedFig &
-                                        board.boards[allyCord + kingIndex];
-
-        const uint64_t pinnedFigFlag = (isKingAttacked >> allyKingShift) * attackedFig;  // 0 or attackedFig
-        pinnedFigMap |= pinnedFigFlag;
-
-        suspectedFigs ^= (maxMsbPossible >> msbPos);
+        const int msbPos = ExtractMsbPos(pinningFigs);
+        pinnedFigMap |= MoveMapT::GetMoves(msbPos, fullMap) & kingFigPerspectiveAttackedFigs;
+        pinningFigs ^= maxMsbPossible >> msbPos;
     }
 
     return pinnedFigMap;

@@ -49,6 +49,8 @@ public:
 
     [[nodiscard]] static int32_t Evaluation1(const Board&bd);
 
+    [[nodiscard]] static int32_t Evaluation2(Board& bd);
+
     // ------------------------------
     // Private class methods
     // ------------------------------
@@ -71,6 +73,16 @@ private:
 
     static int16_t _getNotTaperedEval(const Board& bd);
     static int16_t _getTapperedEval(const Board& bd, int16_t phase);
+
+    // midgame eval / endgame eval / king threats counter w/b
+    // static std::tuple<int16_t, int16_t, int16_t, int16_t> _evaluateKnights(const Board& bd)
+    // {
+    //
+    // }
+
+    static int16_t _evaluateFields(Board& bd, int16_t phase);
+
+    static int16_t _evaluateStructures(const Board& bd, int16_t phase );
 
     // ------------------------------
     // Class fields

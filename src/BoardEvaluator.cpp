@@ -7,6 +7,8 @@
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
 
+#include "../include/MoveGeneration/ChessMechanics.h"
+
 BoardEvaluator::MaterialArrayT BoardEvaluator::_materialTable =  [] () -> MaterialArrayT
     {
         auto _reverseMaterialIndex = [](const size_t index) -> FigureCountsArrayT
@@ -178,6 +180,18 @@ int32_t BoardEvaluator::Evaluation1(const Board& bd)
     positionEval += _getTapperedEval(bd, phase);
 
     return materialEval + positionEval + _applyBonusForCoveredPawns(bd, 0);
+}
+
+int32_t BoardEvaluator::Evaluation2(Board& bd)
+{
+    const auto [isSuccess, counts] = _countFigures(bd);
+    const int16_t phase = _calcPhase(counts);
+
+    const int32_t materialEval = isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation(counts, phase);
+    const int32_t positionEval = _evaluateFields(bd, phase);
+    const int32_t structuralEval = _evaluateStructures(bd, phase);
+
+    return materialEval + positionEval + structuralEval;
 }
 
 int32_t BoardEvaluator::_applyBonusForCoveredPawns(const Board& bd, int32_t eval)
@@ -390,4 +404,21 @@ int16_t BoardEvaluator::_getTapperedEval(const Board& bd, const int16_t phase)
     }
 
     return _getTapperedValue(phase, openinEval, endEval);
+}
+
+int16_t BoardEvaluator::_evaluateFields(Board& bd, int16_t phase)
+{
+    int oCol = bd.movColor;
+    int16_t eval{};
+    ChessMechanics mech{bd};
+
+    bd.movColor = WHITE;
+
+
+    return 0;
+}
+
+int16_t BoardEvaluator::_evaluateStructures(const Board& bd, int16_t phase)
+{
+    return _applyBonusForCoveredPawns(bd, 0);
 }
