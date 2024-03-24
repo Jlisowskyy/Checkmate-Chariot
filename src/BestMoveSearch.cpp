@@ -33,43 +33,8 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
 
         // cleaning tables used in iteration
 
-        if (depth < 4)
-        {
-            _kTable.ClearPlyFloor(depth);
-            eval = _negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {});
-        }
-        else
-        {
-            int delta = BoardEvaluator::BasicFigureValues[wPawnsIndex] / 4;
-            int alpha = eval - delta;
-            int beta = eval + delta;
-            int tries{};
-
-            while (tries++ <= MaxAspWindowTries)
-            {
-                _kTable.ClearPlyFloor(depth);
-                eval = _negaScout(_board, alpha, beta, depth, zHash, {});
-
-                if (eval <= alpha)
-                {
-                    beta = (alpha + beta) / 2;
-                    alpha = std::max(eval - delta, NegativeInfinity);
-                }
-                else if (eval >= beta)
-                    beta = std::min(eval + delta, PositiveInfinity);
-                else
-                    break;
-
-                delta += 2*delta;
-            }
-
-            // final retry with a full window
-            if (tries == MaxAspWindowTries + 1)
-            {
-                _kTable.ClearPlyFloor(depth);
-                eval = _negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {});
-            }
-        }
+        _kTable.ClearPlyFloor(depth);
+        eval = _negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {});
 
         // measurement end
         [[maybe_unused]]auto t2 = std::chrono::steady_clock::now();

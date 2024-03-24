@@ -7,6 +7,92 @@
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
 
+BoardEvaluator::MaterialArrayT BoardEvaluator::_materialTable =  [] () -> MaterialArrayT
+    {
+        auto _reverseMaterialIndex = [](const size_t index) -> FigureCountsArrayT
+        {
+            return {
+                (index % BlackPawnCoef) / WhitePawnCoef,
+                (index % BlackKnightCoef) / WhiteKnightCoef,
+                (index % BlackBishopCoef) / WhiteBishopCoef,
+                (index % BlackRookCoef) / WhiteRookCoef,
+                (index % BlackQueenCoef) / WhiteQueenCoef,
+                index / BlackPawnCoef,
+                (index % WhitePawnCoef) / BlackKnightCoef,
+                (index % WhiteKnightCoef) / BlackBishopCoef,
+                (index % WhiteBishopCoef) / BlackRookCoef,
+                (index % WhiteRookCoef) / BlackQueenCoef,
+            };
+        };
+
+        MaterialArrayT arr{};
+
+        for (size_t i = 0 ; i < MaterialTableSize; ++i)
+        {
+            int materialValue {};
+            auto figArr = _reverseMaterialIndex(i);
+
+            int actPhase{};
+
+            // calculating game phase
+            for (size_t j = 0; j < kingIndex; ++j)
+                actPhase += static_cast<int>(figArr[j] + figArr[BlackFigStartIndex + j]) * FigurePhases[j];
+            actPhase = (actPhase * MaxTapperedCoef + (FullPhase / 2)) / FullPhase; // FullPhase / 2 ?
+
+            // summing up total material values
+            for (size_t j = 0; j < kingIndex; ++j)
+            {
+                const int phasedFigVal = (BasicFigureValues[j]*(MaxTapperedCoef-actPhase) + EndGameFigureValues[j]*actPhase) / MaxTapperedCoef;
+
+                materialValue += static_cast<int>(figArr[j]) * phasedFigVal;
+                materialValue -= static_cast<int>(figArr[BlackFigStartIndex + j]) * phasedFigVal;
+            }
+
+            // Applying now pawn penalty
+            if (figArr[pawnsIndex] == 0)
+                materialValue += NoPawnsPenalty;
+            if (figArr[BlackFigStartIndex + pawnsIndex] == 0)
+                materialValue -= NoPawnsPenalty;
+
+            // Applying Bishop pair bonus
+            const size_t totalPawnCount = figArr[pawnsIndex] + figArr[BlackFigStartIndex + pawnsIndex];
+            if (figArr[bishopsIndex] == 2)
+                materialValue += BishopPairBonus - (static_cast<int>(totalPawnCount)*2 - BishopPairDelta);
+
+            if (figArr[BlackFigStartIndex + bishopsIndex] == 2)
+                materialValue -= BishopPairBonus - (static_cast<int>(totalPawnCount)*2 - BishopPairDelta);
+
+            // Applying Knight pair penalty -> Knights are losing value when less pawns are on board
+            if (figArr[knightsIndex] == 2)
+                materialValue += KnightPairPenalty + (static_cast<int>(totalPawnCount)*2);
+
+            if (figArr[BlackFigStartIndex + knightsIndex] == 2)
+                materialValue -= KnightPairPenalty + (static_cast<int>(totalPawnCount)*2);
+
+            // Applying Rook pair penalty
+            if (figArr[rooksIndex] == 2)
+                materialValue += RookPairPenalty;
+
+            if (figArr[BlackFigStartIndex + rooksIndex] == 2)
+                materialValue -= RookPairPenalty;
+
+            arr[i] = static_cast<int16_t>(materialValue);
+        }
+
+        // applying draw position scores
+        for(const auto& drawPos : MaterialDrawPositionConstelations)
+        {
+            size_t index{};
+
+            for (size_t i = 0; i < drawPos.size(); ++i)
+                index += drawPos[i] * FigCoefs[i];
+
+            arr[index] = 0;
+        }
+
+        return arr;
+    }();
+
 int32_t BoardEvaluator::DefaultFullEvalFunction(const Board& bd, const int color)
 {
     const int whiteEval = Evaluation1(bd);
