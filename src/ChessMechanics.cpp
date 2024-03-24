@@ -61,9 +61,6 @@ size_t ChessMechanics::GetIndexOfContainingBoard(const uint64_t map, const int c
     return 0;
 }
 
-// Todo: test later wheter accumulation of blocked maps is faster?
-// Todo: AVX applied here?
-
 /*      IMPORTANT NOTES:
  *  BlockedFieldsMap - indicates wheter some field could be attacked by enemy figures in their next round.
  *  During generation process there are check test performed with counting, what yields 3 code branches inside main
@@ -165,31 +162,18 @@ std::pair<uint64_t, uint8_t> ChessMechanics::_getRookBlockedMap(uint64_t rookMap
     return {blockedTiles, checks};
 }
 
-// TODO: pretty fking stupid but ok could be optimised after tests:
 uint64_t ChessMechanics::GenerateAllowedTilesForPrecisedPinnedFig(const uint64_t figBoard, const uint64_t fullMap) const
 {
     assert(fullMap != 0);
-    assert(figBoard != 0);
+    assert(CountOnesInBoard(figBoard) == 1);
 
-    constexpr size_t bishopRange = PinningMasks::BishopLines + PinningMasks::PinningMaskPerLinesType;
-    for (size_t i = PinningMasks::BishopLines; i < bishopRange; ++i)
-        if (const uint64_t mask = KingMap::pinMasks[board.GetKingMsbPos(board.movColor)].masks[i];
-            (figBoard & mask) != 0)
-        {
-            return BishopMap::GetMoves(board.GetKingMsbPos(board.movColor), fullMap ^ figBoard) & mask;
-        }
+    const int msbPos = ExtractMsbPos(figBoard);
+    const uint64_t KingBoard = board.boards[board.movColor*Board::BoardsPerCol + kingIndex];
 
-    constexpr size_t rookRange = PinningMasks::RookLines + PinningMasks::PinningMaskPerLinesType;
-    for (size_t i = PinningMasks::RookLines; i < rookRange; ++i)
-        if (const uint64_t mask = KingMap::pinMasks[board.GetKingMsbPos(board.movColor)].masks[i];
-            (figBoard & mask) != 0)
-        {
-            return RookMap::GetMoves(board.GetKingMsbPos(board.movColor), fullMap ^ figBoard) & mask;
-        }
+    const uint64_t RookPerspectiveMoves = RookMap::GetMoves(msbPos, fullMap);
+    if ((RookPerspectiveMoves & KingBoard) != 0)
+        return  RookPerspectiveMoves & RookMap::GetMoves(ExtractMsbPos(KingBoard), fullMap^figBoard);
 
-#ifndef NDEBUG
-    throw std::runtime_error("Fatal error occured during allowed tiles generation!\n");
-#endif
-
-    return 0;
+    const uint64_t BishopPerspectiveMoves = BishopMap::GetMoves(msbPos, fullMap);
+    return BishopPerspectiveMoves & BishopMap::GetMoves(ExtractMsbPos(KingBoard), fullMap^figBoard);
 }

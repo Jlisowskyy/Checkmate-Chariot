@@ -9,8 +9,6 @@
 #include <cstdint>
 
 #include "MoveGeneration.h"
-#include "PinningMask.h"
-
 #include "KnightMap.h"
 
 struct KingMap
@@ -47,10 +45,7 @@ struct KingMap
     // ------------------------------
     // Class Fields
     // ------------------------------
-   public:
-    static constexpr std::array<PinningMasks, Board::BoardFields> pinMasks = PinningMasks::PinningArrayFactory();
 
-   private:
     static constexpr size_t maxMovesCount = 8;
 
     // Describes king possible moves cordinates.

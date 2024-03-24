@@ -41,7 +41,6 @@ add_executable(Checkmate-Chariot main.cpp
         include/MapTypes/FancyMagicRookMap.h
         include/MoveGeneration/SparseRandomGenerator.h
         include/TestsAndDebugging/MoveGenerationTests.h
-        include/MoveGeneration/PinningMask.h
         include/MoveGeneration/BlackPawnMap.h
         src/MoveGenerationTests.cpp
         include/ParseTools.h
