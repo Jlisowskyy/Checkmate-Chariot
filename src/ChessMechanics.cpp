@@ -133,44 +133,6 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     return {blockedMap, checksCount, chT};
 }
 
-// TODO: here pinned figs could be processed first to get some slight speed up
-uint64_t ChessMechanics::GetPinnedFigsMapWoutCheck(const int col, const uint64_t fullMap) const
-{
-    assert(fullMap != 0);
-    assert(col == 1 || col == 0);
-
-    const size_t enemyCord = SwapColor(col) * Board::BoardsPerCol;
-
-    const uint64_t pinnedByRooks =
-        _getPinnedFigsWoutCheckGenerator<RookMap>(fullMap,
-            board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]);
-
-    const uint64_t pinnedByBishops =
-        _getPinnedFigsWoutCheckGenerator<BishopMap>(fullMap,
-            board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]);
-
-    return pinnedByRooks | pinnedByBishops;
-}
-
-// Todo: check wheter interrupting search when checking figure is found boosts up performance here
-std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMapWithCheck(const int col, const uint64_t fullMap) const
-{
-    assert(fullMap != 0);
-    assert(col == 1 || col == 0);
-
-    const size_t enemyCord = SwapColor(col) * Board::BoardsPerCol;
-
-    const auto [pinnedByRooks, allowedRooks] =
-        _getPinnedFigsWithCheckGenerator<RookMap>(fullMap,
-            board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]);
-
-    const auto [pinnedByBishops, allowedBishops] =
-        _getPinnedFigsWithCheckGenerator<BishopMap>(fullMap,
-            board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]);
-
-    return {pinnedByBishops | pinnedByRooks, allowedBishops | allowedRooks};
-}
-
 uint64_t ChessMechanics::GetAllowedTilesWhenCheckedByNonSliding() const
 {
     uint64_t allowedTiles{};

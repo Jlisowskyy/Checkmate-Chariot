@@ -8,22 +8,10 @@
 #include "../BitOperations.h"
 #include "../Board.h"
 
+#include "BishopMap.h"
+#include "RookMap.h"
 
 #include <cassert>
-
-/*              General optimizations TODO:
- *     - test all msb and lsb extractions
- *     - add and test AVX support
- *     - test other ideas for hashing
- *
- */
-
-/*  There is general bug in the logic
- *  double check can also occur by two same type figures
- *  in result of pawn upgrade
- *  what is not predicted in procedure
- *  that generates check count
- */
 
 struct ChessMechanics
 {
@@ -35,6 +23,12 @@ struct ChessMechanics
     {
         slidingFigCheck,
         simpleFigCheck
+    };
+
+    enum class PinnedFigGen
+    {
+        WAllowedTiles,
+        WoutAllowedTiles
     };
 
     // ------------------------------
@@ -67,26 +61,13 @@ struct ChessMechanics
     // [blockedFigMap, checksCount, checkType]
     [[nodiscard]] std::tuple<uint64_t, uint8_t, uint8_t> GetBlockedFieldMap(uint64_t fullMap) const;
 
-    // should only be used when no check is on board
-    [[nodiscard]] uint64_t GetPinnedFigsMapWoutCheck(int col, uint64_t fullMap) const;
-
     [[nodiscard]] uint64_t GenerateAllowedTilesForPrecisedPinnedFig(uint64_t figBoard, uint64_t fullMap) const;
 
     // returns [ pinnedFigMap, allowedTilesMap ]
-    [[nodiscard]] std::pair<uint64_t, uint64_t> GetPinnedFigsMapWithCheck(int col, uint64_t fullMap) const;
+    template<PinnedFigGen genType>
+    [[nodiscard]] std::pair<uint64_t, uint64_t> GetPinnedFigsMap(int col, uint64_t fullMap) const;
 
     [[nodiscard]] uint64_t GetAllowedTilesWhenCheckedByNonSliding() const;
-
-    /*                  Important notes:
-     *
-     *  ActionT must follow this scheme:
-     *  void Action(Board& board)
-     *  Where:
-     *      - board - represents actual state of the board, in current iteration,
-     *
-     *  Iteration follow DFS scheme, and action is only invoked on leafs.
-     *
-     */
 
     // ------------------------------
     // private methods
@@ -98,12 +79,9 @@ struct ChessMechanics
     template <class MoveGeneratorT>
     [[nodiscard]] static uint64_t _blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen);
 
-    template <class MoveMapT>
-    [[nodiscard]] uint64_t _getPinnedFigsWoutCheckGenerator(uint64_t fullMap, uint64_t possiblePinningFigs) const;
-
     // returns [ pinnedFigMap, allowedTilesMap ]
-    template <class MoveMapT>
-    [[nodiscard]] std::pair<uint64_t, uint64_t> _getPinnedFigsWithCheckGenerator(uint64_t fullMap, uint64_t possiblePinningFigs) const;
+    template <class MoveMapT, PinnedFigGen type>
+    [[nodiscard]] std::pair<uint64_t, uint64_t> _getPinnedFigMaps(uint64_t fullMap, uint64_t possiblePinningFigs) const;
 
     // ------------------------------
     // Class fields
@@ -111,6 +89,25 @@ struct ChessMechanics
 
     Board& board;
 };
+
+template<ChessMechanics::PinnedFigGen genType>
+std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMap(const int col, const uint64_t fullMap) const
+{
+    assert(fullMap != 0);
+    assert(col == 1 || col == 0);
+
+    const size_t enemyCord = SwapColor(col) * Board::BoardsPerCol;
+
+    const auto [pinnedByRooks, allowedRooks] =
+            _getPinnedFigMaps<RookMap, genType>(fullMap,
+                                                board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]);
+
+    const auto [pinnedByBishops, allowedBishops] =
+            _getPinnedFigMaps<BishopMap, genType>(fullMap,
+                                                  board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]);
+
+    return {pinnedByBishops | pinnedByRooks, allowedBishops | allowedRooks};
+}
 
 template<class MoveGeneratorT>
 uint64_t ChessMechanics::_blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen)
@@ -128,40 +125,11 @@ uint64_t ChessMechanics::_blockIterativeGenerator(uint64_t board, MoveGeneratorT
     return blockedMap;
 }
 
-template<class MoveMapT>
-uint64_t ChessMechanics::_getPinnedFigsWoutCheckGenerator(const uint64_t fullMap, const uint64_t possiblePinningFigs) const
-{
-    assert(fullMap != 0);
-
-    uint64_t pinnedFigMap{};
-    const int kingPos = board.GetKingMsbPos(board.movColor);
-
-    // generating figs seen from king's rook perpective
-    const uint64_t kingFigPerspectiveAttackedFigs = MoveMapT::GetMoves(kingPos, fullMap) & fullMap;
-
-    // removing figs seen by king
-    const uint64_t cleanedMap = fullMap ^ kingFigPerspectiveAttackedFigs;
-
-    // generating figs, which stayed behid first ones and are actually pinnig ones
-    const uint64_t kingSecondRookPerspective = MoveMapT::GetMoves(kingPos, cleanedMap);
-    uint64_t pinningFigs = possiblePinningFigs & kingSecondRookPerspective;
-
-    // generating fields which are both seen by king and pinning figure = field on which pinned figure stays
-    while(pinningFigs != 0)
-    {
-        const int msbPos = ExtractMsbPos(pinningFigs);
-        pinnedFigMap |= MoveMapT::GetMoves(msbPos, fullMap) & kingFigPerspectiveAttackedFigs;
-        pinningFigs ^= maxMsbPossible >> msbPos;
-    }
-
-    return pinnedFigMap;
-}
-
-template<class MoveMapT>
-std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigsWithCheckGenerator(const uint64_t fullMap, const uint64_t possiblePinningFigs) const
+template<class MoveMapT, ChessMechanics::PinnedFigGen type>
+std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigMaps(const uint64_t fullMap, const uint64_t possiblePinningFigs) const
 {
     uint64_t allowedTilesFigMap{};
-    uint64_t pinnedFigMap{};
+    [[maybe_unused]] uint64_t pinnedFigMap{};
 
     const int kingPos = board.GetKingMsbPos(board.movColor);
     // generating figs seen from king's rook perpective
@@ -169,13 +137,14 @@ std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigsWithCheckGenerator(c
     const uint64_t kingFigPerspectiveAttackedFigs = kingFigPerspectiveAttackedFields & fullMap;
 
     // this functions should be called only in case of single check so the value below can only be either null or the map of checking figure
-    if (const uint64_t kingSeenEnemyFigs = kingFigPerspectiveAttackedFigs & possiblePinningFigs; kingSeenEnemyFigs != 0)
-    {
-        const int msbPos = ExtractMsbPos(kingSeenEnemyFigs);
-        const uint64_t moves = MoveMapT::GetMoves(msbPos, fullMap);
+    if constexpr (type == PinnedFigGen::WAllowedTiles)
+        if (const uint64_t kingSeenEnemyFigs = kingFigPerspectiveAttackedFigs & possiblePinningFigs; kingSeenEnemyFigs != 0)
+        {
+            const int msbPos = ExtractMsbPos(kingSeenEnemyFigs);
+            const uint64_t moves = MoveMapT::GetMoves(msbPos, fullMap);
 
-        allowedTilesFigMap = (moves & kingFigPerspectiveAttackedFields) | kingSeenEnemyFigs;
-    }
+            allowedTilesFigMap = (moves & kingFigPerspectiveAttackedFields) | kingSeenEnemyFigs;
+        }
 
     // removing figs seen by king
     const uint64_t cleanedMap = fullMap ^ kingFigPerspectiveAttackedFigs;
@@ -194,5 +163,6 @@ std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigsWithCheckGenerator(c
 
     return {pinnedFigMap, allowedTilesFigMap};
 }
+
 
 #endif  // CHESSMECHANICS_H

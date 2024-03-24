@@ -194,7 +194,9 @@ void MoveGenerator::_noCheckGen(payload& results, const uint64_t fullMap, const 
 {
     assert(fullMap != 0);
 
-    const uint64_t pinnedFigsMap = _mechanics.GetPinnedFigsMapWoutCheck(_board.movColor, fullMap);
+    [[maybe_unused]] const auto [pinnedFigsMap, _] =
+        _mechanics.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(_board.movColor, fullMap);
+
     const uint64_t enemyMap = _mechanics.GetColMap(SwapColor(_board.movColor));
     const uint64_t allyMap = _mechanics.GetColMap(_board.movColor);
 
@@ -237,10 +239,11 @@ void MoveGenerator::_singleCheckGen(payload& results, const uint64_t fullMap, co
     const auto [pinnedFigsMap, allowedTilesMap] = [&]() -> std::pair<uint64_t, uint64_t>
     {
         if (checkType == slidingFigCheck)
-            return _mechanics.GetPinnedFigsMapWithCheck(_board.movColor, fullMap);
+            return _mechanics.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WAllowedTiles>(_board.movColor, fullMap);
 
-        auto pinned = _mechanics.GetPinnedFigsMapWoutCheck(_board.movColor, fullMap);
-        return {pinned, _mechanics.GetAllowedTilesWhenCheckedByNonSliding()};
+        [[maybe_unused]] const auto [pinnedFigsMap, _] =
+            _mechanics.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(_board.movColor, fullMap);
+        return {pinnedFigsMap, _mechanics.GetAllowedTilesWhenCheckedByNonSliding()};
     }();
 
     // helping variable preparation
