@@ -9,6 +9,7 @@
 
 #include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/MoveGeneration/KnightMap.h"
+#include "../include/MoveGeneration/QueenMap.h"
 
 BoardEvaluator::MaterialArrayT BoardEvaluator::_materialTable =  [] () -> MaterialArrayT
     {
@@ -96,9 +97,9 @@ BoardEvaluator::MaterialArrayT BoardEvaluator::_materialTable =  [] () -> Materi
         return arr;
     }();
 
-int32_t BoardEvaluator::DefaultFullEvalFunction(const Board& bd, const int color)
+int32_t BoardEvaluator::DefaultFullEvalFunction(Board& bd, const int color)
 {
-    const int whiteEval = Evaluation1(bd);
+    const int whiteEval = Evaluation2(bd);
     return color == WHITE ? whiteEval : -whiteEval;
 }
 
@@ -190,9 +191,7 @@ int32_t BoardEvaluator::Evaluation2(Board& bd)
 
     const int32_t materialEval = isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation(counts, phase);
     const int32_t positionEval = _evaluateFields(bd, phase);
-    const int32_t structuralEval = _evaluateStructures(bd, phase);
-
-    return materialEval + positionEval + structuralEval;
+    return materialEval + positionEval;
 }
 
 int32_t BoardEvaluator::_applyBonusForCoveredPawns(const Board& bd, int32_t eval)
@@ -299,9 +298,9 @@ int32_t BoardEvaluator::_calcPhase(const FigureCountsArrayT& figArr)
     return actPhase;
 }
 
-int32_t BoardEvaluator::_getTapperedValue(const int32_t phase, const int32_t min, const int32_t max)
+int32_t BoardEvaluator::_getTapperedValue(const int32_t phase, const int32_t midEval, const int32_t endEval)
 {
-    return (min*(MaxTapperedCoef-phase) + max*phase) / MaxTapperedCoef;
+    return (midEval*(MaxTapperedCoef-phase) + endEval*phase) / MaxTapperedCoef;
 }
 
 int32_t BoardEvaluator::_getNotTaperedEval(const Board& bd)
@@ -426,12 +425,24 @@ BoardEvaluator::_fieldEvalInfo_t BoardEvaluator::_evaluatePawns(Board& bd,
     return rv;
 }
 
+std::tuple<int32_t, int32_t> BoardEvaluator::_evaluateKings(Board& bd)
+{
+    return {
+        BasicBlackKingPositionValues[ExtractMsbPos(bd.boards[wKingIndex])]
+            - BasicBlackKingPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.boards[bKingIndex]))],
+        BasicBlackKingEndPositionValues[ExtractMsbPos(bd.boards[wKingIndex])]
+                    - BasicBlackKingEndPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.boards[bKingIndex]))]
+    };
+}
+
 int32_t BoardEvaluator::_evaluateFields(Board& bd, int32_t phase)
 {
     static constexpr _fieldEvalInfo_t (*EvalFunctions[])(Board&, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t)
     {
         _processFigEval<KnightMap, _processKnightEval>,
-        _processFigEval<BishopMap, _processBishopEval>
+        _processFigEval<BishopMap, _processBishopEval>,
+        _processFigEval<RookMap, _processRookEval>,
+        _processFigEval<QueenMap, _processQueenEval>
     };
 
     int32_t midEval{};
@@ -473,7 +484,20 @@ int32_t BoardEvaluator::_evaluateFields(Board& bd, int32_t phase)
         endEval += evalAggerg.endgameEval;
     }
 
-    return 0;
+    // ------------------------------
+    // Evaluating king
+    // ------------------------------
+
+    const auto [kingMidEval, kingEndEval] = _evaluateKings(bd);
+    midEval += kingMidEval;
+    endEval += kingEndEval;
+
+
+    const int32_t controlEval = (CountOnesInBoard(whiteControlledFields) - CountOnesInBoard(blackControlledFields)) * CenterControlBonusPerTile;
+    midEval += controlEval;
+    endEval += controlEval;
+
+    return _getTapperedValue(phase, midEval, endEval) + _evaluateStructures(bd, phase);
 }
 
 int32_t BoardEvaluator::_evaluateStructures(const Board& bd, int32_t phase)

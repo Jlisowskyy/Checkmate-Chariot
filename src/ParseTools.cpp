@@ -4,6 +4,8 @@
 
 #include "../include/ParseTools.h"
 
+#include <climits>
+
 size_t ParseTools::ExtractNextLine(const size_t startPos, const size_t maxPos, const char* inBuffer,
                                    std::string& outBuffer)
 {
@@ -20,7 +22,10 @@ size_t ParseTools::ExtractNextLine(const size_t startPos, const size_t maxPos, c
 lli ParseTools::ParseTolli(const std::string& str)
 {
     errno = 0;
-    return strtoll(str.c_str(), nullptr, 10);
+    const lli rv = strtoll(str.c_str(), nullptr, 10);
+    if (errno != 0)
+        return LONG_LONG_MAX;
+    return rv;
 }
 
 size_t ParseTools::TrimLeft(const std::string& str)

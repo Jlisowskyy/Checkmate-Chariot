@@ -151,7 +151,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str)
         if (pos == 0)
             return UCICommand::InvalidCommand;
         const lli arg = ParseTools::ParseTolli(workStr);
-        if (arg <= 0)
+        if (arg < 0)
             return UCICommand::InvalidCommand;
 
         _engine.GoDepth(arg, _appliedMoves);

@@ -22,6 +22,7 @@
 
 // TODO:
 // - apply additional prize for exchanges in winning positions
+// - what if e.g rook is pinned by rook? (pinning bonuses)
 
 class BoardEvaluator
 {
@@ -40,7 +41,7 @@ public:
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static int32_t DefaultFullEvalFunction(const Board&bd, int color);
+    [[nodiscard]] static int32_t DefaultFullEvalFunction(Board&bd, int color);
 
     // function uses only material to evaluate passed board
     [[nodiscard]] static int32_t PlainMaterialEvaluation(const Board&bd);
@@ -68,7 +69,7 @@ private:
 
     static int32_t _calcPhase(const FigureCountsArrayT&figArr);
 
-    static int32_t _getTapperedValue(int32_t phase, int32_t min, int32_t max);
+    static int32_t _getTapperedValue(int32_t phase, int32_t midEval, int32_t endEval);
 
     template<class EvalF>
     static int32_t _getSimpleFieldEval(EvalF evaluator, uint64_t figs);
@@ -105,6 +106,22 @@ private:
         evalResult operator()(Board& bd, uint64_t pinnedFigs, int col,
         uint64_t enemyControledFieldsByPawns, uint64_t allyMap, uint64_t enemyMap);
     };
+
+    template<class MapT, int (*fieldValueAccess)(int msbPos)>
+    struct _processRookEval
+    {
+        evalResult operator()(Board& bd, uint64_t pinnedFigs, int col,
+        uint64_t enemyControledFieldsByPawns, uint64_t allyMap, uint64_t enemyMap);
+    };
+
+    template<class MapT, int (*fieldValueAccess)(int msbPos)>
+    struct _processQueenEval
+    {
+        evalResult operator()(Board& bd, uint64_t pinnedFigs, int col,
+        uint64_t enemyControledFieldsByPawns, uint64_t allyMap, uint64_t enemyMap);
+    };
+
+    static std::tuple<int32_t, int32_t> _evaluateKings(Board& bd);
 
     static int32_t _evaluateFields(Board&bd, int32_t phase);
 
@@ -175,11 +192,35 @@ public:
 
     static constexpr int16_t TrappedBishopPenalty = -150;
 
-    static constexpr int16_t TrappedRookPenaltyMid = -100;
+    static constexpr int16_t TrappedRookPenaltyMid = -50;
     static constexpr int16_t TrappedRookPenaltyEnd = -200;
 
     static constexpr int16_t RookMobilityBonusMid = 2;
     static constexpr int16_t RookMobilityBonusEnd = 6;
+
+    static constexpr int16_t QueenMobilityBonusMid = 1;
+    static constexpr int16_t QueenMobilityBonusEnd = 8;
+
+    static constexpr int16_t QueenStartMovesPenalty = -100;
+
+    static constexpr int16_t TrappedQueenPenaltyMid = 0;
+    static constexpr int16_t TrappedQueenPenaltyEnd = -500;
+
+    static constexpr int16_t CenterControlBonusPerTile = 2;
+
+    // 4x4 mask on the center board used to evaluate center control
+    static constexpr uint64_t CenterFieldsMap = []() constexpr
+    {
+        constexpr uint64_t mask = GenMask(0, 63, 8)
+                                  | GenMask(1, 63, 8)
+                                  | GenMask(6, 63, 8)
+                                  | GenMask(7, 63, 8)
+                                  | GenMask(0, 8, 1)
+                                  | GenMask(8, 16, 1)
+                                  | GenMask(48, 56, 1)
+                                  | GenMask(56, 64, 1);
+        return ~mask;
+    }();
 
     static constexpr int16_t BasicFigureValues[]{
         100, // Pawn
@@ -225,14 +266,14 @@ public:
 
     static constexpr int16_t BasicBlackPawnPositionValues[]
     {
-        0, 0, 0, 0, 0, 0, 0, 0,
-        50, 50, 50, 50, 50, 50, 50, 50,
-        10, 10, 20, 30, 30, 20, 10, 10,
-        10, 10, 20, 25, 25, 10, 10, 10,
-        5, 7, 10, 20, 20, 10, 7, 5,
-        5, 5, 5, 0, 0, 5, 5, 5,
-        5, 8, 8, -20, -20, 8, 8, 5,
-        0, 0, 0, 0, 0, 0, 0, 0
+        0,  0,  0,  0,  0,  0,  0,  0,
+       50, 50, 50, 50, 50, 50, 50, 50,
+       10, 10, 20, 30, 30, 20, 10, 10,
+        5,  5, 10, 25, 25, 10,  5,  5,
+        0, -5, -5, 20, 20, -5, -5,  0,
+        5, -5,-10,  0,  0,-10, -5,  5,
+        10, 15, 15,-20,-20, 15, 15, 10,
+        0,  0,  0,  0,  0,  0,  0,  0
     };
 
     static constexpr int16_t BasicBlackPawnPositionEndValues[]
@@ -538,7 +579,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
         controlledFields |= LegalMoves;
 
         // adding mobility bonus
-        const int movesCount = CountOnesInBoard(LegalMoves);
+        const int movesCount = CountOnesInBoard(LegalMoves & safeFields);
         midEval += movesCount * BishopMobilityBonusMid;
         endEval += movesCount * BishopMobilityBonusEnd;
 
@@ -560,9 +601,9 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
         controlledFields |= moves;
 
         // adding mobility bonus
-        const int mobCount = CountOnesInBoard(safeMoves);
-        midEval += mobCount * KnightMobilityBonusMid;
-        endEval += mobCount * KnightMobilityBonusEnd;
+        const int movesCount = CountOnesInBoard(safeMoves);
+        midEval += movesCount * BishopMobilityBonusMid;
+        endEval += movesCount * BishopMobilityBonusEnd;
 
         // adding field values
         interEval += BasicBlackBishopPositionValues[fieldValueAccess(msbPos)];
@@ -576,6 +617,151 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
 
     midEval += interEval;
     endEval += interEval;
+
+    return {midEval, endEval, controlledFields};
+}
+
+template<class MapT, int(* fieldValueAccess)(int msbPos)>
+BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAccess>::operator()(Board& bd,
+    const uint64_t pinnedFigs, const int col, const uint64_t enemyControledFieldsByPawns, const uint64_t allyMap, const uint64_t enemyMap)
+{
+    int32_t midEval{};
+    int32_t interEval{};
+    int32_t endEval{};
+    uint64_t controlledFields{};
+
+    uint64_t pinnedRooks = bd.boards[MapT::GetBoardIndex(col)] & pinnedFigs;
+    uint64_t unpinnedRooks = bd.boards[MapT::GetBoardIndex(col)] ^ pinnedRooks;
+
+    const uint64_t safeFields = ~enemyControledFieldsByPawns;
+    const uint64_t fullMap = allyMap | enemyMap;
+
+    while(pinnedRooks)
+    {
+        const int msbPos = ExtractMsbPos(pinnedRooks);
+        const uint64_t figMap = maxMsbPossible >> msbPos;
+
+        ChessMechanics mech{bd};
+        const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
+
+        const uint64_t LegalMoves = allowedTiles & MapT::GetMoves(msbPos, fullMap);
+
+        // trapped penalty
+        interEval += TrappedPiecePenalty * (LegalMoves == 0);
+
+        // adding controlle fields
+        controlledFields |= LegalMoves;
+
+        // adding mobility bonus
+        const int movesCount = CountOnesInBoard(LegalMoves & safeFields);
+        midEval += movesCount * RookMobilityBonusMid;
+        endEval += movesCount * RookMobilityBonusEnd;
+
+        pinnedRooks ^= figMap;
+    }
+
+    while(unpinnedRooks)
+    {
+        const int msbPos = ExtractMsbPos(unpinnedRooks);
+        const uint64_t figMap = maxMsbPossible >> msbPos;
+
+        const uint64_t moves = MapT::GetMoves(msbPos, fullMap);
+        const uint64_t safeMoves = moves & safeFields;
+
+        // adding fields to controlled ones
+        controlledFields |= moves;
+
+        // adding mobility bonus
+        const int32_t movesCount = CountOnesInBoard(safeMoves);
+        midEval += movesCount * RookMobilityBonusMid;
+        endEval += movesCount * RookMobilityBonusEnd;
+
+        // adding trapped rook penalty if rook is not pinned and therefor has no possible moves
+        const int32_t isNoMoves = (moves & ~allyMap) == 0;
+        midEval += TrappedRookPenaltyMid * isNoMoves;
+        endEval += TrappedRookPenaltyEnd * isNoMoves;
+
+        unpinnedRooks ^= figMap;
+    }
+
+    midEval += interEval;
+    endEval += interEval;
+
+    return {midEval, endEval, controlledFields};
+}
+
+template<class MapT, int(* fieldValueAccess)(int msbPos)>
+BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAccess>::operator()(Board& bd,
+    const uint64_t pinnedFigs, const int col, const  uint64_t enemyControledFieldsByPawns, const uint64_t allyMap, const uint64_t enemyMap)
+{
+    int32_t midEval{};
+    int32_t endEval{};
+    uint64_t controlledFields{};
+
+    uint64_t pinnedQueens = bd.boards[MapT::GetBoardIndex(col)] & pinnedFigs;
+    uint64_t unpinnedQueens = bd.boards[MapT::GetBoardIndex(col)] ^ pinnedQueens;
+
+    const uint64_t safeFields = ~enemyControledFieldsByPawns;
+    const uint64_t fullMap = allyMap | enemyMap;
+
+    while(pinnedQueens)
+    {
+        const int msbPos = ExtractMsbPos(pinnedQueens);
+        const uint64_t figMap = maxMsbPossible >> msbPos;
+
+        ChessMechanics mech{bd};
+        const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
+
+        const uint64_t LegalMoves = allowedTiles & MapT::GetMoves(msbPos, fullMap);
+
+        // adding controlle fields
+        controlledFields |= LegalMoves;
+
+        // adding mobility bonus
+        const int movesCount = CountOnesInBoard(LegalMoves & safeFields);
+        midEval += movesCount * QueenMobilityBonusMid;
+        endEval += movesCount * QueenMobilityBonusEnd;
+
+        // adding penalty for early moves
+        midEval += QueenStartMovesPenalty;
+
+        // adding positional field values
+        midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
+        endEval += BasicBlackQueenEndPositionValues[fieldValueAccess(msbPos)];
+
+        pinnedQueens ^= figMap;
+    }
+
+    while(unpinnedQueens)
+    {
+        const int msbPos = ExtractMsbPos(unpinnedQueens);
+        const uint64_t figMap = maxMsbPossible >> msbPos;
+
+        const uint64_t moves = MapT::GetMoves(msbPos, fullMap);
+        const uint64_t safeMoves = moves & safeFields;
+
+        // adding fields to controlled ones
+        controlledFields |= moves;
+
+        // adding mobility bonus
+        const int32_t movesCount = CountOnesInBoard(safeMoves);
+        midEval += movesCount * QueenMobilityBonusMid;
+        endEval += movesCount * QueenMobilityBonusEnd;
+
+        // adding trapped queen penalty if queen is not pinned and therefor has no possible moves
+        const int32_t isNoMoves = (moves & ~allyMap) == 0;
+        midEval += TrappedQueenPenaltyMid * isNoMoves;
+        endEval += TrappedQueenPenaltyEnd * isNoMoves;
+
+        // adding penalty for early moves
+        midEval += QueenStartMovesPenalty;
+
+        // adding positional field values
+        midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
+        endEval += BasicBlackQueenEndPositionValues[fieldValueAccess(msbPos)];
+
+        unpinnedQueens ^= figMap;
+    }
 
     return {midEval, endEval, controlledFields};
 }

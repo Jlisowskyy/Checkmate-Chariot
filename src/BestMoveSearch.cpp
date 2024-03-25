@@ -21,6 +21,13 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
     const uint64_t zHash = ZHasher.GenerateHash(_board);
     int eval{};
 
+    if (maxDepth == 0)
+    {
+        GlobalLogger.StartLogging() << "info depth 0 score cp "
+            << BoardEvaluator::DefaultFullEvalFunction(_board, _board.movColor) << std::endl;
+        return;
+    }
+
     for (int depth = 1; depth < maxDepth; ++depth)
     {
         // measuring time
