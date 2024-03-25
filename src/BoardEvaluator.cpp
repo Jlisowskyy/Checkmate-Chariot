@@ -428,7 +428,7 @@ BoardEvaluator::_fieldEvalInfo_t BoardEvaluator::_evaluatePawns(Board& bd,
 
 int32_t BoardEvaluator::_evaluateFields(Board& bd, int32_t phase)
 {
-    static constexpr _fieldEvalInfo_t (*EvalFunctions[])(Board&, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t)
+    static constexpr _fieldEvalInfo_t (*EvalFunctions[])(Board&, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t)
     {
         _processFigEval<KnightMap, _processKnightEval>,
         _processFigEval<BishopMap, _processBishopEval>
@@ -440,7 +440,9 @@ int32_t BoardEvaluator::_evaluateFields(Board& bd, int32_t phase)
     uint64_t blackControlledFields{};
     ChessMechanics mech{bd};
 
-    const uint64_t fullMap = mech.GetFullMap();
+    const uint64_t whiteMap = mech.GetColMap(WHITE);
+    const uint64_t blackMap = mech.GetColMap(BLACK);
+    const uint64_t fullMap = blackMap | whiteMap;
 
     const auto [whitePinnedFigs, un1] = mech.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(WHITE, fullMap);
     const auto [blackPinnedFigs, un2] = mech.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(BLACK, fullMap);
@@ -462,7 +464,7 @@ int32_t BoardEvaluator::_evaluateFields(Board& bd, int32_t phase)
 
     for(const auto func : EvalFunctions)
     {
-        const auto evalAggerg = func(bd, blackPinnedFigs, whitePinnedFigs, whitePawnControl, blackPawnControl, fullMap);
+        const auto evalAggerg = func(bd, blackPinnedFigs, whitePinnedFigs, whitePawnControl, blackPawnControl, whiteMap, blackMap);
 
         whiteControlledFields |= evalAggerg.whiteControlledFields;
         blackControlledFields |= evalAggerg.blackControlledFields;

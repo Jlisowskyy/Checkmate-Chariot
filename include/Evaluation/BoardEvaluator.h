@@ -96,14 +96,14 @@ private:
     struct _processKnightEval
     {
         evalResult operator()(Board& bd, uint64_t pinnedFigs, int col,
-        uint64_t enemyControledFieldsByPawns, uint64_t);
+        uint64_t enemyControledFieldsByPawns, uint64_t, uint64_t);
     };
 
     template<class MapT, int (*fieldValueAccess)(int msbPos)>
     struct _processBishopEval
     {
         evalResult operator()(Board& bd, uint64_t pinnedFigs, int col,
-        uint64_t enemyControledFieldsByPawns, uint64_t fullMap);
+        uint64_t enemyControledFieldsByPawns, uint64_t allyMap, uint64_t enemyMap);
     };
 
     static int32_t _evaluateFields(Board&bd, int32_t phase);
@@ -112,7 +112,7 @@ private:
 
     template<class MapT, template<class, int (*fieldValueAccess)(int msbPos)> class EvalProducerT>
     static _fieldEvalInfo_t _processFigEval(Board&bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs
-        ,uint64_t whitePawnControlledFields, uint64_t blackPawnControlledFields, uint64_t fullMap);
+        ,uint64_t whitePawnControlledFields, uint64_t blackPawnControlledFields, uint64_t whiteMap, uint64_t blackMap);
 
     // ------------------------------
     // Class fields
@@ -162,13 +162,19 @@ public:
 
     static constexpr int16_t RookPairPenalty = -10;
 
-    static constexpr int16_t KnightMobilityBonusMid = 5;
+    static constexpr int16_t KnightMobilityBonusMid = 6;
     static constexpr int16_t KnightMobilityBonusEnd = 2;
+
+    static constexpr int16_t BishopMobilityBonusMid = 6;
+    static constexpr int16_t BishopMobilityBonusEnd = 2;
 
     static constexpr int16_t MobilityBonus = 4;
 
     static constexpr int16_t TrappedPiecePenalty = -50;
     static constexpr int16_t PinnedPawnPenalty = -10;
+
+    static constexpr int16_t TrappedBishopPenalty = -150;
+    // static constexpr int16_t
 
     static constexpr int16_t BasicFigureValues[]{
         100, // Pawn
@@ -440,7 +446,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
 
 template<class MapT, int(* fieldValueAccess)(int msbPos)>
 BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAccess>::operator()(Board& bd,
-    const uint64_t pinnedFigs, const int col, const uint64_t enemyControledFieldsByPawns, const uint64_t)
+    const uint64_t pinnedFigs, const int col, const uint64_t enemyControledFieldsByPawns, const uint64_t, const uint64_t)
 {
     int32_t midEval{};
     int32_t interEval{};
@@ -492,82 +498,95 @@ BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAc
     midEval += interEval;
     endEval += interEval;
 
-    return {midEval, endEval, 0};
+    return {midEval, endEval, controlledFields};
 }
 
 template<class MapT, int(* fieldValueAccess)(int msbPos)>
 BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAccess>::operator()(Board& bd,
-    const uint64_t pinnedFigs, const int col, const uint64_t enemyControledFieldsByPawns, const uint64_t fullMap)
+    const uint64_t pinnedFigs, const int col, const uint64_t enemyControledFieldsByPawns, const uint64_t allyMap, const uint64_t enemyMap)
 {
     int32_t midEval{};
     int32_t interEval{};
     int32_t endEval{};
     uint64_t controlledFields{};
-    //
-    // uint64_t pinnedBishops = bd.boards[MapT::GetBoardIndex(col)] & pinnedFigs;
-    // uint64_t unpinnedBishops = bd.boards[MapT::GetBoardIndex(col)] ^ pinnedBishops;
-    //
-    // const uint64_t safeFields = ~enemyControledFieldsByPawns;
-    //
-    // while(pinnedBishops)
-    // {
-    //     const int msbPos = ExtractMsbPos(pinnedBishops);
-    //     const uint64_t figMap = maxMsbPossible >> msbPos;
-    //
-    //     ChessMechanics mech{bd};
-    //     const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
-    //
-    //     // const uint64_t legalMoves = allowedTiles & Map
-    //
-    //     // adding penatly for being pinned
-    //     interEval += TrappedPiecePenalty;
-    //
-    //     // adding field values
-    //     interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
-    //
-    //     pinnedKnighs ^= figMap;
-    // }
-    //
-    // while(unpinnedKnights)
-    // {
-    //     const int msbPos = ExtractMsbPos(unpinnedKnights);
-    //     const uint64_t figMap = maxMsbPossible >> msbPos;
-    //
-    //     const uint64_t moves = MapT::GetMoves(msbPos);
-    //     const uint64_t safeMoves = moves & safeFields;
-    //
-    //     // adding fields to controlled ones
-    //     controlledFields |= moves;
-    //
-    //     // adding mobility bonus
-    //     const int mobCount = CountOnesInBoard(safeMoves);
-    //     midEval += mobCount * KnightMobilityBonusMid;
-    //     endEval += mobCount * KnightMobilityBonusEnd;
-    //
-    //     // adding field values
-    //     interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
-    //
-    //     unpinnedKnights ^= figMap;
-    // }
-    //
-    //
-    // midEval += interEval;
-    // endEval += interEval;
 
-    return {midEval, endEval, 0};
+    uint64_t pinnedBishops = bd.boards[MapT::GetBoardIndex(col)] & pinnedFigs;
+    uint64_t unpinnedBishops = bd.boards[MapT::GetBoardIndex(col)] ^ pinnedBishops;
+
+    const uint64_t safeFields = ~enemyControledFieldsByPawns;
+    const uint64_t fullMap = allyMap | enemyMap;
+
+    while(pinnedBishops)
+    {
+        const int msbPos = ExtractMsbPos(pinnedBishops);
+        const uint64_t figMap = maxMsbPossible >> msbPos;
+
+        ChessMechanics mech{bd};
+        const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
+
+        const uint64_t LegalMoves = allowedTiles & MapT::GetMoves(msbPos, fullMap);
+
+        // trapped penalty
+        interEval += TrappedPiecePenalty * (LegalMoves == 0);
+
+        // adding controlle fields
+        controlledFields |= LegalMoves;
+
+        // adding mobility bonus
+        const int movesCount = CountOnesInBoard(LegalMoves);
+        midEval += movesCount * BishopMobilityBonusMid;
+        endEval += movesCount * BishopMobilityBonusEnd;
+
+        // adding field values
+        interEval += BasicBlackBishopPositionValues[fieldValueAccess(msbPos)];
+
+        pinnedBishops ^= figMap;
+    }
+
+    while(unpinnedBishops)
+    {
+        const int msbPos = ExtractMsbPos(unpinnedBishops);
+        const uint64_t figMap = maxMsbPossible >> msbPos;
+
+        const uint64_t moves = MapT::GetMoves(msbPos, fullMap);
+        const uint64_t safeMoves = moves & safeFields;
+
+        // adding fields to controlled ones
+        controlledFields |= moves;
+
+        // adding mobility bonus
+        const int mobCount = CountOnesInBoard(safeMoves);
+        midEval += mobCount * KnightMobilityBonusMid;
+        endEval += mobCount * KnightMobilityBonusEnd;
+
+        // adding field values
+        interEval += BasicBlackBishopPositionValues[fieldValueAccess(msbPos)];
+
+        // adding trapped bishop penalty if bishop is not pinned and therefor has no possible moves
+        interEval += TrappedBishopPenalty * ((moves & ~allyMap) == 0);
+
+        unpinnedBishops ^= figMap;
+    }
+
+
+    midEval += interEval;
+    endEval += interEval;
+
+    return {midEval, endEval, controlledFields};
 }
 
 template<class MapT, template <class, int(* fieldValueAccess)(int msbPos)> class EvalProducerT>
-BoardEvaluator::_fieldEvalInfo_t BoardEvaluator::_processFigEval(Board& bd, uint64_t blackPinnedFigs,
-    uint64_t whitePinnedFigs, uint64_t whitePawnControlledFields, uint64_t blackPawnControlledFields, uint64_t fullMap)
+BoardEvaluator::_fieldEvalInfo_t BoardEvaluator::_processFigEval(Board& bd, const uint64_t blackPinnedFigs,
+    const uint64_t whitePinnedFigs, const uint64_t whitePawnControlledFields, const uint64_t blackPawnControlledFields,
+    const uint64_t whiteMap, const uint64_t blackMap)
 {
     _fieldEvalInfo_t rv{};
 
     const auto [whiteMidEval, whiteEndEval, whiteControlledFields]
-            = EvalProducerT<MapT, NoOp>()(bd, whitePinnedFigs, WHITE, blackPawnControlledFields, fullMap);
+            = EvalProducerT<MapT, NoOp>()(bd, whitePinnedFigs, WHITE, blackPawnControlledFields, whiteMap, blackMap);
 
     const auto [blackMidEval, blackEndEval, blackControlledFields]
-            = EvalProducerT<MapT, ConvertToReversedPos>()(bd, blackPinnedFigs, BLACK, whitePawnControlledFields, fullMap);
+            = EvalProducerT<MapT, ConvertToReversedPos>()(bd, blackPinnedFigs, BLACK, whitePawnControlledFields, blackMap, whiteMap);
 
     rv.midgameEval = whiteMidEval - blackMidEval;
     rv.endgameEval = blackEndEval - whiteEndEval;
