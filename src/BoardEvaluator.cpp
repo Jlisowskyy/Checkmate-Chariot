@@ -104,7 +104,7 @@ int32_t BoardEvaluator::DefaultFullEvalFunction(const Board& bd, const int color
 
 int32_t BoardEvaluator::PlainMaterialEvaluation(const Board& bd)
 {
-    int eval = 0;
+    int32_t eval = 0;
 
     for (size_t i = 0; i < Board::BoardsCount; ++i)
         eval += CountOnesInBoard(bd.boards[i]) * BasicFigureValues[i];
@@ -114,7 +114,7 @@ int32_t BoardEvaluator::PlainMaterialEvaluation(const Board& bd)
 
 int32_t BoardEvaluator::NaiveEvaluation2(const Board& bd)
 {
-    int eval = 0;
+    int32_t eval = 0;
 
     // iterate through boards
     for (size_t bInd = 0; bInd < Board::BoardsCount; ++bInd)
@@ -140,7 +140,7 @@ int32_t BoardEvaluator::NaiveEvaluation2(const Board& bd)
 
 int32_t BoardEvaluator::NaiveEvaluation3(const Board& bd)
 {
-    int eval = 0;
+    int32_t eval = 0;
 
     // iterate through boards
     for (size_t bInd = 0; bInd < Board::BoardsCount; ++bInd)
@@ -170,7 +170,7 @@ int32_t BoardEvaluator::NaiveEvaluation3(const Board& bd)
 int32_t BoardEvaluator::Evaluation1(const Board& bd)
 {
     const auto [isSuccess, counts] = _countFigures(bd);
-    const int16_t phase = _calcPhase(counts);
+    const int32_t phase = _calcPhase(counts);
     const int32_t materialEval = isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation(counts, phase);
 
     int32_t positionEval{};
@@ -186,7 +186,7 @@ int32_t BoardEvaluator::Evaluation1(const Board& bd)
 int32_t BoardEvaluator::Evaluation2(Board& bd)
 {
     const auto [isSuccess, counts] = _countFigures(bd);
-    const int16_t phase = _calcPhase(counts);
+    const int32_t phase = _calcPhase(counts);
 
     const int32_t materialEval = isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation(counts, phase);
     const int32_t positionEval = _evaluateFields(bd, phase);
@@ -240,19 +240,19 @@ size_t BoardEvaluator::_getMaterialBoardIndex(const FigureCountsArrayT& counts)
     return index;
 }
 
-int16_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT& figArr, const int actPhase)
+int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT& figArr, const int32_t actPhase)
 {
     static constexpr size_t BlackFigStartIndex = 5;
 
-    int16_t materialValue{};
+    int32_t materialValue{};
 
     // summing up total material values
     for (size_t j = 0; j < kingIndex; ++j)
     {
-        const int16_t phasedFigVal = (BasicFigureValues[j]*(256-actPhase) + EndGameFigureValues[j]*actPhase) / 256;
+        const int32_t phasedFigVal = (BasicFigureValues[j]*(256-actPhase) + EndGameFigureValues[j]*actPhase) / 256;
 
-        materialValue += static_cast<int16_t>(figArr[j]) * phasedFigVal;
-        materialValue -= static_cast<int16_t>(figArr[j + BlackFigStartIndex]) * phasedFigVal;
+        materialValue += static_cast<int32_t>(figArr[j]) * phasedFigVal;
+        materialValue -= static_cast<int32_t>(figArr[j + BlackFigStartIndex]) * phasedFigVal;
     }
 
     // Applying no pawn penalty
@@ -264,17 +264,17 @@ int16_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT& figAr
     // Applying Bishop pair bonus
     const size_t totalPawnCount = figArr[pawnsIndex] + figArr[BlackFigStartIndex + pawnsIndex];
     if (figArr[bishopsIndex] == 2)
-        materialValue += BishopPairBonus - (static_cast<int16_t>(totalPawnCount)*2 - BishopPairDelta);
+        materialValue += BishopPairBonus - (static_cast<int32_t>(totalPawnCount)*2 - BishopPairDelta);
 
     if (figArr[BlackFigStartIndex + bishopsIndex] == 2)
-        materialValue -= BishopPairBonus - (static_cast<int16_t>(totalPawnCount)*2 - BishopPairDelta);
+        materialValue -= BishopPairBonus - (static_cast<int32_t>(totalPawnCount)*2 - BishopPairDelta);
 
     // Applying Knight pair penalty -> Knighs are losing value when less pawns are on board
     if (figArr[knightsIndex] == 2)
-        materialValue += KnightPairPenalty + (static_cast<int16_t>(totalPawnCount)*2);
+        materialValue += KnightPairPenalty + (static_cast<int32_t>(totalPawnCount)*2);
 
     if (figArr[BlackFigStartIndex + knightsIndex] == 2)
-        materialValue -= KnightPairPenalty + (static_cast<int16_t>(totalPawnCount)*2);
+        materialValue -= KnightPairPenalty + (static_cast<int32_t>(totalPawnCount)*2);
 
     // Applying Rook pair penalty
     if (figArr[rooksIndex] == 2)
@@ -286,27 +286,27 @@ int16_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT& figAr
     return materialValue;
 }
 
-int16_t BoardEvaluator::_calcPhase(const FigureCountsArrayT& figArr)
+int32_t BoardEvaluator::_calcPhase(const FigureCountsArrayT& figArr)
 {
     static constexpr size_t BlackFigStartIndex = 5;
-    int16_t actPhase{};
+    int32_t actPhase{};
 
     // calculating game phase
     for (size_t j = 0; j < kingIndex; ++j)
-        actPhase += static_cast<int16_t>(figArr[j] + figArr[BlackFigStartIndex + j]) * FigurePhases[j];
+        actPhase += static_cast<int32_t>(figArr[j] + figArr[BlackFigStartIndex + j]) * FigurePhases[j];
     actPhase = (actPhase * MaxTapperedCoef + (FullPhase / 2)) / FullPhase; // FullPhase / 2 ?
 
     return actPhase;
 }
 
-int16_t BoardEvaluator::_getTapperedValue(const int16_t phase, const int16_t min, const int16_t max)
+int32_t BoardEvaluator::_getTapperedValue(const int32_t phase, const int32_t min, const int32_t max)
 {
     return (min*(MaxTapperedCoef-phase) + max*phase) / MaxTapperedCoef;
 }
 
-int16_t BoardEvaluator::_getNotTaperedEval(const Board& bd)
+int32_t BoardEvaluator::_getNotTaperedEval(const Board& bd)
 {
-    int16_t eval{};
+    int32_t eval{};
     for (size_t i = knightsIndex ; i <= rooksIndex; ++i)
     {
         const uint64_t wFigs = bd.boards[i];
@@ -330,9 +330,9 @@ int16_t BoardEvaluator::_getNotTaperedEval(const Board& bd)
     return eval;
 }
 
-int16_t BoardEvaluator::_getTapperedEval(const Board& bd, const int16_t phase)
+int32_t BoardEvaluator::_getTapperedEval(const Board& bd, const int32_t phase)
 {
-    int16_t openinEval{};
+    int32_t openinEval{};
 
     openinEval += _getSimpleFieldEval(
         [=](const int msbInd)
@@ -368,7 +368,7 @@ int16_t BoardEvaluator::_getTapperedEval(const Board& bd, const int16_t phase)
         );
     }
 
-    int16_t endEval{};
+    int32_t endEval{};
 
     endEval += _getSimpleFieldEval(
         [=](const int msbInd)
@@ -426,7 +426,7 @@ BoardEvaluator::_fieldEvalInfo_t BoardEvaluator::_evaluatePawns(Board& bd,
     return rv;
 }
 
-int16_t BoardEvaluator::_evaluateFields(Board& bd, int16_t phase)
+int32_t BoardEvaluator::_evaluateFields(Board& bd, int32_t phase)
 {
     static constexpr _fieldEvalInfo_t (*EvalFunctions[])(Board&, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t)
     {
@@ -434,8 +434,8 @@ int16_t BoardEvaluator::_evaluateFields(Board& bd, int16_t phase)
         _processFigEval<BishopMap, _processBishopEval>
     };
 
-    int16_t midEval{};
-    int16_t endEval{};
+    int32_t midEval{};
+    int32_t endEval{};
     uint64_t whiteControlledFields{};
     uint64_t blackControlledFields{};
     ChessMechanics mech{bd};
@@ -474,7 +474,7 @@ int16_t BoardEvaluator::_evaluateFields(Board& bd, int16_t phase)
     return 0;
 }
 
-int16_t BoardEvaluator::_evaluateStructures(const Board& bd, int16_t phase)
+int32_t BoardEvaluator::_evaluateStructures(const Board& bd, int32_t phase)
 {
     return _applyBonusForCoveredPawns(bd, 0);
 }

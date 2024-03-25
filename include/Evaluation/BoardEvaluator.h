@@ -60,32 +60,32 @@ public:
 private:
     static int32_t _applyBonusForCoveredPawns(const Board&bd, int32_t eval);
 
-    static std::pair<bool, FigureCountsArrayT> __attribute__((always_inline)) _countFigures(const Board&bd);
+    static std::pair<bool, FigureCountsArrayT> __attribute__((always_inline)) _countFigures(const Board& bd);
 
-    static size_t _getMaterialBoardIndex(const FigureCountsArrayT&counts);
+    static size_t _getMaterialBoardIndex(const FigureCountsArrayT& counts);
 
-    static int16_t _slowMaterialCalculation(const FigureCountsArrayT&figArr, int actPhase);
+    static int32_t _slowMaterialCalculation(const FigureCountsArrayT& figArr, int32_t actPhase);
 
-    static int16_t _calcPhase(const FigureCountsArrayT&figArr);
+    static int32_t _calcPhase(const FigureCountsArrayT&figArr);
 
-    static int16_t _getTapperedValue(int16_t phase, int16_t min, int16_t max);
+    static int32_t _getTapperedValue(int32_t phase, int32_t min, int32_t max);
 
     template<class EvalF>
-    static int16_t _getSimpleFieldEval(EvalF evaluator, uint64_t figs);
+    static int32_t _getSimpleFieldEval(EvalF evaluator, uint64_t figs);
 
-    static int16_t _getNotTaperedEval(const Board&bd);
+    static int32_t _getNotTaperedEval(const Board&bd);
 
-    static int16_t _getTapperedEval(const Board&bd, int16_t phase);
+    static int32_t _getTapperedEval(const Board&bd, int32_t phase);
 
     struct _fieldEvalInfo_t
     {
-        int16_t midgameEval;
-        int16_t endgameEval;
+        int32_t midgameEval;
+        int32_t endgameEval;
         uint64_t whiteControlledFields;
         uint64_t blackControlledFields;
     };
 
-    using evalResult = std::tuple<int16_t, int16_t, uint64_t>;
+    using evalResult = std::tuple<int32_t, int32_t, uint64_t>;
 
     static _fieldEvalInfo_t _evaluatePawns(Board&bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs, uint64_t fullMap);
 
@@ -106,9 +106,9 @@ private:
         uint64_t enemyControledFieldsByPawns, uint64_t fullMap);
     };
 
-    static int16_t _evaluateFields(Board&bd, int16_t phase);
+    static int32_t _evaluateFields(Board&bd, int32_t phase);
 
-    static int16_t _evaluateStructures(const Board&bd, int16_t phase);
+    static int32_t _evaluateStructures(const Board&bd, int32_t phase);
 
     template<class MapT, template<class, int (*fieldValueAccess)(int msbPos)> class EvalProducerT>
     static _fieldEvalInfo_t _processFigEval(Board&bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs
@@ -350,14 +350,14 @@ public:
         for (size_t i = 0; i <= kingIndex; ++i)
         {
             for (int j = 0; j < static_cast<int>(Board::BoardFields); ++j)
-                arr[BlackIndex + i][j] = -(BasicFigureValues[i] + BasicBlackPositionValues[i][ConvertToReversedPos(j)]);
+                arr[BlackIndex + i][j] = static_cast<int16_t>(-(BasicFigureValues[i] + BasicBlackPositionValues[i][ConvertToReversedPos(j)]));
         }
 
         constexpr size_t WhiteIndex = WHITE * Board::BoardsPerCol;
         for (size_t i = 0; i <= kingIndex; ++i)
         {
             for (size_t j = 0; j < Board::BoardFields; ++j)
-                arr[WhiteIndex + i][j] = BasicFigureValues[i] + BasicBlackPositionValues[i][j];
+                arr[WhiteIndex + i][j] = static_cast<int16_t>(BasicFigureValues[i] + BasicBlackPositionValues[i][j]);
         }
 
         return arr;
@@ -367,9 +367,9 @@ public:
 };
 
 template<class EvalF>
-int16_t BoardEvaluator::_getSimpleFieldEval(EvalF evaluator, uint64_t figs)
+int32_t BoardEvaluator::_getSimpleFieldEval(EvalF evaluator, uint64_t figs)
 {
-    int16_t eval{};
+    int32_t eval{};
 
     while (figs)
     {
@@ -387,9 +387,9 @@ int16_t BoardEvaluator::_getSimpleFieldEval(EvalF evaluator, uint64_t figs)
 template<class MapT, int(* fieldValueAccess)(int msbPos)>
 BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uint64_t pinnedFigs, const uint64_t fullMap)
 {
-    int16_t midEval{};
-    int16_t interEval{};
-    int16_t endEval{};
+    int32_t midEval{};
+    int32_t interEval{};
+    int32_t endEval{};
     uint64_t pawnControlledFields{};
 
     uint64_t pinnedPawns = bd.boards[MapT::GetBoardIndex(0)] & pinnedFigs;
@@ -442,9 +442,9 @@ template<class MapT, int(* fieldValueAccess)(int msbPos)>
 BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAccess>::operator()(Board& bd,
     const uint64_t pinnedFigs, const int col, const uint64_t enemyControledFieldsByPawns, const uint64_t)
 {
-    int16_t midEval{};
-    int16_t interEval{};
-    int16_t endEval{};
+    int32_t midEval{};
+    int32_t interEval{};
+    int32_t endEval{};
     uint64_t controlledFields{};
 
     uint64_t pinnedKnighs = bd.boards[MapT::GetBoardIndex(col)] & pinnedFigs;
@@ -499,9 +499,9 @@ template<class MapT, int(* fieldValueAccess)(int msbPos)>
 BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAccess>::operator()(Board& bd,
     const uint64_t pinnedFigs, const int col, const uint64_t enemyControledFieldsByPawns, const uint64_t fullMap)
 {
-    int16_t midEval{};
-    int16_t interEval{};
-    int16_t endEval{};
+    int32_t midEval{};
+    int32_t interEval{};
+    int32_t endEval{};
     uint64_t controlledFields{};
     //
     // uint64_t pinnedBishops = bd.boards[MapT::GetBoardIndex(col)] & pinnedFigs;
