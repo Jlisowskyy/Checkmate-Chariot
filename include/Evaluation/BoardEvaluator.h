@@ -174,7 +174,12 @@ public:
     static constexpr int16_t PinnedPawnPenalty = -10;
 
     static constexpr int16_t TrappedBishopPenalty = -150;
-    // static constexpr int16_t
+
+    static constexpr int16_t TrappedRookPenaltyMid = -100;
+    static constexpr int16_t TrappedRookPenaltyEnd = -200;
+
+    static constexpr int16_t RookMobilityBonusMid = 2;
+    static constexpr int16_t RookMobilityBonusEnd = 6;
 
     static constexpr int16_t BasicFigureValues[]{
         100, // Pawn
