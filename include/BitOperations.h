@@ -24,6 +24,8 @@ constexpr int ExtractLsbReversedPos(const uint64_t x) { return __builtin_ctzl(x)
 
 constexpr int ExtractLsbPos(const uint64_t x) { return ConvertToReversedPos(ExtractLsbReversedPos(x)); }
 
+constexpr int NoOp(const int m) { return m; }
+
 constexpr uint64_t ExtractMsbBitBuiltin(const uint64_t x) { return maxMsbPossible >> ExtractMsbPos(x); }
 
 constexpr uint64_t ExtractLsbBitBuiltin(const uint64_t x) { return minMsbPossible << ExtractLsbReversedPos(x); }

@@ -37,7 +37,7 @@ struct ChessMechanics
 
     ChessMechanics() = delete;
 
-    explicit ChessMechanics(Board& bd) : board(bd) {}
+    explicit ChessMechanics(Board& bd) : _board(bd) {}
 
     ChessMechanics(ChessMechanics& other) = default;
 
@@ -87,7 +87,7 @@ struct ChessMechanics
     // Class fields
     // ------------------------------
 
-    Board& board;
+    Board& _board;
 };
 
 template<ChessMechanics::PinnedFigGen genType>
@@ -100,11 +100,11 @@ std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMap(const int col, co
 
     const auto [pinnedByRooks, allowedRooks] =
             _getPinnedFigMaps<RookMap, genType>(fullMap,
-                                                board.boards[enemyCord + rooksIndex] | board.boards[enemyCord + queensIndex]);
+                                                _board.boards[enemyCord + rooksIndex] | _board.boards[enemyCord + queensIndex]);
 
     const auto [pinnedByBishops, allowedBishops] =
             _getPinnedFigMaps<BishopMap, genType>(fullMap,
-                                                  board.boards[enemyCord + bishopsIndex] | board.boards[enemyCord + queensIndex]);
+                                                  _board.boards[enemyCord + bishopsIndex] | _board.boards[enemyCord + queensIndex]);
 
     return {pinnedByBishops | pinnedByRooks, allowedBishops | allowedRooks};
 }
@@ -131,7 +131,7 @@ std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigMaps(const uint64_t f
     uint64_t allowedTilesFigMap{};
     [[maybe_unused]] uint64_t pinnedFigMap{};
 
-    const int kingPos = board.GetKingMsbPos(board.movColor);
+    const int kingPos = _board.GetKingMsbPos(_board.movColor);
     // generating figs seen from king's rook perpective
     const uint64_t kingFigPerspectiveAttackedFields = MoveMapT::GetMoves(kingPos, fullMap);
     const uint64_t kingFigPerspectiveAttackedFigs = kingFigPerspectiveAttackedFields & fullMap;

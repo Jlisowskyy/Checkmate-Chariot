@@ -27,6 +27,8 @@ class BlackPawnMap
 
     [[nodiscard]] static constexpr uint64_t GetAttackFields(uint64_t pawnBits);
 
+    [[nodiscard]] static constexpr uint64_t GetPlainMoves(uint64_t pawnBit, uint64_t fullMap);
+
     // Returns all moves excepts ElPassantOnes
     [[nodiscard]] static constexpr uint64_t GetMoves(int msbPos, uint64_t fullMap, uint64_t enemyMap);
 
@@ -63,16 +65,23 @@ constexpr uint64_t BlackPawnMap::GetAttackFields(const uint64_t pawnBits)
     return leftAttack | rightAttack;
 }
 
-constexpr uint64_t BlackPawnMap::GetMoves(const int msbPos, const uint64_t fullMap, const uint64_t enemyMap)
+constexpr uint64_t BlackPawnMap::GetPlainMoves(const uint64_t pawnBit, const uint64_t fullMap)
 {
-    const uint64_t pawnBit = maxMsbPossible >> msbPos;
-    const uint64_t attackMoves = GetAttackFields(pawnBit) & enemyMap;
     const uint64_t frontMove = (pawnBit >> 8) & ~fullMap;
 
     const uint64_t isOnStartField = ((frontMove << 8) & pawnBit & StartMask) >> 16;
     const uint64_t frontDoubleMove = isOnStartField & ~fullMap;
 
-    return attackMoves | frontMove | frontDoubleMove;
+    return frontMove | frontDoubleMove;
+}
+
+constexpr uint64_t BlackPawnMap::GetMoves(const int msbPos, const uint64_t fullMap, const uint64_t enemyMap)
+{
+    const uint64_t pawnBit = maxMsbPossible >> msbPos;
+    const uint64_t attackMoves = GetAttackFields(pawnBit) & enemyMap;
+    const uint64_t plainMoves = GetPlainMoves(pawnBit, fullMap);
+
+    return attackMoves | plainMoves;
 }
 
 constexpr uint64_t BlackPawnMap::GetElPassantSuspectedFields(const uint64_t elPassantField)

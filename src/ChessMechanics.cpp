@@ -23,7 +23,7 @@ bool ChessMechanics::IsCheck() const
 uint64_t ChessMechanics::GetFullMap() const
 {
     uint64_t map = 0;
-    for (const auto m : board.boards)
+    for (const auto m : _board.boards)
         map |= m;
     return map;
 }
@@ -35,7 +35,7 @@ uint64_t ChessMechanics::GetColMap(const int col) const
 
     uint64_t map = 0;
     for (size_t i = 0; i < Board::BoardsPerCol; ++i)
-        map |= board.boards[Board::BoardsPerCol * col + i];
+        map |= _board.boards[Board::BoardsPerCol * col + i];
     return map;
 }
 
@@ -48,7 +48,7 @@ size_t ChessMechanics::GetIndexOfContainingBoard(const uint64_t map, const int c
     const size_t startInd = Board::BoardsPerCol * col;
 
     for (size_t i = startInd; i < range; ++i)
-        if ((board.boards[i] & map) != 0)
+        if ((_board.boards[i] & map) != 0)
             return i;
 
 #ifndef NDEBUG
@@ -76,27 +76,27 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     uint8_t checksCount{};
     uint8_t chT{};
 
-    const int enemyCol = SwapColor(board.movColor);
+    const int enemyCol = SwapColor(_board.movColor);
     const size_t enemyFigInd = enemyCol * Board::BoardsPerCol;
-    const int allyKingShift = ConvertToReversedPos(board.GetKingMsbPos(board.movColor));
+    const int allyKingShift = ConvertToReversedPos(_board.GetKingMsbPos(_board.movColor));
     const uint64_t allyKingMap = 1LLU << allyKingShift;
 
     // allows to also simply predict which tiles on the other side of the king are allowed.
     const uint64_t fullMapWoutKing = fullMap ^ allyKingMap;
 
     // King attacks generation.
-    const uint64_t kingBlockedMap = KingMap::GetMoves(board.GetKingMsbPos(enemyCol));
+    const uint64_t kingBlockedMap = KingMap::GetMoves(_board.GetKingMsbPos(enemyCol));
 
     // Rook attacks generation. Needs special treatment to correctly detect double check, especially with pawn promotion
     const auto [rookBlockedMap, checkCountRook] =
-        _getRookBlockedMap(board.boards[enemyFigInd + rooksIndex] | board.boards[enemyFigInd + queensIndex], fullMapWoutKing, allyKingMap);
+        _getRookBlockedMap(_board.boards[enemyFigInd + rooksIndex] | _board.boards[enemyFigInd + queensIndex], fullMapWoutKing, allyKingMap);
 
     // = 0, 1 or eventually 2 when promotion to rook like type happens
     checksCount += checkCountRook;
 
     // Bishop attacks generation.
     const uint64_t bishopBlockedMap =
-        _blockIterativeGenerator(board.boards[enemyFigInd + bishopsIndex] | board.boards[enemyFigInd + queensIndex],
+        _blockIterativeGenerator(_board.boards[enemyFigInd + bishopsIndex] | _board.boards[enemyFigInd + queensIndex],
                                  [=](const int pos) { return BishopMap::GetMoves(pos, fullMapWoutKing); });
 
     // = 1 or 0 depending whether hits or not
@@ -104,7 +104,7 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     checksCount += wasCheckedByBishopFlag;
 
     // Pawns attacks generation.
-    const uint64_t pawnsMap = board.boards[enemyFigInd + pawnsIndex];
+    const uint64_t pawnsMap = _board.boards[enemyFigInd + pawnsIndex];
     const uint64_t pawnBlockedMap =
         enemyCol == WHITE ? WhitePawnMap::GetAttackFields(pawnsMap) : BlackPawnMap::GetAttackFields(pawnsMap);
 
@@ -116,7 +116,7 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     chT += simpleFigCheck * wasCheckedByPawnFlag;  // Note: king cannot be double checked by simple figure
 
     // Knight attacks generation.
-    const uint64_t knighBlockedMap = _blockIterativeGenerator(board.boards[enemyFigInd + knightsIndex],
+    const uint64_t knighBlockedMap = _blockIterativeGenerator(_board.boards[enemyFigInd + knightsIndex],
                                                               [=](const int pos) { return KnightMap::GetMoves(pos); });
 
     // = 1 or 0 depending whether hits or not
@@ -134,8 +134,8 @@ uint64_t ChessMechanics::GetAllowedTilesWhenCheckedByNonSliding() const
 {
     uint64_t allowedTiles{};
 
-    allowedTiles |= KingMap::GetSimpleFigCheckKnightsAllowedTiles(board);
-    allowedTiles |= KingMap::GetSimpleFigCheckPawnAllowedTiles(board);
+    allowedTiles |= KingMap::GetSimpleFigCheckKnightsAllowedTiles(_board);
+    allowedTiles |= KingMap::GetSimpleFigCheckPawnAllowedTiles(_board);
 
     return allowedTiles;
 }
@@ -168,7 +168,7 @@ uint64_t ChessMechanics::GenerateAllowedTilesForPrecisedPinnedFig(const uint64_t
     assert(CountOnesInBoard(figBoard) == 1);
 
     const int msbPos = ExtractMsbPos(figBoard);
-    const uint64_t KingBoard = board.boards[board.movColor*Board::BoardsPerCol + kingIndex];
+    const uint64_t KingBoard = _board.boards[_board.movColor*Board::BoardsPerCol + kingIndex];
 
     const uint64_t RookPerspectiveMoves = RookMap::GetMoves(msbPos, fullMap);
     if ((RookPerspectiveMoves & KingBoard) != 0)

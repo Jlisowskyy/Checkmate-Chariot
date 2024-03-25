@@ -8,6 +8,7 @@
 #include "../include/MoveGeneration/WhitePawnMap.h"
 
 #include "../include/MoveGeneration/ChessMechanics.h"
+#include "../include/MoveGeneration/KnightMap.h"
 
 BoardEvaluator::MaterialArrayT BoardEvaluator::_materialTable =  [] () -> MaterialArrayT
     {
@@ -406,14 +407,69 @@ int16_t BoardEvaluator::_getTapperedEval(const Board& bd, const int16_t phase)
     return _getTapperedValue(phase, openinEval, endEval);
 }
 
+BoardEvaluator::_fieldEvalInfo_t BoardEvaluator::_evaluatePawns(Board& bd,
+    const uint64_t blackPinnedFigs, const uint64_t whitePinnedFigs, const uint64_t fullMap)
+{
+    _fieldEvalInfo_t rv{};
+
+    const auto [whiteMidEval, whiteEndEval, whiteControlledFields] =
+        _processPawnEval<WhitePawnMap, NoOp>(bd, whitePinnedFigs, fullMap);
+
+    const auto [blackMidEval, blackEndEval, blackControlledFields] =
+        _processPawnEval<BlackPawnMap, ConvertToReversedPos>(bd, blackPinnedFigs, fullMap);
+
+    rv.midgameEval = whiteMidEval - blackMidEval;
+    rv.endgameEval = whiteEndEval - blackEndEval;
+    rv.whiteControlledFields = whiteControlledFields;
+    rv.blackControlledFields = blackControlledFields;
+
+    return rv;
+}
+
 int16_t BoardEvaluator::_evaluateFields(Board& bd, int16_t phase)
 {
-    int oCol = bd.movColor;
-    int16_t eval{};
+    static constexpr _fieldEvalInfo_t (*EvalFunctions[])(Board&, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t)
+    {
+        _processFigEval<KnightMap, _processKnightEval>,
+        _processFigEval<BishopMap, _processBishopEval>
+    };
+
+    int16_t midEval{};
+    int16_t endEval{};
+    uint64_t whiteControlledFields{};
+    uint64_t blackControlledFields{};
     ChessMechanics mech{bd};
 
-    bd.movColor = WHITE;
+    const uint64_t fullMap = mech.GetFullMap();
 
+    const auto [whitePinnedFigs, un1] = mech.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(WHITE, fullMap);
+    const auto [blackPinnedFigs, un2] = mech.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(BLACK, fullMap);
+
+    // ------------------------------
+    // Evaluating pawn figures
+    // ------------------------------
+
+    const auto pEval = _evaluatePawns(bd, blackPinnedFigs, whitePinnedFigs, fullMap);
+    const uint64_t whitePawnControl = pEval.whiteControlledFields;
+    const uint64_t blackPawnControl = pEval.blackControlledFields;
+
+    midEval += pEval.midgameEval;
+    endEval += pEval.endgameEval;
+
+    // ------------------------------
+    // Evaluating other pieces
+    // ------------------------------
+
+    for(const auto func : EvalFunctions)
+    {
+        const auto evalAggerg = func(bd, blackPinnedFigs, whitePinnedFigs, whitePawnControl, blackPawnControl, fullMap);
+
+        whiteControlledFields |= evalAggerg.whiteControlledFields;
+        blackControlledFields |= evalAggerg.blackControlledFields;
+
+        midEval += evalAggerg.midgameEval;
+        endEval += evalAggerg.endgameEval;
+    }
 
     return 0;
 }
