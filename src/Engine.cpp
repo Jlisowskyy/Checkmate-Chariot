@@ -144,9 +144,14 @@ void Engine::_changeHashSize([[maybe_unused]]Engine& eng, const lli size)
             << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
 }
 
+void Engine::_changeBookUsage(Engine& eng, const bool newValue)
+{
+    eng.UseOwnBook = newValue;
+}
+
 void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves)
 {
-    if (_book.IsLoadedCorrectly() && _isStartPosPlayed == true)
+    if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed == true)
         if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
         {
             GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
@@ -160,7 +165,7 @@ void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves)
 
 void Engine::GoDepth(const int depth, const std::vector<std::string>& moves)
 {
-    if (_book.IsLoadedCorrectly() && _isStartPosPlayed == true)
+    if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed == true)
         if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
         {
             GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);

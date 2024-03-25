@@ -23,6 +23,10 @@
 // TODO:
 // - apply additional prize for exchanges in winning positions
 // - what if e.g rook is pinned by rook? (pinning bonuses)
+// - DIRECTION MOBILITY BONUSES
+// - PAWN PATTERNS
+// - ROOK PATTERNS
+// - KING SAFETY
 
 class BoardEvaluator
 {
@@ -187,24 +191,14 @@ public:
 
     static constexpr int16_t MobilityBonus = 4;
 
-    static constexpr int16_t TrappedPiecePenalty = -50;
+    static constexpr int16_t TrappedPiecePenalty = -20;
     static constexpr int16_t PinnedPawnPenalty = -10;
-
-    static constexpr int16_t TrappedBishopPenalty = -150;
-
-    static constexpr int16_t TrappedRookPenaltyMid = -50;
-    static constexpr int16_t TrappedRookPenaltyEnd = -200;
 
     static constexpr int16_t RookMobilityBonusMid = 2;
     static constexpr int16_t RookMobilityBonusEnd = 6;
 
     static constexpr int16_t QueenMobilityBonusMid = 1;
     static constexpr int16_t QueenMobilityBonusEnd = 8;
-
-    static constexpr int16_t QueenStartMovesPenalty = -100;
-
-    static constexpr int16_t TrappedQueenPenaltyMid = 0;
-    static constexpr int16_t TrappedQueenPenaltyEnd = -500;
 
     static constexpr int16_t CenterControlBonusPerTile = 2;
 
@@ -326,11 +320,11 @@ public:
 
     static constexpr int16_t BasicBlackQueenPositionValues[]
     {
-        -50, -50, -50, -50, -50, -50, -50, -50,
-        -30, -30, -30, -30, -30, -30, -30, -30,
-        -20, -20, -20, -20, -20, -20, -20, -20,
-        -15, -15, -15, -15, -15, -15, -15, -15,
-        -10, -5, -5, -5, -5, -5, -5, -10,
+        -80, -80, -80, -80, -80, -80, -80, -80,
+        -60, -60, -60, -60, -60, -60, -60, -60,
+        -40, -40, -40, -40, -40, -40, -40, -40,
+        -25, -25, -25, -25, -25, -25, -25, -25,
+        -20, -15, -15, -15, -15, -15, -15, -20,
         -10, 5, 5, 5, 5, 5, 5, -10,
         -10, 15, 15, 15, 15, 15, 15, -10,
         -20, -10, -10, 30, 30, -10, -10, -20
@@ -608,9 +602,6 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
         // adding field values
         interEval += BasicBlackBishopPositionValues[fieldValueAccess(msbPos)];
 
-        // adding trapped bishop penalty if bishop is not pinned and therefor has no possible moves
-        interEval += TrappedBishopPenalty * ((moves & ~allyMap) == 0);
-
         unpinnedBishops ^= figMap;
     }
 
@@ -676,11 +667,6 @@ BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAcce
         midEval += movesCount * RookMobilityBonusMid;
         endEval += movesCount * RookMobilityBonusEnd;
 
-        // adding trapped rook penalty if rook is not pinned and therefor has no possible moves
-        const int32_t isNoMoves = (moves & ~allyMap) == 0;
-        midEval += TrappedRookPenaltyMid * isNoMoves;
-        endEval += TrappedRookPenaltyEnd * isNoMoves;
-
         unpinnedRooks ^= figMap;
     }
 
@@ -722,9 +708,6 @@ BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAcc
         midEval += movesCount * QueenMobilityBonusMid;
         endEval += movesCount * QueenMobilityBonusEnd;
 
-        // adding penalty for early moves
-        midEval += QueenStartMovesPenalty;
-
         // adding positional field values
         midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackQueenEndPositionValues[fieldValueAccess(msbPos)];
@@ -747,14 +730,6 @@ BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAcc
         const int32_t movesCount = CountOnesInBoard(safeMoves);
         midEval += movesCount * QueenMobilityBonusMid;
         endEval += movesCount * QueenMobilityBonusEnd;
-
-        // adding trapped queen penalty if queen is not pinned and therefor has no possible moves
-        const int32_t isNoMoves = (moves & ~allyMap) == 0;
-        midEval += TrappedQueenPenaltyMid * isNoMoves;
-        endEval += TrappedQueenPenaltyEnd * isNoMoves;
-
-        // adding penalty for early moves
-        midEval += QueenStartMovesPenalty;
 
         // adding positional field values
         midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];

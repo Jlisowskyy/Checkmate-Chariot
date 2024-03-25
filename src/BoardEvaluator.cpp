@@ -300,7 +300,7 @@ int32_t BoardEvaluator::_calcPhase(const FigureCountsArrayT& figArr)
 
 int32_t BoardEvaluator::_getTapperedValue(const int32_t phase, const int32_t midEval, const int32_t endEval)
 {
-    return (midEval*(MaxTapperedCoef-phase) + endEval*phase) / MaxTapperedCoef;
+    return (endEval*(MaxTapperedCoef-phase) + midEval*phase) / MaxTapperedCoef;
 }
 
 int32_t BoardEvaluator::_getNotTaperedEval(const Board& bd)
