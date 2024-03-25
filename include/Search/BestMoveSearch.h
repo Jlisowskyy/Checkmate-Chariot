@@ -32,6 +32,7 @@ struct BestMoveSearch
     // Private class methods
     // ------------------------------
    private:
+
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimizing player
     [[nodiscard]] int _negaScout(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove);
