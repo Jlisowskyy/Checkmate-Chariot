@@ -54,7 +54,7 @@ private:
     {
         std::array<uint64_t, Board::BoardFields> rv{};
 
-        for (int msb = 0; msb < Board::BoardFields; ++msb)
+        for (int msb = 0; msb < static_cast<int>(Board::BoardFields); ++msb)
         {
             const int boardPos = ConvertToReversedPos(msb);
             const int startpos = boardPos % 8;
@@ -68,7 +68,7 @@ private:
     {
         std::array<uint64_t, Board::BoardFields> rv{};
 
-        for (int msb = 0; msb < Board::BoardFields; ++msb)
+        for (int msb = 0; msb < static_cast<int>(Board::BoardFields); ++msb)
         {
             const int boardPos = ConvertToReversedPos(msb);
             const int startpos = boardPos % 8;
@@ -92,7 +92,7 @@ private:
     {
         std::array<uint64_t, Board::BoardFields> rv{};
 
-        for (int msb = 0; msb < Board::BoardFields; ++msb)
+        for (int msb = 0; msb < static_cast<int>(Board::BoardFields); ++msb)
         {
             const int boardPos = ConvertToReversedPos(msb);
             const int startpos = boardPos % 8;
@@ -105,18 +105,18 @@ private:
         return rv;
     }();
 
+    static constexpr int offset = 8;
     static constexpr  std::array<std::array<uint64_t, Board::BoardFields>, 2> _frontFatFiles = []() constexpr
     {
-        static constexpr int offset = 8;
         std::array<std::array<uint64_t, Board::BoardFields>, 2> rv{};
 
         for (int col = 0; col < 2; ++col)
         {
-            for (int msb = 0; msb < Board::BoardFields; ++msb)
+            for (int msb = 0; msb < static_cast<int>(Board::BoardFields); ++msb)
             {
                 const int boardPos = ConvertToReversedPos(msb);
                 const int nFiledOff = col == WHITE ? offset : -offset;
-                if (const int nextRow = boardPos + nFiledOff; nextRow < 0 || nextRow >= Board::BoardFields) continue;
+                if (const int nextRow = boardPos + nFiledOff; nextRow < 0 || nextRow >= static_cast<int>(Board::BoardFields)) continue;
 
                 const int startpos = boardPos % offset;
 
@@ -143,18 +143,17 @@ private:
         return rv;
     }();
 
-    static inline std::array<std::array<uint64_t, Board::BoardFields>, 2> _frontFiles = []()
+    static constexpr std::array<std::array<uint64_t, Board::BoardFields>, 2> _frontFiles = []() constexpr
     {
-        static constexpr int offset = 8;
         std::array<std::array<uint64_t, Board::BoardFields>, 2> rv{};
 
         for (int col = 0; col < 2; ++col)
         {
-            for (int msb = 0; msb < Board::BoardFields; ++msb)
+            for (int msb = 0; msb < static_cast<int>(Board::BoardFields); ++msb)
             {
                 const int boardPos = ConvertToReversedPos(msb);
                 const int nFiledOff = col == WHITE ? offset : -offset;
-                if (const int nextRow = boardPos + nFiledOff; nextRow < 0 || nextRow >= Board::BoardFields) continue;
+                if (const int nextRow = boardPos + nFiledOff; nextRow < 0 || nextRow >= static_cast<int>(Board::BoardFields)) continue;
 
                 const int startpos = boardPos % offset;
 

@@ -488,7 +488,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
         interEval += StructureEvaluator::EvalIsolatedPawn(bd.boards[MapT::GetBoardIndex(0)], msbPos);
 
         // adding passed pawn penalty
-        interEval += StructureEvaluator::SimplePassedPawn(bd.boards[MapT::GetEnemyPawnBoardIndex], msbPos, MapT::GetColor);
+        interEval += StructureEvaluator::SimplePassedPawn(bd.boards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor());
 
         // adding field values
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
@@ -517,7 +517,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
         interEval += StructureEvaluator::EvalIsolatedPawn(bd.boards[MapT::GetBoardIndex(0)], msbPos);
 
         // adding passed pawn penalty
-        interEval += StructureEvaluator::SimplePassedPawn(bd.boards[MapT::GetEnemyPawnBoardIndex], msbPos, MapT::GetColor);
+        interEval += StructureEvaluator::SimplePassedPawn(bd.boards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor());
 
         unpinnedPawns ^= figMap;
     }
