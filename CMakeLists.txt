@@ -83,6 +83,7 @@ add_executable(Checkmate-Chariot main.cpp
         src/MapPerformanceTest.cpp
         include/Evaluation/KingSafetyFields.h
         src/KingSafetyFields.cpp
+        include/MoveGeneration/FileMap.h
 )
 
 find_package(OpenMP)
@@ -91,8 +92,8 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries( Checkmate-Chariot PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-target_compile_options(Checkmate-Chariot PUBLIC -O3;-march=raptorlake;-fopenmp;-fconstexpr-ops-limit=1335544322 ;-funroll-loops;-fno-peel-loops;-fno-tracer)
-#target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-ops-limit=133554432;-g;)
+#target_compile_options(Checkmate-Chariot PUBLIC -O3;-march=raptorlake;-fopenmp;-fconstexpr-ops-limit=1335544322 ;-funroll-loops;-fno-peel-loops;-fno-tracer)
+target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-ops-limit=133554432;-g;)
 
 
 # Define the source file you want to copy
