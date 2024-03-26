@@ -84,6 +84,7 @@ add_executable(Checkmate-Chariot main.cpp
         include/Evaluation/KingSafetyFields.h
         src/KingSafetyFields.cpp
         include/MoveGeneration/FileMap.h
+        include/Evaluation/StructureEvaluator.h
 )
 
 find_package(OpenMP)

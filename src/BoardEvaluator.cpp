@@ -162,9 +162,6 @@ int32_t BoardEvaluator::NaiveEvaluation3(const Board& bd)
         }
     }
 
-    // add bonuses for covering pawns
-    eval = _applyBonusForCoveredPawns(bd, eval);
-
     return eval;
 }
 
@@ -181,7 +178,7 @@ int32_t BoardEvaluator::Evaluation1(const Board& bd)
     // summing tappered eval
     positionEval += _getTapperedEval(bd, phase);
 
-    return materialEval + positionEval + _applyBonusForCoveredPawns(bd, 0);
+    return materialEval + positionEval;
 }
 
 int32_t BoardEvaluator::Evaluation2(Board& bd)
@@ -192,17 +189,6 @@ int32_t BoardEvaluator::Evaluation2(Board& bd)
     const int32_t materialEval = isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation(counts, phase);
     const int32_t positionEval = _evaluateFields(bd, phase);
     return materialEval + positionEval;
-}
-
-int32_t BoardEvaluator::_applyBonusForCoveredPawns(const Board& bd, int32_t eval)
-{
-    const uint64_t covereWPawns = WhitePawnMap::GetAttackFields(bd.boards[wPawnsIndex]) & bd.boards[wPawnsIndex];
-    eval += CountOnesInBoard(covereWPawns) * CoveredWPawnBonus;
-
-    const uint64_t coveredBPawns = BlackPawnMap::GetAttackFields(bd.boards[bPawnsIndex]) & bd.boards[bPawnsIndex];
-    eval += CountOnesInBoard(coveredBPawns) * CoveredBPawnBonus;
-
-    return eval;
 }
 
 std::pair<bool, BoardEvaluator::FigureCountsArrayT> BoardEvaluator::_countFigures(const Board& bd)
@@ -490,10 +476,5 @@ int32_t BoardEvaluator::_evaluateFields(Board& bd, int32_t phase)
     result.midgameEval += controlEval;
     result.endgameEval += controlEval;
 
-    return _getTapperedValue(phase, result.midgameEval, result.endgameEval) + _evaluateStructures(bd, phase);
-}
-
-int32_t BoardEvaluator::_evaluateStructures(const Board& bd, int32_t phase)
-{
-    return _applyBonusForCoveredPawns(bd, 0);
+    return _getTapperedValue(phase, result.midgameEval, result.endgameEval);
 }

@@ -6,6 +6,7 @@ Important todos:
     - checks wtf is going on castling inside MoveGenerator especially what tf + 1 offset means
     - TOTALLY OPTIMISE COMPILATION TIME
     - Check for bugs in search why returns null move
+    - Improve checking wheter positions is in check simply by evaluating all moves by king
 
 LAST ERROR:
 

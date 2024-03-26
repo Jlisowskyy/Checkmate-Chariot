@@ -8,6 +8,9 @@
 #include "../Board.h"
 #include "../MoveGeneration/ChessMechanics.h"
 #include "KingSafetyFields.h"
+#include "StructureEvaluator.h"
+
+#include "../MoveGeneration/FileMap.h"
 
 /*      Collection of evaluation functions
  *
@@ -66,8 +69,6 @@ public:
     // ------------------------------
 
 private:
-    static int32_t _applyBonusForCoveredPawns(const Board&bd, int32_t eval);
-
     static std::pair<bool, FigureCountsArrayT> __attribute__((always_inline)) _countFigures(const Board& bd);
 
     static size_t _getMaterialBoardIndex(const FigureCountsArrayT& counts);
@@ -136,8 +137,6 @@ private:
 
     static int32_t _evaluateFields(Board&bd, int32_t phase);
 
-    static int32_t _evaluateStructures(const Board&bd, int32_t phase);
-
     template<class MapT, template<class, int (*fieldValueAccess)(int msbPos)> class EvalProducerT>
     static void _processFigEval(_fieldEvalInfo_t& out, Board&bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs
         ,uint64_t whitePawnControlledFields, uint64_t blackPawnControlledFields, uint64_t whiteMap, uint64_t blackMap);
@@ -177,9 +176,6 @@ public:
     };
 
     using MaterialArrayT = std::array<int16_t, MaterialTableSize>;
-
-    static constexpr int16_t CoveredWPawnBonus = 5;
-    static constexpr int16_t CoveredBPawnBonus = -5;
 
     static constexpr int16_t NoPawnsPenalty = -100;
 
@@ -485,6 +481,15 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
         // adding pawn control zone to global
         pawnControlledFields |= (allowedTiles & MapT::GetAttackFields(figMap));
 
+        // adding doubled pawn penalty
+        interEval += StructureEvaluator::EvalDoubledPawn(bd.boards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
+
+        // adding isolated pawn penalty
+        interEval += StructureEvaluator::EvalIsolatedPawn(bd.boards[MapT::GetBoardIndex(0)], msbPos);
+
+        // adding passed pawn penalty
+        interEval += StructureEvaluator::SimplePassedPawn(bd.boards[MapT::GetEnemyPawnBoardIndex], msbPos, MapT::GetColor);
+
         // adding field values
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
@@ -505,11 +510,22 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
 
+        // adding doubled pawn penalty
+        interEval += StructureEvaluator::EvalDoubledPawn(bd.boards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
+
+        // adding isolated pawn penalty
+        interEval += StructureEvaluator::EvalIsolatedPawn(bd.boards[MapT::GetBoardIndex(0)], msbPos);
+
+        // adding passed pawn penalty
+        interEval += StructureEvaluator::SimplePassedPawn(bd.boards[MapT::GetEnemyPawnBoardIndex], msbPos, MapT::GetColor);
+
         unpinnedPawns ^= figMap;
     }
 
     // adding controlled fields
     pawnControlledFields |= MapT::GetAttackFields(unpinnedPawns);
+
+    interEval += StructureEvaluator::EvalPawnChain(bd.boards[MapT::GetBoardIndex(0)], pawnControlledFields);
 
     midEval += interEval;
     endEval += interEval;
@@ -690,6 +706,9 @@ BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAcce
         // trapped penalty
         interEval += TrappedPiecePenalty * (LegalMoves == 0);
 
+        // open file bonus
+        interEval += StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
+
         // adding controlle fields
         controlledFields |= LegalMoves;
 
@@ -716,6 +735,9 @@ BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAcce
         const int32_t movesCount = CountOnesInBoard(safeMoves);
         midEval += movesCount * RookMobilityBonusMid;
         endEval += movesCount * RookMobilityBonusEnd;
+
+        // open file bonus
+        interEval += StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
 
         // adding king attack info
         KingSafetyFields::UpdateKingAttacks(kInfo, moves, kingRing, KingRookAttackPoints);

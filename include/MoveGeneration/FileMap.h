@@ -7,8 +7,6 @@
 
 #include "MoveGeneration.h"
 
-#include <cassert>
-
 struct FileMap
 {
     // ------------------------------
@@ -27,12 +25,22 @@ struct FileMap
         return _plainFiles[msbPos];
     }
 
+    static uint64_t GetNeighborFiles(const int msbPos)
+    {
+        return _neigborFiles[msbPos];
+    }
+
     static uint64_t GetFatFile(const int msbPos)
     {
         return _fatFiles[msbPos];
     }
 
     static uint64_t GetFronFatFile(const int msbPos, const int col)
+    {
+        return _frontFatFiles[col][msbPos];
+    }
+
+    static uint64_t GetFrontFile(const int msbPos, const int col)
     {
         return _frontFiles[col][msbPos];
     }
@@ -56,6 +64,30 @@ private:
         return rv;
     }();
 
+    static constexpr std::array<uint64_t, Board::BoardFields> _neigborFiles = []() constexpr
+    {
+        std::array<uint64_t, Board::BoardFields> rv{};
+
+        for (int msb = 0; msb < Board::BoardFields; ++msb)
+        {
+            const int boardPos = ConvertToReversedPos(msb);
+            const int startpos = boardPos % 8;
+
+            uint64_t leftMap{};
+            uint64_t rightMap{};
+
+            if (startpos-1 >= 0)
+                leftMap = GenMask(startpos-1, Board::BoardFields, 8);
+
+            if (startpos+1 < 8)
+                rightMap = GenMask(startpos+1, Board::BoardFields, 8);
+
+            rv[msb] = leftMap | rightMap;
+        }
+
+        return rv;
+    }();
+
     static constexpr std::array<uint64_t, Board::BoardFields> _fatFiles = []() constexpr
     {
         std::array<uint64_t, Board::BoardFields> rv{};
@@ -73,7 +105,7 @@ private:
         return rv;
     }();
 
-    static inline std::array<std::array<uint64_t, Board::BoardFields>, 2> _frontFiles = []()
+    static constexpr  std::array<std::array<uint64_t, Board::BoardFields>, 2> _frontFatFiles = []() constexpr
     {
         static constexpr int offset = 8;
         std::array<std::array<uint64_t, Board::BoardFields>, 2> rv{};
@@ -105,6 +137,30 @@ private:
                     GenMask(startpos, boardPos, offset);
 
                 rv[col][msb] = mainMask | leftMask | rightMask;
+            }
+        }
+
+        return rv;
+    }();
+
+    static inline std::array<std::array<uint64_t, Board::BoardFields>, 2> _frontFiles = []()
+    {
+        static constexpr int offset = 8;
+        std::array<std::array<uint64_t, Board::BoardFields>, 2> rv{};
+
+        for (int col = 0; col < 2; ++col)
+        {
+            for (int msb = 0; msb < Board::BoardFields; ++msb)
+            {
+                const int boardPos = ConvertToReversedPos(msb);
+                const int nFiledOff = col == WHITE ? offset : -offset;
+                if (const int nextRow = boardPos + nFiledOff; nextRow < 0 || nextRow >= Board::BoardFields) continue;
+
+                const int startpos = boardPos % offset;
+
+                rv[col][msb] = col == WHITE ?
+                    GenMask(boardPos + offset, Board::BoardFields, offset) :
+                    GenMask(startpos, boardPos, offset);
             }
         }
 
