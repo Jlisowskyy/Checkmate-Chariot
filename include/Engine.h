@@ -110,7 +110,7 @@ class Engine
     inline static const OptionT<Option::OptionType::spin> Threads{"Threads", _changeThreadCount, 1, 1024, 1};
     inline static const OptionT<Option::OptionType::string> DebugLogFile{"Debug Log File", _changeDebugState, ""};
     inline static const OptionT<Option::OptionType::spin> HashSize{"Hash", _changeHashSize, 16, 524289, 16};
-    inline static const OptionT<Option::OptionType::check> OwnBook{"OwnBook", _changeBookUsage, false};
+    inline static const OptionT<Option::OptionType::check> OwnBook{"OwnBook", _changeBookUsage, true};
 
 
     inline static const EngineInfo engineInfo = {

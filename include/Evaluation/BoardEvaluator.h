@@ -7,6 +7,7 @@
 
 #include "../Board.h"
 #include "../MoveGeneration/ChessMechanics.h"
+#include "KingSafetyFields.h"
 
 /*      Collection of evaluation functions
  *
@@ -26,7 +27,9 @@
 // - DIRECTION MOBILITY BONUSES
 // - PAWN PATTERNS
 // - ROOK PATTERNS
-// - KING SAFETY
+// - NO CASTLING PENALTIES ?
+// - ADD CONTACTLESS KING SAFETY
+// - ADD BIGGER KING RING ?
 
 class BoardEvaluator
 {
@@ -82,15 +85,19 @@ private:
 
     static int32_t _getTapperedEval(const Board&bd, int32_t phase);
 
+    using _kingSafetyInfo_t = KingSafetyFields::_kingSafetyInfo_t;
+
     struct _fieldEvalInfo_t
     {
         int32_t midgameEval;
         int32_t endgameEval;
         uint64_t whiteControlledFields;
         uint64_t blackControlledFields;
+        _kingSafetyInfo_t whiteKingSafety;
+        _kingSafetyInfo_t blackKingSafety;
     };
 
-    using evalResult = std::tuple<int32_t, int32_t, uint64_t>;
+    using evalResult = std::tuple<int32_t, int32_t, uint64_t, _kingSafetyInfo_t>;
 
     static _fieldEvalInfo_t _evaluatePawns(Board&bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs, uint64_t fullMap);
 
@@ -125,14 +132,14 @@ private:
         uint64_t enemyControledFieldsByPawns, uint64_t allyMap, uint64_t enemyMap);
     };
 
-    static std::tuple<int32_t, int32_t> _evaluateKings(Board& bd);
+    static void _evaluateKings(Board& bd, _fieldEvalInfo_t& io);
 
     static int32_t _evaluateFields(Board&bd, int32_t phase);
 
     static int32_t _evaluateStructures(const Board&bd, int32_t phase);
 
     template<class MapT, template<class, int (*fieldValueAccess)(int msbPos)> class EvalProducerT>
-    static _fieldEvalInfo_t _processFigEval(Board&bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs
+    static void _processFigEval(_fieldEvalInfo_t& out, Board&bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs
         ,uint64_t whitePawnControlledFields, uint64_t blackPawnControlledFields, uint64_t whiteMap, uint64_t blackMap);
 
     // ------------------------------
@@ -201,6 +208,10 @@ public:
     static constexpr int16_t QueenMobilityBonusEnd = 8;
 
     static constexpr int16_t CenterControlBonusPerTile = 2;
+
+    static constexpr int16_t KingMinorPieceAttackPoints = 2;
+    static constexpr int16_t KingRookAttackPoints = 3;
+    static constexpr int16_t KingQueenAttackPoints = 5;
 
     // 4x4 mask on the center board used to evaluate center control
     static constexpr uint64_t CenterFieldsMap = []() constexpr
@@ -364,6 +375,19 @@ public:
         -50, -30, -30, -30, -30, -30, -30, -50
     };
 
+    static constexpr int16_t _kingSafetyValues[] = {
+        0,  0,   1,   2,   3,   5,   7,   9,  12,  15,
+      18,  22,  26,  30,  35,  39,  44,  50,  56,  62,
+      68,  75,  82,  85,  89,  97, 105, 113, 122, 131,
+     140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
+     260, 272, 283, 295, 307, 319, 330, 342, 354, 366,
+     377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
+     494, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+     500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+     500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+     500, 500, 500, 500, 500, 500, 500, 500, 500, 500
+    };
+
     static constexpr FigureCountsArrayT MaterialDrawPositionConstelations[]
     {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -374,6 +398,7 @@ public:
         {0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
     };
+
 
     static constexpr const int16_t* BasicBlackPositionValues[]{
         BasicBlackPawnPositionValues, BasicBlackKnightPositionValues, BasicBlackBishopPositionValues,
@@ -437,9 +462,13 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
     int32_t interEval{};
     int32_t endEval{};
     uint64_t pawnControlledFields{};
+    _kingSafetyInfo_t kInfo{};
 
     uint64_t pinnedPawns = bd.boards[MapT::GetBoardIndex(0)] & pinnedFigs;
     uint64_t unpinnedPawns = bd.boards[MapT::GetBoardIndex(0)] ^ pinnedPawns;
+
+    // generating king ring
+    const uint64_t kingRing = KingSafetyFields::GetSafetyFields(bd, MapT::GetColor());
 
     while(pinnedPawns)
     {
@@ -468,6 +497,10 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
         const int msbPos = ExtractMsbPos(unpinnedPawns);
         const uint64_t figMap = maxMsbPossible >> msbPos;
 
+        const uint64_t attackFields = MapT::GetAttackFields(figMap);
+
+        KingSafetyFields::UpdateKingAttacks(kInfo, attackFields, kingRing, KingMinorPieceAttackPoints);
+
         // adding field values
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
@@ -481,7 +514,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
     midEval += interEval;
     endEval += interEval;
 
-    return {midEval, endEval, pawnControlledFields};
+    return {midEval, endEval, pawnControlledFields, kInfo};
 }
 
 template<class MapT, int(* fieldValueAccess)(int msbPos)>
@@ -492,11 +525,15 @@ BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAc
     int32_t interEval{};
     int32_t endEval{};
     uint64_t controlledFields{};
+    _kingSafetyInfo_t kInfo{};
 
     uint64_t pinnedKnighs = bd.boards[MapT::GetBoardIndex(col)] & pinnedFigs;
     uint64_t unpinnedKnights = bd.boards[MapT::GetBoardIndex(col)] ^ pinnedKnighs;
 
     const uint64_t safeFields = ~enemyControledFieldsByPawns;
+
+    // generating king ring
+    const uint64_t kingRing = KingSafetyFields::GetSafetyFields(bd, col);
 
     while(pinnedKnighs)
     {
@@ -528,6 +565,9 @@ BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAc
         midEval += mobCount * KnightMobilityBonusMid;
         endEval += mobCount * KnightMobilityBonusEnd;
 
+        // adding king attack info
+        KingSafetyFields::UpdateKingAttacks(kInfo, moves, kingRing, KingMinorPieceAttackPoints);
+
         // adding field values
         interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
 
@@ -538,7 +578,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAc
     midEval += interEval;
     endEval += interEval;
 
-    return {midEval, endEval, controlledFields};
+    return {midEval, endEval, controlledFields, kInfo};
 }
 
 template<class MapT, int(* fieldValueAccess)(int msbPos)>
@@ -549,12 +589,16 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
     int32_t interEval{};
     int32_t endEval{};
     uint64_t controlledFields{};
+    _kingSafetyInfo_t kInfo{};
 
     uint64_t pinnedBishops = bd.boards[MapT::GetBoardIndex(col)] & pinnedFigs;
     uint64_t unpinnedBishops = bd.boards[MapT::GetBoardIndex(col)] ^ pinnedBishops;
 
     const uint64_t safeFields = ~enemyControledFieldsByPawns;
     const uint64_t fullMap = allyMap | enemyMap;
+
+    // generating king ring
+    const uint64_t kingRing = KingSafetyFields::GetSafetyFields(bd, col);
 
     while(pinnedBishops)
     {
@@ -602,14 +646,16 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
         // adding field values
         interEval += BasicBlackBishopPositionValues[fieldValueAccess(msbPos)];
 
+        // adding king attack info
+        KingSafetyFields::UpdateKingAttacks(kInfo, moves, kingRing, KingMinorPieceAttackPoints);
+
         unpinnedBishops ^= figMap;
     }
-
 
     midEval += interEval;
     endEval += interEval;
 
-    return {midEval, endEval, controlledFields};
+    return {midEval, endEval, controlledFields, kInfo};
 }
 
 template<class MapT, int(* fieldValueAccess)(int msbPos)>
@@ -620,12 +666,16 @@ BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAcce
     int32_t interEval{};
     int32_t endEval{};
     uint64_t controlledFields{};
+    _kingSafetyInfo_t kInfo{};
 
     uint64_t pinnedRooks = bd.boards[MapT::GetBoardIndex(col)] & pinnedFigs;
     uint64_t unpinnedRooks = bd.boards[MapT::GetBoardIndex(col)] ^ pinnedRooks;
 
     const uint64_t safeFields = ~enemyControledFieldsByPawns;
     const uint64_t fullMap = allyMap | enemyMap;
+
+    // generating king ring
+    const uint64_t kingRing = KingSafetyFields::GetSafetyFields(bd, col);
 
     while(pinnedRooks)
     {
@@ -667,13 +717,16 @@ BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAcce
         midEval += movesCount * RookMobilityBonusMid;
         endEval += movesCount * RookMobilityBonusEnd;
 
+        // adding king attack info
+        KingSafetyFields::UpdateKingAttacks(kInfo, moves, kingRing, KingRookAttackPoints);
+
         unpinnedRooks ^= figMap;
     }
 
     midEval += interEval;
     endEval += interEval;
 
-    return {midEval, endEval, controlledFields};
+    return {midEval, endEval, controlledFields, kInfo};
 }
 
 template<class MapT, int(* fieldValueAccess)(int msbPos)>
@@ -683,12 +736,16 @@ BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAcc
     int32_t midEval{};
     int32_t endEval{};
     uint64_t controlledFields{};
+    _kingSafetyInfo_t kInfo{};
 
     uint64_t pinnedQueens = bd.boards[MapT::GetBoardIndex(col)] & pinnedFigs;
     uint64_t unpinnedQueens = bd.boards[MapT::GetBoardIndex(col)] ^ pinnedQueens;
 
     const uint64_t safeFields = ~enemyControledFieldsByPawns;
     const uint64_t fullMap = allyMap | enemyMap;
+
+    // generating king ring
+    const uint64_t kingRing = KingSafetyFields::GetSafetyFields(bd, col);
 
     while(pinnedQueens)
     {
@@ -735,31 +792,34 @@ BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAcc
         midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackQueenEndPositionValues[fieldValueAccess(msbPos)];
 
+        // adding king attack info
+        KingSafetyFields::UpdateKingAttacks(kInfo, moves, kingRing, KingQueenAttackPoints);
+
         unpinnedQueens ^= figMap;
     }
 
-    return {midEval, endEval, controlledFields};
+    return {midEval, endEval, controlledFields, kInfo};
 }
 
 template<class MapT, template <class, int(* fieldValueAccess)(int msbPos)> class EvalProducerT>
-BoardEvaluator::_fieldEvalInfo_t BoardEvaluator::_processFigEval(Board& bd, const uint64_t blackPinnedFigs,
+void BoardEvaluator::_processFigEval(_fieldEvalInfo_t& out, Board& bd, const uint64_t blackPinnedFigs,
     const uint64_t whitePinnedFigs, const uint64_t whitePawnControlledFields, const uint64_t blackPawnControlledFields,
     const uint64_t whiteMap, const uint64_t blackMap)
 {
-    _fieldEvalInfo_t rv{};
-
-    const auto [whiteMidEval, whiteEndEval, whiteControlledFields]
+    const auto [whiteMidEval, whiteEndEval, whiteControlledFields, wKInfo]
             = EvalProducerT<MapT, NoOp>()(bd, whitePinnedFigs, WHITE, blackPawnControlledFields, whiteMap, blackMap);
 
-    const auto [blackMidEval, blackEndEval, blackControlledFields]
+    const auto [blackMidEval, blackEndEval, blackControlledFields, bKInfo]
             = EvalProducerT<MapT, ConvertToReversedPos>()(bd, blackPinnedFigs, BLACK, whitePawnControlledFields, blackMap, whiteMap);
 
-    rv.midgameEval = whiteMidEval - blackMidEval;
-    rv.endgameEval = blackEndEval - whiteEndEval;
-    rv.whiteControlledFields = whiteControlledFields;
-    rv.blackControlledFields = blackControlledFields;
-
-    return rv;
+    out.midgameEval += whiteMidEval - blackMidEval;
+    out.endgameEval += blackEndEval - whiteEndEval;
+    out.whiteControlledFields |= whiteControlledFields;
+    out.blackControlledFields |= blackControlledFields;
+    out.whiteKingSafety.attackCounts += wKInfo.attackCounts;
+    out.whiteKingSafety.attackPoints += wKInfo.attackPoints;
+    out.blackKingSafety.attackCounts += bKInfo.attackCounts;
+    out.blackKingSafety.attackPoints += bKInfo.attackPoints;
 }
 
 #endif  // BOARDEVALUATOR_H

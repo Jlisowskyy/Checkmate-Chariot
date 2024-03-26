@@ -411,33 +411,40 @@ BoardEvaluator::_fieldEvalInfo_t BoardEvaluator::_evaluatePawns(Board& bd,
 {
     _fieldEvalInfo_t rv{};
 
-    const auto [whiteMidEval, whiteEndEval, whiteControlledFields] =
+    const auto [whiteMidEval, whiteEndEval, whiteControlledFields, wkinfo] =
         _processPawnEval<WhitePawnMap, NoOp>(bd, whitePinnedFigs, fullMap);
 
-    const auto [blackMidEval, blackEndEval, blackControlledFields] =
+    const auto [blackMidEval, blackEndEval, blackControlledFields, bkinfo] =
         _processPawnEval<BlackPawnMap, ConvertToReversedPos>(bd, blackPinnedFigs, fullMap);
 
     rv.midgameEval = whiteMidEval - blackMidEval;
     rv.endgameEval = whiteEndEval - blackEndEval;
     rv.whiteControlledFields = whiteControlledFields;
     rv.blackControlledFields = blackControlledFields;
+    rv.whiteKingSafety = wkinfo;
+    rv.blackKingSafety = bkinfo;
 
     return rv;
 }
 
-std::tuple<int32_t, int32_t> BoardEvaluator::_evaluateKings(Board& bd)
+void BoardEvaluator::_evaluateKings(Board& bd, _fieldEvalInfo_t& io)
 {
-    return {
-        BasicBlackKingPositionValues[ExtractMsbPos(bd.boards[wKingIndex])]
-            - BasicBlackKingPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.boards[bKingIndex]))],
-        BasicBlackKingEndPositionValues[ExtractMsbPos(bd.boards[wKingIndex])]
-                    - BasicBlackKingEndPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.boards[bKingIndex]))]
-    };
+    io.midgameEval += BasicBlackKingPositionValues[ExtractMsbPos(bd.boards[wKingIndex])]
+            - BasicBlackKingPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.boards[bKingIndex]))];
+    io.endgameEval += BasicBlackKingEndPositionValues[ExtractMsbPos(bd.boards[wKingIndex])]
+                    - BasicBlackKingEndPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.boards[bKingIndex]))];
+
+    int32_t bonus{};
+    bonus += (io.whiteKingSafety.attackCounts > 2) * (-_kingSafetyValues[io.whiteKingSafety.attackCounts]);
+    bonus += (io.blackKingSafety.attackCounts > 2) * (_kingSafetyValues[io.blackKingSafety.attackCounts]);
+
+    io.midgameEval += bonus;
+    io.endgameEval += bonus;
 }
 
 int32_t BoardEvaluator::_evaluateFields(Board& bd, int32_t phase)
 {
-    static constexpr _fieldEvalInfo_t (*EvalFunctions[])(Board&, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t)
+    static constexpr void (*EvalFunctions[])(_fieldEvalInfo_t&, Board&, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t)
     {
         _processFigEval<KnightMap, _processKnightEval>,
         _processFigEval<BishopMap, _processBishopEval>,
@@ -445,10 +452,7 @@ int32_t BoardEvaluator::_evaluateFields(Board& bd, int32_t phase)
         _processFigEval<QueenMap, _processQueenEval>
     };
 
-    int32_t midEval{};
-    int32_t endEval{};
-    uint64_t whiteControlledFields{};
-    uint64_t blackControlledFields{};
+    _fieldEvalInfo_t result{};
     ChessMechanics mech{bd};
 
     const uint64_t whiteMap = mech.GetColMap(WHITE);
@@ -466,38 +470,27 @@ int32_t BoardEvaluator::_evaluateFields(Board& bd, int32_t phase)
     const uint64_t whitePawnControl = pEval.whiteControlledFields;
     const uint64_t blackPawnControl = pEval.blackControlledFields;
 
-    midEval += pEval.midgameEval;
-    endEval += pEval.endgameEval;
+    result.midgameEval += pEval.midgameEval;
+    result.endgameEval += pEval.endgameEval;
 
     // ------------------------------
     // Evaluating other pieces
     // ------------------------------
 
     for(const auto func : EvalFunctions)
-    {
-        const auto evalAggerg = func(bd, blackPinnedFigs, whitePinnedFigs, whitePawnControl, blackPawnControl, whiteMap, blackMap);
-
-        whiteControlledFields |= evalAggerg.whiteControlledFields;
-        blackControlledFields |= evalAggerg.blackControlledFields;
-
-        midEval += evalAggerg.midgameEval;
-        endEval += evalAggerg.endgameEval;
-    }
+        func(result, bd, blackPinnedFigs, whitePinnedFigs, whitePawnControl, blackPawnControl, whiteMap, blackMap);
 
     // ------------------------------
     // Evaluating king
     // ------------------------------
 
-    const auto [kingMidEval, kingEndEval] = _evaluateKings(bd);
-    midEval += kingMidEval;
-    endEval += kingEndEval;
+    _evaluateKings(bd, result);
 
+    const int32_t controlEval = (CountOnesInBoard(result.whiteControlledFields) - CountOnesInBoard(result.blackControlledFields)) * CenterControlBonusPerTile;
+    result.midgameEval += controlEval;
+    result.endgameEval += controlEval;
 
-    const int32_t controlEval = (CountOnesInBoard(whiteControlledFields) - CountOnesInBoard(blackControlledFields)) * CenterControlBonusPerTile;
-    midEval += controlEval;
-    endEval += controlEval;
-
-    return _getTapperedValue(phase, midEval, endEval) + _evaluateStructures(bd, phase);
+    return _getTapperedValue(phase, result.midgameEval, result.endgameEval) + _evaluateStructures(bd, phase);
 }
 
 int32_t BoardEvaluator::_evaluateStructures(const Board& bd, int32_t phase)

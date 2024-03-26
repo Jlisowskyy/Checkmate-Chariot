@@ -23,6 +23,8 @@ class WhitePawnMap
 
     [[nodiscard]] static constexpr size_t GetBoardIndex([[maybe_unused]] int color);
 
+    [[nodiscard]] static constexpr int GetColor() { return WHITE; }
+
     [[nodiscard]] static constexpr size_t GetEnemyPawnBoardIndex();
 
     [[nodiscard]] static constexpr uint64_t GetAttackFields(uint64_t pawnBits);

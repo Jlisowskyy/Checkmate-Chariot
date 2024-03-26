@@ -81,6 +81,8 @@ add_executable(Checkmate-Chariot main.cpp
         src/KillerTable.cpp
         src/MapCorrectnessTest.cpp
         src/MapPerformanceTest.cpp
+        include/Evaluation/KingSafetyFields.h
+        src/KingSafetyFields.cpp
 )
 
 find_package(OpenMP)
