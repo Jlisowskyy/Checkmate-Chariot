@@ -6,7 +6,6 @@
 #define TRANSPOSITIONTABLES_H
 
 #include <cinttypes>
-#include <cstdlib>
 
 #include "../MoveGeneration/Move.h"
 
@@ -173,7 +172,7 @@ public:
 
 private:
 
-    static constexpr size_t _entryAlignment = 32;
+    static constexpr size_t _entryAlignment = 16;
 
     size_t _containedRecords{};
     size_t _tableSize{};

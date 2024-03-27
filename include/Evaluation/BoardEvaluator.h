@@ -7,7 +7,7 @@
 
 #include "../Board.h"
 #include "../MoveGeneration/ChessMechanics.h"
-#include "KingSafetyFields.h"
+#include "KingSafetyEval.h"
 #include "StructureEvaluator.h"
 
 #include "../MoveGeneration/FileMap.h"
@@ -86,7 +86,7 @@ private:
 
     static int32_t _getTapperedEval(const Board&bd, int32_t phase);
 
-    using _kingSafetyInfo_t = KingSafetyFields::_kingSafetyInfo_t;
+    using _kingSafetyInfo_t = KingSafetyEval::_kingSafetyInfo_t;
 
     struct _fieldEvalInfo_t
     {
@@ -464,7 +464,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
     uint64_t unpinnedPawns = bd.boards[MapT::GetBoardIndex(0)] ^ pinnedPawns;
 
     // generating king ring
-    const uint64_t kingRing = KingSafetyFields::GetSafetyFields(bd, MapT::GetColor());
+    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, MapT::GetColor());
 
     while(pinnedPawns)
     {
@@ -504,7 +504,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
 
         const uint64_t attackFields = MapT::GetAttackFields(figMap);
 
-        KingSafetyFields::UpdateKingAttacks(kInfo, attackFields, kingRing, KingMinorPieceAttackPoints);
+        KingSafetyEval::UpdateKingAttacks(kInfo, attackFields, kingRing, KingMinorPieceAttackPoints);
 
         // adding field values
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
@@ -549,7 +549,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAc
     const uint64_t safeFields = ~enemyControledFieldsByPawns;
 
     // generating king ring
-    const uint64_t kingRing = KingSafetyFields::GetSafetyFields(bd, col);
+    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
 
     while(pinnedKnighs)
     {
@@ -582,7 +582,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAc
         endEval += mobCount * KnightMobilityBonusEnd;
 
         // adding king attack info
-        KingSafetyFields::UpdateKingAttacks(kInfo, moves, kingRing, KingMinorPieceAttackPoints);
+        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingMinorPieceAttackPoints);
 
         // adding field values
         interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
@@ -614,7 +614,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
     const uint64_t fullMap = allyMap | enemyMap;
 
     // generating king ring
-    const uint64_t kingRing = KingSafetyFields::GetSafetyFields(bd, col);
+    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
 
     while(pinnedBishops)
     {
@@ -657,7 +657,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
         endEval += movesCount * BishopMobilityBonusEnd;
 
         // adding king attack info
-        KingSafetyFields::UpdateKingAttacks(kInfo, moves, kingRing, KingMinorPieceAttackPoints);
+        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingMinorPieceAttackPoints);
 
         unpinnedBishops ^= figMap;
     }
@@ -685,7 +685,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAcce
     const uint64_t fullMap = allyMap | enemyMap;
 
     // generating king ring
-    const uint64_t kingRing = KingSafetyFields::GetSafetyFields(bd, col);
+    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
 
     while(pinnedRooks)
     {
@@ -734,7 +734,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAcce
         interEval += StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
 
         // adding king attack info
-        KingSafetyFields::UpdateKingAttacks(kInfo, moves, kingRing, KingRookAttackPoints);
+        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingRookAttackPoints);
 
         unpinnedRooks ^= figMap;
     }
@@ -761,7 +761,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAcc
     const uint64_t fullMap = allyMap | enemyMap;
 
     // generating king ring
-    const uint64_t kingRing = KingSafetyFields::GetSafetyFields(bd, col);
+    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
 
     while(pinnedQueens)
     {
@@ -807,7 +807,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAcc
         midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
 
         // adding king attack info
-        KingSafetyFields::UpdateKingAttacks(kInfo, moves, kingRing, KingQueenAttackPoints);
+        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingQueenAttackPoints);
 
         unpinnedQueens ^= figMap;
     }

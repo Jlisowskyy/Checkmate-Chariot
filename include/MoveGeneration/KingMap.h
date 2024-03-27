@@ -35,6 +35,7 @@ struct KingMap
     // ------------------------------
     // Private methods
     // ------------------------------
+
    private:
     // genarates possibles tiles on which enemy pawn could attack king
     [[nodiscard]] static constexpr uint64_t _getWhiteKingDetectionTiles(const Board& bd);
@@ -61,6 +62,25 @@ struct KingMap
     // Masks used to detect allowed tiles when checked by pawn
     static constexpr uint64_t LeftPawnDetectionMask = ~GenMask(0, 57, 8);
     static constexpr uint64_t RightPawnDetetcionMask = ~GenMask(7, 64, 8);
+public:
+
+    static constexpr std::array<uint64_t, 2> ShelterLocationMask = []() {
+        const int fields[] = {0,1,6,7};
+        const int lines[][2] = {{0,1*8},{6*8,7*8}};
+        uint64_t base{};
+
+        for(const int field : fields) {
+            base |= minMsbPossible << field;
+        }
+
+        std::array<uint64_t, 2> rv{};
+
+        for (int col = WHITE; col <= BLACK; ++col) {
+            rv[col] = (base << lines[col][0]) | (base << lines[col][1]);
+        }
+
+        return rv;
+    }();
 };
 
 constexpr size_t KingMap::GetBoardIndex(const int color)

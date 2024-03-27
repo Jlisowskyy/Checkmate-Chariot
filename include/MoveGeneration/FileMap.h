@@ -9,6 +9,8 @@
 
 struct FileMap
 {
+    using SepFiles = const uint64_t*;
+
     // ------------------------------
     // Class creation
     // ------------------------------
@@ -43,6 +45,10 @@ struct FileMap
     static uint64_t GetFrontFile(const int msbPos, const int col)
     {
         return _frontFiles[col][msbPos];
+    }
+
+    static SepFiles GetSepFiles(const int msbPos) {
+        return _plainSepFiles[msbPos].data();
     }
 
     // ------------------------------
@@ -165,6 +171,30 @@ private:
 
         return rv;
     }();
+
+public:
+    static constexpr size_t FileSepSize = 3;
+private:
+
+    static constexpr std::array<std::array<uint64_t, FileSepSize>, Board::BoardFields> _plainSepFiles = []() constexpr
+        {
+            std::array<std::array<uint64_t, FileSepSize>, Board::BoardFields> rv{};
+
+            for (int msb = 0; msb < static_cast<int>(Board::BoardFields); ++msb)
+            {
+                const int boardPos = ConvertToReversedPos(msb);
+                const int startpos = boardPos % 8;
+                rv[msb] =
+                    {
+                        startpos > 0 ? GenMask(startpos-1, Board::BoardFields, 8) : 0,
+                        GenMask(startpos, Board::BoardFields, 8),
+                        startpos < 7 ? GenMask(startpos+1, Board::BoardFields, 8) : 0
+                    };
+            }
+
+            return rv;
+        }();
+
 };
 
 #endif //FILEMAP_H

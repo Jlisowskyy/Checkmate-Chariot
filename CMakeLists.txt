@@ -81,8 +81,8 @@ add_executable(Checkmate-Chariot main.cpp
         src/KillerTable.cpp
         src/MapCorrectnessTest.cpp
         src/MapPerformanceTest.cpp
-        include/Evaluation/KingSafetyFields.h
-        src/KingSafetyFields.cpp
+        include/Evaluation/KingSafetyEval.h
+        src/KingSafetyEval.cpp
         include/MoveGeneration/FileMap.h
         include/Evaluation/StructureEvaluator.h
 )
