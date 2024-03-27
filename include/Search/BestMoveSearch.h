@@ -25,11 +25,11 @@ class BestMoveSearch
 
         void InsertNext(const PackedMove mv, const PV& pv) {
             _path[0] = mv;
-            memcpy(_path + 1, pv._path, _depth-1);
+            memcpy(_path + 1, pv._path, (_depth-1)*sizeof(PackedMove));
         }
 
         void Clear() {
-            memset(_path, 0, _depth);
+            memset(_path, 0, _depth*sizeof(PackedMove));
         }
 
         void Print() {
@@ -42,7 +42,7 @@ class BestMoveSearch
         const int _depth;
     };
 
-private:
+public:
     // ------------------------------
     // Class creation
     // ------------------------------

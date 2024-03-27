@@ -60,7 +60,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
             const uint64_t nps = 1000LLU * _visitedNodes / spentMs;
             const double cutOffPerc = static_cast<double>(_cutoffNodes)/static_cast<double>(_visitedNodes);
 
-            GlobalLogger.StartLogging() << std::format("info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv",
+            GlobalLogger.StartLogging() << std::format("info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
                                                        depth + 1, spentMs, _visitedNodes, nps, eval,  output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc);
 
             pv.Print();
@@ -144,6 +144,7 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
         nType = pvNode;
         alpha = bestEval;
         bestMove = moves[0].GetPackedMove();
+        pv.InsertNext(bestMove,inPV);
     }
 
     // processsing each move
@@ -192,6 +193,7 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
                     }
 
                     nType = pvNode;
+                    pv.InsertNext(bestMove,inPV);
                 }
             }
         }
@@ -211,8 +213,7 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
         TTable.Add(record, zHash);
     }
 
-    if (nType == pvNode)
-        pv.InsertNext(bestMove,inPV);
+    assert(nType != pvNode || bestMove.IsOkeyMove());
 
     return bestEval;
 }

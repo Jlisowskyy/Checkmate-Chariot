@@ -61,23 +61,23 @@ private:
                 const int startInd = boardIndex + offset;
                 const int xOff = boardIndex % 8;
 
-                if (startInd < 0 ||startInd >= Board::BoardFields) continue;
+                if (startInd < 0 ||startInd >= static_cast<int>(Board::BoardFields)) continue;
 
                 uint64_t leftMask{};
                 uint64_t rightMask{};
 
                 if (xOff - 1 >= 0)
                     leftMask = col == WHITE ?
-                        GenMask(startInd - 1, std::min((int)Board::BoardFields, startInd + 8), 8) :
+                        GenMask(startInd - 1, std::min(static_cast<int>(Board::BoardFields), startInd + 8), 8) :
                         GenMask(std::max(xOff-1, startInd - 8 - 1), startInd, 8);
 
                 if (xOff + 1 < 8)
                     rightMask = col == WHITE ?
-                        GenMask(startInd + 1, std::min((int)Board::BoardFields, startInd + 8 + 1 + 1), 8) :
+                        GenMask(startInd + 1, std::min(static_cast<int>(Board::BoardFields), startInd + 8 + 1 + 1), 8) :
                         GenMask(std::max(xOff+1, startInd + 1 - 8), startInd + 2 , 8);
 
                 const uint64_t midMask = col == WHITE ?
-                    GenMask(startInd, std::min((int)Board::BoardFields, startInd + 8 + 1), 8) :
+                    GenMask(startInd, std::min(static_cast<int>(Board::BoardFields), startInd + 8 + 1), 8) :
                         GenMask(std::max(xOff, startInd - 8), startInd + 1 , 8);
 
 
