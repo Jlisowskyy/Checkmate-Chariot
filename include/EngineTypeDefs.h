@@ -31,7 +31,7 @@ std::string ConvertToStrPos(uint64_t boardMap);
 // global defined stack capacity used to store generated moves per thread
 static constexpr size_t MB = 1024 * 1024;
 static constexpr size_t DefaultStackSize = 32 * MB / sizeof(uint64_t);
-static constexpr int MaxSearchDepth = 256;
+static constexpr int MaxSearchDepth = 128;
 
 extern const char IndexToFigCharMap[Board::BoardsCount];
 extern const std::unordered_map<char, size_t> FigCharToIndexMap;

@@ -9,10 +9,40 @@
 #include "../Evaluation/CounterMoveTable.h"
 #include "../Evaluation/HistoricTable.h"
 #include "../Evaluation/KillerTable.h"
+#include "../Interface/Logger.h"
 #include "../ThreadManagement/stack.h"
 
-struct BestMoveSearch
+class BestMoveSearch
 {
+    // ------------------------------
+    // Class inner types
+    // ------------------------------
+
+    struct PV {
+        PV() = delete;
+
+        PV(const int depth): _depth(depth){}
+
+        void InsertNext(const PackedMove mv, const PV& pv) {
+            _path[0] = mv;
+            memcpy(_path + 1, pv._path, _depth-1);
+        }
+
+        void Clear() {
+            memset(_path, 0, _depth);
+        }
+
+        void Print() {
+            for (int i = 0; i < _depth; ++i)
+                GlobalLogger.StartLogging() << _path[i].GetLongAlgebraicNotation() << ' ';
+        }
+
+    private:
+        PackedMove _path[MaxSearchDepth+1]{};
+        const int _depth;
+    };
+
+private:
     // ------------------------------
     // Class creation
     // ------------------------------
@@ -35,7 +65,7 @@ struct BestMoveSearch
 
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimizing player
-    [[nodiscard]] int _negaScout(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove);
+    [[nodiscard]] int _pwsSearch(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV& pv);
     [[nodiscard]] int _zwSearch(Board& bd, int alpha, int depthLeft, uint64_t zHash, Move prevMove);
     [[nodiscard]] int _quiescenceSearch(Board& bd, int alpha, int beta, uint64_t zHash);
     [[nodiscard]] int _zwQuiescenceSearch(Board& bd, int alpha, uint64_t zHash);

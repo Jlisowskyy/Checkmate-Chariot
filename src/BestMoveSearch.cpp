@@ -6,7 +6,6 @@
 
 #include <cassert>
 #include <chrono>
-#include <climits>
 #include <format>
 #include <string>
 #include <vector>
@@ -33,6 +32,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
 
     for (int depth = 1; depth < maxDepth; ++depth)
     {
+        PV pv{depth};
         // measuring time
         [[maybe_unused]]auto t1 = std::chrono::steady_clock::now();
 
@@ -44,7 +44,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
         // cleaning tables used in iteration
 
         _kTable.ClearPlyFloor(depth);
-        eval = _negaScout(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {});
+        eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, pv);
 
         // measurement end
         [[maybe_unused]]auto t2 = std::chrono::steady_clock::now();
@@ -60,13 +60,16 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
             const uint64_t nps = 1000LLU * _visitedNodes / spentMs;
             const double cutOffPerc = static_cast<double>(_cutoffNodes)/static_cast<double>(_visitedNodes);
 
-            GlobalLogger.StartLogging() << std::format("info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f}\n",
+            GlobalLogger.StartLogging() << std::format("info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv",
                                                        depth + 1, spentMs, _visitedNodes, nps, eval,  output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc);
+
+            pv.Print();
+            GlobalLogger.StartLogging() << std::endl;
         }
     }
 }
 
-int BestMoveSearch::_negaScout(Board& bd, int alpha, const int beta, const int depthLeft, uint64_t zHash, const Move prevMove)
+int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int depthLeft, uint64_t zHash, const Move prevMove, PV& pv)
 {
     assert(alpha < beta);
 
@@ -101,11 +104,13 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, const int beta, const int d
     const auto oldCastlings = bd.Castlings;
     const auto oldElPassant = bd.elPassantField;
 
+    PV inPV{depthLeft};
+
     zHash = ZHasher.UpdateHash(zHash, moves[0], oldElPassant, oldCastlings);
     TTable.Prefetch(zHash);
     Move::MakeMove(moves[0], bd);
     _kTable.ClearPlyFloor(depthLeft - 1);
-    int bestEval = -_negaScout(bd, -beta, -alpha, depthLeft - 1, zHash, moves[0]);
+    int bestEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[0], inPV);
     zHash = ZHasher.UpdateHash(zHash, moves[0], oldElPassant, oldCastlings);
     Move::UnmakeMove(moves[0], bd, oldCastlings, oldElPassant);
 
@@ -159,7 +164,7 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, const int beta, const int d
         {
             TTable.Prefetch(zHash);
             _kTable.ClearPlyFloor(depthLeft - 1);
-            moveEval = -_negaScout(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i]);
+            moveEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV);
 
             if (moveEval > bestEval)
             {
@@ -205,6 +210,9 @@ int BestMoveSearch::_negaScout(Board& bd, int alpha, const int beta, const int d
             wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age };
         TTable.Add(record, zHash);
     }
+
+    if (nType == pvNode)
+        pv.InsertNext(bestMove,inPV);
 
     return bestEval;
 }
