@@ -28,9 +28,9 @@ struct HistoricTable {
     // ------------------------------
 
     void SetBonusMove(const Move mv, const int depth) {
-        static constexpr int Barrier = 2000;
+        static constexpr int Barrier = 2400;
 
-        _table[mv.GetStartBoardIndex()][mv.GetTargetField()] += std::min(depth*depth, Barrier);
+        _table[mv.GetStartBoardIndex()][mv.GetTargetField()] = std::min(_table[mv.GetStartBoardIndex()][mv.GetTargetField()] + depth, Barrier);
     }
 
     [[nodiscard]] int GetBonusMove(const Move mv) const {

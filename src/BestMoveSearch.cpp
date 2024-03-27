@@ -33,6 +33,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
     for (int depth = 1; depth < maxDepth; ++depth)
     {
         PV pv{depth};
+        PV pvBuff{depth};
         // measuring time
         [[maybe_unused]]auto t1 = std::chrono::steady_clock::now();
 
@@ -43,15 +44,47 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
 
         // cleaning tables used in iteration
 
-        _kTable.ClearPlyFloor(depth);
-        eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, pv);
+        if (true)
+        {
+            _kTable.ClearPlyFloor(depth);
+            eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, pv, true);
+        }
+        else
+        {
+            int delta = BoardEvaluator::BasicFigureValues[wPawnsIndex] / 16;
+            int alpha = eval - delta;
+            int beta = eval + delta;
+
+            int tries = 0;
+            while (true)
+            {
+                tries++;
+                pvBuff.Clone(pv);
+                _kTable.ClearPlyFloor(depth);
+                eval = _pwsSearch(_board, alpha, beta, depth, zHash, {}, pvBuff, true);
+
+                if (eval <= alpha)
+                {
+                    beta = (alpha + beta) / 2;
+                    alpha = std::max(eval - delta, NegativeInfinity);
+                }
+                else if (eval >= beta)
+                    beta = std::min(eval + delta, PositiveInfinity);
+                else
+                    break;
+
+                delta += delta;
+            }
+
+            GlobalLogger.StartLogging() << std::format("[ WARN ] Total aspiration tries: {}\n", tries);
+            pv.Clone(pvBuff);
+        }
 
         // measurement end
         [[maybe_unused]]auto t2 = std::chrono::steady_clock::now();
 
-        // move sorting
-        auto record = TTable.GetRecord(zHash);
-        *output = record.GetMove();
+        // saving move
+        *output = pv[0];
 
         if (writeInfo)
         {
@@ -61,7 +94,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
             const double cutOffPerc = static_cast<double>(_cutoffNodes)/static_cast<double>(_visitedNodes);
 
             GlobalLogger.StartLogging() << std::format("info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
-                                                       depth + 1, spentMs, _visitedNodes, nps, eval,  output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc);
+                                                       depth + 1, spentMs, _visitedNodes, nps, eval*BoardEvaluator::ScoreGrain,  output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc);
 
             pv.Print();
             GlobalLogger.StartLogging() << std::endl;
@@ -69,7 +102,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
     }
 }
 
-int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int depthLeft, uint64_t zHash, const Move prevMove, PV& pv)
+int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int depthLeft, uint64_t zHash, const Move prevMove, PV& pv, bool followPv)
 {
     assert(alpha < beta);
 
@@ -97,8 +130,9 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
     if (wasTTHit && prevSearchRes.GetNodeType() != upperBound)
         _pullMoveToFront(moves, prevSearchRes.GetMove());
-    else
+    else if (!followPv || depthLeft == 1)
         _fetchBestMove(moves, 0);
+    else _pullMoveToFront(moves, pv(depthLeft, _currRootDepth));
 
     // saving old params
     const auto oldCastlings = bd.Castlings;
@@ -110,7 +144,7 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
     TTable.Prefetch(zHash);
     Move::MakeMove(moves[0], bd);
     _kTable.ClearPlyFloor(depthLeft - 1);
-    int bestEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[0], inPV);
+    int bestEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[0], inPV, followPv);
     zHash = ZHasher.UpdateHash(zHash, moves[0], oldElPassant, oldCastlings);
     Move::UnmakeMove(moves[0], bd, oldCastlings, oldElPassant);
 
@@ -165,7 +199,7 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
         {
             TTable.Prefetch(zHash);
             _kTable.ClearPlyFloor(depthLeft - 1);
-            moveEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV);
+            moveEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV, false);
 
             if (moveEval > bestEval)
             {

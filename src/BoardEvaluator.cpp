@@ -100,7 +100,7 @@ BoardEvaluator::MaterialArrayT BoardEvaluator::_materialTable =  [] () -> Materi
 int32_t BoardEvaluator::DefaultFullEvalFunction(Board& bd, const int color)
 {
     const int whiteEval = Evaluation2(bd);
-    return color == WHITE ? whiteEval : -whiteEval;
+    return (color == WHITE ? whiteEval : -whiteEval) / ScoreGrain;
 }
 
 int32_t BoardEvaluator::PlainMaterialEvaluation(const Board& bd)

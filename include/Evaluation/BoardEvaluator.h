@@ -147,6 +147,8 @@ private:
 public:
     using CostArrayT = std::array<std::array<int16_t, Board::BoardFields>, Board::BoardsCount>;
 
+    static constexpr int32_t ScoreGrain = 8;
+
     // for each color and each figure including lack of figure /pawn/knight/bishop/rook/queen/
     static constexpr size_t MaterialTableSize = 9 * 9 * 3 * 3 * 3 * 3 * 3 * 3 * 2 * 2;
 

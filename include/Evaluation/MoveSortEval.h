@@ -87,7 +87,7 @@ struct MoveSortEval
     static constexpr int16_t RunAwayPrize = 50;
     static constexpr int16_t KillerMovePrize = 150;
     static constexpr int16_t CounterMovePrize = 200;
-    static constexpr int16_t MostRecentSquarePrize = 900;
+    static constexpr int16_t MostRecentSquarePrize = 1600;
     static constexpr int16_t CaptureBonus = 2500;
     static constexpr int16_t PromotionBonus = 4000;
 };

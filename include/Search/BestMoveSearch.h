@@ -32,10 +32,27 @@ class BestMoveSearch
             memset(_path, 0, _depth*sizeof(PackedMove));
         }
 
-        void Print() {
+        void Clone(const PV& pv)
+        {
+            memcpy(_path, pv._path, (_depth)*sizeof(PackedMove));
+        }
+
+        void Print() const
+        {
             for (int i = 0; i < _depth; ++i)
                 GlobalLogger.StartLogging() << _path[i].GetLongAlgebraicNotation() << ' ';
         }
+
+        PackedMove operator()(const int depthLeft, const int rootDepth) const
+        {
+            return _path[rootDepth - depthLeft];
+        }
+
+        PackedMove operator[](const int ply) const
+        {
+            return _path[ply];
+        }
+
 
     private:
         PackedMove _path[MaxSearchDepth+1]{};
@@ -65,7 +82,7 @@ public:
 
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimizing player
-    [[nodiscard]] int _pwsSearch(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV& pv);
+    [[nodiscard]] int _pwsSearch(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV& pv, bool followPv);
     [[nodiscard]] int _zwSearch(Board& bd, int alpha, int depthLeft, uint64_t zHash, Move prevMove);
     [[nodiscard]] int _quiescenceSearch(Board& bd, int alpha, int beta, uint64_t zHash);
     [[nodiscard]] int _zwQuiescenceSearch(Board& bd, int alpha, uint64_t zHash);
