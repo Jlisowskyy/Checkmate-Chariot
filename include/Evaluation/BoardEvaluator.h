@@ -327,10 +327,10 @@ public:
 
     static constexpr int16_t BasicBlackQueenPositionValues[]
     {
+        -110, -110, -110, -110, -110, -110, -110, -110,
         -80, -80, -80, -80, -80, -80, -80, -80,
         -60, -60, -60, -60, -60, -60, -60, -60,
-        -40, -40, -40, -40, -40, -40, -40, -40,
-        -25, -25, -25, -25, -25, -25, -25, -25,
+        -45, -45, -45, -45, -45, -45, -45, -45,
         -20, -15, -15, -15, -15, -15, -15, -20,
         -10, 5, 5, 5, 5, 5, 5, -10,
         -10, 15, 15, 15, 15, 15, 15, -10,
@@ -637,9 +637,6 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
         midEval += movesCount * BishopMobilityBonusMid;
         endEval += movesCount * BishopMobilityBonusEnd;
 
-        // adding field values
-        interEval += BasicBlackBishopPositionValues[fieldValueAccess(msbPos)];
-
         pinnedBishops ^= figMap;
     }
 
@@ -658,9 +655,6 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
         const int movesCount = CountOnesInBoard(safeMoves);
         midEval += movesCount * BishopMobilityBonusMid;
         endEval += movesCount * BishopMobilityBonusEnd;
-
-        // adding field values
-        interEval += BasicBlackBishopPositionValues[fieldValueAccess(msbPos)];
 
         // adding king attack info
         KingSafetyFields::UpdateKingAttacks(kInfo, moves, kingRing, KingMinorPieceAttackPoints);
@@ -789,7 +783,6 @@ BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAcc
 
         // adding positional field values
         midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
-        endEval += BasicBlackQueenEndPositionValues[fieldValueAccess(msbPos)];
 
         pinnedQueens ^= figMap;
     }
@@ -812,7 +805,6 @@ BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAcc
 
         // adding positional field values
         midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
-        endEval += BasicBlackQueenEndPositionValues[fieldValueAccess(msbPos)];
 
         // adding king attack info
         KingSafetyFields::UpdateKingAttacks(kInfo, moves, kingRing, KingQueenAttackPoints);
