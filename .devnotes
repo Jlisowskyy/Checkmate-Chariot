@@ -9,9 +9,7 @@ Important todos:
     - Improve checking wheter positions is in check simply by evaluating all moves by king
 
     MAIN DEVELOP PATH:
-        -> "PV SAVING"
         -> "INTERNAL ITERATIVE ON NO TT HIT ON FULL WINDOW NODES"
-        -> "TAKING BEST MOVE FROM PV"`
         -> "BUCKET TT"
         -> "EXTENSIONS"
 

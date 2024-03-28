@@ -17,11 +17,11 @@
 
 static constexpr int NO_EVAL =  TranspositionTable::HashRecord::NoEval;
 
-
 void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, const bool writeInfo)
 {
     const uint64_t zHash = ZHasher.GenerateHash(_board);
     int eval{};
+    long avg{};
 
     if (maxDepth == 0)
     {
@@ -44,40 +44,44 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
 
         // cleaning tables used in iteration
 
-        if (true)
+        if (depth < 7)
         {
             _kTable.ClearPlyFloor(depth);
+            _histTable.ScaleTableDown();
             eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, pv, true);
+            avg += eval;
         }
         else
         {
+            const int averageScore = avg / (depth - 1);
             int delta = BoardEvaluator::BasicFigureValues[wPawnsIndex] / 16;
-            int alpha = eval - delta;
-            int beta = eval + delta;
+            int alpha = averageScore - delta;
+            int beta = averageScore + delta;
 
             int tries = 0;
             while (true)
             {
+                delta += delta;
                 tries++;
                 pvBuff.Clone(pv);
                 _kTable.ClearPlyFloor(depth);
+                _histTable.ScaleTableDown();
                 eval = _pwsSearch(_board, alpha, beta, depth, zHash, {}, pvBuff, true);
 
                 if (eval <= alpha)
                 {
                     beta = (alpha + beta) / 2;
-                    alpha = std::max(eval - delta, NegativeInfinity);
+                    alpha = std::max(alpha - delta, NegativeInfinity);
                 }
                 else if (eval >= beta)
-                    beta = std::min(eval + delta, PositiveInfinity);
+                    beta = std::min(beta + delta, PositiveInfinity);
                 else
                     break;
-
-                delta += delta;
             }
 
             GlobalLogger.StartLogging() << std::format("[ WARN ] Total aspiration tries: {}\n", tries);
             pv.Clone(pvBuff);
+            avg += eval;
         }
 
         // measurement end

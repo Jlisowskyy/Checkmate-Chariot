@@ -42,13 +42,21 @@ struct HistoricTable {
             std::fill_n(_table[i], Board::BoardFields, 0);
     }
 
+    void ScaleTableDown() {
+        for (auto & figureMap : _table)
+            for (short & field : figureMap)
+                field /= ScaleFactor;
+    }
+
     // ------------------------------
     // Class fields
     // ------------------------------
 
+    static constexpr int16_t ScaleFactor = 4;
+
 private:
 
-    int _table[Board::BoardsCount][Board::BoardFields];
+    int16_t _table[Board::BoardsCount][Board::BoardFields];
 };
 
 #endif //HISTORICTABLE_H
