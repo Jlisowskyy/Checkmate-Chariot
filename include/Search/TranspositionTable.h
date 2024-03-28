@@ -6,6 +6,7 @@
 #define TRANSPOSITIONTABLES_H
 
 #include <cinttypes>
+#include <climits>
 
 #include "../MoveGeneration/Move.h"
 
@@ -40,6 +41,9 @@ struct TranspositionTable
         // Class creation
         // ------------------------------
 
+        HashRecord() = default;
+        ~HashRecord() = default;
+
         HashRecord(const uint64_t hash, const PackedMove mv, const int eval, const int statVal, const int depth, const nodeType nType, const uint16_t age):
             _zobristHashAndAgePacked(_packHashAndAge(hash, age)),
             _madeMove(mv),
@@ -71,10 +75,12 @@ struct TranspositionTable
         void SetStatVal(const int statEval) { _value = static_cast<int16_t>(statEval); }
         void SetEvalVal(const int eval) { _eval = static_cast<int16_t>(eval); }
 
+
+
         // ------------------------------
         // Private class methods
         // ------------------------------
-private:
+    private:
 
         static uint64_t _packHashAndAge(const uint64_t Hash, const uint16_t age)
         {
@@ -84,7 +90,7 @@ private:
         // ------------------------------
         // Class fields
         // ------------------------------
-public:
+    public:
 
         static constexpr int NoEval = INT16_MAX;
 
@@ -100,6 +106,78 @@ public:
         static constexpr uint64_t HashBytes = ~AgeBytes;
 
         friend TranspositionTable;
+    };
+
+    struct alignas(32) TTBucket {
+
+        enum class HitType {
+            NoHit = -1,
+            Hit0 = 0,
+            Hit1 = 1
+        };
+
+        // ------------------------------
+        // Class creation
+        // ------------------------------
+
+        TTBucket() = default;
+        ~TTBucket() = default;
+
+        // ------------------------------
+        // Class interaction
+        // ------------------------------
+
+        [[nodiscard]] HitType IsHit(const uint64_t hash) const {
+            if (_records[0].IsSameHash(hash)) return HitType::Hit0;
+            if (_records[1].IsSameHash(hash)) return HitType::Hit1;
+            return HitType::NoHit;
+        }
+
+        HashRecord& GetRecord(HitType type) {
+            return type == HitType::Hit0 ? _records[0] : _records[1];
+        }
+
+        size_t GetSaveInfo(const nodeType type, const int depth, const int age)  const{
+            const int bonusPv = (type == pvNode) * PvBonus;
+            const int bonusLowerBound = (type == upperBound) * UpperBoundBonus;
+            const int bonus = bonusPv + bonusLowerBound;
+
+            int bestEv = INT_MAX;
+            size_t ind = SIZE_MAX;
+
+            for (size_t i = 0 ; i < BucketSize ; ++i) {
+                const int ev = (depth - _records[i].GetDepth()) + bonus +
+                    std::min(0, (age - _records[i].GetAge() - AgeConsideration))/2;
+
+                if (ev > bestEv) {
+                    bestEv = ev;
+                    ind = i;
+                }
+            }
+
+            return ind;
+        }
+
+        void Save(const HashRecord& record, size_t ind) {
+            _records[ind] = record;
+        }
+
+        // ------------------------------
+        // Private class methods
+        // ------------------------------
+
+        // ------------------------------
+        // Class fields
+        // ------------------------------
+
+        static constexpr int16_t PvBonus = 3;
+        static constexpr int16_t UpperBoundBonus = -1;
+        static constexpr size_t BucketSize = 2;
+        static constexpr int16_t AgeConsideration = 6;
+        static constexpr size_t NOT_SAVABLE = SIZE_MAX;
+
+    private:
+        HashRecord _records[BucketSize]{};
     };
 
     // ------------------------------
@@ -122,17 +200,9 @@ public:
     // Class interaction
     // ------------------------------
 
-    void __attribute__((always_inline)) Add(const HashRecord& record, const uint64_t zHash)
+    [[nodiscard]] TTBucket& __attribute__((always_inline)) GetBucket(const uint64_t zHash)
     {
-        // hash uses 48 bytes inside the record while masks uses at least log2(16 * 1024 * 1024 / 32) = 19
         const size_t pos = zHash & _hashMask;
-        _containedRecords += _map[pos].IsEmpty();
-        _map[pos] = record;
-    }
-
-    [[nodiscard]] HashRecord __attribute__((always_inline)) GetRecord(const uint64_t zHash)  const
-    {
-        const size_t pos =  zHash & _hashMask;
         return _map[pos];
     }
 
@@ -146,8 +216,6 @@ public:
 
     // IMPORTANT: function should only be used before any search was concluded, because is fully cleared when resizing
     ssize_t ResizeTable(size_t sizeMB);
-
-    [[nodiscard]] size_t GetContainedElements() const;
 
     // ------------------------------
     // private methods
@@ -168,16 +236,15 @@ public:
     static constexpr size_t MaxSizeMB = 1024 * 256;
     static constexpr size_t StartTableSizeMB = 16;
     static constexpr size_t MB = 1024 * 1024;
-    static constexpr size_t StartTableSize = StartTableSizeMB * MB / sizeof(HashRecord);
+    static constexpr size_t StartTableSize = StartTableSizeMB * MB / sizeof(TTBucket);
 
 private:
 
-    static constexpr size_t _entryAlignment = 16;
+    static constexpr size_t _entryAlignment = sizeof(TTBucket);
 
-    size_t _containedRecords{};
     size_t _tableSize{};
     size_t _hashMask{};
-    HashRecord* _map{};
+    TTBucket* _map{};
 };
 
 extern TranspositionTable TTable;

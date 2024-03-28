@@ -16,7 +16,7 @@ TranspositionTable TTable{};
 TranspositionTable::TranspositionTable():
     _tableSize(StartTableSize),
     _hashMask(_getPow2ModuloMask(StartTableSize)),
-    _map{static_cast<HashRecord *>(std::aligned_alloc(_entryAlignment, sizeof(HashRecord)*StartTableSize))}
+    _map{static_cast<TTBucket *>(std::aligned_alloc(_entryAlignment, sizeof(TTBucket)*StartTableSize))}
 {
     _checkForCorrectAlloc(StartTableSize);
     ClearTable();
@@ -29,20 +29,19 @@ TranspositionTable::~TranspositionTable()
 
 
 void TranspositionTable::ClearTable() {
-    memset(_map, 0, _tableSize * sizeof(HashRecord));
-    _containedRecords = 0;
+    memset(_map, 0, _tableSize * sizeof(TTBucket));
 }
 
 ssize_t TranspositionTable::ResizeTable(const size_t sizeMB)
 {
     free(_map);
     const size_t ceiledSizeMB = std::bit_floor(sizeMB);
-    const size_t objSize = ceiledSizeMB*MB/sizeof(HashRecord);
-    _map = static_cast<HashRecord *>(std::aligned_alloc(_entryAlignment, ceiledSizeMB*MB));
+    const size_t objSize = ceiledSizeMB*MB/sizeof(TTBucket);
+    _map = static_cast<TTBucket *>(std::aligned_alloc(_entryAlignment, ceiledSizeMB*MB));
 
     if (_map == nullptr)
     {
-        _map = static_cast<HashRecord *>(std::aligned_alloc(_entryAlignment, StartTableSize*sizeof(HashRecord)));
+        _map = static_cast<TTBucket *>(std::aligned_alloc(_entryAlignment, StartTableSize*sizeof(TTBucket)));
         _tableSize = StartTableSize;
         _hashMask = _getPow2ModuloMask(StartTableSize);
         _checkForCorrectAlloc(StartTableSize);
@@ -56,11 +55,6 @@ ssize_t TranspositionTable::ResizeTable(const size_t sizeMB)
     ClearTable();
 
     return static_cast<ssize_t>(ceiledSizeMB);
-}
-
-size_t TranspositionTable::GetContainedElements() const
-{
-    return _containedRecords;
 }
 
 void TranspositionTable::_checkForCorrectAlloc(const size_t size) const {

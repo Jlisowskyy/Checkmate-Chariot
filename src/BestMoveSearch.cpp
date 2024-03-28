@@ -97,8 +97,8 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
             const uint64_t nps = 1000LLU * _visitedNodes / spentMs;
             const double cutOffPerc = static_cast<double>(_cutoffNodes)/static_cast<double>(_visitedNodes);
 
-            GlobalLogger.StartLogging() << std::format("info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
-                                                       depth + 1, spentMs, _visitedNodes, nps, eval*BoardEvaluator::ScoreGrain,  output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc);
+            GlobalLogger.StartLogging() << std::format("info depth {} time {} nodes {} nps {} score cp {} currmove {} cut-offs perc {:.2f} pv ",
+                                                       depth + 1, spentMs, _visitedNodes, nps, eval*BoardEvaluator::ScoreGrain,  output->GetLongAlgebraicNotation(), cutOffPerc);
 
             pv.Print();
             GlobalLogger.StartLogging() << std::endl;
@@ -128,15 +128,15 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
         return mechanics.IsCheck() ? _getMateValue(depthLeft) : 0;
 
     // reading Transposition table for the best move
-    const auto prevSearchRes = TTable.GetRecord(zHash);
+    auto bucket = TTable.GetBucket(zHash);
+    auto hitInfo = bucket.IsHit(zHash);
+    const bool wasTTHit = hitInfo != TranspositionTable::TTBucket::HitType::NoHit;
+    auto hRecord = bucket.GetRecord(hitInfo);
 
-    // We got a hit
-    const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
-    if (wasTTHit && prevSearchRes.GetNodeType() != upperBound)
-        _pullMoveToFront(moves, prevSearchRes.GetMove());
-    else if (!followPv || depthLeft == 1)
-        _fetchBestMove(moves, 0);
-    else _pullMoveToFront(moves, pv(depthLeft, _currRootDepth));
+    if (wasTTHit && hRecord.GetNodeType() != upperBound)
+        _pullMoveToFront(moves, hRecord.GetMove());
+    else if (followPv) _pullMoveToFront(moves, pv(depthLeft, _currRootDepth));
+    _fetchBestMove(moves, 0);
 
     // saving old params
     const auto oldCastlings = bd.Castlings;
@@ -166,13 +166,11 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
                 _histTable.SetBonusMove(moves[0], depthLeft);
             }
 
-            // updating if profitable
-            if (depthLeft >= prevSearchRes.GetDepth()
-                || (!wasTTHit && _age - prevSearchRes.GetAge() >= SearchAgeDiffToReplace))
-            {
+            const auto saveInfo = bucket.GetSaveInfo(lowerBound, depthLeft, _age);
+            if (saveInfo != TranspositionTable::TTBucket::NOT_SAVABLE) {
                 const TranspositionTable::HashRecord record{zHash, moves[0].GetPackedMove(),
-                    bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, lowerBound, _age };
-                TTable.Add(record, zHash);
+                    bestEval, wasTTHit ? hRecord.GetStatVal() : NO_EVAL, depthLeft, lowerBound, _age };
+                bucket.Save(record, saveInfo);
             }
 
             _stack.PopAggregate(moves);
@@ -242,13 +240,11 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
     //clean up
     _stack.PopAggregate(moves);
 
-    // updating if profitable
-    if (depthLeft >= prevSearchRes.GetDepth()
-        || (!wasTTHit && _age - prevSearchRes.GetAge() >= SearchAgeDiffToReplace))
-    {
-        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval,
-            wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age };
-        TTable.Add(record, zHash);
+    const auto saveInfo = bucket.GetSaveInfo(lowerBound, depthLeft, _age);
+    if (saveInfo != TranspositionTable::TTBucket::NOT_SAVABLE) {
+        const TranspositionTable::HashRecord record{zHash, bestMove,
+            bestEval, wasTTHit ? hRecord.GetStatVal() : NO_EVAL, depthLeft, nType, _age };
+        bucket.Save(record, saveInfo);
     }
 
     assert(nType != pvNode || bestMove.IsOkeyMove());
@@ -269,19 +265,20 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
     // incrementing nodes counter;
     ++_visitedNodes;
 
-    // reading Transposition table for previous score
-    const auto prevSearchRes = TTable.GetRecord(zHash);
+    // reading Transposition table for the best move
+    auto bucket = TTable.GetBucket(zHash);
+    auto hitInfo = bucket.IsHit(zHash);
+    const bool wasTTHit = hitInfo != TranspositionTable::TTBucket::HitType::NoHit;
+    auto hRecord = bucket.GetRecord(hitInfo);
 
-    // We got a hit
-    const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
-    if (wasTTHit && prevSearchRes.GetDepth() >= depthLeft)
+    if (wasTTHit && hRecord.GetDepth() >= depthLeft)
     {
-        const nodeType expectedType = prevSearchRes.GetEval() >= beta ? lowerBound : upperBound;
+        const nodeType expectedType = hRecord.GetEval() >= beta ? lowerBound : upperBound;
 
-        if (expectedType == prevSearchRes.GetNodeType() || prevSearchRes.GetNodeType() == pvNode)
+        if (expectedType == hRecord.GetNodeType() || hRecord.GetNodeType() == pvNode)
         {
             ++_cutoffNodes;
-            return prevSearchRes.GetEval();
+            return hRecord.GetEval();
         }
     }
 
@@ -296,14 +293,13 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
     if (moves.size == 0)
         return mechanics.IsCheck() ? _getMateValue(depthLeft) : 0;
 
+    if (wasTTHit && hRecord.GetNodeType() != upperBound)
+        _pullMoveToFront(moves, hRecord.GetMove());
+
     // processing each move
     for (size_t i = 0; i < moves.size; ++i)
     {
-        // load the best move from TT if possible
-        if (i == 0 && prevSearchRes.IsSameHash(zHash) && prevSearchRes.GetNodeType() != upperBound)
-            _pullMoveToFront(moves, prevSearchRes.GetMove());
-        else
-            _fetchBestMove(moves, i);
+        _fetchBestMove(moves, i);
 
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         TTable.Prefetch(zHash);
@@ -335,13 +331,13 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
         }
     }
 
-    if (depthLeft >= prevSearchRes.GetDepth()
-            || (!wasTTHit && _age - prevSearchRes.GetAge() >= SearchAgeDiffToReplace))
-    {
-        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval,
-            wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age };
-        TTable.Add(record, zHash);
+    const auto saveInfo = bucket.GetSaveInfo(lowerBound, depthLeft, _age);
+    if (saveInfo != TranspositionTable::TTBucket::NOT_SAVABLE) {
+        const TranspositionTable::HashRecord record{zHash, bestMove,
+            bestEval, wasTTHit ? hRecord.GetStatVal() : NO_EVAL, depthLeft, nType, _age };
+        bucket.Save(record, saveInfo);
     }
+
 
     //clean up
     _stack.PopAggregate(moves);
@@ -358,12 +354,13 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, const int beta, uint
     ++_visitedNodes;
 
     // reading Transposition table for the best move
-    auto prevSearchRes = TTable.GetRecord(zHash);
+    auto bucket = TTable.GetBucket(zHash);
+    const auto hitInfo = bucket.IsHit(zHash);
+    const bool wasTTHit = hitInfo != TranspositionTable::TTBucket::HitType::NoHit;
+    auto hRecord = bucket.GetRecord(hitInfo);
 
-    // We got a hit
-    const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
-    if (wasTTHit && prevSearchRes.GetStatVal() != NO_EVAL)
-        statEval = prevSearchRes.GetStatVal();
+    if (wasTTHit && hRecord.GetStatVal() != NO_EVAL)
+        statEval = hRecord.GetStatVal();
     else
         statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
 
@@ -375,11 +372,9 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, const int beta, uint
         {
             ++_cutoffNodes;
 
-            if (wasTTHit && prevSearchRes.GetStatVal() == NO_EVAL)
-            {
-                prevSearchRes.SetStatVal(statEval);
-                TTable.Add(prevSearchRes, zHash);
-            }
+            if (wasTTHit && hRecord.GetStatVal() == NO_EVAL)
+                hRecord.SetStatVal(statEval);
+
             return bestEval;
         }
 
@@ -394,16 +389,13 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, const int beta, uint
     const auto oldCastlings = bd.Castlings;
     const auto oldElPassant = bd.elPassantField;
 
-    if (wasTTHit && prevSearchRes.GetNodeType() != upperBound && prevSearchRes.GetMove().IsCapture())
-        _pullMoveToFront(moves, prevSearchRes.GetMove());
-    else
-        _fetchBestMove(moves, 0);
+    if (wasTTHit && hRecord.GetNodeType() != upperBound && hRecord.GetMove().IsCapture())
+        _pullMoveToFront(moves, hRecord.GetMove());
 
     // iterating through moves
     for (size_t i = 0; i < moves.size; ++i)
     {
-        if (i != 0)
-            _fetchBestMove(moves, i);
+        _fetchBestMove(moves, i);
 
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         TTable.Prefetch(zHash);
@@ -435,12 +427,12 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, const int beta, uint
     // clean up
     _stack.PopAggregate(moves);
 
-    if (prevSearchRes.GetDepth() == 0 ||
-        (wasTTHit == false && _age - prevSearchRes.GetAge() >= QuisenceAgeDiffToReplace))
-    {
+    const auto saveInfo = bucket.GetSaveInfo(lowerBound, 0, _age);
+    if (saveInfo != TranspositionTable::TTBucket::NOT_SAVABLE) {
         const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age };
-        TTable.Add(record, zHash);
+        bucket.Save(record, saveInfo);
     }
+
     return bestEval;
 }
 
@@ -455,22 +447,23 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
     ++_visitedNodes;
 
     // reading Transposition table for the best move
-    auto prevSearchRes = TTable.GetRecord(zHash);
+    auto bucket = TTable.GetBucket(zHash);
+    auto hitInfo = bucket.IsHit(zHash);
+    const bool wasTTHit = hitInfo != TranspositionTable::TTBucket::HitType::NoHit;
+    auto hRecord = bucket.GetRecord(hitInfo);
 
-    // We got a hit
-    const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
     if (wasTTHit)
     {
-        const nodeType expectedType = prevSearchRes.GetEval() >= beta ? lowerBound : upperBound;
+        const nodeType expectedType = hRecord.GetEval() >= beta ? lowerBound : upperBound;
 
-        if (expectedType == prevSearchRes.GetNodeType() || prevSearchRes.GetNodeType() == pvNode)
+        if (expectedType == hRecord.GetNodeType() || hRecord.GetNodeType() == pvNode)
         {
             ++_cutoffNodes;
-            return prevSearchRes.GetEval();
+            return hRecord.GetEval();
         }
 
-        if (prevSearchRes.GetStatVal() != NO_EVAL)
-            statEval = prevSearchRes.GetStatVal();
+        if (hRecord.GetStatVal() != NO_EVAL)
+            statEval = hRecord.GetStatVal();
         else
             statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
     }
@@ -482,12 +475,8 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
     {
         ++_cutoffNodes;
 
-        if (wasTTHit && prevSearchRes.GetStatVal() == NO_EVAL)
-        {
-            prevSearchRes.SetStatVal(statEval);
-            TTable.Add(prevSearchRes, zHash);
-        }
-
+        if (wasTTHit && hRecord.GetStatVal() == NO_EVAL)
+            hRecord.SetStatVal(statEval);
         return bestEval;
     }
 
@@ -499,15 +488,13 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
     const auto oldCastlings = bd.Castlings;
     const auto oldElPassant = bd.elPassantField;
 
-    if (wasTTHit && prevSearchRes.GetNodeType() != upperBound && prevSearchRes.GetMove().IsCapture())
-        _pullMoveToFront(moves, prevSearchRes.GetMove());
-    else _fetchBestMove(moves, 0);
+    if (wasTTHit && hRecord.GetNodeType() != upperBound && hRecord.GetMove().IsCapture())
+        _pullMoveToFront(moves, hRecord.GetMove());
 
     // iterating through moves
     for (size_t i = 0; i < moves.size; ++i)
     {
-        if (i != 0)
-            _fetchBestMove(moves, i);
+        _fetchBestMove(moves, i);
 
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         TTable.Prefetch(zHash);
@@ -531,11 +518,10 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
         }
     }
 
-    if (prevSearchRes.GetDepth() == 0
-        || (wasTTHit == false && _age - prevSearchRes.GetAge() >= QuisenceAgeDiffToReplace))
-    {
+    const auto saveInfo = bucket.GetSaveInfo(lowerBound, 0, _age);
+    if (saveInfo != TranspositionTable::TTBucket::NOT_SAVABLE) {
         const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age };
-        TTable.Add(record, zHash);
+        bucket.Save(record, saveInfo);
     }
 
     // clean up
@@ -575,7 +561,7 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Packed
 
     // if move found swapping
     if (ind != moves.size)
-        std::swap(moves.data[ind], moves.data[0]);
+        moves.data[ind].SetEval(INT16_MAX);
 
     assert(ind != moves.size);
 }
