@@ -17,11 +17,11 @@
 
 static constexpr int NO_EVAL =  TranspositionTable::HashRecord::NoEval;
 
-void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, const bool writeInfo)
+void BestMoveSearch::IterativeDeepening(PackedMove* output, const int32_t maxDepth, const bool writeInfo)
 {
     const uint64_t zHash = ZHasher.GenerateHash(_board);
-    int eval{};
-    long avg{};
+    int32_t eval{};
+    int64_t avg{};
 
     if (maxDepth == 0)
     {
@@ -30,7 +30,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
         return;
     }
 
-    for (int depth = 1; depth < maxDepth; ++depth)
+    for (int32_t depth = 1; depth < maxDepth; ++depth)
     {
         PV pv{depth};
         PV pvBuff{depth};
@@ -44,19 +44,20 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
 
         // cleaning tables used in iteration
 
-        if (depth < 7)
+        if (depth < 5)
         {
             _kTable.ClearPlyFloor(depth);
             _histTable.ScaleTableDown();
             eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, pv, true);
-            avg += eval;
+            avg += depth * eval;
         }
         else
         {
-            const int averageScore = avg / (depth - 1);
-            int delta = BoardEvaluator::BasicFigureValues[wPawnsIndex] / 16;
-            int alpha = averageScore - delta;
-            int beta = averageScore + delta;
+            const int64_t coefSum = (depth + 1) * depth / 2;
+            const int32_t averageScore = avg / coefSum;
+            int32_t delta = BoardEvaluator::BasicFigureValues[wPawnsIndex] / 16;
+            int32_t alpha = averageScore - delta;
+            int32_t beta = averageScore + delta;
 
             int tries = 0;
             while (true)
@@ -81,7 +82,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int maxDepth, 
 
             GlobalLogger.StartLogging() << std::format("[ WARN ] Total aspiration tries: {}\n", tries);
             pv.Clone(pvBuff);
-            avg += eval;
+            avg += depth * eval;
         }
 
         // measurement end

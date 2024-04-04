@@ -8,6 +8,8 @@ Important todos:
     - Check for bugs in search why returns null move
     - Improve checking wheter positions is in check simply by evaluating all moves by king
 
+    - Investigate using previous entries from TT as hint for asipration windows
+
     MAIN DEVELOP PATH:
         -> "INTERNAL ITERATIVE ON NO TT HIT ON FULL WINDOW NODES"
         -> "BUCKET TT"
