@@ -15,12 +15,40 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Update/install essentials
-      run: sudo apt-get update && sudo apt-get install -y cmake gcc-13
-    - name: Install gtest manually
-      run: sudo apt-get install libgtest-dev && cd /usr/src/gtest && sudo cmake CMakeLists.txt && sudo make && sudo cp lib/*.a /usr/lib && sudo ln -s /usr/lib/libgtest.a /usr/local/lib/libgtest.a && sudo ln -s /usr/lib/libgtest_main.a /usr/local/lib/libgtest_main.a
-    - uses: actions/checkout@v1
-    - name: configure
-      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug ../CMakeLists.txt
-    - name: make
-      run: cd build && make
+    - name: Update system
+      run: sudo apt-get update
+
+    - name: Install cmake and gcc-13
+      run: sudo apt-get install -y cmake gcc-13
+
+    - name: Set default GCC and G++ to version 13
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+
+    - name: Install Google Test dependencies
+      run: sudo apt-get install -y libgtest-dev
+
+    - name: Compile and set up Google Test manually
+      run: |
+        cd /usr/src/gtest
+        sudo cmake CMakeLists.txt
+        sudo make
+        sudo cp *.a /usr/lib
+        sudo ln -s /usr/lib/libgtest.a /usr/local/lib/libgtest.a
+        sudo ln -s /usr/lib/libgtest_main.a /usr/local/lib/libgtest_main.a
+
+    - uses: actions/checkout@v2
+
+    - name: Create build directory
+      run: mkdir build
+
+    - name: Configure CMake
+      run: |
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=gcc-13 ../
+
+    - name: Build project
+      run: |
+        cd build
+        make
+
