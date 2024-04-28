@@ -2,10 +2,27 @@ cmake_minimum_required(VERSION 3.27)
 project(Checkmate-Chariot)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON) # GoogleTest requires at least C++14
 
 cmake_host_system_information(RESULT LOGICAL_CORES QUERY NUMBER_OF_LOGICAL_CORES)
 configure_file(include/cmakeDefines.h.in include/cmakeDefines.h @ONLY)
 
+
+################################################################################
+#                         Fetch GoogleTest from github                         #
+################################################################################
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/d83fee138a9ae6cb7c03688a2d08d4043a39815d.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+################################################################################
+#                                   Main App                                   #
+################################################################################
 add_executable(Checkmate-Chariot main.cpp
         include/compilationConstants.h
         include/ChessEngine.h
@@ -86,6 +103,19 @@ add_executable(Checkmate-Chariot main.cpp
         include/MoveGeneration/FileMap.h
         include/Evaluation/StructureEvaluator.h
 )
+################################################################################
+#                                  Unit Tests                                  #
+################################################################################
+add_executable(Checkmate-Chariot-Tests
+        tests/TestingGoogleTests.cc
+)
+target_link_libraries(
+        Checkmate-Chariot-Tests
+        GTest::gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(Checkmate-Chariot-Tests)
 
 find_package(OpenMP)
 
