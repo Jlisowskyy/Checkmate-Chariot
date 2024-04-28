@@ -6,10 +6,12 @@ on:
     paths:
       - '**.cpp'
       - '**.h'
+      - '**.cc'
   pull_request:
     paths:
       - '**.cpp'
       - '**.h'
+      - '**.cc'
 
 jobs:
   format-code:
