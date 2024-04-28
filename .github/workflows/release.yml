@@ -57,5 +57,7 @@ jobs:
         make
 
     - name: Run GTests
-      run: ./Checkmate-Chariot-Tests
+      run: |
+        cd build
+        ./Checkmate-Chariot-Tests
 
