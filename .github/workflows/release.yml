@@ -48,7 +48,7 @@ jobs:
     - name: Configure CMake
       run: |
         cd build
-        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=gcc -S ../
+        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -S ../
 
     - name: Build project
       run: |

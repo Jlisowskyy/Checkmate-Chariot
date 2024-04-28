@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON) # GoogleTest requires at least C++14
 cmake_host_system_information(RESULT LOGICAL_CORES QUERY NUMBER_OF_LOGICAL_CORES)
 configure_file(include/cmakeDefines.h.in include/cmakeDefines.h @ONLY)
 
-
 ################################################################################
 #                         Fetch GoogleTest from github                         #
 ################################################################################
@@ -123,14 +122,8 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries( Checkmate-Chariot PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-# Link against the standard C++ library
-target_link_libraries(Checkmate-Chariot PUBLIC stdc++fs)
-# Explicitly link against the standard C++ library filesystem (required for ubuntu using github actions)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
-
 target_compile_options(Checkmate-Chariot PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=1335544322 ;-funroll-loops;-fno-peel-loops;-fno-tracer)
 #target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-ops-limit=133554432;-g;)
-
 
 # Define the source file you want to copy
 set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/resources/uci_ready_long")
