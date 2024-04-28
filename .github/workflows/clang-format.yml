@@ -6,10 +6,12 @@ on:
     paths:
       - '**.cpp'
       - '**.h'
+      - '**.cc'
   pull_request:
     paths:
       - '**.cpp'
       - '**.h'
+      - '**.cc'
 
 jobs:
   format-code:
@@ -23,7 +25,7 @@ jobs:
       run: sudo apt-get install clang-format -y
 
     - name: Run Clang-Format
-      run: find . -regex '.*\.\(cpp\|h\)' -exec clang-format -i {} +
+      run: find . -regex '.*\.\(cpp\|h\|cc\)' -exec clang-format -i {} +
 
     - name: Commit changes
       run: |
