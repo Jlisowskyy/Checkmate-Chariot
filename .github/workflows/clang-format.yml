@@ -1,6 +1,15 @@
 name: Clang-Format Codebase
 
-on: [push, pull_request]
+# Run only on source code change
+on:
+  push:
+    paths:
+      - '**.cpp'
+      - '**.h'
+  pull_request:
+    paths:
+      - '**.cpp'
+      - '**.h'
 
 jobs:
   format-code:

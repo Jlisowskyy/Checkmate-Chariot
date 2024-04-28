@@ -1,0 +1,75 @@
+name: run-google-tests
+
+# Default: run-google-tests on changes to code
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'resources/**'
+      - 'include/**'
+      - 'Tests/**'
+      - 'tests/**'
+      - 'main.cpp'
+      - 'CMakeLists.txt'
+#    branches: [ master ] # Add and modify to run run-google-tests only on certain branches
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'resources/**'
+      - 'include/**'
+      - 'Tests/**'
+      - 'tests/**'
+      - 'main.cpp'
+      - 'CMakeLists.txt'
+#    branches: [ master ] # Add and modify to run run-google-tests only on certain branches
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Update system
+      run: sudo apt-get update
+
+    - name: Ensure libstdc installed
+      run: sudo apt-get install -y build-essential
+
+    - name: Install cmake, gcc-13 g++-13
+      run: sudo apt-get install -y cmake gcc-13 g++-13
+
+    - name: Set default GCC and G++ to version 13
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+
+    - name: Install Google Test dependencies
+      run: sudo apt-get install -y libgtest-dev
+
+    - name: Compile and set up Google Test manually
+      run: |
+        cd /usr/src/gtest
+        sudo cmake CMakeLists.txt
+        sudo make
+        sudo cp lib/*.a /usr/lib
+        sudo ln -s /usr/lib/libgtest.a /usr/local/lib/libgtest.a
+        sudo ln -s /usr/lib/libgtest_main.a /usr/local/lib/libgtest_main.a
+
+    - uses: actions/checkout@v2
+
+    - name: Create build directory
+      run: mkdir build
+
+    - name: Configure CMake
+      run: |
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -S ../
+
+    - name: Build project
+      run: |
+        cd build
+        make
+
+    - name: Run GTests
+      run: |
+        cd build
+        ./Checkmate-Chariot-Tests
+
