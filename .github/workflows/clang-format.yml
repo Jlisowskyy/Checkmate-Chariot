@@ -1,0 +1,25 @@
+name: Clang-Format Codebase
+
+on: [push, pull_request]
+
+jobs:
+  format-code:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Install Clang-Format
+      run: sudo apt-get install clang-format-10 -y
+
+    - name: Run Clang-Format
+      run: find . -regex '.*\.\(cpp\|h\)' -exec clang-format-10 -i {} +
+
+    - name: Commit changes
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+        git commit -am "Apply clang-format changes" || echo "No changes to commit"
+        git push origin
+
