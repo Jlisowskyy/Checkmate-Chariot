@@ -7,13 +7,13 @@ on:
       - '**.cpp'
       - '**.h'
       - '**.cc'
-    #    branches: [ main ]
+    branches: [ main ]
   pull_request:
     paths:
       - '**.cpp'
       - '**.h'
       - '**.cc'
-    #    branches: [ main ]
+    branches: [ main ]
 
 jobs:
   format-code:
