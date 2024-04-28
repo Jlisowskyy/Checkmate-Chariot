@@ -1,0 +1,36 @@
+name: clang-format codebase
+
+# Run only on source code change
+on:
+  push:
+    paths:
+      - '**.cpp'
+      - '**.h'
+      - '**.cc'
+    branches: [ main ]
+
+jobs:
+  format-code:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install Clang-Format
+      run: sudo apt-get install clang-format -y
+
+    - name: Run Clang-Format
+      run: find . -regex '.*\.\(cpp\|h\|cc\)' -exec clang-format -i {} +
+
+    - name: Commit changes
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+        git add -A  # Add all modified files to the staging area
+        git commit -m "Apply clang-format changes" || echo "No changes to commit"
+        git push origin
