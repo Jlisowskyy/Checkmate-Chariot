@@ -114,8 +114,8 @@ class Engine
 
 
     inline static const EngineInfo engineInfo = {
-        .author = "Jakub Lisowski, Warsaw University of Technology",
-        .name = "ChessEngine development version 0.14",
+        .author = "Jakub Lisowski, Lukasz Kryczka, Jakub Pietrzak Warsaw University of Technology",
+        .name = "ChessEngine development version 0.16",
         .options = std::map<std::string, const Option*>{
             std::make_pair<std::string, const Option*>("Threads", &Threads),
             std::make_pair<std::string, const Option*>("Debug Log File", &DebugLogFile),

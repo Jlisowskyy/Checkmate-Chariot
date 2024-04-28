@@ -1,0 +1,1 @@
+All classes and functions that are correlated with multi-threading, synchronization or signals should be stored here.

@@ -1,0 +1,2 @@
+All files that are used during move generation process are stored here.
+This includes specific figure moves, main move generation, move storing as well as helping functions.

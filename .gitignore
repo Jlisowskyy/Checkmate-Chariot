@@ -4,3 +4,8 @@ python\ scripts/
 *.exec
 *.out
 scripts/
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CMakeCache.txt
+Checkmate-Chariot
