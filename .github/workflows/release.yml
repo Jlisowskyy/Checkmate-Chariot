@@ -18,6 +18,9 @@ jobs:
     - name: Update system
       run: sudo apt-get update
 
+    - name: Ensure libstdc installed
+      run: sudo apt-get install -y build-essential
+
     - name: Install cmake and gcc-13
       run: sudo apt-get install -y cmake gcc-13
 
@@ -51,4 +54,7 @@ jobs:
       run: |
         cd build
         make
+
+    - name: Run GTests
+      run: ./Checkmate-Chariot-Tests
 
