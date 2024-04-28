@@ -21,12 +21,13 @@ jobs:
     - name: Ensure libstdc installed
       run: sudo apt-get install -y build-essential
 
-    - name: Install cmake and gcc-13
-      run: sudo apt-get install -y cmake gcc-13
+    - name: Install cmake, gcc-13 g++-13
+      run: sudo apt-get install -y cmake gcc-13 g++-13
 
     - name: Set default GCC and G++ to version 13
       run: |
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 
     - name: Install Google Test dependencies
       run: sudo apt-get install -y libgtest-dev
