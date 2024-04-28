@@ -319,7 +319,7 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
         "   - \"go file / \" - will run tests on singlePos.csv\n"
         "   - \"go file\" - will run tests on positionTests.csv\n"
         "   - \"go perfComp /\" - will run tests on perfTest1.csv\n"
-        "   - \"go searchPerf\" - will run tests on searchTests.csv";
+        "   - \"go searchPerf\" - will run tests on searchTests.csv\n";
 
     GlobalLogger.StartLogging() << "Help content:\n\n"
                                 << "TODO MAIN HELP\n\n" // TODO

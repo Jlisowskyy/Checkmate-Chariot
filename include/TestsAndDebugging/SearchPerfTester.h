@@ -41,8 +41,8 @@ struct SearchPerfTester
     // Class fields
     // ------------------------------
 
-    static constexpr auto defPath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/searchTests.csv";
-    static constexpr auto defSavePath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/search_perf_out.csv";
+    static constexpr auto defPath = "Tests/searchTests.csv";
+    static constexpr auto defSavePath = "Tests/search_perf_out.csv";
 };
 
 #endif  // SEARCHPERFTESTER_H
