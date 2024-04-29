@@ -39,7 +39,8 @@ MapCorrectnessTester::RecordsPack MapCorrectnessTester::_readTestFile(std::strin
 
         if (!stream)
             throw std::runtime_error(
-                std::format("[ ERROR ] Encountered ill-formed record inside the test. Test no {} (0-based).", i));
+                std::format("[ ERROR ] Encountered ill-formed record inside the test. Test no {} (0-based).", i)
+            );
     }
 
     return {recordCount, std::move(fullMaps), std::move(figureMaps), std::move(correctResults)};

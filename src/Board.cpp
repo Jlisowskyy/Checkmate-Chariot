@@ -7,7 +7,7 @@
 #include <format>
 #include <iostream>
 
-bool Board::Comp(const Board& a, const Board& b)
+bool Board::Comp(const Board &a, const Board &b)
 {
     for (int i = 0; i < 12; ++i)
         if (a.boards[i] != b.boards[i])
