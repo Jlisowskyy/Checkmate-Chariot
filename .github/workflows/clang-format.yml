@@ -1,15 +1,31 @@
 name: clang-format codebase
 
-# Run only on source code change
 on: [push]
 
 jobs:
-  format-code:
+  format:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: RafikFarhad/clang-format-github-action@v4
-      with:
-        sources: "**/*.h,**/*.c,**/*.cc,**/*.cpp"
-        style: "file"
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install clang-format
+      run: sudo apt-get install clang-format
+
+    - name: Find C++ source files
+      id: files
+      run: |
+        echo "::set-output name=cpp_files::$(find . -regex '.*\.\(cpp\|cc\|h\|c\)' -print)"
+    
+    - name: Check formatting
+      run: |
+        FILES=${{ steps.files.outputs.cpp_files }}
+        UNFORMATTED=$(clang-format -style=file $FILES | diff $FILES -)
+        if [ -n "$UNFORMATTED" ]; then
+          echo "The following files are not properly formatted:"
+          echo "$UNFORMATTED"
+          exit 1
+        else
+          echo "All files are properly formatted."
+        fi
