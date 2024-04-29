@@ -2,14 +2,14 @@
 // Created by Jlisowskyy on 12/28/23.
 //
 
-#include "../include/EngineTypeDefs.h"
+#include "../include/EngineUtils.h"
 
 #include <format>
 
 #include "../include/BitOperations.h"
 #include "../include/Interface/Logger.h"
 
-const char IndexToFigCharMap[Board::BoardsCount]
+const char IndexToFigCharMap[Board::BitBoardsCount]
 {
     'P',
     'N',
@@ -72,9 +72,9 @@ void DisplayBoard(const Board&bd)
             GlobalLogger.StartLogging() << ' ';
 
             bool found = false;
-            for (size_t desc = 0; desc < Board::BoardsCount; ++desc)
+            for (size_t desc = 0; desc < Board::BitBoardsCount; ++desc)
             {
-                if ((bd.boards[desc] & field) != 0)
+                if ((bd.BitBoards[desc] & field) != 0)
                 {
                     GlobalLogger.StartLogging() << IndexToFigCharMap[desc];
                     found = true;
@@ -103,7 +103,7 @@ void DisplayBoard(const Board&bd)
     }
     GlobalLogger.StartLogging() << std::endl;
 
-    GlobalLogger.StartLogging() << "Moving color: " << (bd.movColor == WHITE ? "white" : "black") << std::endl;
+    GlobalLogger.StartLogging() << "Moving color: " << (bd.MovingColor == WHITE ? "white" : "black") << std::endl;
     GlobalLogger.StartLogging() << "Possible castlings:\n";
     static constexpr const char* castlingNames[] = {
         "White King Side", "White Queen Side", "Black King Side",
@@ -115,9 +115,9 @@ void DisplayBoard(const Board&bd)
     }
 
     GlobalLogger.StartLogging() << "El passant field: "
-            << (bd.elPassantField == Board::InvalidElPassantBoard
-                    ? "-"
-                    : ConvertToStrPos(bd.elPassantField))
+            << (bd.ElPassantField == Board::InvalidElPassantBitBoard
+                                        ? "-"
+                    : ConvertToStrPos(bd.ElPassantField))
             << std::endl;
 }
 

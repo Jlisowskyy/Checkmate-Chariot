@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-#include "MoveGeneration.h"
+#include "MoveGenerationUtils.h"
 
 class WhitePawnMap
 {

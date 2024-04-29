@@ -5,7 +5,7 @@
 #ifndef KINGSAFETYFIELDS_H
 #define KINGSAFETYFIELDS_H
 
-#include "../MoveGeneration/MoveGeneration.h"
+#include "../MoveGeneration/MoveGenerationUtils.h"
 
 struct KingSafetyEval
 {
@@ -49,35 +49,35 @@ struct KingSafetyEval
     // ------------------------------
 private:
 
-    static constexpr std::array<std::array<uint64_t, Board::BoardFields>, 2> _kingPawnDefenseFields = []() constexpr
+    static constexpr std::array<std::array<uint64_t, Board::BitBoardFields>, 2> _kingPawnDefenseFields = []() constexpr
     {
-        std::array<std::array<uint64_t, Board::BoardFields>, 2> rv{};
+        std::array<std::array<uint64_t, Board::BitBoardFields>, 2> rv{};
 
         for (int col = WHITE; col <= BLACK; ++col) {
             const int offset = col == WHITE ? 8 : -8;
 
-            for (int msb = 0; msb < static_cast<int>(Board::BoardFields); ++msb) {
+            for (int msb = 0; msb < static_cast<int>(Board::BitBoardFields); ++msb) {
                 const int boardIndex = ConvertToReversedPos(msb);
                 const int startInd = boardIndex + offset;
                 const int xOff = boardIndex % 8;
 
-                if (startInd < 0 ||startInd >= static_cast<int>(Board::BoardFields)) continue;
+                if (startInd < 0 ||startInd >= static_cast<int>(Board::BitBoardFields)) continue;
 
                 uint64_t leftMask{};
                 uint64_t rightMask{};
 
                 if (xOff - 1 >= 0)
                     leftMask = col == WHITE ?
-                        GenMask(startInd - 1, std::min(static_cast<int>(Board::BoardFields), startInd + 8), 8) :
+                        GenMask(startInd - 1, std::min(static_cast<int>(Board::BitBoardFields), startInd + 8), 8) :
                         GenMask(std::max(xOff-1, startInd - 8 - 1), startInd, 8);
 
                 if (xOff + 1 < 8)
                     rightMask = col == WHITE ?
-                        GenMask(startInd + 1, std::min(static_cast<int>(Board::BoardFields), startInd + 8 + 1 + 1), 8) :
+                        GenMask(startInd + 1, std::min(static_cast<int>(Board::BitBoardFields), startInd + 8 + 1 + 1), 8) :
                         GenMask(std::max(xOff+1, startInd + 1 - 8), startInd + 2 , 8);
 
                 const uint64_t midMask = col == WHITE ?
-                    GenMask(startInd, std::min(static_cast<int>(Board::BoardFields), startInd + 8 + 1), 8) :
+                    GenMask(startInd, std::min(static_cast<int>(Board::BitBoardFields), startInd + 8 + 1), 8) :
                         GenMask(std::max(xOff, startInd - 8), startInd + 1 , 8);
 
 

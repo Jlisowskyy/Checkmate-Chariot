@@ -9,7 +9,7 @@
 #include <map>
 
 #include "../include/ThreadManagement/SearchThreadManager.h"
-#include "EngineTypeDefs.h"
+#include "EngineUtils.h"
 #include "Interface/FenTranslator.h"
 #include "Interface/Logger.h"
 #include "Interface/UCIOptions.h"
@@ -33,11 +33,9 @@ class Engine
     // Type interaction
     // ------------------------------
 
-    // Implemented function
-    void writeBoard() const;
+    void WriteBoard() const;
 
     std::map<std::string, uint64_t> GetPerft(int depth);
-    std::map<std::string, uint64_t> GetMoveBasedPerft(int depth);
 
     template <bool LogToOut = true>
     double GoPerft(int depth);
@@ -129,7 +127,7 @@ template <bool LogToOut>
 double Engine::GoPerft(const int depth)
 {
     const auto t1 = std::chrono::steady_clock::now();
-    auto moves = GetMoveBasedPerft(depth);
+    auto moves = GetPerft(depth);
     const auto t2 = std::chrono::steady_clock::now();
 
     uint64_t totalSum{};

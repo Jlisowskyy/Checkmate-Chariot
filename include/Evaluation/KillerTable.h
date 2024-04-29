@@ -5,8 +5,8 @@
 #ifndef KILLERTABLE_H
 #define KILLERTABLE_H
 
+#include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
-#include "../EngineTypeDefs.h"
 
 /*
  *      Class used to implement so-called killed heuristic, which depends on observation

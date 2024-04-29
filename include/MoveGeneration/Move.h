@@ -219,23 +219,23 @@ class Move
         assert(mv.IsOkeyMove());
 
         // removing the old piece from the board
-        bd.boards[mv.GetStartBoardIndex()] ^= maxMsbPossible >> mv.GetStartField();
+        bd.BitBoards[mv.GetStartBoardIndex()] ^= maxMsbPossible >> mv.GetStartField();
 
         // placing the figure on new field
-        bd.boards[mv.GetTargetBoardIndex()] |= maxMsbPossible >> mv.GetTargetField();
+        bd.BitBoards[mv.GetTargetBoardIndex()] |= maxMsbPossible >> mv.GetTargetField();
 
         // removing the killed figure in case no figure is killed index should be indicating to the sentinel
-        bd.boards[mv.GetKilledBoardIndex()] ^= maxMsbPossible >> mv.GetKilledFigureField();
+        bd.BitBoards[mv.GetKilledBoardIndex()] ^= maxMsbPossible >> mv.GetKilledFigureField();
 
         // applying new castling rights
         bd.Castlings = mv.GetCastlingRights();
 
         // applying new el passant field
-        bd.elPassantField = maxMsbPossible >> mv.GetElPassantField();
+        bd.ElPassantField = maxMsbPossible >> mv.GetElPassantField();
 
         // applying additional castling operation
         const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
-        bd.boards[boardIndex] |= field;
+        bd.BitBoards[boardIndex] |= field;
 
         bd.ChangePlayingColor();
     }
@@ -258,23 +258,23 @@ class Move
         bd.ChangePlayingColor();
 
         // placing the piece on old board
-        bd.boards[mv.GetStartBoardIndex()] |= maxMsbPossible >> mv.GetStartField();
+        bd.BitBoards[mv.GetStartBoardIndex()] |= maxMsbPossible >> mv.GetStartField();
 
         // removing the figure from the new field
-        bd.boards[mv.GetTargetBoardIndex()] ^= maxMsbPossible >> mv.GetTargetField();
+        bd.BitBoards[mv.GetTargetBoardIndex()] ^= maxMsbPossible >> mv.GetTargetField();
 
         // placing the killed figure in good place
-        bd.boards[mv.GetKilledBoardIndex()] |= maxMsbPossible >> mv.GetKilledFigureField();
+        bd.BitBoards[mv.GetKilledBoardIndex()] |= maxMsbPossible >> mv.GetKilledFigureField();
 
         // recovering old castlings
         bd.Castlings = castlings;
 
         // recovering old el passant field
-        bd.elPassantField = oldElPassant;
+        bd.ElPassantField = oldElPassant;
 
         // reverting castling operation
         const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
-        bd.boards[boardIndex] ^= field;
+        bd.BitBoards[boardIndex] ^= field;
     }
 
     void SetEval(const int16_t eval) { _eval = eval; }

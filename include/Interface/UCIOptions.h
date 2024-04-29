@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-#include "../compilationConstants.h"
+#include "../CompilationConstants.h"
 
 class Engine;
 

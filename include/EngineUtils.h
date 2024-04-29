@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 #include "Board.h"
+#include "CompilationConstants.h"
 
 constexpr int SwapColor(const int col) { return col ^ 1; }
 
@@ -28,12 +29,8 @@ std::string ConvertToStrPos(int boardPosMsb);
 std::pair<char, char> ConvertToCharPos(uint64_t boardMap);
 std::string ConvertToStrPos(uint64_t boardMap);
 
-// global defined stack capacity used to store generated moves per thread
-static constexpr size_t MB = 1024 * 1024;
-static constexpr size_t DefaultStackSize = 32 * MB / sizeof(uint64_t);
-static constexpr int MaxSearchDepth = 128;
 
-extern const char IndexToFigCharMap[Board::BoardsCount];
+extern const char IndexToFigCharMap[Board::BitBoardsCount];
 extern const std::unordered_map<char, size_t> FigCharToIndexMap;
 
 #endif  // ENGINETYPEDEFS_H

@@ -9,7 +9,7 @@
 #include <string>
 
 #include "../BitOperations.h"
-#include "../EngineTypeDefs.h"
+#include "../EngineUtils.h"
 
 struct FenTranslator
 {
@@ -96,9 +96,9 @@ struct FenTranslator
     static constexpr auto StartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     static constexpr Board StartBoard = {.Castlings = {0b11111},
-                                         .elPassantField = Board::InvalidElPassantBoard,
-                                         .movColor = WHITE,
-                                         .boards = {
+                                         .ElPassantField = Board::InvalidElPassantBitBoard,
+                                         .MovingColor = WHITE,
+                                         .BitBoards = {
                                              65280LLU,
                                              66LLU,
                                              36LLU,

@@ -8,8 +8,8 @@
 #include <array>
 #include <cstdint>
 
-#include "MoveGeneration.h"
 #include "KnightMap.h"
+#include "MoveGenerationUtils.h"
 
 struct KingMap
 {
@@ -56,7 +56,7 @@ struct KingMap
     // Used to omit errors during generation.
     static constexpr int rowCords[] = {0, -1, -1, -1, 0, 1, 1, 1};
 
-    static constexpr std::array<uint64_t, Board::BoardFields> movesMap =
+    static constexpr std::array<uint64_t, Board::BitBoardFields> movesMap =
         GenStaticMoves(maxMovesCount, movesCords, rowCords);
 
     // Masks used to detect allowed tiles when checked by pawn
@@ -85,7 +85,7 @@ public:
 
 constexpr size_t KingMap::GetBoardIndex(const int color)
 {
-    return Board::BoardsPerCol * color + kingIndex;
+    return Board::BitBoardsPerCol * color + kingIndex;
 }
 
 constexpr uint64_t KingMap::GetMoves(const int msbInd)
@@ -94,21 +94,21 @@ constexpr uint64_t KingMap::GetMoves(const int msbInd)
 constexpr uint64_t KingMap::GetSimpleFigCheckPawnAllowedTiles(const Board& bd)
 {
     const uint64_t detectionFields =
-            bd.movColor == WHITE ? _getWhiteKingDetectionTiles(bd) : _getBlackKingDetectionTiles(bd);
+            bd.MovingColor == WHITE ? _getWhiteKingDetectionTiles(bd) : _getBlackKingDetectionTiles(bd);
 
-    return detectionFields & bd.boards[Board::BoardsPerCol * SwapColor(bd.movColor) + pawnsIndex];
+    return detectionFields & bd.BitBoards[Board::BitBoardsPerCol * SwapColor(bd.MovingColor) + pawnsIndex];
 }
 
 constexpr uint64_t KingMap::GetSimpleFigCheckKnightsAllowedTiles(const Board& bd)
 {
-    const uint64_t detectionFields = KnightMap::GetMoves(bd.GetKingMsbPos(bd.movColor));
+    const uint64_t detectionFields = KnightMap::GetMoves(bd.GetKingMsbPos(bd.MovingColor));
 
-    return detectionFields & bd.boards[Board::BoardsPerCol * SwapColor(bd.movColor) + knightsIndex];
+    return detectionFields & bd.BitBoards[Board::BitBoardsPerCol * SwapColor(bd.MovingColor) + knightsIndex];
 }
 
 constexpr uint64_t KingMap::_getWhiteKingDetectionTiles(const Board& bd)
 {
-    const uint64_t kingMap = bd.boards[Board::BoardsPerCol * WHITE + kingIndex];
+    const uint64_t kingMap = bd.BitBoards[Board::BitBoardsPerCol * WHITE + kingIndex];
 
     const uint64_t leftDetectionTile = (kingMap & LeftPawnDetectionMask) << 7;
     const uint64_t rightDetectionTile = (kingMap & RightPawnDetetcionMask) << 9;
@@ -118,7 +118,7 @@ constexpr uint64_t KingMap::_getWhiteKingDetectionTiles(const Board& bd)
 
 constexpr uint64_t KingMap::_getBlackKingDetectionTiles(const Board& bd)
 {
-    const uint64_t kingMap = bd.boards[Board::BoardsPerCol * BLACK + kingIndex];
+    const uint64_t kingMap = bd.BitBoards[Board::BitBoardsPerCol * BLACK + kingIndex];
 
     const uint64_t rightDetectionTile = (kingMap & RightPawnDetetcionMask) >> 7;
     const uint64_t leftDetectionTile = (kingMap & LeftPawnDetectionMask) >> 9;

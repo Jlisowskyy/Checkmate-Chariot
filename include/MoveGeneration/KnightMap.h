@@ -7,7 +7,7 @@
 
 #include <array>
 
-#include "MoveGeneration.h"
+#include "MoveGenerationUtils.h"
 
 class KnightMap
 {
@@ -38,13 +38,13 @@ class KnightMap
     // Used to omit errors during generation.
     static constexpr int rowCords[] = {1, 2, 2, 1, -1, -2, -2, -1};
 
-    static constexpr std::array<uint64_t, Board::BoardFields> movesMap =
+    static constexpr std::array<uint64_t, Board::BitBoardFields> movesMap =
         GenStaticMoves(maxMovesCount, movesCords, rowCords);
 };
 
 constexpr size_t KnightMap::GetBoardIndex(const int color)
 {
-    return Board::BoardsPerCol * color + knightsIndex;
+    return Board::BitBoardsPerCol * color + knightsIndex;
 }
 
 constexpr uint64_t KnightMap::GetMoves(const int msbInd, const uint64_t, const uint64_t)

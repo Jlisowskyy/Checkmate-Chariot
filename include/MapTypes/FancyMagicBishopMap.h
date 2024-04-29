@@ -5,16 +5,16 @@
 #ifndef FANCYMAGICBISHOPMAP_H
 #define FANCYMAGICBISHOPMAP_H
 
-#include "../EngineTypeDefs.h"
+#include "../EngineUtils.h"
 #include "../MoveGeneration/BishopMapGenerator.h"
 #include "../MoveGeneration/SparseRandomGenerator.h"
-#include "../movesHashMap.h"
+#include "../MovesHashMap.h"
 #include "HashFunctions.h"
 
 class FancyMagicBishopMap
 {
     using _hashFuncT = FancyMagicHashFunction<SparseRandomGenerator<>>;
-    using _underlyingMapT = movesHashMap<_hashFuncT, BishopMapGenerator::MaxPossibleNeighborsWithOverlap>;
+    using _underlyingMapT = MovesHashMap<_hashFuncT, BishopMapGenerator::MaxPossibleNeighborsWithOverlap>;
 
    public:
     constexpr FancyMagicBishopMap();
@@ -28,7 +28,7 @@ class FancyMagicBishopMap
     // ------------------------------
 
    private:
-    static constexpr _hashFuncT funcs[Board::BoardFields]{
+    static constexpr _hashFuncT funcs[Board::BitBoardFields]{
         _hashFuncT(std::make_tuple(2459020380749179396LLU, 6)),
         _hashFuncT(std::make_tuple(18228596997040662761LLU, 5)),
         _hashFuncT(std::make_tuple(577023771530035456LLU, 5)),
@@ -94,12 +94,12 @@ class FancyMagicBishopMap
         _hashFuncT(std::make_tuple(2306977739592179777LLU, 5)),
         _hashFuncT(std::make_tuple(18381131039969901408LLU, 6)),
     };
-    std::array<_underlyingMapT, Board::BoardFields> _maps;
+    std::array<_underlyingMapT, Board::BitBoardFields> _maps;
 };
 
 constexpr FancyMagicBishopMap::FancyMagicBishopMap()
 {
-    for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
+    for (int i = 0; i < static_cast<int>(Board::BitBoardFields); ++i)
     {
         const int boardIndex = ConvertToReversedPos(i);
 

@@ -9,14 +9,14 @@
 #include <bit>
 
 #include "../BitOperations.h"
-#include "../EngineTypeDefs.h"
+#include "../EngineUtils.h"
 #include "../Interface/Logger.h"
 
-[[nodiscard]] constexpr std::array<uint64_t, Board::BoardFields> GenStaticMoves(const size_t maxMovesCount,
+[[nodiscard]] constexpr std::array<uint64_t, Board::BitBoardFields> GenStaticMoves(const size_t maxMovesCount,
                                                                                 const int* movesCords,
                                                                                 const int* rowCords)
 {
-    std::array<uint64_t, Board::BoardFields> movesRet{};
+    std::array<uint64_t, Board::BitBoardFields> movesRet{};
 
     for (int x = 0; x < 8; ++x)
     {

@@ -45,8 +45,8 @@ struct CounterMoveTable
 
     void ClearTable()
     {
-        for (size_t i = 0 ; i < Board::BoardsCount; ++i)
-            for (size_t j = 0; j < Board::BoardFields; ++j)
+        for (size_t i = 0 ; i < Board::BitBoardsCount; ++i)
+            for (size_t j = 0; j < Board::BitBoardFields; ++j)
                 _counterMovesTable[i][j] = {};
     }
 
@@ -55,7 +55,7 @@ struct CounterMoveTable
     // ------------------------------
 private:
 
-    PackedMove _counterMovesTable[Board::BoardsCount][Board::BoardFields]{};
+    PackedMove _counterMovesTable[Board::BitBoardsCount][Board::BitBoardFields]{};
 };
 
 #endif //COUNTERMOVETABLE_H

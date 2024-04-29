@@ -42,7 +42,7 @@ class BishopMap
 
 constexpr size_t BishopMap::GetBoardIndex(const int color)
 {
-    return Board::BoardsPerCol * color + bishopsIndex;
+    return Board::BitBoardsPerCol * color + bishopsIndex;
 }
 
 constexpr uint64_t BishopMap::GetMoves(const int msbInd, const uint64_t fullBoard, const uint64_t)

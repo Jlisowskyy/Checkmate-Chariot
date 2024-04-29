@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "BitOperations.h"
-#include "EngineTypeDefs.h"
+#include "EngineUtils.h"
 #include "Interface/Logger.h"
 
 static inline Logger ParameterSearchLogger{};
@@ -27,7 +27,7 @@ static inline Logger ParameterSearchLogger{};
  */
 
 template <class HashFuncT, size_t mapAllocSize = 256>
-class movesHashMap
+class MovesHashMap
 {
     // ------------------------------
     // Class creation
@@ -35,22 +35,22 @@ class movesHashMap
    public:
     static constexpr size_t MasksCount = 4;
 
-    constexpr movesHashMap() = default;
+    constexpr MovesHashMap() = default;
 
-    constexpr ~movesHashMap() = default;
+    constexpr ~MovesHashMap() = default;
 
-    constexpr movesHashMap(const std::array<uint64_t, MasksCount>& nMasks, const HashFuncT& func)
+    constexpr MovesHashMap(const std::array<uint64_t, MasksCount>& nMasks, const HashFuncT& func)
         : masks(nMasks), HFunc(func), _map{0}
     {
     }
 
-    constexpr movesHashMap(const movesHashMap&) = default;
+    constexpr MovesHashMap(const MovesHashMap&) = default;
 
-    constexpr movesHashMap(movesHashMap&&) = default;
+    constexpr MovesHashMap(MovesHashMap&&) = default;
 
-    constexpr movesHashMap& operator=(const movesHashMap&) = default;
+    constexpr MovesHashMap& operator=(const MovesHashMap&) = default;
 
-    constexpr movesHashMap& operator=(movesHashMap&&) = default;
+    constexpr MovesHashMap& operator=(MovesHashMap&&) = default;
 
     // ------------------------------
     // Class interaction
@@ -93,7 +93,7 @@ class movesHashMap
 template<class HashFuncT, size_t mapAllocSize>
 template<class NeighborGeneratorT, uint64_t(* stripFunction)(uint64_t, const std::array<uint64_t, 4>&), bool
     ShouldSignal>
-std::pair<bool, size_t> movesHashMap<HashFuncT, mapAllocSize>::IntegrityTest(NeighborGeneratorT func,
+std::pair<bool, size_t> MovesHashMap<HashFuncT, mapAllocSize>::IntegrityTest(NeighborGeneratorT func,
     const int boardIndex)
 {
     const auto [possibilities, posSize] = func(boardIndex, masks);
@@ -130,21 +130,21 @@ std::pair<bool, size_t> movesHashMap<HashFuncT, mapAllocSize>::IntegrityTest(Nei
 
 template<class HashFuncT, size_t mapAllocSize>
 template<class NeighborGeneratorT, class MaskInitT, uint64_t(* stripFunction)(uint64_t, const std::array<uint64_t, 4>&)>
-void movesHashMap<HashFuncT, mapAllocSize>::FindHashParameters(const HashFuncT* const funcs, NeighborGeneratorT nGen,
+void MovesHashMap<HashFuncT, mapAllocSize>::FindHashParameters(const HashFuncT* const funcs, NeighborGeneratorT nGen,
     MaskInitT mInit)
 {
-    movesHashMap maps[Board::BoardFields]{};
-    std::vector finishedMaps(Board::BoardFields, false);
+    MovesHashMap maps[Board::BitBoardFields]{};
+    std::vector finishedMaps(Board::BitBoardFields, false);
     std::mutex guard{};
     size_t fullSize{};
     size_t correctMaps{};
 
     // Preparing the temp map to perform calculations
-    for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
-        maps[i] = movesHashMap(mInit(ConvertToReversedPos(i)), funcs[i]);
+    for (int i = 0; i < static_cast<int>(Board::BitBoardFields); ++i)
+        maps[i] = MovesHashMap(mInit(ConvertToReversedPos(i)), funcs[i]);
 
 #pragma omp parallel for
-    for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
+    for (int i = 0; i < static_cast<int>(Board::BitBoardFields); ++i)
     {
         const int bInd = ConvertToReversedPos(i);
 
@@ -201,7 +201,7 @@ void movesHashMap<HashFuncT, mapAllocSize>::FindHashParameters(const HashFuncT* 
 
         // Printing actual parameters
         ParameterSearchLogger.Log("Actual rehashing result:\n{");
-        for (size_t j = 0; j < Board::BoardFields; ++j)
+        for (size_t j = 0; j < Board::BitBoardFields; ++j)
             ParameterSearchLogger.StartLogging()
                     << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
         ParameterSearchLogger.Log(
@@ -212,7 +212,7 @@ void movesHashMap<HashFuncT, mapAllocSize>::FindHashParameters(const HashFuncT* 
 
     // Print final looking table
     ParameterSearchLogger.Log("Actual rehashing result:\n{");
-    for (size_t j = 0; j < Board::BoardFields; ++j)
+    for (size_t j = 0; j < Board::BitBoardFields; ++j)
         ParameterSearchLogger.StartLogging()
                 << '\t' << (finishedMaps[j] == true ? maps[j].HFunc : funcs[j]) << ",\n";
     ParameterSearchLogger.Log(
@@ -221,17 +221,17 @@ void movesHashMap<HashFuncT, mapAllocSize>::FindHashParameters(const HashFuncT* 
 
 template<class HashFuncT, size_t mapAllocSize>
 template<class NeighborGeneratorT, class MaskInitT, uint64_t(* stripFunction)(uint64_t, const std::array<uint64_t, 4>&)>
-void movesHashMap<HashFuncT, mapAllocSize>::FindCollidingIndices(const HashFuncT* const funcs, NeighborGeneratorT nGen,
+void MovesHashMap<HashFuncT, mapAllocSize>::FindCollidingIndices(const HashFuncT* const funcs, NeighborGeneratorT nGen,
     MaskInitT mInit)
 {
     ParameterSearchLogger.StartLogging() << "Collision detected on indices:\n\t{ ";
     size_t invalidIndices{};
 
-    for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
+    for (int i = 0; i < static_cast<int>(Board::BitBoardFields); ++i)
     {
         const int bInd = ConvertToReversedPos(i);
 
-        auto map = movesHashMap(mInit(bInd), funcs[i]);
+        auto map = MovesHashMap(mInit(bInd), funcs[i]);
         auto [result, _] = map.template IntegrityTest<NeighborGeneratorT, stripFunction>(nGen, bInd);
 
         if (result == false)

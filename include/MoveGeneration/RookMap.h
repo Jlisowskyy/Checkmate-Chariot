@@ -46,7 +46,7 @@ class RookMap
 
 constexpr size_t RookMap::GetBoardIndex(const int color)
 {
-    return Board::BoardsPerCol * color + rooksIndex;
+    return Board::BitBoardsPerCol * color + rooksIndex;
 }
 
 constexpr uint64_t RookMap::GetMoves(const int msbInd, const uint64_t fullBoard, const uint64_t)
@@ -57,7 +57,7 @@ constexpr uint64_t RookMap::GetMoves(const int msbInd, const uint64_t fullBoard,
 constexpr size_t RookMap::GetMatchingCastlingIndex(const Board& bd, const uint64_t figBoard)
 {
     for (size_t i = 0; i < Board::CastlingsPerColor; ++i)
-        if (const size_t index = bd.movColor * Board::CastlingsPerColor + i;
+        if (const size_t index = bd.MovingColor * Board::CastlingsPerColor + i;
             bd.Castlings[index] && (Board::CastlingsRookMaps[index] & figBoard) != 0)
             return index;
 

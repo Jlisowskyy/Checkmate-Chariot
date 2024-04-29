@@ -43,18 +43,17 @@ std::string FenTranslator::Translate(const Board& board)
     std::string fenPos{};
     _extractFiguresEncoding(board, fenPos);
     fenPos += ' ';
-    fenPos += board.movColor == WHITE ? 'w' : 'b';
+    fenPos += board.MovingColor == WHITE ? 'w' : 'b';
     fenPos += ' ';
     fenPos += _extractCastling(board);
     fenPos += ' ';
 
     // inner representation points to position made with long pawn move
-    const auto FenCompatibleElPassantPosition = board.movColor == WHITE
-                                                    ? WhitePawnMap::GetElPassantMoveField(board.elPassantField)
-                                                    : BlackPawnMap::GetElPassantMoveField(board.elPassantField);
+    const auto FenCompatibleElPassantPosition = board.MovingColor == WHITE
+                                                    ? WhitePawnMap::GetElPassantMoveField(board.ElPassantField)
+                                                    : BlackPawnMap::GetElPassantMoveField(board.ElPassantField);
 
-    fenPos += board.elPassantField == Board::InvalidElPassantBoard
-                  ? "-"
+    fenPos += board.ElPassantField == Board::InvalidElPassantBitBoard ? "-"
                   : ConvertToStrPos(FenCompatibleElPassantPosition);
 
     // skpping moves counters - not supported
@@ -117,14 +116,14 @@ std::tuple<FenTranslator::FieldOccup, char, Color> FenTranslator::_extractSingle
 {
     const uint64_t map = 1LLU << bInd;
 
-    for (size_t i = 0; i < Board::BoardsCount; ++i)
+    for (size_t i = 0; i < Board::BitBoardsCount; ++i)
     {
-        if ((map & bd.boards[i]) != 0)
+        if ((map & bd.BitBoards[i]) != 0)
         {
-            Color col = i >= Board::BoardsPerCol ? BLACK : WHITE;
+            Color col = i >= Board::BitBoardsPerCol ? BLACK : WHITE;
             char fig;
 
-            switch (i % Board::BoardsPerCol)
+            switch (i % Board::BitBoardsPerCol)
             {
                 case pawnsIndex:
                     fig = 'p';
@@ -176,11 +175,11 @@ size_t FenTranslator::_processElPassant(Board& bd, const size_t pos, const std::
     if (boardPos == 0)
         throw std::runtime_error("[ ERROR ] Invalid field description detected on ElPassant field!\n");
 
-    bd.elPassantField = boardPos;
+    bd.ElPassantField = boardPos;
 
     // inner representation points to position made with long pawn move
-    bd.elPassantField = bd.movColor == WHITE ? BlackPawnMap::GetElPassantMoveField(bd.elPassantField)
-                                             : WhitePawnMap::GetElPassantMoveField(bd.elPassantField);
+    bd.ElPassantField = bd.MovingColor == WHITE ? BlackPawnMap::GetElPassantMoveField(bd.ElPassantField)
+                                             : WhitePawnMap::GetElPassantMoveField(bd.ElPassantField);
 
     return pos + 2;
 }
@@ -249,9 +248,9 @@ size_t FenTranslator::_processMovingColor(Board& bd, const size_t pos, const std
 
     // Color detection.
     if (fenPos[pos] == 'w')
-        bd.movColor = WHITE;
+        bd.MovingColor = WHITE;
     else if (fenPos[pos] == 'b')
-        bd.movColor = BLACK;
+        bd.MovingColor = BLACK;
     else
         throw std::runtime_error(
             std::format("[ ERROR ] Fen position contains invalid character ({0}) on moving color field", fenPos[pos]));
@@ -280,13 +279,13 @@ size_t FenTranslator::_processPositions(Board& bd, size_t pos, const std::string
             ++processedFields;
         }
 
-        if (processedFields > static_cast<int>(Board::BoardFields))
+        if (processedFields > static_cast<int>(Board::BitBoardFields))
             throw std::runtime_error(std::format("[ ERROR ] Too much fields are used inside passed fen position!\n"));
 
         ++pos;
     }
 
-    if (processedFields < static_cast<int>(Board::BoardFields))
+    if (processedFields < static_cast<int>(Board::BitBoardFields))
         throw std::runtime_error(std::format("[ ERROR ] Not enugh fields are used inside passed fen position!\n"));
 
     return pos;
@@ -304,7 +303,7 @@ void FenTranslator::_addFigure(const std::string& pos, char fig, Board& bd)
         throw std::runtime_error(
             std::format("[ ERROR ] Encountered invalid character ({0})inside fen position description!\n", fig));
 
-    bd.boards[FigCharToIndexMap.at(fig)] |= field;
+    bd.BitBoards[FigCharToIndexMap.at(fig)] |= field;
 }
 
 size_t FenTranslator::_skipBlanks(size_t pos, const std::string& fenPos)

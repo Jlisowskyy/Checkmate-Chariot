@@ -6,7 +6,7 @@
 #define BISHOPMAPGENERATOR_H
 
 #include "../BitOperations.h"
-#include "MoveGeneration.h"
+#include "MoveGenerationUtils.h"
 
 class BishopMapGenerator
 {

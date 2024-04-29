@@ -24,8 +24,8 @@ struct  StructureEvaluator
 
     static int32_t EvalRookOnOpenFile(const Board& bd, const int msb, const int col)
     {
-        const uint64_t allyPawns = bd.boards[col*Board::BoardsPerCol + pawnsIndex];
-        const uint64_t enemyPawns = bd.boards[SwapColor(col)*Board::BoardsPerCol + pawnsIndex];
+        const uint64_t allyPawns = bd.BitBoards[col*Board::BitBoardsPerCol + pawnsIndex];
+        const uint64_t enemyPawns = bd.BitBoards[SwapColor(col)*Board::BitBoardsPerCol + pawnsIndex];
 
         int32_t rv{};
         rv += ((FileMap::GetPlainFile(msb) & allyPawns) == 0) * RookSemiOpenFileBonus;

@@ -21,7 +21,7 @@ While I strive to incorporate my own ideas and solutions, I occasionally draw in
 
 - OpenMp - is used to parallelize map parameter search
 - GCC compiler
-- x86_64 platform
+- x86_64 platform 
 - linux environment - to correctly run tests
 
 ### Installation

@@ -8,7 +8,7 @@
 #include <array>
 
 #include "../BitOperations.h"
-#include "MoveGeneration.h"
+#include "MoveGenerationUtils.h"
 
 class RookMapGenerator
 {

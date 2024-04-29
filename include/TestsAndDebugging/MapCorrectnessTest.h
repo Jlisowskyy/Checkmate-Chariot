@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "../BitOperations.h"
-#include "../EngineTypeDefs.h"
+#include "../EngineUtils.h"
 
 /*              IMPORTANT NOTES
  *  All files containing maps used to test must follow this scheme:

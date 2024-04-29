@@ -26,7 +26,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove* output, const int32_t maxDep
     if (maxDepth == 0)
     {
         GlobalLogger.StartLogging() << "info depth 0 score cp "
-            << BoardEvaluator::DefaultFullEvalFunction(_board, _board.movColor) << std::endl;
+            << BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor) << std::endl;
         return;
     }
 
@@ -141,7 +141,7 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
 
     // saving old params
     const auto oldCastlings = bd.Castlings;
-    const auto oldElPassant = bd.elPassantField;
+    const auto oldElPassant = bd.ElPassantField;
 
     PV inPV{depthLeft};
 
@@ -288,7 +288,7 @@ int BestMoveSearch::_pwsSearch(Board& bd, int alpha, const int beta, const int d
 
     // saving old params
     const auto oldCastlings = bd.Castlings;
-    const auto oldElPassant = bd.elPassantField;
+    const auto oldElPassant = bd.ElPassantField;
 
     // generate moves
     MoveGenerator mechanics(bd, _stack, _histTable, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField());
@@ -366,7 +366,7 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, const int beta, uint
     if (wasTTHit && prevSearchRes.GetStatVal() != NO_EVAL)
         statEval = prevSearchRes.GetStatVal();
     else
-        statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
+        statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
 
     int bestEval = statEval;
 
@@ -393,7 +393,7 @@ int BestMoveSearch::_quiescenceSearch(Board& bd, int alpha, const int beta, uint
 
     // saving old params
     const auto oldCastlings = bd.Castlings;
-    const auto oldElPassant = bd.elPassantField;
+    const auto oldElPassant = bd.ElPassantField;
 
     if (wasTTHit && prevSearchRes.GetNodeType() != upperBound && prevSearchRes.GetMove().IsCapture())
         _pullMoveToFront(moves, prevSearchRes.GetMove());
@@ -473,10 +473,10 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
         if (prevSearchRes.GetStatVal() != NO_EVAL)
             statEval = prevSearchRes.GetStatVal();
         else
-            statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
+            statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
     }
     else
-        statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
+        statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
 
     int bestEval = statEval;
     if (bestEval >= beta)
@@ -498,7 +498,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board& bd, const int alpha, uint64_t zHa
 
     // saving old params
     const auto oldCastlings = bd.Castlings;
-    const auto oldElPassant = bd.elPassantField;
+    const auto oldElPassant = bd.ElPassantField;
 
     if (wasTTHit && prevSearchRes.GetNodeType() != upperBound && prevSearchRes.GetMove().IsCapture())
         _pullMoveToFront(moves, prevSearchRes.GetMove());
