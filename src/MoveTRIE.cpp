@@ -4,11 +4,11 @@
 
 #include "../include/OpeningBook/MoveTRIE.h"
 
-void MoveTRIE::AddMoveSequence(const std::vector<std::string>& moves)
+void MoveTRIE::AddMoveSequence(const std::vector<std::string> &moves)
 {
-    node* root = _root;
+    node *root = _root;
 
-    for (const auto& move : moves)
+    for (const auto &move : moves)
     {
         // searching for move on array
         const ssize_t nextInd = _findOnArr(move, root->_moves);
@@ -27,12 +27,12 @@ void MoveTRIE::AddMoveSequence(const std::vector<std::string>& moves)
 
 void MoveTRIE::OptimiseMemoryUsage() { _optMem(_root); }
 
-const std::vector<std::string>& MoveTRIE::FindNextMoves(const std::vector<std::string>& moves) const
+const std::vector<std::string> &MoveTRIE::FindNextMoves(const std::vector<std::string> &moves) const
 {
     static constexpr std::vector<std::string> _emptVect{};
-    const node* root = _root;
+    const node *root = _root;
 
-    for (const auto& move : moves)
+    for (const auto &move : moves)
     {
         const ssize_t nextInd = _findOnArr(move, root->_moves);
         if (nextInd == -1)
@@ -43,7 +43,7 @@ const std::vector<std::string>& MoveTRIE::FindNextMoves(const std::vector<std::s
     return root->_moves;
 }
 
-ssize_t MoveTRIE::_findOnArr(const std::string& move, const std::vector<std::string>& moves)
+ssize_t MoveTRIE::_findOnArr(const std::string &move, const std::vector<std::string> &moves)
 {
     for (ssize_t i = 0; i < static_cast<ssize_t>(moves.size()); ++i)
         if (moves[i] == move)
@@ -51,18 +51,17 @@ ssize_t MoveTRIE::_findOnArr(const std::string& move, const std::vector<std::str
     return -1;
 }
 
-void MoveTRIE::_destroy(const node* root)
+void MoveTRIE::_destroy(const node *root)
 {
     if (!root)
         return;
 
-    for (const auto& n : root->_next)
-        _destroy(n);
+    for (const auto &n : root->_next) _destroy(n);
 
     delete root;
 }
 
-void MoveTRIE::_optMem(node* root)
+void MoveTRIE::_optMem(node *root)
 {
     if (!root)
         return;
@@ -70,6 +69,5 @@ void MoveTRIE::_optMem(node* root)
     root->_moves.shrink_to_fit();
     root->_next.shrink_to_fit();
 
-    for (const auto n : root->_next)
-        _optMem(n);
+    for (const auto n : root->_next) _optMem(n);
 }

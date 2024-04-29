@@ -9,35 +9,23 @@
 #include "../include/BitOperations.h"
 #include "../include/Interface/Logger.h"
 
-const char IndexToFigCharMap[Board::BoardsCount]
-{
-    'P',
-    'N',
-    'B',
-    'R',
-    'Q',
-    'K',
-    'p',
-    'n',
-    'b',
-    'r',
-    'q',
-    'k',
+const char IndexToFigCharMap[Board::BoardsCount]{
+    'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k',
 };
 
 const std::unordered_map<char, size_t> FigCharToIndexMap{
-    {'P', wPawnsIndex},
+    {'P',   wPawnsIndex},
     {'N', wKnightsIndex},
     {'B', wBishopsIndex},
-    {'R', wRooksIndex},
-    {'Q', wQueensIndex},
-    {'K', wKingIndex},
-    {'p', bPawnsIndex},
+    {'R',   wRooksIndex},
+    {'Q',  wQueensIndex},
+    {'K',    wKingIndex},
+    {'p',   bPawnsIndex},
     {'n', bKnightsIndex},
     {'b', bBishopsIndex},
-    {'r', bRooksIndex},
-    {'q', bQueensIndex},
-    {'k', bKingIndex}
+    {'r',   bRooksIndex},
+    {'q',  bQueensIndex},
+    {'k',    bKingIndex}
 };
 
 void DisplayMask(const uint64_t mask)
@@ -56,12 +44,12 @@ void DisplayMask(const uint64_t mask)
     }
 }
 
-void DisplayBoard(const Board&bd)
+void DisplayBoard(const Board &bd)
 {
     static constexpr size_t LastRowIndex = 7;
-    static constexpr size_t CharsForFig = 3;
-    static constexpr size_t FigsPerRow = 8;
-    static constexpr size_t FigsPerCol = 8;
+    static constexpr size_t CharsForFig  = 3;
+    static constexpr size_t FigsPerRow   = 8;
+    static constexpr size_t FigsPerCol   = 8;
 
     for (size_t y = 0; y < FigsPerCol; ++y)
     {
@@ -105,20 +93,17 @@ void DisplayBoard(const Board&bd)
 
     GlobalLogger.StartLogging() << "Moving color: " << (bd.movColor == WHITE ? "white" : "black") << std::endl;
     GlobalLogger.StartLogging() << "Possible castlings:\n";
-    static constexpr const char* castlingNames[] = {
-        "White King Side", "White Queen Side", "Black King Side",
-        "Black Queen Side"
+    static constexpr const char *castlingNames[] = {
+        "White King Side", "White Queen Side", "Black King Side", "Black Queen Side"
     };
     for (size_t i = 0; i < Board::CastlingCount; ++i)
     {
         GlobalLogger.StartLogging() << castlingNames[i] << ": " << bd.Castlings[i] << std::endl;
     }
 
-    GlobalLogger.StartLogging() << "El passant field: "
-            << (bd.elPassantField == Board::InvalidElPassantBoard
-                    ? "-"
-                    : ConvertToStrPos(bd.elPassantField))
-            << std::endl;
+    GlobalLogger.StartLogging(
+    ) << "El passant field: "
+      << (bd.elPassantField == Board::InvalidElPassantBoard ? "-" : ConvertToStrPos(bd.elPassantField)) << std::endl;
 }
 
 uint64_t ExtractPosFromStr(int x, const int y)
@@ -133,7 +118,7 @@ uint64_t ExtractPosFromStr(int x, const int y)
     return 1LLU << ((y - '1') * 8 + (x - 'a'));
 }
 
-std::pair<uint64_t, uint64_t> ExtractPositionsFromEncoding(const std::string&encoding)
+std::pair<uint64_t, uint64_t> ExtractPositionsFromEncoding(const std::string &encoding)
 {
     if (encoding.length() < 4)
         return {0, 0};
@@ -155,17 +140,11 @@ std::string ConvertToStrPos(const int boardPosMsb)
     static constexpr size_t PosStrSize = 2;
     std::string rv{PosStrSize};
     auto [c1, c2] = ConvertToCharPos(boardPosMsb);
-    rv[0] = c1;
-    rv[1] = c2;
+    rv[0]         = c1;
+    rv[1]         = c2;
     return rv;
 }
 
-std::pair<char, char> ConvertToCharPos(const uint64_t boardMap)
-{
-    return ConvertToCharPos(ExtractMsbPos(boardMap));
-}
+std::pair<char, char> ConvertToCharPos(const uint64_t boardMap) { return ConvertToCharPos(ExtractMsbPos(boardMap)); }
 
-std::string ConvertToStrPos(const uint64_t boardMap)
-{
-    return ConvertToStrPos(ExtractMsbPos(boardMap));
-}
+std::string ConvertToStrPos(const uint64_t boardMap) { return ConvertToStrPos(ExtractMsbPos(boardMap)); }

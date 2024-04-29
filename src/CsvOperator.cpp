@@ -10,7 +10,7 @@
 #include "../include/Interface/Logger.h"
 #include "../include/ParseTools.h"
 
-std::vector<std::pair<std::string, int>> CsvOperator::ReadPosDepthCsv(std::ifstream& stream)
+std::vector<std::pair<std::string, int>> CsvOperator::ReadPosDepthCsv(std::ifstream &stream)
 {
     std::vector<std::pair<std::string, int>> records{};
 
@@ -21,7 +21,11 @@ std::vector<std::pair<std::string, int>> CsvOperator::ReadPosDepthCsv(std::ifstr
         if (buffer.empty())
             continue;
 
-        size_t pos = ParseTools::ExtractNextWord<[](const int x) -> int { return x == ','; }>(buffer, innerBuf, 0);
+        size_t pos = ParseTools::ExtractNextWord<
+            [](const int x) -> int
+            {
+                return x == ',';
+            }>(buffer, innerBuf, 0);
         if (pos == 0)
             throw std::runtime_error("missing comma: expected two values fen position and depth");
 
@@ -38,7 +42,7 @@ std::vector<std::pair<std::string, int>> CsvOperator::ReadPosDepthCsv(std::ifstr
     return records;
 }
 
-std::vector<std::pair<std::string, int>> CsvOperator::ReadPosDepthCsv(const std::string& fileName)
+std::vector<std::pair<std::string, int>> CsvOperator::ReadPosDepthCsv(const std::string &fileName)
 {
     std::ifstream csvRead(fileName);
 
@@ -48,7 +52,7 @@ std::vector<std::pair<std::string, int>> CsvOperator::ReadPosDepthCsv(const std:
     {
         tests = ReadPosDepthCsv(csvRead);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         GlobalLogger.StartErrLogging() << std::format("[ ERROR ] Error occured:\n{}\n", exc.what());
         return {};

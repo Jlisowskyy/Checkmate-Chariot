@@ -5,6 +5,6 @@
 #ifndef CHESS_ENGINE_H
 #define CHESS_ENGINE_H
 
-void ChessEngineMainEntry(int argc, const char** argv);
+void ChessEngineMainEntry(int argc, const char **argv);
 
-#endif  // CHESS_ENGINE_H
+#endif // CHESS_ENGINE_H

@@ -20,10 +20,11 @@ class Engine
     // --------------------------------------
     // Type creation and initialization
     // --------------------------------------
-   public:
+
+    public:
     Engine() = default;
 
-    Engine(const Board& bd) : _board(bd), _startingBoard(bd) {}
+    Engine(const Board &bd) : _board(bd), _startingBoard(bd) {}
 
     ~Engine() = default;
 
@@ -39,16 +40,15 @@ class Engine
     std::map<std::string, uint64_t> GetPerft(int depth);
     std::map<std::string, uint64_t> GetMoveBasedPerft(int depth);
 
-    template <bool LogToOut = true>
-    double GoPerft(int depth);
+    template <bool LogToOut = true> double GoPerft(int depth);
 
-    void SetFenPosition(const std::string& fenStr);
+    void SetFenPosition(const std::string &fenStr);
 
     void SetStartpos();
 
-    static const EngineInfo& GetEngineInfo();
+    static const EngineInfo &GetEngineInfo();
 
-    bool ApplyMoves(const std::vector<std::string>& UCIMoves);
+    bool ApplyMoves(const std::vector<std::string> &UCIMoves);
 
     void RestartEngine();
 
@@ -56,9 +56,9 @@ class Engine
 
     [[nodiscard]] std::string GetFenTranslation() const;
 
-    void GoMoveTime(lli time, const std::vector<std::string>& moves);
+    void GoMoveTime(lli time, const std::vector<std::string> &moves);
 
-    void GoDepth(int depth, const std::vector<std::string>& moves);
+    void GoDepth(int depth, const std::vector<std::string> &moves);
 
     void StopSearch();
 
@@ -67,20 +67,20 @@ class Engine
     // ------------------------------
     // private methods
     // ------------------------------
-   private:
-    bool _applyMove(Board& board, const std::string& move);
 
-    static void _changeDebugState(Engine& eng, std::string& nPath);
+    private:
+    bool _applyMove(Board &board, const std::string &move);
 
-    static void _changeHashSize([[maybe_unused]]Engine& eng, lli size);
+    static void _changeDebugState(Engine &eng, std::string &nPath);
 
-    static void _changeBookUsage(Engine& eng, bool newValue);
+    static void _changeHashSize([[maybe_unused]] Engine &eng, lli size);
 
-    static void _changeThreadCount([[maybe_unused]] Engine& eng, const lli tCount)
+    static void _changeBookUsage(Engine &eng, bool newValue);
+
+    static void _changeThreadCount([[maybe_unused]] Engine &eng, const lli tCount)
     {
         std::cout << "New thread count: " << tCount << '\n';
     }
-
 
     // ------------------------------
     // private fields
@@ -90,15 +90,15 @@ class Engine
     Board _startingBoard{};
     OpeningBook _book{"uci_ready_long", OpeningBook::bookFileType::text_uci};
 
-    bool _isStartPosPlayed = true;
-    uint16_t _age = 1;
+    bool _isStartPosPlayed                            = true;
+    uint16_t _age                                     = 1;
     static constexpr std::string_view _startposPrefix = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
-    bool UseOwnBook = false;
+    bool UseOwnBook                                   = false;
 
-   public:
+    public:
     SearchThreadManager TManager{};
 
-   private:
+    private:
     // ------------------------------
     // Engine options
     // ------------------------------
@@ -112,28 +112,26 @@ class Engine
     inline static const OptionT<Option::OptionType::spin> HashSize{"Hash", _changeHashSize, 16, 524289, 16};
     inline static const OptionT<Option::OptionType::check> OwnBook{"OwnBook", _changeBookUsage, true};
 
-
     inline static const EngineInfo engineInfo = {
         .author = "Jakub Lisowski, Lukasz Kryczka, Jakub Pietrzak Warsaw University of Technology",
-        .name = "ChessEngine development version 0.16",
-        .options = std::map<std::string, const Option*>{
-            std::make_pair<std::string, const Option*>("Threads", &Threads),
-            std::make_pair<std::string, const Option*>("Debug Log File", &DebugLogFile),
-            std::make_pair<std::string, const Option*>("Hash", &HashSize),
-            std::make_pair<std::string, const Option*>("OwnBook", &OwnBook)
-        },
+        .name   = "ChessEngine development version 0.16",
+        .options =
+            std::map<std::string, const Option *>{
+                                                  std::make_pair<std::string, const Option *>("Threads", &Threads),
+                                                  std::make_pair<std::string, const Option *>("Debug Log File", &DebugLogFile),
+                                                  std::make_pair<std::string, const Option *>("Hash", &HashSize),
+                                                  std::make_pair<std::string, const Option *>("OwnBook", &OwnBook)},
     };
 };
 
-template <bool LogToOut>
-double Engine::GoPerft(const int depth)
+template <bool LogToOut> double Engine::GoPerft(const int depth)
 {
     const auto t1 = std::chrono::steady_clock::now();
-    auto moves = GetMoveBasedPerft(depth);
+    auto moves    = GetMoveBasedPerft(depth);
     const auto t2 = std::chrono::steady_clock::now();
 
     uint64_t totalSum{};
-    for (const auto& [moveStr, moveCount] : moves)
+    for (const auto &[moveStr, moveCount] : moves)
     {
         if constexpr (LogToOut)
             GlobalLogger.StartLogging() << std::format("{}: {}\n", moveStr, moveCount);
@@ -147,4 +145,4 @@ double Engine::GoPerft(const int depth)
     return spentTime;
 }
 
-#endif  // ENGINE_H
+#endif // ENGINE_H

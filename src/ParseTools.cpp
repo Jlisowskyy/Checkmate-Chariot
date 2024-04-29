@@ -6,8 +6,8 @@
 
 #include <climits>
 
-size_t ParseTools::ExtractNextLine(const size_t startPos, const size_t maxPos, const char* inBuffer,
-                                   std::string& outBuffer)
+size_t
+ParseTools::ExtractNextLine(const size_t startPos, const size_t maxPos, const char *inBuffer, std::string &outBuffer)
 {
     for (size_t pos = startPos; pos < maxPos; ++pos)
     {
@@ -19,16 +19,16 @@ size_t ParseTools::ExtractNextLine(const size_t startPos, const size_t maxPos, c
     return maxPos;
 }
 
-lli ParseTools::ParseTolli(const std::string& str)
+lli ParseTools::ParseTolli(const std::string &str)
 {
-    errno = 0;
+    errno        = 0;
     const lli rv = strtoll(str.c_str(), nullptr, 10);
     if (errno != 0)
         return LONG_LONG_MAX;
     return rv;
 }
 
-size_t ParseTools::TrimLeft(const std::string& str)
+size_t ParseTools::TrimLeft(const std::string &str)
 {
     size_t ind = 0;
     while (ind < str.length() && std::isblank(str[ind]))
@@ -38,7 +38,7 @@ size_t ParseTools::TrimLeft(const std::string& str)
     return ind;
 }
 
-size_t ParseTools::TrimRight(const std::string& str)
+size_t ParseTools::TrimRight(const std::string &str)
 {
     size_t ind = str.length();
     while (ind > 0 && std::isblank(str[ind]))
@@ -48,9 +48,9 @@ size_t ParseTools::TrimRight(const std::string& str)
     return ind;
 }
 
-std::string ParseTools::GetTrimmed(const std::string& str)
+std::string ParseTools::GetTrimmed(const std::string &str)
 {
-    const size_t tLeft = TrimLeft(str);
+    const size_t tLeft  = TrimLeft(str);
     const size_t tRight = TrimRight(str);
 
     if (tLeft > tRight)
@@ -59,7 +59,7 @@ std::string ParseTools::GetTrimmed(const std::string& str)
     return str.substr(tLeft, tRight - tLeft);
 }
 
-ssize_t ParseTools::GetLineCountFromFile(std::fstream& stream)
+ssize_t ParseTools::GetLineCountFromFile(std::fstream &stream)
 {
     if (stream.bad())
         return -1;
@@ -70,8 +70,7 @@ ssize_t ParseTools::GetLineCountFromFile(std::fstream& stream)
     stream.seekg(0);
 
     ssize_t newLineCount{};
-    for (char buff; stream.get(buff);)
-        newLineCount += (buff == '\n');
+    for (char buff; stream.get(buff);) newLineCount += (buff == '\n');
 
     stream.clear();
     stream.seekg(oldPos);

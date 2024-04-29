@@ -6,45 +6,45 @@
 
 Logger GlobalLogger{};
 
-void Logger::Log(const std::string& logMessage)
+void Logger::Log(const std::string &logMessage)
 {
     logGuard.lock();
     (*loggingStream) << logMessage << std::endl;
     logGuard.unlock();
 }
 
-std::ostream& Logger::StartLogging() { return *loggingStream; }
+std::ostream &Logger::StartLogging() { return *loggingStream; }
 
-std::ostream& Logger::StartErrLogging() { return *errLoggingStream; }
+std::ostream &Logger::StartErrLogging() { return *errLoggingStream; }
 
-void Logger::LogError(const std::string& logMessage)
+void Logger::LogError(const std::string &logMessage)
 {
     logGuard.lock();
     (*errLoggingStream) << logMessage << std::endl;
     logGuard.unlock();
 }
 
-bool Logger::ChangeLogStream(const std::string& FileName)
+bool Logger::ChangeLogStream(const std::string &FileName)
 {
     if (const std::ofstream nStream{FileName}; !nStream)
         return false;
 
     logGuard.lock();
     CloseFStream();
-    loggingFStream = std::ofstream{FileName};
+    loggingFStream   = std::ofstream{FileName};
     errLoggingStream = &loggingFStream;
-    loggingStream = &loggingFStream;
+    loggingStream    = &loggingFStream;
     logGuard.unlock();
 
     return true;
 }
 
-void Logger::ChangeLogStream(std::ostream& stream)
+void Logger::ChangeLogStream(std::ostream &stream)
 {
     logGuard.lock();
     CloseFStream();
     errLoggingStream = &stream;
-    loggingStream = &stream;
+    loggingStream    = &stream;
     logGuard.unlock();
 }
 
