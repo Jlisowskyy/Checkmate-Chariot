@@ -16,7 +16,8 @@ jobs:
         chmod +x llvm.sh
         sudo ./llvm.sh 17
         sudo apt install clang-format-17
-        sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-17 100
+        sudo rm /usr/bin/clang-format
+        sudo ln -s /usr/bin/clang-format-17 /usr/bin/clang-format
 
     - name: Check clang-format version
       run: clang-format --version
