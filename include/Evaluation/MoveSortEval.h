@@ -26,49 +26,23 @@ struct MoveSortEval
     // Class interaction
     // ------------------------------
 
-    static int16_t ApplyAttackFieldEffects(
-        int16_t eval, const uint64_t pawnAttacks, const uint64_t startField, const uint64_t targetField
-    )
-    {
-        if ((pawnAttacks & startField) != 0)
-            eval += RunAwayPrize;
-        if ((pawnAttacks & targetField) != 0)
-            eval += AttackedFigurePenalty;
+    static int32_t ApplyAttackFieldEffects(
+        int32_t eval, uint64_t pawnAttacks, uint64_t startField, uint64_t targetField
+    );
 
-        return eval;
-    }
+    static int32_t ApplyPromotionEffects(int32_t eval, size_t nFig);
 
-    static int16_t ApplyPromotionEffects(const int16_t eval, const size_t nFig)
-    {
-        return FigureEval[nFig] + eval + PromotionBonus;
-    }
+    static int32_t ApplyKilledFigEffect(int32_t eval, size_t attackFig, size_t killedFig);
 
-    static int16_t ApplyKilledFigEffect(const int16_t eval, const size_t attackFig, const size_t killedFig)
-    {
-        return eval + FigureEval[killedFig] - FigureEval[attackFig] + CaptureBonus;
-    }
+    static int32_t
+    ApplyKillerMoveEffect(int32_t eval, const KillerTable &kTable, Move mv, int depthLeft);
 
-    static int16_t
-    ApplyKillerMoveEffect(const int16_t eval, const KillerTable &kTable, const Move mv, const int depthLeft)
-    {
-        return eval + KillerMovePrize * kTable.IsKillerMove(mv, depthLeft);
-    }
+    static int32_t ApplyCounterMoveEffect(int32_t eval, PackedMove counterMove, Move move);
 
-    static int16_t ApplyCounterMoveEffect(const int16_t eval, const PackedMove counterMove, const Move move)
-    {
-        return eval + CounterMovePrize * (move.GetPackedMove() == counterMove);
-    }
+    static int32_t
+    ApplyCaptureMostRecentSquareEffect(int32_t eval, int mostRecentSquareMsb, int moveSquare);
 
-    static int16_t
-    ApplyCaptureMostRecentSquareEffect(const int16_t eval, const int mostRecentSquareMsb, const int moveSquare)
-    {
-        return eval + MostRecentSquarePrize * (mostRecentSquareMsb == moveSquare);
-    }
-
-    static int16_t ApplyHistoryTableBonus(const int16_t eval, const Move mv, const HistoricTable &hTable)
-    {
-        return eval + hTable.GetBonusMove(mv);
-    }
+    static int32_t ApplyHistoryTableBonus(int32_t eval, Move mv, const HistoricTable &hTable);
 
     // ------------------------------
     // Class fields

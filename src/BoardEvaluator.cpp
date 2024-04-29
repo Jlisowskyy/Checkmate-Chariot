@@ -354,17 +354,14 @@ void BoardEvaluator::_evaluateKings(Board &bd, _fieldEvalInfo_t &io)
     io.endgameEval += BasicBlackKingEndPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])] -
                       BasicBlackKingEndPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.BitBoards[bKingIndex]))];
 
-    int32_t bonus{};
-    bonus += (io.whiteKingSafety.attackCounts > 2) * (-_kingSafetyValues[io.whiteKingSafety.attackPoints]);
-    bonus += (io.blackKingSafety.attackCounts > 2) * (_kingSafetyValues[io.blackKingSafety.attackPoints]);
+    int32_t kingRingSafety = KingSafetyEval::ScoreKingRingControl(io.whiteKingSafety, io.blackKingSafety);
 
     int32_t structEval{};
-
     structEval += KingSafetyEval::EvalKingShelter(bd);
     structEval += KingSafetyEval::EvalKingOpenFiles(bd);
 
-    io.midgameEval += bonus + structEval;
-    io.endgameEval += bonus;
+    io.midgameEval += kingRingSafety + structEval;
+    io.endgameEval += kingRingSafety;
 }
 
 int32_t BoardEvaluator::_evaluateFields(Board &bd, int32_t phase)

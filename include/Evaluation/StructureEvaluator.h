@@ -9,6 +9,10 @@
 
 #include "../MoveGeneration/FileMap.h"
 
+/*
+ *  Static class used to store various structure evaluation functions.
+ */
+
 struct StructureEvaluator
 {
     // ------------------------------
@@ -22,43 +26,31 @@ struct StructureEvaluator
     // Class interaction
     // ------------------------------
 
-    static int32_t EvalRookOnOpenFile(const Board &bd, const int msb, const int col)
-    {
-        const uint64_t allyPawns  = bd.BitBoards[col * Board::BitBoardsPerCol + pawnsIndex];
-        const uint64_t enemyPawns = bd.BitBoards[SwapColor(col) * Board::BitBoardsPerCol + pawnsIndex];
+    // Method used to evaluate whether rook positioned on rooksMsbPos is on open file. Returns bonus for the given rook.
+    static int32_t EvalRookOnOpenFile(const Board &bd, int rooksMsbPos, int col);
 
-        int32_t rv{};
-        rv += ((FileMap::GetPlainFile(msb) & allyPawns) == 0) * RookSemiOpenFileBonus;
-        rv += ((FileMap::GetPlainFile(msb) & (allyPawns | enemyPawns)) == 0) * RookSemiOpenFileBonus;
+    // Method simply counts all pawns that are covered by other pawns. Returns the bonus.
+    static int32_t EvalPawnChain(uint64_t allyPawns, uint64_t pawnAttacks);
 
-        return rv;
-    }
+    // Method used to evaluate doubled pawns. Returns penalty for the given pawn. Currently checks only whether there is
+    // another pawn on the same file. TODO: reconsider that to something more complicated and precise.
+    static int32_t EvalDoubledPawn(uint64_t allyPawns, int pawnsMsbPos, int col);
 
-    static int32_t EvalPawnChain(const uint64_t allyPawns, const uint64_t pawnAttacks)
-    {
-        return CountOnesInBoard((pawnAttacks & allyPawns)) * CoveredPawnBonus;
-    }
+    // Method used to evaluate isolated pawns. Returns penalty for the given pawn.
+    // Currently, it only checks whether there are no own pawns on the neighboring files. TODO: reconsider
+    static int32_t EvalIsolatedPawn(uint64_t allyPawns, int pawnsMsbPos);
 
-    static int32_t EvalDoubledPawn(const uint64_t allyPawns, const int msb, const int col)
-    {
-        return ((allyPawns & FileMap::GetFrontFile(msb, col)) != 0) * DoubledPawnPenalty;
-    }
-
-    static int32_t EvalIsolatedPawn(const uint64_t allyPawns, const int msb)
-    {
-        return ((allyPawns & FileMap::GetNeighborFiles(msb)) == 0) * IsolatedPawnPenalty;
-    }
-
-    static int32_t SimplePassedPawn(const uint64_t enemyPawns, const int msb, const int col)
-    {
-        return ((enemyPawns & FileMap::GetFronFatFile(msb, col)) == 0) * PassedPawnBonus;
-    }
+    // Method used to evaluate passed pawn. Returns bonus for the given pawn when there is no enemy pawn on the same file,
+    // and no enemy pawn on the neighboring files.
+    static int32_t SimplePassedPawn(uint64_t enemyPawns, int pawnsMsbPos, int col);
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
     private:
+
+    // All bonuses for above methods.
     static constexpr int16_t RookSemiOpenFileBonus = 8;
     static constexpr int16_t CoveredPawnBonus      = 4;
     static constexpr int16_t DoubledPawnPenalty    = -25;

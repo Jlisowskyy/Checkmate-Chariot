@@ -315,21 +315,6 @@ class BoardEvaluator
     //      Center of the board is the most important part of the map so maximizing the control of it may be a good idea
     static constexpr int16_t CenterControlBonusPerTile = 2;
 
-    // values below are used to construct a key to the king safety lookup table (_kingSafetyValues),
-    // which store exponentially scaled king safety values.
-    // Key is simply constructed by summing number of attacks * (corresponding coef)
-    static constexpr int16_t KingMinorPieceAttackPoints = 2;
-    static constexpr int16_t KingRookAttackPoints       = 3;
-    static constexpr int16_t KingQueenAttackPoints      = 5;
-
-    static constexpr int16_t _kingSafetyValues[] = {
-        0,   0,   1,   2,   3,   5,   7,   9,   12,  15,  18,  22,  26,  30,  35,  39,  44,  50,  56,  62,
-        68,  75,  82,  85,  89,  97,  105, 113, 122, 131, 140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
-        260, 272, 283, 295, 307, 319, 330, 342, 354, 366, 377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
-        494, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500
-    };
-
     // 4x4 mask on the center board used to evaluate center control
     static constexpr uint64_t CenterFieldsMap = []() constexpr
     {
@@ -565,7 +550,7 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
 
         const uint64_t attackFields = MapT::GetAttackFields(figMap);
 
-        KingSafetyEval::UpdateKingAttacks(kInfo, attackFields, kingRing, KingMinorPieceAttackPoints);
+        KingSafetyEval::UpdateKingAttacks(kInfo, attackFields, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
 
         // adding field values
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
@@ -648,7 +633,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAc
         endEval += mobCount * KnightMobilityBonusEnd;
 
         // adding king attack info
-        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingMinorPieceAttackPoints);
+        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
 
         // adding field values
         interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
@@ -724,7 +709,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
         endEval += movesCount * BishopMobilityBonusEnd;
 
         // adding king attack info
-        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingMinorPieceAttackPoints);
+        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
 
         RemovePiece(unpinnedBishops, figMap);
     }
@@ -803,7 +788,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAcce
         interEval += StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
 
         // adding king attack info
-        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingRookAttackPoints);
+        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingRookAttackPoints);
 
         RemovePiece(unpinnedRooks, figMap);
     }
@@ -878,7 +863,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAcc
         midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
 
         // adding king attack info
-        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingQueenAttackPoints);
+        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingQueenAttackPoints);
 
         RemovePiece(unpinnedQueens, figMap);
     }
