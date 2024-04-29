@@ -14,41 +14,41 @@
 
 bool ChessMechanics::IsCheck() const
 {
-    [[maybe_unused]] const auto [unused1, checksCount, unused2] = GetBlockedFieldMap(GetFullMap());
+    [[maybe_unused]] const auto [unused1, checksCount, unused2] = GetBlockedFieldBitMap(GetFullBitMap());
 
     return checksCount > 0;
 }
 
 // Gets occupancy maps, which simply indicates wheter some field is occupied or not. Does not distinguish colors.
-uint64_t ChessMechanics::GetFullMap() const
+uint64_t ChessMechanics::GetFullBitMap() const
 {
     uint64_t map = 0;
-    for (const auto m : _board.boards)
+    for (const auto m : _board.BitBoards)
         map |= m;
     return map;
 }
 
 // Gets occupancy maps, which simply indicates wheter some field is occupied or not, by desired color figures.
-uint64_t ChessMechanics::GetColMap(const int col) const
+uint64_t ChessMechanics::GetColBitMap(const int col) const
 {
     assert(col == 1 || col == 0);
 
     uint64_t map = 0;
-    for (size_t i = 0; i < Board::BoardsPerCol; ++i)
-        map |= _board.boards[Board::BoardsPerCol * col + i];
+    for (size_t i = 0; i < Board::BitBoardsPerCol; ++i)
+        map |= _board.BitBoards[Board::BitBoardsPerCol * col + i];
     return map;
 }
 
-size_t ChessMechanics::GetIndexOfContainingBoard(const uint64_t map, const int col) const
+size_t ChessMechanics::GetIndexOfContainingBitBoard(uint64_t map, int col) const
 {
     assert(col == 1 || col == 0);
     assert(map != 0);
 
-    const size_t range = Board::BoardsPerCol * col + kingIndex;
-    const size_t startInd = Board::BoardsPerCol * col;
+    const size_t range = Board::BitBoardsPerCol * col + kingIndex;
+    const size_t startInd = Board::BitBoardsPerCol * col;
 
     for (size_t i = startInd; i < range; ++i)
-        if ((_board.boards[i] & map) != 0)
+        if ((_board.BitBoards[i] & map) != 0)
             return i;
 
 #ifndef NDEBUG
@@ -69,16 +69,16 @@ size_t ChessMechanics::GetIndexOfContainingBoard(const uint64_t map, const int c
  *
  */
 
-std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const uint64_t fullMap) const
+std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldBitMap(uint64_t fullMap) const
 {
     assert(fullMap != 0);
 
     uint8_t checksCount{};
     uint8_t chT{};
 
-    const int enemyCol = SwapColor(_board.movColor);
-    const size_t enemyFigInd = enemyCol * Board::BoardsPerCol;
-    const int allyKingShift = ConvertToReversedPos(_board.GetKingMsbPos(_board.movColor));
+    const int enemyCol = SwapColor(_board.MovingColor);
+    const size_t enemyFigInd = enemyCol * Board::BitBoardsPerCol;
+    const int allyKingShift = ConvertToReversedPos(_board.GetKingMsbPos(_board.MovingColor));
     const uint64_t allyKingMap = 1LLU << allyKingShift;
 
     // allows to also simply predict which tiles on the other side of the king are allowed.
@@ -89,14 +89,14 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
 
     // Rook attacks generation. Needs special treatment to correctly detect double check, especially with pawn promotion
     const auto [rookBlockedMap, checkCountRook] =
-        _getRookBlockedMap(_board.boards[enemyFigInd + rooksIndex] | _board.boards[enemyFigInd + queensIndex], fullMapWoutKing, allyKingMap);
+        _getRookBlockedMap(_board.BitBoards[enemyFigInd + rooksIndex] | _board.BitBoards[enemyFigInd + queensIndex], fullMapWoutKing, allyKingMap);
 
     // = 0, 1 or eventually 2 when promotion to rook like type happens
     checksCount += checkCountRook;
 
     // Bishop attacks generation.
     const uint64_t bishopBlockedMap =
-        _blockIterativeGenerator(_board.boards[enemyFigInd + bishopsIndex] | _board.boards[enemyFigInd + queensIndex],
+        _blockIterativeGenerator(_board.BitBoards[enemyFigInd + bishopsIndex] | _board.BitBoards[enemyFigInd + queensIndex],
                                  [=](const int pos) { return BishopMap::GetMoves(pos, fullMapWoutKing); });
 
     // = 1 or 0 depending whether hits or not
@@ -104,7 +104,7 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     checksCount += wasCheckedByBishopFlag;
 
     // Pawns attacks generation.
-    const uint64_t pawnsMap = _board.boards[enemyFigInd + pawnsIndex];
+    const uint64_t pawnsMap = _board.BitBoards[enemyFigInd + pawnsIndex];
     const uint64_t pawnBlockedMap =
         enemyCol == WHITE ? WhitePawnMap::GetAttackFields(pawnsMap) : BlackPawnMap::GetAttackFields(pawnsMap);
 
@@ -116,7 +116,7 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldMap(const 
     chT += simpleFigCheck * wasCheckedByPawnFlag;  // Note: king cannot be double checked by simple figure
 
     // Knight attacks generation.
-    const uint64_t knighBlockedMap = _blockIterativeGenerator(_board.boards[enemyFigInd + knightsIndex],
+    const uint64_t knighBlockedMap = _blockIterativeGenerator(_board.BitBoards[enemyFigInd + knightsIndex],
                                                               [=](const int pos) { return KnightMap::GetMoves(pos); });
 
     // = 1 or 0 depending whether hits or not
@@ -168,7 +168,7 @@ uint64_t ChessMechanics::GenerateAllowedTilesForPrecisedPinnedFig(const uint64_t
     assert(CountOnesInBoard(figBoard) == 1);
 
     const int msbPos = ExtractMsbPos(figBoard);
-    const uint64_t KingBoard = _board.boards[_board.movColor*Board::BoardsPerCol + kingIndex];
+    const uint64_t KingBoard = _board.BitBoards[_board.MovingColor *Board::BitBoardsPerCol + kingIndex];
 
     const uint64_t RookPerspectiveMoves = RookMap::GetMoves(msbPos, fullMap);
     if ((RookPerspectiveMoves & KingBoard) != 0)

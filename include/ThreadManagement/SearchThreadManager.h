@@ -8,8 +8,8 @@
 #include <string>
 #include <thread>
 
+#include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
-#include "../EngineTypeDefs.h"
 #include "stack.h"
 
 class SearchThreadManager

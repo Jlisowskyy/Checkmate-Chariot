@@ -38,8 +38,8 @@ struct HistoricTable {
     }
 
     void ClearTable() {
-        for (size_t i = 0; i < Board::BoardsCount; ++i)
-            std::fill_n(_table[i], Board::BoardFields, 0);
+        for (size_t i = 0; i < Board::BitBoardsCount; ++i)
+            std::fill_n(_table[i], Board::BitBoardFields, 0);
     }
 
     void ScaleTableDown() {
@@ -56,7 +56,7 @@ struct HistoricTable {
 
 private:
 
-    int16_t _table[Board::BoardsCount][Board::BoardFields];
+    int16_t _table[Board::BitBoardsCount][Board::BitBoardFields];
 };
 
 #endif //HISTORICTABLE_H

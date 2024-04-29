@@ -10,7 +10,7 @@
 bool Board::Comp(const Board& a, const Board& b)
 {
     for (int i = 0; i < 12; ++i)
-        if (a.boards[i] != b.boards[i])
+        if (a.BitBoards[i] != b.BitBoards[i])
         {
             std::cout << std::format("Invalid board: {}\n", i);
             return false;
@@ -20,10 +20,10 @@ bool Board::Comp(const Board& a, const Board& b)
         if (a.Castlings[i] != b.Castlings[i])
             return false;
 
-    if (a.elPassantField != b.elPassantField)
+    if (a.ElPassantField != b.ElPassantField)
         return false;
 
-    if (a.movColor != b.movColor)
+    if (a.MovingColor != b.MovingColor)
         return false;
 
     return true;

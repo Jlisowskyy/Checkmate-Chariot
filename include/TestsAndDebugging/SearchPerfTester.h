@@ -8,9 +8,9 @@
 #include <string>
 #include <vector>
 
+#include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
 #include "../ThreadManagement/stack.h"
-#include "../EngineTypeDefs.h"
 
 struct SearchPerfTester
 {

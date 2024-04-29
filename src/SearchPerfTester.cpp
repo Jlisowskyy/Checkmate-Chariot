@@ -57,7 +57,7 @@ double SearchPerfTester::_performTestCase(const std::string& testCase, const int
         searcher.IterativeDeepening(&mv, depth);
     else
     {
-        const int eval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.movColor);
+        const int eval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
         GlobalLogger.StartLogging() << std::format("[ INFO ] Evaluation result: {} on position:\n\t{}\n", eval, testCase);
     }
     const auto tStop = std::chrono::steady_clock::now();

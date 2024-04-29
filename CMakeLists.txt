@@ -23,26 +23,26 @@ FetchContent_MakeAvailable(googletest)
 #                                   Main App                                   #
 ################################################################################
 add_executable(Checkmate-Chariot main.cpp
-        include/compilationConstants.h
+        include/CompilationConstants.h
         include/ChessEngine.h
         src/ChessEngine.cpp
         src/UCITranslator.cpp
         include/Interface/UCIOptions.h
         src/Engine.cpp
         include/Engine.h
-        include/EngineTypeDefs.h
+        include/EngineUtils.h
         src/FenTranslator.cpp
         include/Interface/FenTranslator.h
         src/Logger.cpp
         include/Interface/Logger.h
-        src/EngineTypeDefs.cpp
+        src/EngineUtils.cpp
         include/MoveGeneration/RookMap.h
         include/MoveGeneration/BishopMap.h
         include/MoveGeneration/KnightMap.h
         include/BitOperations.h
-        include/movesHashMap.h
+        include/MovesHashMap.h
         include/MoveGeneration/KingMap.h
-        include/MoveGeneration/MoveGeneration.h
+        include/MoveGeneration/MoveGenerationUtils.h
         include/MoveGeneration/QueenMap.h
         include/MoveGeneration/WhitePawnMap.h
         src/ChessMechanics.cpp

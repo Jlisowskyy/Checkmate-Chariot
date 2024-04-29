@@ -3,7 +3,7 @@
 //
 
 #include "../include/MoveGeneration/Move.h"
-#include "../include/EngineTypeDefs.h"
+#include "../include/EngineUtils.h"
 
 std::string PackedMove::GetLongAlgebraicNotation() const
 {

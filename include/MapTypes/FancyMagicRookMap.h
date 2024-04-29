@@ -5,16 +5,16 @@
 #ifndef FANCYMAGICROOKMAP_H
 #define FANCYMAGICROOKMAP_H
 
-#include "../EngineTypeDefs.h"
+#include "../EngineUtils.h"
 #include "../MoveGeneration/RookMapGenerator.h"
 #include "../MoveGeneration/SparseRandomGenerator.h"
-#include "../movesHashMap.h"
+#include "../MovesHashMap.h"
 #include "HashFunctions.h"
 
 class FancyMagicRookMap
 {
     using _hashFuncT = FancyMagicHashFunction<SparseRandomGenerator<>>;
-    using _underlyingMapT = movesHashMap<_hashFuncT, RookMapGenerator::MaxRookPossibleNeighborsWithOverlap>;
+    using _underlyingMapT = MovesHashMap<_hashFuncT, RookMapGenerator::MaxRookPossibleNeighborsWithOverlap>;
 
    public:
     constexpr FancyMagicRookMap();
@@ -28,7 +28,7 @@ class FancyMagicRookMap
     // ------------------------------
 
    private:
-    static constexpr _hashFuncT funcs[Board::BoardFields]{
+    static constexpr _hashFuncT funcs[Board::BitBoardFields]{
         _hashFuncT(std::make_tuple(1170940307609551394LLU, 12)),
         _hashFuncT(std::make_tuple(864693331908632740LLU, 11)),
         _hashFuncT(std::make_tuple(18577430269659234LLU, 11)),
@@ -95,12 +95,12 @@ class FancyMagicRookMap
         _hashFuncT(std::make_tuple(612489824202555536LLU, 12)),
     };
 
-    std::array<_underlyingMapT, Board::BoardFields> _maps;
+    std::array<_underlyingMapT, Board::BitBoardFields> _maps;
 };
 
 constexpr FancyMagicRookMap::FancyMagicRookMap()
 {
-    for (int i = 0; i < static_cast<int>(Board::BoardFields); ++i)
+    for (int i = 0; i < static_cast<int>(Board::BitBoardFields); ++i)
     {
         const int boardIndex = ConvertToReversedPos(i);
 

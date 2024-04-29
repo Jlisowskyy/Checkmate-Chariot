@@ -291,7 +291,7 @@ UCITranslator::UCICommand UCITranslator::_isReadyResponse([[maybe_unused]] const
 
 UCITranslator::UCICommand UCITranslator::_displayResponse([[maybe_unused]] const std::string& unused)
 {
-    _engine.writeBoard();
+    _engine.WriteBoard();
     return UCICommand::displayCommand;
 }
 

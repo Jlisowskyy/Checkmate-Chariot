@@ -12,12 +12,12 @@ ZobristHasher::ZobristHasher(const uint64_t engineSeed) {
     std::mt19937_64 randEngine{engineSeed};
 
     // filling board hashes except sentinel board
-    for (size_t bd = 0; bd < Board::BoardsCount; ++bd)
-        for (size_t field = 0; field < Board::BoardFields; ++field)
+    for (size_t bd = 0; bd < Board::BitBoardsCount; ++bd)
+        for (size_t field = 0; field < Board::BitBoardFields; ++field)
             _mainHashes[bd][field] = randEngine();
 
     // sentinel board should not affect
-    for (size_t field = 0; field < Board::BoardFields; ++field)
+    for (size_t field = 0; field < Board::BitBoardFields; ++field)
         _mainHashes[Board::SentinelBoardIndex][field] = 0;
 
     _colorHash = randEngine();
@@ -32,7 +32,7 @@ ZobristHasher::ZobristHasher(const uint64_t engineSeed) {
         _castlingHashes[noSentinelCastling + castling] = _castlingHashes[castling];
     }
 
-    // filling el passant boards
+    // filling el passant BitBoards
     for (unsigned long & _elPassantHashe : _elPassantHashes)
         _elPassantHashe = randEngine();
 }
@@ -41,8 +41,8 @@ uint64_t ZobristHasher::GenerateHash(const Board& board) const {
     uint64_t hash{};
 
     // hashing pieces
-    for (size_t boardInd = 0; boardInd < Board::BoardsCount; ++boardInd) {
-        uint64_t boardMap = board.boards[boardInd];
+    for (size_t boardInd = 0; boardInd < Board::BitBoardsCount; ++boardInd) {
+        uint64_t boardMap = board.BitBoards[boardInd];
 
         while (boardMap) {
             const int boardMapPos = ExtractMsbPos(boardMap);
@@ -52,13 +52,13 @@ uint64_t ZobristHasher::GenerateHash(const Board& board) const {
     }
 
     // hashing color
-    if (board.movColor == BLACK) hash ^= _colorHash;
+    if (board.MovingColor == BLACK) hash ^= _colorHash;
 
     // hashing castling possibilites
     hash ^= _castlingHashes[board.Castlings.to_ullong()];
 
     // hashing el passant field
-    hash ^= _elPassantHashes[ExtractMsbPos(board.elPassantField)];
+    hash ^= _elPassantHashes[ExtractMsbPos(board.ElPassantField)];
 
     return hash;
 }

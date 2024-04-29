@@ -63,11 +63,11 @@ struct Board
     // class interaction
     // ------------------------------
 
-    void ChangePlayingColor() { movColor ^= 1; }
+    void ChangePlayingColor() { MovingColor ^= 1; }
 
     [[nodiscard]] constexpr int GetKingMsbPos(const int col) const
     {
-        return ExtractMsbPos(boards[col * BoardsPerCol + kingIndex]);
+        return ExtractMsbPos(BitBoards[col * BitBoardsPerCol + kingIndex]);
     }
 
     static bool Comp(const Board& a, const Board& b);
@@ -76,14 +76,14 @@ struct Board
     // Class fields
     // ------------------------------
 
-    static constexpr size_t BoardsCount = 12;
+    static constexpr size_t BitBoardsCount = 12;
     static constexpr size_t CastlingCount = 4;
-    static constexpr size_t BoardFields = 64;
-    static constexpr size_t BoardsPerCol = 6;
+    static constexpr size_t BitBoardFields = 64;
+    static constexpr size_t BitBoardsPerCol = 6;
     static constexpr size_t KingPosCount = 2;
     static constexpr size_t CastlingsPerColor = 2;
     static constexpr uint64_t InvalidElPassantField = 1;
-    static constexpr uint64_t InvalidElPassantBoard = maxMsbPossible >> InvalidElPassantField;
+    static constexpr uint64_t InvalidElPassantBitBoard = maxMsbPossible >> InvalidElPassantField;
     static constexpr size_t SentinelBoardIndex = 12;
     static constexpr size_t SentinelCastlingIndex = 4;
 
@@ -105,9 +105,9 @@ struct Board
         1LLU << 58 | 1LLU << 59 | 1LLU << 57};
 
     std::bitset<CastlingCount + 1> Castlings{0};  // additional sentinel field
-    uint64_t elPassantField = maxMsbPossible >> InvalidElPassantField;
-    int movColor = WHITE;
-    uint64_t boards[BoardsCount + 1] = {};  // additional sentinel board
+    uint64_t ElPassantField = maxMsbPossible >> InvalidElPassantField;
+    int MovingColor = WHITE;
+    uint64_t BitBoards[BitBoardsCount + 1] = {};  // additional sentinel board
 };
 
 #endif  // BOARD_H

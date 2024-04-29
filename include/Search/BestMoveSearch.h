@@ -5,7 +5,7 @@
 #ifndef BESTMOVESEARCH_H
 #define BESTMOVESEARCH_H
 
-#include "../EngineTypeDefs.h"
+#include "../EngineUtils.h"
 #include "../Evaluation/CounterMoveTable.h"
 #include "../Evaluation/HistoricTable.h"
 #include "../Evaluation/KillerTable.h"

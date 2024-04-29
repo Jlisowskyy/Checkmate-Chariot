@@ -36,7 +36,7 @@ struct ZobristHasher
         oldHash ^= _mainHashes[mv.GetTargetBoardIndex()][mv.GetTargetField()]; // removing a figure from start square
         oldHash ^= _mainHashes[mv.GetKilledBoardIndex()][mv.GetKilledFigureField()]; // removing a killed figure from the board
 
-        oldHash ^= _elPassantHashes[ExtractMsbPos(oldElPassant)]; // removing old elPassantField
+        oldHash ^= _elPassantHashes[ExtractMsbPos(oldElPassant)]; // removing old ElPassantField
         oldHash ^= _elPassantHashes[mv.GetElPassantField()]; // placing new elPassantFiled
 
         oldHash ^= _castlingHashes[oldCastlings.to_ullong()]; // removing old castlings
@@ -57,10 +57,10 @@ struct ZobristHasher
 private:
     static constexpr size_t CastlingHashesCount = 32; // 2^(4 + 1) each castling property can be either 1 or 0
                                                         // and additional sentinel
-    uint64_t _mainHashes[Board::BoardsCount+1][Board::BoardFields]{};
+    uint64_t _mainHashes[Board::BitBoardsCount +1][Board::BitBoardFields]{};
     uint64_t _colorHash{};
     uint64_t _castlingHashes[CastlingHashesCount]{};
-    uint64_t _elPassantHashes[Board::BoardFields]{};
+    uint64_t _elPassantHashes[Board::BitBoardFields]{};
 };
 
 extern ZobristHasher ZHasher;

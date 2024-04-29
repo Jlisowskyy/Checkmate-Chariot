@@ -14,16 +14,9 @@ void Engine::Initialize()
     _startingBoard = _board;
 }
 
-void Engine::writeBoard() const { DisplayBoard(_board); }
+void Engine::WriteBoard() const { DisplayBoard(_board); }
 
 std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
-{
-    Board startingBoard = _board;
-    MoveGenerator game(startingBoard, TManager.GetDefaultStack());
-    return game.GetCountedMoves(depth);
-}
-
-std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
 {
     Board startingBoard = _board;
     MoveGenerator game(startingBoard, TManager.GetDefaultStack());
@@ -32,7 +25,7 @@ std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
     const auto moves = game.GetMovesFast();
 
     const auto oldCastling = startingBoard.Castlings;
-    const auto oldElPassant = startingBoard.elPassantField;
+    const auto oldElPassant = startingBoard.ElPassantField;
     for (size_t i = 0; i < moves.size; ++i)
     {
         Move::MakeMove(moves[i], startingBoard);

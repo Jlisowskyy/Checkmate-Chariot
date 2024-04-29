@@ -1,0 +1,22 @@
+Definitions:
+    - game phase - sum of figures with weights that symbolize point between mid-game and endgame
+    - tapered eval - evaluation that is calculated based on mid-game and endgame interpolation
+    - fullMap - bit map that contains all figures on the board no matter the color
+    - pinned figure - figure that is located on the same line as the king and can't move because it would expose the king to check
+    - unpinned figure - figure that is not pinned
+    - MapT - type that defines moves possible to be made by a figure
+    - msbPos - way to index bits in a integer number from msb bit to lsb bit
+                                         msb, .............., lsb
+               e.g for uint8_t index are: 0, 1, 2, 3, 4, 5, 6, 7
+    - lsbPos - way to index bits in a integer number from lsb bit to msb
+                                         msb, .............., lsb
+               e.g for uint8_t index are: 7, 6, 5, 4, 3, 2, 1, 0
+    - king ring - fields around king, which control by enemy imposes danger to the game
+    - Board evaluation - Process of static evaluation of the whole board state.
+                         This is metric that guides search directions
+    - move sort evaluation - Simplified evaluation of the move that is used to sort moves in the search,
+                             improves alpha-beta pruning efficiency. It is mostly based on well known chess heuristics
+    - block map / block field map - bit map that all ones indicates field that are attacked by enemy figures.
+                                    Main purpose is to contain fields which are unreachable for the king
+    - allowed Fields/Map - bit map that contains fields that are legal moves for specific figure
+                           when it is pinned on given position

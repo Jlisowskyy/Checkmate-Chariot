@@ -29,7 +29,7 @@ class QueenMap
 
 constexpr size_t QueenMap::GetBoardIndex(const int color)
 {
-    return Board::BoardsPerCol * color + queensIndex;
+    return Board::BitBoardsPerCol * color + queensIndex;
 }
 
 constexpr uint64_t QueenMap::GetMoves(const int msbInd, const uint64_t fullMap, const uint64_t)
