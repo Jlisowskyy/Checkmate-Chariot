@@ -21,4 +21,4 @@ jobs:
 
     - name: Check formatting
       run: |
-        ./clang-format-checker.sh
+        bash .github/workflows/clang-format-checker.sh
