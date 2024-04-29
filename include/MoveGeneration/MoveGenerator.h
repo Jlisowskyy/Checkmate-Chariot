@@ -451,8 +451,7 @@ void MoveGenerator::_processFigMoves(
                 return MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap;
             if constexpr (isCheck)
                 return MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap & allowedMoveSelector;
-        }
-        ();
+        }();
 
         // Performing checks for castlings
         std::bitset<Board::CastlingCount + 1> updatedCastlings = _board.Castlings;

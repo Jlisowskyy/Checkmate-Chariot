@@ -107,11 +107,17 @@ constexpr FancyMagicBishopMap::FancyMagicBishopMap()
         _maps[i].InitFullMask();
 
         MoveInitializer(
-            _maps[i], [](const uint64_t n, const int ind) constexpr { return BishopMapGenerator::GenMoves(n, ind); },
-            []([[maybe_unused]] const int, const BishopMapGenerator::MasksT &m) constexpr {
+            _maps[i],
+            [](const uint64_t n, const int ind) constexpr
+            {
+                return BishopMapGenerator::GenMoves(n, ind);
+            },
+            []([[maybe_unused]] const int, const BishopMapGenerator::MasksT &m) constexpr
+            {
                 return BishopMapGenerator::GenPossibleNeighborsWithOverlap(m);
             },
-            [](const uint64_t b, const BishopMapGenerator::MasksT &m) constexpr {
+            [](const uint64_t b, const BishopMapGenerator::MasksT &m) constexpr
+            {
                 return BishopMapGenerator::StripBlockingNeighbors(b, m);
             },
             boardIndex

@@ -60,7 +60,8 @@ template <class RandomGeneratorT = std::mt19937_64> class Fast2PowHashFunction
     void RollParameters()
     {
         static RandomGeneratorT randEngine_64{
-            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
+            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
+        };
 
         _a = randEngine_64() | static_cast<__uint128_t>(randEngine_64()) << 64;
         _b = randEngine_64() | static_cast<__uint128_t>(randEngine_64()) << 64;
@@ -151,7 +152,8 @@ template <class RandomGeneratorT = std::mt19937_64> class Fast2PowHashFunctionNo
     void RollParameters()
     {
         static RandomGeneratorT randEngine_64{
-            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
+            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
+        };
 
         _a = randEngine_64() | static_cast<__uint128_t>(randEngine_64()) << 64;
     }
@@ -231,7 +233,8 @@ template <class RandomGeneratorT = std::mt19937_64> class FancyMagicHashFunction
     void RollParameters()
     {
         static RandomGeneratorT randEngine_64{
-            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
+            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
+        };
 
         _magic = randEngine_64();
     }
@@ -322,7 +325,8 @@ template <bool OptimizeSecondModulo = false, class RandomGeneratorT = std::mt199
     void RollParameters()
     {
         static RandomGeneratorT randEngine_64{
-            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
+            static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
+        };
 
         _a = randEngine_64();
         _b = randEngine_64();

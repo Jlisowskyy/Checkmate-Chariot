@@ -51,8 +51,7 @@ struct FileMap
         }
 
         return rv;
-    }
-    ();
+    }();
 
     static constexpr std::array<uint64_t, Board::BitBoardFields> _neigborFiles = []() constexpr
     {
@@ -76,8 +75,7 @@ struct FileMap
         }
 
         return rv;
-    }
-    ();
+    }();
 
     static constexpr std::array<uint64_t, Board::BitBoardFields> _fatFiles = []() constexpr
     {
@@ -94,8 +92,7 @@ struct FileMap
         }
 
         return rv;
-    }
-    ();
+    }();
 
     static constexpr int offset                                                                = 8;
     static constexpr std::array<std::array<uint64_t, Board::BitBoardFields>, 2> _frontFatFiles = []() constexpr
@@ -132,8 +129,7 @@ struct FileMap
         }
 
         return rv;
-    }
-    ();
+    }();
 
     static constexpr std::array<std::array<uint64_t, Board::BitBoardFields>, 2> _frontFiles = []() constexpr
     {
@@ -157,8 +153,7 @@ struct FileMap
         }
 
         return rv;
-    }
-    ();
+    }();
 
     public:
     static constexpr size_t FileSepSize = 3;
@@ -174,14 +169,14 @@ struct FileMap
             const int boardPos = ConvertToReversedPos(msb);
             const int startpos = boardPos % 8;
             rv[msb]            = {
-                           startpos > 0 ? GenMask(startpos - 1, Board::BitBoardFields, 8) : 0,
+                startpos > 0 ? GenMask(startpos - 1, Board::BitBoardFields, 8) : 0,
                 GenMask(startpos, Board::BitBoardFields, 8),
-                startpos < 7 ? GenMask(startpos + 1, Board::BitBoardFields, 8) : 0};
+                startpos < 7 ? GenMask(startpos + 1, Board::BitBoardFields, 8) : 0
+            };
         }
 
         return rv;
-    }
-    ();
+    }();
 };
 
 #endif // FILEMAP_H

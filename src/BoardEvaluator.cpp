@@ -369,8 +369,8 @@ void BoardEvaluator::_evaluateKings(Board &bd, _fieldEvalInfo_t &io)
 
 int32_t BoardEvaluator::_evaluateFields(Board &bd, int32_t phase)
 {
-    static constexpr void (*EvalFunctions[]
-    )(_fieldEvalInfo_t &, Board &, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t
+    static constexpr void (*EvalFunctions[])(
+        _fieldEvalInfo_t &, Board &, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t
     ){_processFigEval<KnightMap, _processKnightEval>, _processFigEval<BishopMap, _processBishopEval>,
       _processFigEval<RookMap, _processRookEval>, _processFigEval<QueenMap, _processQueenEval>};
 
