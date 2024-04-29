@@ -32,5 +32,6 @@ jobs:
       env:
         CPP_FILES: ${{ steps.files-finder.outputs.cpp_files}}
       run: |
+        /usr/bin/clang-format --version
         bash .github/workflows/clang-format-checker.sh $CPP_FILES
 
