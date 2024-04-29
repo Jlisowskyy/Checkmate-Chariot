@@ -13,6 +13,7 @@
 
 BoardEvaluator::MaterialArrayT BoardEvaluator::_materialTable =  [] () -> MaterialArrayT
     {
+        // Lambda used to based on given index return array of figure counts
         auto _reverseMaterialIndex = [](const size_t index) -> FigureCountsArrayT
         {
             return {
@@ -31,54 +32,13 @@ BoardEvaluator::MaterialArrayT BoardEvaluator::_materialTable =  [] () -> Materi
 
         MaterialArrayT arr{};
 
+        // processing all position with standard procedure
         for (size_t i = 0 ; i < MaterialTableSize; ++i)
         {
-            int materialValue {};
             auto figArr = _reverseMaterialIndex(i);
 
-            int actPhase{};
-
-            // calculating game phase
-            for (size_t j = 0; j < kingIndex; ++j)
-                actPhase += static_cast<int>(figArr[j] + figArr[BlackFigStartIndex + j]) * FigurePhases[j];
-            actPhase = (actPhase * MaxTapperedCoef + (FullPhase / 2)) / FullPhase; // FullPhase / 2 ?
-
-            // summing up total material values
-            for (size_t j = 0; j < kingIndex; ++j)
-            {
-                const int phasedFigVal = (BasicFigureValues[j]*(MaxTapperedCoef-actPhase) + EndGameFigureValues[j]*actPhase) / MaxTapperedCoef;
-
-                materialValue += static_cast<int>(figArr[j]) * phasedFigVal;
-                materialValue -= static_cast<int>(figArr[BlackFigStartIndex + j]) * phasedFigVal;
-            }
-
-            // Applying now pawn penalty
-            if (figArr[pawnsIndex] == 0)
-                materialValue += NoPawnsPenalty;
-            if (figArr[BlackFigStartIndex + pawnsIndex] == 0)
-                materialValue -= NoPawnsPenalty;
-
-            // Applying Bishop pair bonus
-            const size_t totalPawnCount = figArr[pawnsIndex] + figArr[BlackFigStartIndex + pawnsIndex];
-            if (figArr[bishopsIndex] == 2)
-                materialValue += BishopPairBonus - (static_cast<int>(totalPawnCount)*2 - BishopPairDelta);
-
-            if (figArr[BlackFigStartIndex + bishopsIndex] == 2)
-                materialValue -= BishopPairBonus - (static_cast<int>(totalPawnCount)*2 - BishopPairDelta);
-
-            // Applying Knight pair penalty -> Knights are losing value when less pawns are on board
-            if (figArr[knightsIndex] == 2)
-                materialValue += KnightPairPenalty + (static_cast<int>(totalPawnCount)*2);
-
-            if (figArr[BlackFigStartIndex + knightsIndex] == 2)
-                materialValue -= KnightPairPenalty + (static_cast<int>(totalPawnCount)*2);
-
-            // Applying Rook pair penalty
-            if (figArr[rooksIndex] == 2)
-                materialValue += RookPairPenalty;
-
-            if (figArr[BlackFigStartIndex + rooksIndex] == 2)
-                materialValue -= RookPairPenalty;
+            int32_t phase = BoardEvaluator::_calcPhase(figArr);
+            int32_t materialValue = BoardEvaluator::_slowMaterialCalculation(figArr, phase);
 
             arr[i] = static_cast<int16_t>(materialValue);
         }
@@ -113,7 +73,7 @@ int32_t BoardEvaluator::PlainMaterialEvaluation(const Board& bd)
     return eval;
 }
 
-int32_t BoardEvaluator::NaiveEvaluation2(const Board& bd)
+int32_t BoardEvaluator::NaiveEvaluation(const Board& bd)
 {
     int32_t eval = 0;
 
@@ -132,33 +92,7 @@ int32_t BoardEvaluator::NaiveEvaluation2(const Board& bd)
             eval += CostsWithPositionsIncluded[bInd][figPos];
 
             // remove processed figures
-            figs ^= maxMsbPossible >> figPos;
-        }
-    }
-
-    return eval;
-}
-
-int32_t BoardEvaluator::NaiveEvaluation3(const Board& bd)
-{
-    int32_t eval = 0;
-
-    // iterate through BitBoards
-    for (size_t bInd = 0; bInd < Board::BitBoardsCount; ++bInd)
-    {
-        // extract figures board
-        uint64_t figs = bd.BitBoards[bInd];
-
-        // iterate through figures
-        while (figs)
-        {
-            const int figPos = ExtractMsbPos(figs);
-
-            // sum costs offseted by position
-            eval += CostsWithPositionsIncluded[bInd][figPos];
-
-            // remove processed figures
-            figs ^= maxMsbPossible >> figPos;
+            RemovePiece(figs, figPos);
         }
     }
 
@@ -224,8 +158,6 @@ size_t BoardEvaluator::_getMaterialBoardIndex(const FigureCountsArrayT& counts)
 
 int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT& figArr, const int32_t actPhase)
 {
-    static constexpr size_t BlackFigStartIndex = 5;
-
     int32_t materialValue{};
 
     // summing up total material values
@@ -270,20 +202,19 @@ int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT& figAr
 
 int32_t BoardEvaluator::_calcPhase(const FigureCountsArrayT& figArr)
 {
-    static constexpr size_t BlackFigStartIndex = 5;
     int32_t actPhase{};
 
     // calculating game phase
     for (size_t j = 0; j < kingIndex; ++j)
         actPhase += static_cast<int32_t>(figArr[j] + figArr[BlackFigStartIndex + j]) * FigurePhases[j];
-    actPhase = (actPhase * MaxTapperedCoef + (FullPhase / 2)) / FullPhase; // FullPhase / 2 ?
+    actPhase = (actPhase * MaxTaperedCoef + (FullPhase / 2)) / FullPhase; // FullPhase / 2 ?
 
     return actPhase;
 }
 
 int32_t BoardEvaluator::_getTapperedValue(const int32_t phase, const int32_t midEval, const int32_t endEval)
 {
-    return (endEval*(MaxTapperedCoef-phase) + midEval*phase) / MaxTapperedCoef;
+    return (endEval*(MaxTaperedCoef - phase) + midEval*phase) / MaxTaperedCoef;
 }
 
 int32_t BoardEvaluator::_getNotTaperedEval(const Board& bd)

@@ -18,3 +18,5 @@ Definitions:
                              improves alpha-beta pruning efficiency. It is mostly based on well known chess heuristics
     - block map / block field map - bit map that all ones indicates field that are attacked by enemy figures.
                                     Main purpose is to contain fields which are unreachable for the king
+    - allowed Fields/Map - bit map that contains fields that are legal moves for specific figure
+                           when it is pinned on given position

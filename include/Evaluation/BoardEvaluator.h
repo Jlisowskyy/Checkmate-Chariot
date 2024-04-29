@@ -39,6 +39,9 @@
  *
  */
 
+// TODO:
+// TODO: there are additional evaluation functions that should be deleted after some tests in the future
+
 /*              Current evaluation elements:
  *  - material table evaluation
  *  - tapered (interpolated) mid-end evaluation
@@ -52,6 +55,9 @@
  *  - isolated pawn
  *  - passed pawn
  *  - doubled pawn
+ *  - pawn chain
+ *  - pinned pieces penalty
+ *  - exponential king's safety evaluation values
  *
  * */
 
@@ -105,9 +111,7 @@ public:
     // function uses only material to evaluate passed board
     [[nodiscard]] static int32_t PlainMaterialEvaluation(const Board&bd);
 
-    [[nodiscard]] static int32_t NaiveEvaluation2(const Board&bd);
-
-    [[nodiscard]] static int32_t NaiveEvaluation3(const Board&bd);
+    [[nodiscard]] static int32_t NaiveEvaluation(const Board&bd);
 
     [[nodiscard]] static int32_t Evaluation1(const Board&bd);
 
@@ -286,19 +290,18 @@ public:
 
     // Denotes the penalty for having two rooks on the board.
     // Reasoning:
-    //      We should 
+    //      We should try to guide the engine to exchange one of the rooks, because in most cases this allows to create
+    //      more open files for the remaining rook and guide it towards the end game
     static constexpr int16_t RookPairPenalty = -10;
 
+    // Values used to calculate mobility bonus for each figure type at the end-game and mid-game
+    // Reasoning:
+    //      We want to maximize amount of possible moves our figure can make a try to squeeze the enemy as much as we can
     static constexpr int16_t KnightMobilityBonusMid = 6;
     static constexpr int16_t KnightMobilityBonusEnd = 2;
 
     static constexpr int16_t BishopMobilityBonusMid = 6;
     static constexpr int16_t BishopMobilityBonusEnd = 2;
-
-    static constexpr int16_t MobilityBonus = 4;
-
-    static constexpr int16_t TrappedPiecePenalty = -20;
-    static constexpr int16_t PinnedPawnPenalty = -10;
 
     static constexpr int16_t RookMobilityBonusMid = 2;
     static constexpr int16_t RookMobilityBonusEnd = 6;
@@ -306,11 +309,39 @@ public:
     static constexpr int16_t QueenMobilityBonusMid = 1;
     static constexpr int16_t QueenMobilityBonusEnd = 8;
 
+    // universal mobility bonus for all figures not mentioned above
+    static constexpr int16_t MobilityBonus = 4;
+
+    // Decreases the value of pinned figures (rooks, bishops and knights) that have no possibility to move
+    // Reasoning:
+    //      Trapped peace that cannot do any move is usually vulnerable to be killed in close sequence of moves
+    static constexpr int16_t TrappedPiecePenalty = -20;
+    static constexpr int16_t PinnedPawnPenalty = -10;
+
+    // Values below is used to apply bonus per each tile that is controlled on the board center by given color
+    // Reasoning:
+    //      Center of the board is the most important part of the map so maximizing the control of it may be a good idea
     static constexpr int16_t CenterControlBonusPerTile = 2;
 
+    // values below are used to construct a key to the king safety lookup table (_kingSafetyValues),
+    // which store exponentially scaled king safety values.
+    // Key is simply constructed by summing number of attacks * (corresponding coef)
     static constexpr int16_t KingMinorPieceAttackPoints = 2;
     static constexpr int16_t KingRookAttackPoints = 3;
     static constexpr int16_t KingQueenAttackPoints = 5;
+
+    static constexpr int16_t _kingSafetyValues[] = {
+        0,  0,   1,   2,   3,   5,   7,   9,  12,  15,
+        18,  22,  26,  30,  35,  39,  44,  50,  56,  62,
+        68,  75,  82,  85,  89,  97, 105, 113, 122, 131,
+        140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
+        260, 272, 283, 295, 307, 319, 330, 342, 354, 366,
+        377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
+        494, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+        500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+        500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+        500, 500, 500, 500, 500, 500, 500, 500, 500, 500
+    };
 
     // 4x4 mask on the center board used to evaluate center control
     static constexpr uint64_t CenterFieldsMap = []() constexpr
@@ -326,6 +357,7 @@ public:
         return ~mask;
     }();
 
+    // values used to calculate material value of given board at the mid-game stage
     static constexpr int16_t BasicFigureValues[]{
         100, // Pawn
         325, // Knight
@@ -341,6 +373,7 @@ public:
         -10000 // king
     };
 
+    // values that are used to calculate material value of given board at the end-game stage
     static constexpr int16_t EndGameFigureValues[]{
         130, // Pawn
         340, // Knight
@@ -349,8 +382,8 @@ public:
         1000, // Queen
     };
 
-    // TODO: What about promotions?
 
+    // Weights below are usd to calculate game phase based on the number of figures on the board
     static constexpr int16_t PawnPhase = 0;
     static constexpr int16_t KnightPhase = 1;
     static constexpr int16_t BishopPhase = 1;
@@ -365,8 +398,15 @@ public:
         QueenPhase
     };
 
+    // Full phase based on available figure counts
     static constexpr int16_t FullPhase = 4 * KnightPhase + 4 * BishopPhase + 4 * RookPhase + 2 * QueenPhase;
-    static constexpr int16_t MaxTapperedCoef = 256;
+
+    // Maximal value to which the phase can be scaled
+    static constexpr int16_t MaxTaperedCoef = 256;
+
+    // ----------------------------------------------
+    // Figure-Position bonuses/penalties tables
+    // ----------------------------------------------
 
     static constexpr int16_t BasicBlackPawnPositionValues[]
     {
@@ -474,31 +514,6 @@ public:
         -50, -30, -30, -30, -30, -30, -30, -50
     };
 
-    static constexpr int16_t _kingSafetyValues[] = {
-        0,  0,   1,   2,   3,   5,   7,   9,  12,  15,
-      18,  22,  26,  30,  35,  39,  44,  50,  56,  62,
-      68,  75,  82,  85,  89,  97, 105, 113, 122, 131,
-     140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
-     260, 272, 283, 295, 307, 319, 330, 342, 354, 366,
-     377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
-     494, 500, 500, 500, 500, 500, 500, 500, 500, 500,
-     500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
-     500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
-     500, 500, 500, 500, 500, 500, 500, 500, 500, 500
-    };
-
-    static constexpr FigureCountsArrayT MaterialDrawPositionConstelations[]
-    {
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 2, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 2, 0, 0, 0},
-        {0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-    };
-
-
     static constexpr const int16_t* BasicBlackPositionValues[]{
         BasicBlackPawnPositionValues, BasicBlackKnightPositionValues, BasicBlackBishopPositionValues,
         BasicBlackRookPositionValues, BasicBlackQueenPositionValues, BasicBlackKingPositionValues,
@@ -509,9 +524,7 @@ public:
         BasicBlackRookPositionValues, BasicBlackQueenEndPositionValues, BasicBlackKingEndPositionValues,
     };
 
-    static constexpr size_t BlackFigStartIndex = 5;
-
-
+    // This table below is generated to simplify usage of above's tables. It is only used in naive evaluation.
     static constexpr CostArrayT CostsWithPositionsIncluded = []() constexpr
     {
         CostArrayT arr{};
@@ -533,6 +546,25 @@ public:
         return arr;
     }();
 
+    // ------------------------------
+    // Material table
+    // ------------------------------
+
+    // This table stores all position, which are 100% draw
+    // TODO: currently it stores only 7 patterns and the eval returns 0 for all of them, which is not the best idea
+    // TODO: there should be clear indication that this is draw, because besides that position eval is also summed at the end
+    static constexpr FigureCountsArrayT MaterialDrawPositionConstelations[]
+        {
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 2, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 2, 0, 0, 0},
+            {0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+        };
+
+    static constexpr size_t BlackFigStartIndex = 5;
     static MaterialArrayT _materialTable;
 };
 
@@ -547,8 +579,7 @@ int32_t BoardEvaluator::_getSimpleFieldEval(EvalF evaluator, uint64_t figs)
 
         eval += evaluator(figPos);
 
-        // remove processed figures
-        figs ^= maxMsbPossible >> figPos;
+        RemovePiece(figs, figPos);
     }
 
     return eval;
@@ -572,17 +603,17 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
     while(pinnedPawns)
     {
         const int msbPos = ExtractMsbPos(pinnedPawns);
-        const uint64_t figMap = maxMsbPossible >> msbPos;
+        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
 
         ChessMechanics mech{bd};
         const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
-        const uint64_t plainMoves = MapT::GetPlainMoves(figMap, fullMap) & allowedTiles;
+        const uint64_t plainMoves = FilterMoves(MapT::GetPlainMoves(figMap, fullMap), allowedTiles);
 
         // adding penatly for pinned pawn
         interEval += (plainMoves == 0) * PinnedPawnPenalty;
 
         // adding pawn control zone to global
-        pawnControlledFields |= (allowedTiles & MapT::GetAttackFields(figMap));
+        pawnControlledFields |= FilterMoves(MapT::GetAttackFields(figMap), allowedTiles);
 
         // adding doubled pawn penalty
         interEval += StructureEvaluator::EvalDoubledPawn(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
@@ -597,13 +628,13 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
 
-        pinnedPawns ^= figMap;
+        RemovePiece(pinnedPawns, figMap);
     }
 
     while(unpinnedPawns)
     {
         const int msbPos = ExtractMsbPos(unpinnedPawns);
-        const uint64_t figMap = maxMsbPossible >> msbPos;
+        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
 
         const uint64_t attackFields = MapT::GetAttackFields(figMap);
 
@@ -622,7 +653,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board& bd, const uin
         // adding passed pawn penalty
         interEval += StructureEvaluator::SimplePassedPawn(bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor());
 
-        unpinnedPawns ^= figMap;
+        RemovePiece(unpinnedPawns, figMap);
     }
 
     // adding controlled fields
@@ -646,35 +677,35 @@ BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAc
     uint64_t controlledFields{};
     _kingSafetyInfo_t kInfo{};
 
-    uint64_t pinnedKnighs = bd.BitBoards[MapT::GetBoardIndex(col)] & pinnedFigs;
-    uint64_t unpinnedKnights = bd.BitBoards[MapT::GetBoardIndex(col)] ^ pinnedKnighs;
+    uint64_t pinnedKnights = bd.BitBoards[MapT::GetBoardIndex(col)] & pinnedFigs;
+    uint64_t unpinnedKnights = bd.BitBoards[MapT::GetBoardIndex(col)] ^ pinnedKnights;
 
     const uint64_t safeFields = ~enemyControlledFieldsByPawns;
 
     // generating king ring
     const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
 
-    while(pinnedKnighs)
+    while(pinnedKnights)
     {
-        const int msbPos = ExtractMsbPos(pinnedKnighs);
-        const uint64_t figMap = maxMsbPossible >> msbPos;
+        const int msbPos = ExtractMsbPos(pinnedKnights);
+        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
 
-        // adding penatly for being pinned
+        // adding penalty for being pinned
         interEval += TrappedPiecePenalty;
 
         // adding field values
         interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
 
-        pinnedKnighs ^= figMap;
+        RemovePiece(pinnedKnights, figMap);
     }
 
     while(unpinnedKnights)
     {
         const int msbPos = ExtractMsbPos(unpinnedKnights);
-        const uint64_t figMap = maxMsbPossible >> msbPos;
+        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
 
         const uint64_t moves = MapT::GetMoves(msbPos);
-        const uint64_t safeMoves = moves & safeFields;
+        const uint64_t safeMoves = FilterMoves(moves, safeFields);
 
         // adding fields to controlled ones
         controlledFields |= moves;
@@ -690,9 +721,8 @@ BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAc
         // adding field values
         interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
 
-        unpinnedKnights ^= figMap;
+        RemovePiece(unpinnedKnights, figMap);
     }
-
 
     midEval += interEval;
     endEval += interEval;
@@ -722,17 +752,17 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
     while(pinnedBishops)
     {
         const int msbPos = ExtractMsbPos(pinnedBishops);
-        const uint64_t figMap = maxMsbPossible >> msbPos;
+        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
 
         ChessMechanics mech{bd};
         const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
 
-        const uint64_t LegalMoves = allowedTiles & MapT::GetMoves(msbPos, fullMap);
+        const uint64_t LegalMoves = FilterMoves(MapT::GetMoves(msbPos, fullMap), allowedTiles);
 
         // trapped penalty
         interEval += TrappedPiecePenalty * (LegalMoves == 0);
 
-        // adding controlle fields
+        // adding controlled fields
         controlledFields |= LegalMoves;
 
         // adding mobility bonus
@@ -740,16 +770,16 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
         midEval += movesCount * BishopMobilityBonusMid;
         endEval += movesCount * BishopMobilityBonusEnd;
 
-        pinnedBishops ^= figMap;
+        RemovePiece(pinnedBishops, figMap);
     }
 
     while(unpinnedBishops)
     {
         const int msbPos = ExtractMsbPos(unpinnedBishops);
-        const uint64_t figMap = maxMsbPossible >> msbPos;
+        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
 
         const uint64_t moves = MapT::GetMoves(msbPos, fullMap);
-        const uint64_t safeMoves = moves & safeFields;
+        const uint64_t safeMoves = FilterMoves(moves, safeFields);
 
         // adding fields to controlled ones
         controlledFields |= moves;
@@ -762,7 +792,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAc
         // adding king attack info
         KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingMinorPieceAttackPoints);
 
-        unpinnedBishops ^= figMap;
+        RemovePiece(unpinnedBishops, figMap);
     }
 
     midEval += interEval;
@@ -793,12 +823,12 @@ BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAcce
     while(pinnedRooks)
     {
         const int msbPos = ExtractMsbPos(pinnedRooks);
-        const uint64_t figMap = maxMsbPossible >> msbPos;
+        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
 
         ChessMechanics mech{bd};
         const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
 
-        const uint64_t LegalMoves = allowedTiles & MapT::GetMoves(msbPos, fullMap);
+        const uint64_t LegalMoves = FilterMoves(MapT::GetMoves(msbPos, fullMap), allowedTiles);
 
         // trapped penalty
         interEval += TrappedPiecePenalty * (LegalMoves == 0);
@@ -814,16 +844,16 @@ BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAcce
         midEval += movesCount * RookMobilityBonusMid;
         endEval += movesCount * RookMobilityBonusEnd;
 
-        pinnedRooks ^= figMap;
+        RemovePiece(pinnedRooks, figMap);
     }
 
     while(unpinnedRooks)
     {
         const int msbPos = ExtractMsbPos(unpinnedRooks);
-        const uint64_t figMap = maxMsbPossible >> msbPos;
+        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
 
         const uint64_t moves = MapT::GetMoves(msbPos, fullMap);
-        const uint64_t safeMoves = moves & safeFields;
+        const uint64_t safeMoves = FilterMoves(moves, safeFields);
 
         // adding fields to controlled ones
         controlledFields |= moves;
@@ -839,7 +869,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAcce
         // adding king attack info
         KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingRookAttackPoints);
 
-        unpinnedRooks ^= figMap;
+        RemovePiece(unpinnedRooks, figMap);
     }
 
     midEval += interEval;
@@ -869,34 +899,34 @@ BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAcc
     while(pinnedQueens)
     {
         const int msbPos = ExtractMsbPos(pinnedQueens);
-        const uint64_t figMap = maxMsbPossible >> msbPos;
+        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
 
         ChessMechanics mech{bd};
         const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
 
-        const uint64_t LegalMoves = allowedTiles & MapT::GetMoves(msbPos, fullMap);
+        const uint64_t LegalMoves = FilterMoves(MapT::GetMoves(msbPos, fullMap), allowedTiles);
 
-        // adding controlle fields
+        // adding controlled fields
         controlledFields |= LegalMoves;
 
         // adding mobility bonus
-        const int movesCount = CountOnesInBoard(LegalMoves & safeFields);
+        const int movesCount = CountOnesInBoard(FilterMoves(LegalMoves, safeFields));
         midEval += movesCount * QueenMobilityBonusMid;
         endEval += movesCount * QueenMobilityBonusEnd;
 
         // adding positional field values
         midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
 
-        pinnedQueens ^= figMap;
+        RemovePiece(pinnedQueens, figMap);
     }
 
     while(unpinnedQueens)
     {
         const int msbPos = ExtractMsbPos(unpinnedQueens);
-        const uint64_t figMap = maxMsbPossible >> msbPos;
+        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
 
         const uint64_t moves = MapT::GetMoves(msbPos, fullMap);
-        const uint64_t safeMoves = moves & safeFields;
+        const uint64_t safeMoves = FilterMoves(moves, safeFields);
 
         // adding fields to controlled ones
         controlledFields |= moves;
@@ -912,7 +942,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAcc
         // adding king attack info
         KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingQueenAttackPoints);
 
-        unpinnedQueens ^= figMap;
+        RemovePiece(unpinnedQueens, figMap);
     }
 
     return {midEval, endEval, controlledFields, kInfo};

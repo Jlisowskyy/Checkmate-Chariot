@@ -13,6 +13,26 @@
 
 constexpr int SwapColor(const int col) { return col ^ 1; }
 
+constexpr uint64_t RemovePiece(uint64_t &bitMap, uint64_t singleBitBitMap)
+{
+    return bitMap ^= singleBitBitMap;
+}
+
+constexpr uint64_t RemovePiece(uint64_t &bitMap, int msbPos)
+{
+    return bitMap ^= (maxMsbPossible >> msbPos);
+}
+
+constexpr uint64_t ConvertMsbPosToBitMap(int msbPos)
+{
+    return (maxMsbPossible >> msbPos);
+}
+
+constexpr uint64_t FilterMoves(uint64_t moves, uint64_t allowedMoves)
+{
+    return moves & allowedMoves;
+}
+
 void DisplayMask(uint64_t mask);
 void DisplayBoard(const Board& bd);
 
