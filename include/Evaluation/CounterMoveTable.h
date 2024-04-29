@@ -20,14 +20,14 @@ struct CounterMoveTable
     // Class creation
     // ------------------------------
 
-    constexpr CounterMoveTable() = default;
+    constexpr CounterMoveTable()  = default;
     constexpr ~CounterMoveTable() = default;
 
-    CounterMoveTable(CounterMoveTable&&) = delete;
-    CounterMoveTable(const CounterMoveTable&) = delete;
+    CounterMoveTable(CounterMoveTable &&)      = delete;
+    CounterMoveTable(const CounterMoveTable &) = delete;
 
-    CounterMoveTable& operator=(const CounterMoveTable&) = delete;
-    CounterMoveTable& operator=(CounterMoveTable&&) = delete;
+    CounterMoveTable &operator=(const CounterMoveTable &) = delete;
+    CounterMoveTable &operator=(CounterMoveTable &&)      = delete;
 
     // ------------------------------
     // Class interaction
@@ -45,17 +45,16 @@ struct CounterMoveTable
 
     void ClearTable()
     {
-        for (size_t i = 0 ; i < Board::BitBoardsCount; ++i)
-            for (size_t j = 0; j < Board::BitBoardFields; ++j)
-                _counterMovesTable[i][j] = {};
+        for (size_t i = 0; i < Board::BitBoardsCount; ++i)
+            for (size_t j = 0; j < Board::BitBoardFields; ++j) _counterMovesTable[i][j] = {};
     }
 
     // ------------------------------
     // Class fields
     // ------------------------------
-private:
 
+    private:
     PackedMove _counterMovesTable[Board::BitBoardsCount][Board::BitBoardFields]{};
 };
 
-#endif //COUNTERMOVETABLE_H
+#endif // COUNTERMOVETABLE_H

@@ -13,10 +13,10 @@
 
 class FancyMagicBishopMap
 {
-    using _hashFuncT = FancyMagicHashFunction<SparseRandomGenerator<>>;
+    using _hashFuncT      = FancyMagicHashFunction<SparseRandomGenerator<>>;
     using _underlyingMapT = MovesHashMap<_hashFuncT, BishopMapGenerator::MaxPossibleNeighborsWithOverlap>;
 
-   public:
+    public:
     constexpr FancyMagicBishopMap();
 
     [[nodiscard]] constexpr uint64_t GetMoves(int msbInd, uint64_t fullBoard) const;
@@ -27,7 +27,7 @@ class FancyMagicBishopMap
     // class fields
     // ------------------------------
 
-   private:
+    private:
     static constexpr _hashFuncT funcs[Board::BitBoardFields]{
         _hashFuncT(std::make_tuple(2459020380749179396LLU, 6)),
         _hashFuncT(std::make_tuple(18228596997040662761LLU, 5)),
@@ -107,13 +107,15 @@ constexpr FancyMagicBishopMap::FancyMagicBishopMap()
         _maps[i].InitFullMask();
 
         MoveInitializer(
-            _maps[i],
-            [](const uint64_t n, const int ind) constexpr { return BishopMapGenerator::GenMoves(n, ind); },
-            []([[maybe_unused]] const int, const BishopMapGenerator::MasksT& m) constexpr
-            { return BishopMapGenerator::GenPossibleNeighborsWithOverlap(m); },
-            [](const uint64_t b, const BishopMapGenerator::MasksT& m) constexpr
-            { return BishopMapGenerator::StripBlockingNeighbors(b, m); },
-            boardIndex);
+            _maps[i], [](const uint64_t n, const int ind) constexpr { return BishopMapGenerator::GenMoves(n, ind); },
+            []([[maybe_unused]] const int, const BishopMapGenerator::MasksT &m) constexpr {
+                return BishopMapGenerator::GenPossibleNeighborsWithOverlap(m);
+            },
+            [](const uint64_t b, const BishopMapGenerator::MasksT &m) constexpr {
+                return BishopMapGenerator::StripBlockingNeighbors(b, m);
+            },
+            boardIndex
+        );
     }
 }
 
@@ -123,4 +125,4 @@ constexpr uint64_t FancyMagicBishopMap::GetMoves(const int msbInd, const uint64_
     return _maps[msbInd][neighbors];
 }
 
-#endif  // FANCYMAGICBISHOPMAP_H
+#endif // FANCYMAGICBISHOPMAP_H

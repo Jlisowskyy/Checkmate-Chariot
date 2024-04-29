@@ -6,7 +6,6 @@
 
 #include <fstream>
 
-
 MapPerformanceTester::RecordsPack MapPerformanceTester::_readTestFile(std::string filename)
 {
     std::ifstream stream(filename, std::ios::binary | std::ios::in);
@@ -37,7 +36,8 @@ MapPerformanceTester::RecordsPack MapPerformanceTester::_readTestFile(std::strin
 
         if (!stream)
             throw std::runtime_error(
-                std::format("[ ERROR ] Encountered ill-formed record inside the test. Test no {} (0-based).", i));
+                std::format("[ ERROR ] Encountered ill-formed record inside the test. Test no {} (0-based).", i)
+            );
     }
 
     return {recordCount, fullMaps, figureMaps};

@@ -70,32 +70,32 @@ struct Board
         return ExtractMsbPos(BitBoards[col * BitBoardsPerCol + kingIndex]);
     }
 
-    static bool Comp(const Board& a, const Board& b);
+    static bool Comp(const Board &a, const Board &b);
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
-    static constexpr size_t BitBoardsCount = 12;
-    static constexpr size_t CastlingCount = 4;
-    static constexpr size_t BitBoardFields = 64;
-    static constexpr size_t BitBoardsPerCol = 6;
-    static constexpr size_t KingPosCount = 2;
-    static constexpr size_t CastlingsPerColor = 2;
-    static constexpr uint64_t InvalidElPassantField = 1;
+    static constexpr size_t BitBoardsCount             = 12;
+    static constexpr size_t CastlingCount              = 4;
+    static constexpr size_t BitBoardFields             = 64;
+    static constexpr size_t BitBoardsPerCol            = 6;
+    static constexpr size_t KingPosCount               = 2;
+    static constexpr size_t CastlingsPerColor          = 2;
+    static constexpr uint64_t InvalidElPassantField    = 1;
     static constexpr uint64_t InvalidElPassantBitBoard = maxMsbPossible >> InvalidElPassantField;
-    static constexpr size_t SentinelBoardIndex = 12;
-    static constexpr size_t SentinelCastlingIndex = 4;
+    static constexpr size_t SentinelBoardIndex         = 12;
+    static constexpr size_t SentinelCastlingIndex      = 4;
 
-    static constexpr std::array<uint64_t, KingPosCount> DefaultKingBoards{maxMsbPossible >> ConvertToReversedPos(4),
-                                                                          maxMsbPossible >> ConvertToReversedPos(60)};
+    static constexpr std::array<uint64_t, KingPosCount> DefaultKingBoards{
+        maxMsbPossible >> ConvertToReversedPos(4), maxMsbPossible >> ConvertToReversedPos(60)};
     static constexpr std::array<int, CastlingCount> CastlingNewKingPos{
         ConvertToReversedPos(6), ConvertToReversedPos(2), ConvertToReversedPos(62), ConvertToReversedPos(58)};
 
     static constexpr std::array<uint64_t, CastlingCount> CastlingsRookMaps{1LLU << 7, 1LLU, 1LLU << 63, 1LLU << 56};
 
-    static constexpr std::array<uint64_t, CastlingCount> CastlingNewRookMaps{1LLU << 5, 1LLU << 3, 1LLU << 61,
-                                                                             1LLU << 59};
+    static constexpr std::array<uint64_t, CastlingCount> CastlingNewRookMaps{
+        1LLU << 5, 1LLU << 3, 1LLU << 61, 1LLU << 59};
 
     static constexpr std::array<uint64_t, CastlingCount> CastlingSensitiveFields{
         1LLU << 6 | 1LLU << 5, 1LLU << 2 | 1LLU << 3, 1LLU << 61 | 1LLU << 62, 1LLU << 58 | 1LLU << 59};
@@ -104,10 +104,10 @@ struct Board
         1LLU << 6 | 1LLU << 5, 1LLU << 2 | 1LLU << 3 | 1LLU << 1, 1LLU << 61 | 1LLU << 62,
         1LLU << 58 | 1LLU << 59 | 1LLU << 57};
 
-    std::bitset<CastlingCount + 1> Castlings{0};  // additional sentinel field
-    uint64_t ElPassantField = maxMsbPossible >> InvalidElPassantField;
-    int MovingColor = WHITE;
-    uint64_t BitBoards[BitBoardsCount + 1] = {};  // additional sentinel board
+    std::bitset<CastlingCount + 1> Castlings{0}; // additional sentinel field
+    uint64_t ElPassantField                = maxMsbPossible >> InvalidElPassantField;
+    int MovingColor                        = WHITE;
+    uint64_t BitBoards[BitBoardsCount + 1] = {}; // additional sentinel board
 };
 
-#endif  // BOARD_H
+#endif // BOARD_H

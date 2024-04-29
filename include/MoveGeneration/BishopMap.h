@@ -18,7 +18,8 @@ class BishopMap
     // ---------------------------------------
     // Class creation and initialization
     // ---------------------------------------
-   public:
+
+    public:
     BishopMap() = delete;
 
     ~BishopMap() = delete;
@@ -35,19 +36,16 @@ class BishopMap
     // Class fields
     // ------------------------------
 
-    static constexpr const char* names[] = {"nwMask", "neMask", "swMask", "seMask"};
+    static constexpr const char *names[] = {"nwMask", "neMask", "swMask", "seMask"};
 
     static constexpr _underlyingMap _map{};
 };
 
-constexpr size_t BishopMap::GetBoardIndex(const int color)
-{
-    return Board::BitBoardsPerCol * color + bishopsIndex;
-}
+constexpr size_t BishopMap::GetBoardIndex(const int color) { return Board::BitBoardsPerCol * color + bishopsIndex; }
 
 constexpr uint64_t BishopMap::GetMoves(const int msbInd, const uint64_t fullBoard, const uint64_t)
 {
     return _map.GetMoves(msbInd, fullBoard);
 }
 
-#endif  // BISHOPMAP_H
+#endif // BISHOPMAP_H

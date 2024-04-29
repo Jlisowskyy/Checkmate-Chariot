@@ -21,8 +21,8 @@
  *  - records should be saved in such manner that:
  *      - uint64_t - full map - 8 bytes
  *      - uint64_t - map containing only rooks or bishops - 8 bytes
- *      - uint8_t - contains number of following results, all should be sorted from the highest board index to lowest - 1
- * byte
+ *      - uint8_t - contains number of following results, all should be sorted from the highest board index to lowest -
+ * 1 byte
  *      - uint64_t - move results for each figure from the highest board index to lowest - 8 bytes each
  */
 
@@ -40,7 +40,8 @@ class MapCorrectnessTester
     // ------------------------------
     // Class creation
     // ------------------------------
-   public:
+
+    public:
     MapCorrectnessTester() = default;
 
     ~MapCorrectnessTester() = default;
@@ -49,18 +50,18 @@ class MapCorrectnessTester
     // Class interaction
     // ------------------------------
 
-    template <class MapT>
-    static void PerformTest(const std::string &filename, const MapT &map) noexcept(false);
+    template <class MapT> static void PerformTest(const std::string &filename, const MapT &map) noexcept(false);
 
     // ------------------------------
     // Private class methods
     // ------------------------------
-   private:
+
+    private:
     static RecordsPack _readTestFile(std::string filename);
 };
 
-template<class MapT>
-void MapCorrectnessTester::PerformTest(const std::string& filename, const MapT& map) noexcept(false)
+template <class MapT>
+void MapCorrectnessTester::PerformTest(const std::string &filename, const MapT &map) noexcept(false)
 {
     auto [recordCount, fullMaps, figureMaps, correctMoves] = _readTestFile(filename);
     uint64_t errorCount{};
@@ -73,7 +74,7 @@ void MapCorrectnessTester::PerformTest(const std::string& filename, const MapT& 
     for (size_t i = 0; i < recordCount; ++i)
     {
         const uint64_t fullMap = fullMaps[i];
-        uint64_t figureMap = figureMaps[i];
+        uint64_t figureMap     = figureMaps[i];
 
         int figNum{};
         while (figureMap != 0)
@@ -84,10 +85,10 @@ void MapCorrectnessTester::PerformTest(const std::string& filename, const MapT& 
             if (const uint64_t move = map.GetMoves(msbPos, fullMap); move != correctMoves[i][figNum])
             {
                 ++errorCount;
-                lastErrorMove = move;
+                lastErrorMove           = move;
                 lastErrorMoveCorrectOne = correctMoves[i][figNum];
-                lastErrorMap = fullMap;
-                lastFigPos = maxMsbPossible >> msbPos;
+                lastErrorMap            = fullMap;
+                lastFigPos              = maxMsbPossible >> msbPos;
             }
 
             ++figNum;
@@ -100,8 +101,7 @@ void MapCorrectnessTester::PerformTest(const std::string& filename, const MapT& 
     std::cout << std::format("Processed records: {}\nTotally checked: {} moves\n", recordCount, moveCount);
     if (errorCount)
     {
-        std::cout << std::format("________Last error move on field {}:\n\n",
-                                 ConvertToStrPos(lastFigPos));
+        std::cout << std::format("________Last error move on field {}:\n\n", ConvertToStrPos(lastFigPos));
         DisplayMask(lastErrorMove);
         std::cout << "________Correct move:\n\n";
         DisplayMask(lastErrorMoveCorrectOne);
@@ -110,4 +110,4 @@ void MapCorrectnessTester::PerformTest(const std::string& filename, const MapT& 
     }
 }
 
-#endif  // MAPCORRECTNESSTEST_H
+#endif // MAPCORRECTNESSTEST_H

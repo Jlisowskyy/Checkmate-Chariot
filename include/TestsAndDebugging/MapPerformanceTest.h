@@ -10,8 +10,8 @@
 #include <string>
 #include <vector>
 
-#include "../Interface/Logger.h"
 #include "../BitOperations.h"
+#include "../Interface/Logger.h"
 
 /*              IMPORTANT NOTES
  *  All files containing maps used to test must follow this scheme:
@@ -33,7 +33,8 @@ class MapPerformanceTester
     // ------------------------------
     // Class creation
     // ------------------------------
-   public:
+
+    public:
     MapPerformanceTester() = default;
 
     ~MapPerformanceTester() = default;
@@ -42,29 +43,29 @@ class MapPerformanceTester
     // Class interaction
     // ------------------------------
 
-    template <class MapT>
-    static double PerformTest(const std::string &filename, const MapT &map) noexcept(false);
+    template <class MapT> static double PerformTest(const std::string &filename, const MapT &map) noexcept(false);
 
     // ------------------------------
     // Private class methods
     // ------------------------------
-   private:
+
+    private:
     static RecordsPack _readTestFile(std::string filename);
 };
 
-template<class MapT>
-double MapPerformanceTester::PerformTest(const std::string& filename, const MapT& map) noexcept(false)
+template <class MapT>
+double MapPerformanceTester::PerformTest(const std::string &filename, const MapT &map) noexcept(false)
 {
     auto [recordCount, fullMaps, figureMaps] = _readTestFile(filename);
     uint64_t mapReads{};
-    uint64_t trulyNotRandomNumber{};  // was unsure about optimizations done when there was no use of read value
+    uint64_t trulyNotRandomNumber{}; // was unsure about optimizations done when there was no use of read value
 
     const auto timeStart = std::chrono::steady_clock::now();
 
     for (size_t i = 0; i < recordCount; ++i)
     {
         const uint64_t fullMap = fullMaps[i];
-        uint64_t figureMap = figureMaps[i];
+        uint64_t figureMap     = figureMaps[i];
 
         while (figureMap != 0)
         {
@@ -78,17 +79,18 @@ double MapPerformanceTester::PerformTest(const std::string& filename, const MapT
         }
     }
 
-    const auto timeStop = std::chrono::steady_clock::now();
+    const auto timeStop      = std::chrono::steady_clock::now();
     const double timeSpentMs = (timeStop - timeStart).count() * 1e-6;
-    const double readPerMs = mapReads / timeSpentMs;
+    const double readPerMs   = mapReads / timeSpentMs;
 
     GlobalLogger.StartLogging()
-            << std::format(
-                "During the test there was {} reads in total.\nAll done in {}ms.\nWhich outputs {} reads per ms\n",
-                mapReads, timeSpentMs, readPerMs)
-            << std::format("Acquired test number: {}\n", trulyNotRandomNumber);
+        << std::format(
+               "During the test there was {} reads in total.\nAll done in {}ms.\nWhich outputs {} reads per ms\n",
+               mapReads, timeSpentMs, readPerMs
+           )
+        << std::format("Acquired test number: {}\n", trulyNotRandomNumber);
 
     return readPerMs;
 }
 
-#endif  // MAPPERFORMANCETEST_H
+#endif // MAPPERFORMANCETEST_H

@@ -52,14 +52,14 @@ struct PackedMove
     // Class creation
     // ------------------------------
 
-    PackedMove() = default;
+    PackedMove()  = default;
     ~PackedMove() = default;
 
-    PackedMove(const PackedMove& other) = default;
-    PackedMove& operator=(const PackedMove& other) = default;
+    PackedMove(const PackedMove &other)            = default;
+    PackedMove &operator=(const PackedMove &other) = default;
 
-    PackedMove(PackedMove&& other) = default;
-    PackedMove& operator=(PackedMove&& other) = default;
+    PackedMove(PackedMove &&other)            = default;
+    PackedMove &operator=(PackedMove &&other) = default;
 
     // ------------------------------
     // Class interaction
@@ -84,46 +84,22 @@ struct PackedMove
         return (_packedMove & TargetFieldMask) >> 6;
     }
 
-    [[nodiscard]] bool IsEmpty() const
-    {
-        return _packedMove == 0;
-    }
+    [[nodiscard]] bool IsEmpty() const { return _packedMove == 0; }
 
-    [[nodiscard]] bool IsQuiet() const
-    {
-        return (_packedMove & MoveTypeBits) == 0;
-    }
+    [[nodiscard]] bool IsQuiet() const { return (_packedMove & MoveTypeBits) == 0; }
 
-    [[nodiscard]] bool IsCapture() const
-    {
-        return (_packedMove & CaptureBit) != 0;
-    }
+    [[nodiscard]] bool IsCapture() const { return (_packedMove & CaptureBit) != 0; }
 
-    [[nodiscard]] bool IsPromo() const
-    {
-        return (_packedMove & PromoBit) != 0;
-    }
+    [[nodiscard]] bool IsPromo() const { return (_packedMove & PromoBit) != 0; }
 
-    void SetMoveType(const uint16_t MoveType)
-    {
-        _packedMove |= MoveType << 12;
-    }
+    void SetMoveType(const uint16_t MoveType) { _packedMove |= MoveType << 12; }
 
-    [[nodiscard]] uint16_t GetMoveType() const
-    {
-        return (_packedMove & MoveTypeBits) >> 12;
-    }
+    [[nodiscard]] uint16_t GetMoveType() const { return (_packedMove & MoveTypeBits) >> 12; }
 
-    [[nodiscard]] bool IsValidMove() const
-    {
-        return !IsEmpty();
-    }
+    [[nodiscard]] bool IsValidMove() const { return !IsEmpty(); }
 
     // debugging tool
-    [[nodiscard]] bool IsOkeyMove() const
-    {
-        return !IsEmpty() && GetTargetField() != GetStartField();
-    }
+    [[nodiscard]] bool IsOkeyMove() const { return !IsEmpty() && GetTargetField() != GetStartField(); }
 
     [[nodiscard]] std::string GetLongAlgebraicNotation() const;
 
@@ -131,20 +107,20 @@ struct PackedMove
     // Class fields
     // ------------------------------
 
-    static constexpr uint16_t PromoFlag = 0b1000;
-    static constexpr uint16_t CaptureFlag = 0b100;
-    static constexpr uint16_t CastlingFlag = 0b10;
-    static constexpr uint16_t QueenFlag = 0;
-    static constexpr uint16_t RookFlag = 0b1;
-    static constexpr uint16_t BishopFlag = 0b10;
-    static constexpr uint16_t KnightFlag = 0b11;
+    static constexpr uint16_t PromoFlag     = 0b1000;
+    static constexpr uint16_t CaptureFlag   = 0b100;
+    static constexpr uint16_t CastlingFlag  = 0b10;
+    static constexpr uint16_t QueenFlag     = 0;
+    static constexpr uint16_t RookFlag      = 0b1;
+    static constexpr uint16_t BishopFlag    = 0b10;
+    static constexpr uint16_t KnightFlag    = 0b11;
     static constexpr uint16_t PromoSpecBits = 0b11;
 
-private:
+    private:
     static constexpr uint16_t MoveTypeBits = 0xF << 12;
-    static constexpr uint16_t Bit6 = 0b111111;
+    static constexpr uint16_t Bit6         = 0b111111;
 
-    static constexpr uint16_t PromoBit = 0b1000 << 12;
+    static constexpr uint16_t PromoBit   = 0b1000 << 12;
     static constexpr uint16_t CaptureBit = 0b100 << 12;
 
     friend Move;
@@ -154,22 +130,22 @@ private:
 
 class Move
 {
-   public:
+    public:
     // ------------------------------
     // Class creation
     // ------------------------------
 
     // This construction does not initialize crucial fields what must be done
-    explicit Move(const PackedMove mv): _packedMove(mv) {}
+    explicit Move(const PackedMove mv) : _packedMove(mv) {}
 
-    Move() = default;
+    Move()  = default;
     ~Move() = default;
 
-    Move(const Move& other) = default;
-    Move& operator=(const Move& other) = default;
+    Move(const Move &other)            = default;
+    Move &operator=(const Move &other) = default;
 
-    Move(Move&& other) = default;
-    Move& operator=(Move&& other) = default;
+    Move(Move &&other)            = default;
+    Move &operator=(Move &&other) = default;
 
     // ------------------------------
     // Class interaction
@@ -178,43 +154,22 @@ class Move
     friend bool operator==(const Move a, const Move b) { return a._packedMove == b._packedMove; }
     friend bool operator!=(const Move a, const Move b) { return !(a == b); }
 
-    [[nodiscard]] PackedMove GetPackedMove() const
-    {
-        return _packedMove;
-    }
+    [[nodiscard]] PackedMove GetPackedMove() const { return _packedMove; }
 
-    void SetMoveType(const uint16_t MoveType)
-    {
-        _packedMove.SetMoveType(MoveType);
-    }
+    void SetMoveType(const uint16_t MoveType) { _packedMove.SetMoveType(MoveType); }
 
-    [[nodiscard]] uint16_t GetMoveType() const
-    {
-        return _packedMove.GetMoveType();
-    }
+    [[nodiscard]] uint16_t GetMoveType() const { return _packedMove.GetMoveType(); }
 
-    [[nodiscard]] bool IsQuietMove() const
-    {
-        return !_packedMove.IsCapture() && !_packedMove.IsPromo();
-    }
+    [[nodiscard]] bool IsQuietMove() const { return !_packedMove.IsCapture() && !_packedMove.IsPromo(); }
 
-    [[nodiscard]] bool IsValidMove() const
-    {
-        return _packedMove.IsValidMove();
-    }
+    [[nodiscard]] bool IsValidMove() const { return _packedMove.IsValidMove(); }
 
     // debugging tool
-    [[nodiscard]] bool IsOkeyMove() const
-    {
-        return _packedMove.IsOkeyMove();
-    }
+    [[nodiscard]] bool IsOkeyMove() const { return _packedMove.IsOkeyMove(); }
 
-    [[nodiscard]] std::string GetLongAlgebraicNotation() const
-    {
-        return _packedMove.GetLongAlgebraicNotation();
-    }
+    [[nodiscard]] std::string GetLongAlgebraicNotation() const { return _packedMove.GetLongAlgebraicNotation(); }
 
-    static void MakeMove(const Move mv, Board& bd)
+    static void MakeMove(const Move mv, Board &bd)
     {
         assert(mv.IsOkeyMove());
 
@@ -240,18 +195,13 @@ class Move
         bd.ChangePlayingColor();
     }
 
-    [[nodiscard]] bool IsAttackingMove() const
-    {
-        return _packedMove.IsCapture();
-    }
+    [[nodiscard]] bool IsAttackingMove() const { return _packedMove.IsCapture(); }
 
-    [[nodiscard]] bool IsEmpty() const
-    {
-        return  _packedMove.IsEmpty();
-    }
+    [[nodiscard]] bool IsEmpty() const { return _packedMove.IsEmpty(); }
 
-    static void UnmakeMove(const Move mv, Board& bd, const std::bitset<Board::CastlingCount + 1> castlings,
-                           const uint64_t oldElPassant)
+    static void UnmakeMove(
+        const Move mv, Board &bd, const std::bitset<Board::CastlingCount + 1> castlings, const uint64_t oldElPassant
+    )
     {
         assert(mv.IsOkeyMove());
 
@@ -279,29 +229,17 @@ class Move
 
     void SetEval(const int16_t eval) { _eval = eval; }
 
-    void ReplaceEval(const int16_t eval)
-    {
-        SetEval(eval);
-    }
+    void ReplaceEval(const int16_t eval) { SetEval(eval); }
 
-    [[nodiscard]] int16_t GetEval() const
-    {
-        return _eval;
-    }
+    [[nodiscard]] int16_t GetEval() const { return _eval; }
 
     void SetStartField(const uint16_t startField) { _packedMove.SetStartField(startField); }
 
-    [[nodiscard]] uint16_t GetStartField() const
-    {
-        return _packedMove.GetStartField();
-    }
+    [[nodiscard]] uint16_t GetStartField() const { return _packedMove.GetStartField(); }
 
     void SetTargetField(const uint16_t targetField) { _packedMove.SetTargetField(targetField); }
 
-    [[nodiscard]] uint16_t GetTargetField() const
-    {
-        return _packedMove.GetTargetField();
-    }
+    [[nodiscard]] uint16_t GetTargetField() const { return _packedMove.GetTargetField(); }
 
     void SetStartBoardIndex(const uint16_t startBoard) { _packedIndexes |= startBoard; }
 
@@ -310,7 +248,6 @@ class Move
         static constexpr uint16_t StartBoardMask = Bit4;
         return _packedIndexes & StartBoardMask;
     }
-
 
     void SetTargetBoardIndex(const uint16_t targetBoardIndex) { _packedIndexes |= targetBoardIndex << 4; }
 
@@ -361,12 +298,11 @@ class Move
     [[nodiscard]] std::bitset<Board::CastlingCount + 1> GetCastlingRights() const
     {
         static constexpr uint16_t CastlingMask = Bit4 << 12;
-        const uint16_t rights = (_packedMisc & CastlingMask) >> 12;
+        const uint16_t rights                  = (_packedMisc & CastlingMask) >> 12;
         const std::bitset<Board::CastlingCount + 1> arr{rights};
 
         return arr;
     }
-
 
     // ------------------------------
     // Private class methods
@@ -375,7 +311,8 @@ class Move
     // ------------------------------
     // Class fields
     // ------------------------------
-private:
+
+    private:
     static constexpr uint16_t Bit4 = 0b1111;
     static constexpr uint16_t Bit6 = 0b111111;
     static constexpr uint16_t Bit3 = 0b111;
@@ -384,14 +321,15 @@ private:
     PackedMove _packedMove{};
     uint16_t _packedIndexes{};
     uint16_t _packedMisc{};
-public:
+
+    public:
     static constexpr std::pair<size_t, uint64_t> CastlingActions[] = {
-        {Board::SentinelBoardIndex, 0LLU},
-        {wRooksIndex, Board::CastlingNewRookMaps[0]},
-        {wRooksIndex, Board::CastlingNewRookMaps[1]},
-        {bRooksIndex, Board::CastlingNewRookMaps[2]},
-        {bRooksIndex, Board::CastlingNewRookMaps[3]},
+        {Board::SentinelBoardIndex,                          0LLU},
+        {              wRooksIndex, Board::CastlingNewRookMaps[0]},
+        {              wRooksIndex, Board::CastlingNewRookMaps[1]},
+        {              bRooksIndex, Board::CastlingNewRookMaps[2]},
+        {              bRooksIndex, Board::CastlingNewRookMaps[3]},
     };
 };
 
-#endif  // MOVE_H
+#endif // MOVE_H

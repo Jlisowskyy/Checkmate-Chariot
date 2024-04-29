@@ -17,35 +17,30 @@
 class KillerTable
 {
     static constexpr size_t MovesPerPly = 3;
-public:
+
+    public:
     // ------------------------------
     // Class creation
     // ------------------------------
 
-    constexpr KillerTable() = default;
+    constexpr KillerTable()  = default;
     constexpr ~KillerTable() = default;
 
-    KillerTable(KillerTable&&) = delete;
-    KillerTable(const KillerTable&) = delete;
+    KillerTable(KillerTable &&)      = delete;
+    KillerTable(const KillerTable &) = delete;
 
-    KillerTable& operator=(const KillerTable&) = delete;
-    KillerTable& operator=(KillerTable&&) = delete;
+    KillerTable &operator=(const KillerTable &) = delete;
+    KillerTable &operator=(KillerTable &&)      = delete;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
     // simply clears previously saved moves
-    void ClearPlyFloor(const int depthLeft)
-    {
-        _kTable[depthLeft] = {};
-    }
+    void ClearPlyFloor(const int depthLeft) { _kTable[depthLeft] = {}; }
 
     // saves move to the table if possible
-    void SaveKillerMove(const Move kMove, const int depthLeft)
-    {
-        _kTable[depthLeft].Push(kMove);
-    }
+    void SaveKillerMove(const Move kMove, const int depthLeft) { _kTable[depthLeft].Push(kMove); }
 
     // checks whether actual move is a "killer" move
     [[nodiscard]] bool IsKillerMove(const Move move, const int depthLeft) const
@@ -53,7 +48,7 @@ public:
         return _kTable[depthLeft].Contains(move);
     }
 
-private:
+    private:
     // ------------------------------
     // Inner types
     // ------------------------------
@@ -77,4 +72,4 @@ private:
     _killerFloor_t _kTable[MaxSearchDepth]{};
 };
 
-#endif //KILLERTABLE_H
+#endif // KILLERTABLE_H

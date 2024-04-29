@@ -17,35 +17,38 @@ class SearchThreadManager
     // ------------------------------
     // Class creation
     // ------------------------------
-   public:
+
+    public:
     SearchThreadManager() = default;
     ~SearchThreadManager();
 
-    SearchThreadManager(const SearchThreadManager&) = delete;
-    SearchThreadManager(SearchThreadManager&&) = delete;
+    SearchThreadManager(const SearchThreadManager &) = delete;
+    SearchThreadManager(SearchThreadManager &&)      = delete;
 
-    SearchThreadManager& operator=(const SearchThreadManager&) = delete;
-    SearchThreadManager& operator=(SearchThreadManager&&) = delete;
+    SearchThreadManager &operator=(const SearchThreadManager &) = delete;
+    SearchThreadManager &operator=(SearchThreadManager &&)      = delete;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] stack<Move, DefaultStackSize>& GetDefaultStack() { return _stacks[0]; }
+    [[nodiscard]] stack<Move, DefaultStackSize> &GetDefaultStack() { return _stacks[0]; }
 
-    bool goInfinite(const Board& bd, uint16_t age);
+    bool goInfinite(const Board &bd, uint16_t age);
 
     std::string stop();
 
-    std::string goMoveTime(const Board& bd, long long msecs, uint16_t age);
+    std::string goMoveTime(const Board &bd, long long msecs, uint16_t age);
 
-    std::string goDepth(const Board& bd, int depth, uint16_t age);
+    std::string goDepth(const Board &bd, int depth, uint16_t age);
 
     // ------------------------------
     // Private class methods
     // ------------------------------
-   private:
-    static void _threadSearchJob(const Board* bd, stack<Move, DefaultStackSize>* s, PackedMove* output, int depth, uint16_t age);
+
+    private:
+    static void
+    _threadSearchJob(const Board *bd, stack<Move, DefaultStackSize> *s, PackedMove *output, int depth, uint16_t age);
 
     void _cancelThread(size_t threadInd);
 
@@ -64,7 +67,7 @@ class SearchThreadManager
     PackedMove _seachResult{};
 
     stack<Move, DefaultStackSize> _stacks[20 + 1]{};
-    std::thread* _threads[20 + 1]{};
+    std::thread *_threads[20 + 1]{};
 };
 
-#endif  // SEARCHTHREADMANAGER_H
+#endif // SEARCHTHREADMANAGER_H

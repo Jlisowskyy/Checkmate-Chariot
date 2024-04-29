@@ -14,7 +14,8 @@ class KnightMap
     // ---------------------------------------
     // Class creation and initialization
     // ---------------------------------------
-   public:
+
+    public:
     KnightMap() = delete;
 
     // ------------------------------
@@ -23,7 +24,8 @@ class KnightMap
 
     [[nodiscard]] static constexpr size_t GetBoardIndex(int color);
 
-    [[nodiscard]] static constexpr uint64_t GetMoves(int msbInd, [[maybe_unused]] uint64_t = 0, [[maybe_unused]] uint64_t = 0);
+    [[nodiscard]] static constexpr uint64_t
+    GetMoves(int msbInd, [[maybe_unused]] uint64_t = 0, [[maybe_unused]] uint64_t = 0);
 
     // ------------------------------
     // Class fields
@@ -42,14 +44,8 @@ class KnightMap
         GenStaticMoves(maxMovesCount, movesCords, rowCords);
 };
 
-constexpr size_t KnightMap::GetBoardIndex(const int color)
-{
-    return Board::BitBoardsPerCol * color + knightsIndex;
-}
+constexpr size_t KnightMap::GetBoardIndex(const int color) { return Board::BitBoardsPerCol * color + knightsIndex; }
 
-constexpr uint64_t KnightMap::GetMoves(const int msbInd, const uint64_t, const uint64_t)
-{
-    return movesMap[msbInd];
-}
+constexpr uint64_t KnightMap::GetMoves(const int msbInd, const uint64_t, const uint64_t) { return movesMap[msbInd]; }
 
-#endif  // KNIGHTMAP_H
+#endif // KNIGHTMAP_H

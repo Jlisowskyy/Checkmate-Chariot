@@ -15,7 +15,8 @@ class QueenMap
     // ------------------------------
     // Class creation
     // ------------------------------
-   public:
+
+    public:
     constexpr QueenMap() = default;
 
     // ------------------------------
@@ -27,14 +28,11 @@ class QueenMap
     [[nodiscard]] static constexpr uint64_t GetMoves(int msbInd, uint64_t fullMap, [[maybe_unused]] uint64_t = 0);
 };
 
-constexpr size_t QueenMap::GetBoardIndex(const int color)
-{
-    return Board::BitBoardsPerCol * color + queensIndex;
-}
+constexpr size_t QueenMap::GetBoardIndex(const int color) { return Board::BitBoardsPerCol * color + queensIndex; }
 
 constexpr uint64_t QueenMap::GetMoves(const int msbInd, const uint64_t fullMap, const uint64_t)
 {
     return BishopMap::GetMoves(msbInd, fullMap) | RookMap::GetMoves(msbInd, fullMap);
 }
 
-#endif  // QUEENMAP_H
+#endif // QUEENMAP_H

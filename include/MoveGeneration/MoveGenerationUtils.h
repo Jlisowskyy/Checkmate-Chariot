@@ -12,9 +12,8 @@
 #include "../EngineUtils.h"
 #include "../Interface/Logger.h"
 
-[[nodiscard]] constexpr std::array<uint64_t, Board::BitBoardFields> GenStaticMoves(const size_t maxMovesCount,
-                                                                                const int* movesCords,
-                                                                                const int* rowCords)
+[[nodiscard]] constexpr std::array<uint64_t, Board::BitBoardFields>
+GenStaticMoves(const size_t maxMovesCount, const int *movesCords, const int *rowCords)
 {
     std::array<uint64_t, Board::BitBoardFields> movesRet{};
 
@@ -22,13 +21,13 @@
     {
         for (int y = 0; y < 8; ++y)
         {
-            const int bInd = 8 * y + x;
+            const int bInd   = 8 * y + x;
             const int msbInd = ConvertToReversedPos(bInd);
 
             uint64_t packedMoves = 0;
             for (size_t i = 0; i < maxMovesCount; ++i)
             {
-                const int moveYCord = (bInd + movesCords[i]) / 8;
+                const int moveYCord   = (bInd + movesCords[i]) / 8;
                 const int knightYCord = bInd / 8;
 
                 if (const int moveInd = bInd + movesCords[i];
@@ -58,7 +57,7 @@ template <class NeighborCountingFuncT>
     return sum;
 }
 
-inline void DisplayMasks(const uint64_t* masks, const char** names, const size_t maskCount)
+inline void DisplayMasks(const uint64_t *masks, const char **names, const size_t maskCount)
 {
     for (size_t i = 0; i < maskCount; ++i)
     {
@@ -72,8 +71,7 @@ template <class ComparisonMethodT>
 {
     uint64_t mask = 0;
 
-    while (comp(boardIndex += offset, barrier))
-        mask |= (1LLU << boardIndex);
+    while (comp(boardIndex += offset, barrier)) mask |= (1LLU << boardIndex);
 
     return mask;
 }
@@ -81,8 +79,7 @@ template <class ComparisonMethodT>
 [[nodiscard]] constexpr uint64_t GenMask(const int startInd, const int boarderIndex, const int offset)
 {
     uint64_t ret = 0;
-    for (int i = startInd; i < boarderIndex; i += offset)
-        ret |= (1LLU << i);
+    for (int i = startInd; i < boarderIndex; i += offset) ret |= (1LLU << i);
     return ret;
 }
 
@@ -95,11 +92,11 @@ template <class ComparisonMethodT>
 [[nodiscard]] constexpr size_t GetRoundedSizePow(const size_t x) { return std::countr_zero(std::bit_ceil(x)); }
 
 template <class BoundryCheckFuncT>
-constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd, const int offset,
-                                   BoundryCheckFuncT boundryCheck)
+constexpr uint64_t
+GenSlidingMoves(const uint64_t neighbors, const int bInd, const int offset, BoundryCheckFuncT boundryCheck)
 {
     uint64_t ret = 0;
-    int actPos = bInd;
+    int actPos   = bInd;
 
     while (boundryCheck(actPos += offset))
     {
@@ -114,18 +111,18 @@ constexpr uint64_t GenSlidingMoves(const uint64_t neighbors, const int bInd, con
 }
 
 template <class MoveGeneratorT, class NeighborGeneratorT, class NeigborStripT, class MapT>
-constexpr void MoveInitializer(MapT& map, MoveGeneratorT mGen, NeighborGeneratorT nGen, NeigborStripT nStrip,
-                               const int bInd)
+constexpr void
+MoveInitializer(MapT &map, MoveGeneratorT mGen, NeighborGeneratorT nGen, NeigborStripT nStrip, const int bInd)
 {
     const auto [possibilities, posSize] = nGen(bInd, map.masks);
 
     for (size_t j = 0; j < posSize; ++j)
     {
         const uint64_t strippedNeighbors = nStrip(possibilities[j], map.masks);
-        const uint64_t moves = mGen(strippedNeighbors, bInd);
+        const uint64_t moves             = mGen(strippedNeighbors, bInd);
 
         map[possibilities[j]] = moves;
     }
 }
 
-#endif  // MOVEGENERATION_H
+#endif // MOVEGENERATION_H

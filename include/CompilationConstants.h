@@ -10,8 +10,8 @@
 using lli = long long int;
 
 // global defined stack capacity used to store generated moves per thread
-static constexpr size_t MB = 1024 * 1024;
+static constexpr size_t MB               = 1024 * 1024;
 static constexpr size_t DefaultStackSize = 32 * MB / sizeof(uint64_t);
-static constexpr int MaxSearchDepth = 128;
+static constexpr int MaxSearchDepth      = 128;
 
-#endif  // COMPILATION_CONSTANTS_H
+#endif // COMPILATION_CONSTANTS_H

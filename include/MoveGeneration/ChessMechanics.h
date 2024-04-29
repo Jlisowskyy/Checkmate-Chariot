@@ -37,11 +37,11 @@ struct ChessMechanics
 
     ChessMechanics() = delete;
 
-    explicit ChessMechanics(Board& bd) : _board(bd) {}
+    explicit ChessMechanics(Board &bd) : _board(bd) {}
 
-    ChessMechanics(ChessMechanics& other) = default;
+    ChessMechanics(ChessMechanics &other) = default;
 
-    ChessMechanics& operator=(ChessMechanics&) = delete;
+    ChessMechanics &operator=(ChessMechanics &) = delete;
 
     ~ChessMechanics() = default;
 
@@ -64,7 +64,7 @@ struct ChessMechanics
     [[nodiscard]] uint64_t GenerateAllowedTilesForPrecisedPinnedFig(uint64_t figBoard, uint64_t fullMap) const;
 
     // returns [ pinnedFigMap, allowedTilesMap ]
-    template<PinnedFigGen genType>
+    template <PinnedFigGen genType>
     [[nodiscard]] std::pair<uint64_t, uint64_t> GetPinnedFigsMap(int col, uint64_t fullMap) const;
 
     [[nodiscard]] uint64_t GetAllowedTilesWhenCheckedByNonSliding() const;
@@ -73,8 +73,8 @@ struct ChessMechanics
     // private methods
     // ------------------------------
 
-
-    static std::pair<uint64_t, uint8_t> _getRookBlockedMap(uint64_t rookMap, uint64_t fullMapWoutKing, uint64_t kingMap);
+    static std::pair<uint64_t, uint8_t>
+    _getRookBlockedMap(uint64_t rookMap, uint64_t fullMapWoutKing, uint64_t kingMap);
 
     template <class MoveGeneratorT>
     [[nodiscard]] static uint64_t _blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen);
@@ -87,10 +87,10 @@ struct ChessMechanics
     // Class fields
     // ------------------------------
 
-    Board& _board;
+    Board &_board;
 };
 
-template<ChessMechanics::PinnedFigGen genType>
+template <ChessMechanics::PinnedFigGen genType>
 std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMap(const int col, const uint64_t fullMap) const
 {
     assert(fullMap != 0);
@@ -98,19 +98,18 @@ std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMap(const int col, co
 
     const size_t enemyCord = SwapColor(col) * Board::BitBoardsPerCol;
 
-    const auto [pinnedByRooks, allowedRooks] =
-            _getPinnedFigMaps<RookMap, genType>(fullMap,
-                                                _board.BitBoards[enemyCord + rooksIndex] | _board.BitBoards[enemyCord + queensIndex]);
+    const auto [pinnedByRooks, allowedRooks] = _getPinnedFigMaps<RookMap, genType>(
+        fullMap, _board.BitBoards[enemyCord + rooksIndex] | _board.BitBoards[enemyCord + queensIndex]
+    );
 
-    const auto [pinnedByBishops, allowedBishops] =
-            _getPinnedFigMaps<BishopMap, genType>(fullMap,
-                                                  _board.BitBoards[enemyCord + bishopsIndex] | _board.BitBoards[enemyCord + queensIndex]);
+    const auto [pinnedByBishops, allowedBishops] = _getPinnedFigMaps<BishopMap, genType>(
+        fullMap, _board.BitBoards[enemyCord + bishopsIndex] | _board.BitBoards[enemyCord + queensIndex]
+    );
 
     return {pinnedByBishops | pinnedByRooks, allowedBishops | allowedRooks};
 }
 
-template<class MoveGeneratorT>
-uint64_t ChessMechanics::_blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen)
+template <class MoveGeneratorT> uint64_t ChessMechanics::_blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen)
 {
     uint64_t blockedMap = 0;
 
@@ -125,8 +124,9 @@ uint64_t ChessMechanics::_blockIterativeGenerator(uint64_t board, MoveGeneratorT
     return blockedMap;
 }
 
-template<class MoveMapT, ChessMechanics::PinnedFigGen type>
-std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigMaps(const uint64_t fullMap, const uint64_t possiblePinningFigs) const
+template <class MoveMapT, ChessMechanics::PinnedFigGen type>
+std::pair<uint64_t, uint64_t>
+ChessMechanics::_getPinnedFigMaps(const uint64_t fullMap, const uint64_t possiblePinningFigs) const
 {
     uint64_t allowedTilesFigMap{};
     [[maybe_unused]] uint64_t pinnedFigMap{};
@@ -134,13 +134,15 @@ std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigMaps(const uint64_t f
     const int kingPos = _board.GetKingMsbPos(_board.MovingColor);
     // generating figs seen from king's rook perpective
     const uint64_t kingFigPerspectiveAttackedFields = MoveMapT::GetMoves(kingPos, fullMap);
-    const uint64_t kingFigPerspectiveAttackedFigs = kingFigPerspectiveAttackedFields & fullMap;
+    const uint64_t kingFigPerspectiveAttackedFigs   = kingFigPerspectiveAttackedFields & fullMap;
 
-    // this functions should be called only in case of single check so the value below can only be either null or the map of checking figure
+    // this functions should be called only in case of single check so the value below can only be either null or the
+    // map of checking figure
     if constexpr (type == PinnedFigGen::WAllowedTiles)
-        if (const uint64_t kingSeenEnemyFigs = kingFigPerspectiveAttackedFigs & possiblePinningFigs; kingSeenEnemyFigs != 0)
+        if (const uint64_t kingSeenEnemyFigs = kingFigPerspectiveAttackedFigs & possiblePinningFigs;
+            kingSeenEnemyFigs != 0)
         {
-            const int msbPos = ExtractMsbPos(kingSeenEnemyFigs);
+            const int msbPos     = ExtractMsbPos(kingSeenEnemyFigs);
             const uint64_t moves = MoveMapT::GetMoves(msbPos, fullMap);
 
             allowedTilesFigMap = (moves & kingFigPerspectiveAttackedFields) | kingSeenEnemyFigs;
@@ -151,10 +153,10 @@ std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigMaps(const uint64_t f
 
     // generating figs, which stayed behid first ones and are actually pinnig ones
     const uint64_t kingSecondRookPerspective = MoveMapT::GetMoves(kingPos, cleanedMap);
-    uint64_t pinningFigs = possiblePinningFigs & kingSecondRookPerspective;
+    uint64_t pinningFigs                     = possiblePinningFigs & kingSecondRookPerspective;
 
     // generating fields which are both seen by king and pinning figure = field on which pinned figure stays
-    while(pinningFigs != 0)
+    while (pinningFigs != 0)
     {
         const int msbPos = ExtractMsbPos(pinningFigs);
         pinnedFigMap |= MoveMapT::GetMoves(msbPos, fullMap) & kingFigPerspectiveAttackedFigs;
@@ -164,5 +166,4 @@ std::pair<uint64_t, uint64_t> ChessMechanics::_getPinnedFigMaps(const uint64_t f
     return {pinnedFigMap, allowedTilesFigMap};
 }
 
-
-#endif  // CHESSMECHANICS_H
+#endif // CHESSMECHANICS_H

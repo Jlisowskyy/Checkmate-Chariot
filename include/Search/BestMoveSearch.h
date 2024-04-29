@@ -18,74 +18,66 @@ class BestMoveSearch
     // Class inner types
     // ------------------------------
 
-    struct PV {
+    struct PV
+    {
         PV() = delete;
 
-        PV(const int depth): _depth(depth){}
+        PV(const int depth) : _depth(depth) {}
 
-        void InsertNext(const PackedMove mv, const PV& pv) {
-            _path[0] = mv;
-            memcpy(_path + 1, pv._path, (_depth-1)*sizeof(PackedMove));
-        }
-
-        void Clear() {
-            memset(_path, 0, _depth*sizeof(PackedMove));
-        }
-
-        void Clone(const PV& pv)
+        void InsertNext(const PackedMove mv, const PV &pv)
         {
-            memcpy(_path, pv._path, (_depth)*sizeof(PackedMove));
+            _path[0] = mv;
+            memcpy(_path + 1, pv._path, (_depth - 1) * sizeof(PackedMove));
         }
+
+        void Clear() { memset(_path, 0, _depth * sizeof(PackedMove)); }
+
+        void Clone(const PV &pv) { memcpy(_path, pv._path, (_depth) * sizeof(PackedMove)); }
 
         void Print() const
         {
-            for (int i = 0; i < _depth; ++i)
-                GlobalLogger.StartLogging() << _path[i].GetLongAlgebraicNotation() << ' ';
+            for (int i = 0; i < _depth; ++i) GlobalLogger.StartLogging() << _path[i].GetLongAlgebraicNotation() << ' ';
         }
 
-        PackedMove operator()(const int depthLeft, const int rootDepth) const
-        {
-            return _path[rootDepth - depthLeft];
-        }
+        PackedMove operator()(const int depthLeft, const int rootDepth) const { return _path[rootDepth - depthLeft]; }
 
-        PackedMove operator[](const int ply) const
-        {
-            return _path[ply];
-        }
+        PackedMove operator[](const int ply) const { return _path[ply]; }
 
-
-    private:
-        PackedMove _path[MaxSearchDepth+1]{};
+        private:
+        PackedMove _path[MaxSearchDepth + 1]{};
         const int _depth;
     };
 
-public:
+    public:
     // ------------------------------
     // Class creation
     // ------------------------------
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board& board, stack<Move, DefaultStackSize>& s, const uint16_t age) :
-        _stack(s), _board(board), _age(age) {}
+    BestMoveSearch(const Board &board, stack<Move, DefaultStackSize> &s, const uint16_t age)
+        : _stack(s), _board(board), _age(age)
+    {
+    }
     ~BestMoveSearch() = default;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    void IterativeDeepening(PackedMove* output, int maxDepth, bool writeInfo = true);
+    void IterativeDeepening(PackedMove *output, int maxDepth, bool writeInfo = true);
 
     // ------------------------------
     // Private class methods
     // ------------------------------
-   private:
 
+    private:
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimizing player
-    [[nodiscard]] int _pwsSearch(Board& bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV& pv, bool followPv);
-    [[nodiscard]] int _zwSearch(Board& bd, int alpha, int depthLeft, uint64_t zHash, Move prevMove);
-    [[nodiscard]] int _quiescenceSearch(Board& bd, int alpha, int beta, uint64_t zHash);
-    [[nodiscard]] int _zwQuiescenceSearch(Board& bd, int alpha, uint64_t zHash);
+    [[nodiscard]] int
+    _pwsSearch(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);
+    [[nodiscard]] int _zwSearch(Board &bd, int alpha, int depthLeft, uint64_t zHash, Move prevMove);
+    [[nodiscard]] int _quiescenceSearch(Board &bd, int alpha, int beta, uint64_t zHash);
+    [[nodiscard]] int _zwQuiescenceSearch(Board &bd, int alpha, uint64_t zHash);
 
     static void _embeddedMoveSort(stack<Move, DefaultStackSize>::stackPayload moves, size_t range);
     static void _pullMoveToFront(stack<Move, DefaultStackSize>::stackPayload moves, PackedMove mv);
@@ -97,24 +89,24 @@ public:
     // Class fields
     // ------------------------------
 
-    static constexpr int MateMargin = 200;
+    static constexpr int MateMargin       = 200;
     static constexpr int NegativeInfinity = INT16_MIN + 100;
     static constexpr int PositiveInfinity = INT16_MAX - 100;
 
     static constexpr uint16_t QuisenceAgeDiffToReplace = 16;
-    static constexpr uint16_t SearchAgeDiffToReplace = 10;
+    static constexpr uint16_t SearchAgeDiffToReplace   = 10;
 
     static constexpr int MaxAspWindowTries = 4;
 
-    stack<Move, DefaultStackSize>& _stack;
+    stack<Move, DefaultStackSize> &_stack;
     Board _board;
     const uint16_t _age;
     uint64_t _visitedNodes = 0;
-    uint64_t _cutoffNodes = 0;
-    int _currRootDepth = 0;
+    uint64_t _cutoffNodes  = 0;
+    int _currRootDepth     = 0;
     KillerTable _kTable{};
     CounterMoveTable _cmTable{};
     HistoricTable _histTable{};
 };
 
-#endif  // BESTMOVESEARCH_H
+#endif // BESTMOVESEARCH_H

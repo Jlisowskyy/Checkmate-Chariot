@@ -8,25 +8,25 @@
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
 
-const Board& FenTranslator::GetDefault() { return StartBoard; }
+const Board &FenTranslator::GetDefault() { return StartBoard; }
 
-bool FenTranslator::Translate(const std::string& fenPos, Board& bd)
+bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
 {
     Board workBoard{};
 
     try
     {
         size_t pos = 0;
-        pos = _skipBlanks(pos, fenPos);
-        pos = _processPositions(workBoard, pos, fenPos);
-        pos = _skipBlanks(pos, fenPos);
-        pos = _processMovingColor(workBoard, pos, fenPos);
-        pos = _skipBlanks(pos, fenPos);
-        pos = _processCastlings(workBoard, pos, fenPos);
-        pos = _skipBlanks(pos, fenPos);
+        pos        = _skipBlanks(pos, fenPos);
+        pos        = _processPositions(workBoard, pos, fenPos);
+        pos        = _skipBlanks(pos, fenPos);
+        pos        = _processMovingColor(workBoard, pos, fenPos);
+        pos        = _skipBlanks(pos, fenPos);
+        pos        = _processCastlings(workBoard, pos, fenPos);
+        pos        = _skipBlanks(pos, fenPos);
         _processElPassant(workBoard, pos, fenPos);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         GlobalLogger.LogError(exc.what());
         GlobalLogger.LogError("[ INFO ] Loading default layout...");
@@ -38,7 +38,7 @@ bool FenTranslator::Translate(const std::string& fenPos, Board& bd)
     return true;
 }
 
-std::string FenTranslator::Translate(const Board& board)
+std::string FenTranslator::Translate(const Board &board)
 {
     std::string fenPos{};
     _extractFiguresEncoding(board, fenPos);
@@ -53,8 +53,8 @@ std::string FenTranslator::Translate(const Board& board)
                                                     ? WhitePawnMap::GetElPassantMoveField(board.ElPassantField)
                                                     : BlackPawnMap::GetElPassantMoveField(board.ElPassantField);
 
-    fenPos += board.ElPassantField == Board::InvalidElPassantBitBoard ? "-"
-                  : ConvertToStrPos(FenCompatibleElPassantPosition);
+    fenPos +=
+        board.ElPassantField == Board::InvalidElPassantBitBoard ? "-" : ConvertToStrPos(FenCompatibleElPassantPosition);
 
     // skpping moves counters - not supported
     fenPos += " 0 1";
@@ -62,7 +62,7 @@ std::string FenTranslator::Translate(const Board& board)
     return fenPos;
 }
 
-std::string FenTranslator::_extractCastling(const Board& bd)
+std::string FenTranslator::_extractCastling(const Board &bd)
 {
     std::string str{};
     for (size_t i = 0; i < Board::CastlingCount; ++i)
@@ -74,7 +74,7 @@ std::string FenTranslator::_extractCastling(const Board& bd)
     return str;
 }
 
-void FenTranslator::_extractFiguresEncoding(const Board& bd, std::string& fenPos)
+void FenTranslator::_extractFiguresEncoding(const Board &bd, std::string &fenPos)
 {
     int inSeries{};
 
@@ -111,8 +111,8 @@ void FenTranslator::_extractFiguresEncoding(const Board& bd, std::string& fenPos
     }
 }
 
-std::tuple<FenTranslator::FieldOccup, char, Color> FenTranslator::_extractSingleEncoding(const Board& bd,
-                                                                                         const int bInd)
+std::tuple<FenTranslator::FieldOccup, char, Color>
+FenTranslator::_extractSingleEncoding(const Board &bd, const int bInd)
 {
     const uint64_t map = 1LLU << bInd;
 
@@ -125,24 +125,24 @@ std::tuple<FenTranslator::FieldOccup, char, Color> FenTranslator::_extractSingle
 
             switch (i % Board::BitBoardsPerCol)
             {
-                case pawnsIndex:
-                    fig = 'p';
-                    break;
-                case knightsIndex:
-                    fig = 'n';
-                    break;
-                case bishopsIndex:
-                    fig = 'b';
-                    break;
-                case rooksIndex:
-                    fig = 'r';
-                    break;
-                case queensIndex:
-                    fig = 'q';
-                    break;
-                case kingIndex:
-                    fig = 'k';
-                    break;
+            case pawnsIndex:
+                fig = 'p';
+                break;
+            case knightsIndex:
+                fig = 'n';
+                break;
+            case bishopsIndex:
+                fig = 'b';
+                break;
+            case rooksIndex:
+                fig = 'r';
+                break;
+            case queensIndex:
+                fig = 'q';
+                break;
+            case kingIndex:
+                fig = 'k';
+                break;
             }
 
             return {occupied, fig, col};
@@ -152,7 +152,7 @@ std::tuple<FenTranslator::FieldOccup, char, Color> FenTranslator::_extractSingle
     return {empty, {}, {}};
 }
 
-size_t FenTranslator::_processElPassant(Board& bd, const size_t pos, const std::string& fenPos)
+size_t FenTranslator::_processElPassant(Board &bd, const size_t pos, const std::string &fenPos)
 {
     if (pos >= fenPos.length())
         throw std::runtime_error("[ ERROR ] Fen position has invalid castling specified!\n");
@@ -169,7 +169,7 @@ size_t FenTranslator::_processElPassant(Board& bd, const size_t pos, const std::
     if (pos + 1 >= fenPos.length() || (pos + 2 < fenPos.length() && !std::isblank(fenPos[pos + 2])))
         throw std::runtime_error("[ ERROR ] Invalid field description detected on ElPassant field!\n");
 
-    const auto field = fenPos.substr(pos, 2);
+    const auto field        = fenPos.substr(pos, 2);
     const uint64_t boardPos = ExtractPosFromStr(field[0], field[1]);
 
     if (boardPos == 0)
@@ -179,12 +179,12 @@ size_t FenTranslator::_processElPassant(Board& bd, const size_t pos, const std::
 
     // inner representation points to position made with long pawn move
     bd.ElPassantField = bd.MovingColor == WHITE ? BlackPawnMap::GetElPassantMoveField(bd.ElPassantField)
-                                             : WhitePawnMap::GetElPassantMoveField(bd.ElPassantField);
+                                                : WhitePawnMap::GetElPassantMoveField(bd.ElPassantField);
 
     return pos + 2;
 }
 
-size_t FenTranslator::_processCastlings(Board& bd, size_t pos, const std::string& fenPos)
+size_t FenTranslator::_processCastlings(Board &bd, size_t pos, const std::string &fenPos)
 {
     if (pos >= fenPos.length())
         throw std::runtime_error("[ ERROR ] Fen position does not contain information about castling!\n");
@@ -207,20 +207,20 @@ size_t FenTranslator::_processCastlings(Board& bd, size_t pos, const std::string
 
         switch (fenPos[pos])
         {
-            case 'K':
-                ind = WhiteKingSide;
-                break;
-            case 'k':
-                ind = BlackKingSide;
-                break;
-            case 'Q':
-                ind = WhiteQueenSide;
-                break;
-            case 'q':
-                ind = BlackQueenSide;
-                break;
-            default:
-                throw std::runtime_error(std::format("[ ERROR ] Unrecognized castling specifier: {0}!\n", fenPos[pos]));
+        case 'K':
+            ind = WhiteKingSide;
+            break;
+        case 'k':
+            ind = BlackKingSide;
+            break;
+        case 'Q':
+            ind = WhiteQueenSide;
+            break;
+        case 'q':
+            ind = BlackQueenSide;
+            break;
+        default:
+            throw std::runtime_error(std::format("[ ERROR ] Unrecognized castling specifier: {0}!\n", fenPos[pos]));
         }
 
         if (bd.Castlings[ind] != false)
@@ -240,7 +240,7 @@ size_t FenTranslator::_processCastlings(Board& bd, size_t pos, const std::string
     return pos;
 }
 
-size_t FenTranslator::_processMovingColor(Board& bd, const size_t pos, const std::string& fenPos)
+size_t FenTranslator::_processMovingColor(Board &bd, const size_t pos, const std::string &fenPos)
 {
     // Too short fenPos string or too long moving color specyfing substring.
     if (pos >= fenPos.length() || (pos + 1 < fenPos.length() && !std::isblank(fenPos[pos + 1])))
@@ -253,14 +253,15 @@ size_t FenTranslator::_processMovingColor(Board& bd, const size_t pos, const std
         bd.MovingColor = BLACK;
     else
         throw std::runtime_error(
-            std::format("[ ERROR ] Fen position contains invalid character ({0}) on moving color field", fenPos[pos]));
+            std::format("[ ERROR ] Fen position contains invalid character ({0}) on moving color field", fenPos[pos])
+        );
 
     return pos + 1;
 }
 
-size_t FenTranslator::_processPositions(Board& bd, size_t pos, const std::string& fenPos)
+size_t FenTranslator::_processPositions(Board &bd, size_t pos, const std::string &fenPos)
 {
-    int processedFields = 0;
+    int processedFields   = 0;
     std::string posBuffer = "00";
 
     while (pos < fenPos.length() && !std::isblank(fenPos[pos]))
@@ -291,22 +292,24 @@ size_t FenTranslator::_processPositions(Board& bd, size_t pos, const std::string
     return pos;
 }
 
-void FenTranslator::_addFigure(const std::string& pos, char fig, Board& bd)
+void FenTranslator::_addFigure(const std::string &pos, char fig, Board &bd)
 {
     const auto field = ExtractPosFromStr(pos[0], pos[1]);
 
     if (field == 0)
         throw std::runtime_error(
-            std::format("[ ERROR ] Encountered invalid character ({0})inside fen position description!\n", pos));
+            std::format("[ ERROR ] Encountered invalid character ({0})inside fen position description!\n", pos)
+        );
 
     if (!FigCharToIndexMap.contains(fig))
         throw std::runtime_error(
-            std::format("[ ERROR ] Encountered invalid character ({0})inside fen position description!\n", fig));
+            std::format("[ ERROR ] Encountered invalid character ({0})inside fen position description!\n", fig)
+        );
 
     bd.BitBoards[FigCharToIndexMap.at(fig)] |= field;
 }
 
-size_t FenTranslator::_skipBlanks(size_t pos, const std::string& fenPos)
+size_t FenTranslator::_skipBlanks(size_t pos, const std::string &fenPos)
 {
     while (pos < fenPos.length() && std::isblank(fenPos[pos]))
     {

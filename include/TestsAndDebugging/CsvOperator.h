@@ -14,15 +14,15 @@ struct CsvOperator
     // Class creation
     // ------------------------------
 
-    CsvOperator() = default;
+    CsvOperator()  = default;
     ~CsvOperator() = default;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] static std::vector<std::pair<std::string, int>> ReadPosDepthCsv(std::ifstream& stream);
-    [[nodiscard]] static std::vector<std::pair<std::string, int>> ReadPosDepthCsv(const std::string& fileName);
+    [[nodiscard]] static std::vector<std::pair<std::string, int>> ReadPosDepthCsv(std::ifstream &stream);
+    [[nodiscard]] static std::vector<std::pair<std::string, int>> ReadPosDepthCsv(const std::string &fileName);
 
     // ------------------------------
     // Private class methods
@@ -33,4 +33,4 @@ struct CsvOperator
     // ------------------------------
 };
 
-#endif  // CSVOPERATOR_H
+#endif // CSVOPERATOR_H

@@ -7,8 +7,7 @@
 
 #include <random>
 
-template <class Base64GeneratorT = std::mt19937_64>
-struct SparseRandomGenerator
+template <class Base64GeneratorT = std::mt19937_64> struct SparseRandomGenerator
 {
     // ------------------------------
     // Class creation
@@ -18,9 +17,9 @@ struct SparseRandomGenerator
 
     ~SparseRandomGenerator() = default;
 
-    SparseRandomGenerator(const SparseRandomGenerator&) = delete;
+    SparseRandomGenerator(const SparseRandomGenerator &) = delete;
 
-    SparseRandomGenerator& operator=(const SparseRandomGenerator&) = delete;
+    SparseRandomGenerator &operator=(const SparseRandomGenerator &) = delete;
 
     explicit SparseRandomGenerator(uint64_t seed) : _underlyingRandEngine(seed) {}
 
@@ -33,12 +32,12 @@ struct SparseRandomGenerator
     // ------------------------------
     // class fields
     // ------------------------------
-   private:
+
+    private:
     Base64GeneratorT _underlyingRandEngine{};
 };
 
-template<class Base64GeneratorT>
-uint64_t SparseRandomGenerator<Base64GeneratorT>::operator()()
+template <class Base64GeneratorT> uint64_t SparseRandomGenerator<Base64GeneratorT>::operator()()
 {
     const uint64_t rand1 = _underlyingRandEngine();
     const uint64_t rand2 = _underlyingRandEngine();
@@ -47,4 +46,4 @@ uint64_t SparseRandomGenerator<Base64GeneratorT>::operator()()
     return rand1 & rand2 & rand3;
 }
 
-#endif  // SPARSERANDOMGENERATOR_H
+#endif // SPARSERANDOMGENERATOR_H

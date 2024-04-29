@@ -5,8 +5,8 @@
 #ifndef OPENINGBOOK_H
 #define OPENINGBOOK_H
 
-#include <string>
 #include "MoveTRIE.h"
+#include <string>
 
 struct OpeningBook
 {
@@ -26,28 +26,29 @@ struct OpeningBook
     // ------------------------------
 
     // initializing the only const field
-    OpeningBook(const std::string& bookPath, bookFileType type);
+    OpeningBook(const std::string &bookPath, bookFileType type);
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
     // Possibly in use when array representation will be considered
-    void SaveToBinary(const std::string& outputPath) const;
+    void SaveToBinary(const std::string &outputPath) const;
     [[nodiscard]] bool IsLoadedCorrectly() const;
 
-    [[nodiscard]] const std::string& GetRandomNextMove(const std::vector<std::string>& moves) const;
-    [[nodiscard]] const std::vector<std::string>& GetAllPossibleNextMoves(const std::vector<std::string>& moves) const;
+    [[nodiscard]] const std::string &GetRandomNextMove(const std::vector<std::string> &moves) const;
+    [[nodiscard]] const std::vector<std::string> &GetAllPossibleNextMoves(const std::vector<std::string> &moves) const;
 
     // ------------------------------
     // Private class methods
     // ------------------------------
-   private:
-    void _readBinaryBook(const std::string& bookPath)
+
+    private:
+    void _readBinaryBook(const std::string &bookPath)
         // Possibly in use when array representation will be considered
         ;
 
-    void _readTextBook(const std::string& bookPath);
+    void _readTextBook(const std::string &bookPath);
 
     // ------------------------------
     // Class fields
@@ -57,4 +58,4 @@ struct OpeningBook
     bool _isCorrectlyLoaded{};
 };
 
-#endif  // OPENINGBOOK_H
+#endif // OPENINGBOOK_H

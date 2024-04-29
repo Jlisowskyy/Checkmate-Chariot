@@ -15,7 +15,7 @@ constexpr int ExtractMsbPos(const uint64_t x) { return __builtin_clzl(x); }
 
 constexpr int ConvertToReversedPos(const int x)
 {
-    return x ^ 63;  // equals to 63 - x;
+    return x ^ 63; // equals to 63 - x;
 }
 
 constexpr int ExtractMsbReversedPos(const uint64_t x) { return ConvertToReversedPos(ExtractMsbPos(x)); }
@@ -40,13 +40,12 @@ constexpr uint64_t ClearAFromIntersectingBits(const uint64_t a, const uint64_t b
 
 constexpr int CountOnesInBoard(const uint64_t num) { return __builtin_popcountll(num); }
 
-constexpr __uint128_t operator""_uint128_t(const char* x)
+constexpr __uint128_t operator""_uint128_t(const char *x)
 {
     __uint128_t y = 0;
     ssize_t literalSize{};
 
-    for (ssize_t i = 0; x[i] != '\0'; ++i)
-        literalSize = i;
+    for (ssize_t i = 0; x[i] != '\0'; ++i) literalSize = i;
 
     __uint128_t pow = 1;
     for (ssize_t i = literalSize; i > -1; --i)
@@ -67,8 +66,8 @@ constexpr __uint128_t operator""_uint128_t(const char* x)
  */
 
 template <class IndexableT>
-constexpr void GenerateBitPermutationsRecursion(const uint64_t number, const int bitPos, IndexableT& container,
-                                                size_t& containerPos)
+constexpr void
+GenerateBitPermutationsRecursion(const uint64_t number, const int bitPos, IndexableT &container, size_t &containerPos)
 {
     if (bitPos == -1 || number == 0)
         return;
@@ -91,8 +90,7 @@ constexpr void GenerateBitPermutationsRecursion(const uint64_t number, const int
     containerPos *= 2;
 }
 
-template <class IndexableT>
-constexpr size_t GenerateBitPermutations(const uint64_t number, IndexableT& container)
+template <class IndexableT> constexpr size_t GenerateBitPermutations(const uint64_t number, IndexableT &container)
 {
     container[0] = 0;
     size_t index = 1;
@@ -101,4 +99,4 @@ constexpr size_t GenerateBitPermutations(const uint64_t number, IndexableT& cont
     return index;
 }
 
-#endif  // BITOPERATIONS_H
+#endif // BITOPERATIONS_H

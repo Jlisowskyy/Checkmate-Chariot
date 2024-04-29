@@ -22,33 +22,34 @@ class MoveTRIE
 
     struct node
     {
-        node() = default;
+        node()  = default;
         ~node() = default;
 
         std::vector<std::string> _moves{};
-        std::vector<node*> _next;
+        std::vector<node *> _next;
     };
 
     // ------------------------------
     // Class creation
     // ------------------------------
-   public:
+
+    public:
     MoveTRIE() { _root = new node(); }
 
     ~MoveTRIE() { _destroy(_root); }
 
     // to allow some more complicated initialization
-    MoveTRIE(MoveTRIE&&) = default;
-    MoveTRIE& operator=(MoveTRIE&&) = default;
+    MoveTRIE(MoveTRIE &&)            = default;
+    MoveTRIE &operator=(MoveTRIE &&) = default;
 
-    MoveTRIE& operator=(const MoveTRIE&) = delete;
-    MoveTRIE(const MoveTRIE&) = delete;
+    MoveTRIE &operator=(const MoveTRIE &) = delete;
+    MoveTRIE(const MoveTRIE &)            = delete;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    void AddMoveSequence(const std::vector<std::string>& moves)
+    void AddMoveSequence(const std::vector<std::string> &moves)
         // should only be used on building phase, because OptimiseMemoryUsage should be run after all
         ;
 
@@ -56,7 +57,7 @@ class MoveTRIE
         // should be used after adding all move sequences to the database to optimize memory usage
         ;
 
-    [[nodiscard]] const std::vector<std::string>& FindNextMoves(const std::vector<std::string>& moves) const
+    [[nodiscard]] const std::vector<std::string> &FindNextMoves(const std::vector<std::string> &moves) const
         // used to query the database about next save moves that could be added to sequence.
         // return empty vector if no moves are possible
         ;
@@ -64,17 +65,18 @@ class MoveTRIE
     // ------------------------------
     // Private class methods
     // ------------------------------
-   private:
-    [[nodiscard]] static ssize_t _findOnArr(const std::string& move, const std::vector<std::string>& moves)
+
+    private:
+    [[nodiscard]] static ssize_t _findOnArr(const std::string &move, const std::vector<std::string> &moves)
         // checks whether passed move is present on moves' vector
         // returns index of the found element or -1 if not found.
         ;
 
-    static void _destroy(const node* root)
+    static void _destroy(const node *root)
         // simply deletes all underlying nodes under root with root considered
         ;
 
-    static void _optMem(node* root)
+    static void _optMem(node *root)
         // simply runs .shrink_to_fit() on every underlying node component
         ;
 
@@ -82,7 +84,7 @@ class MoveTRIE
     // Class fields
     // ------------------------------
 
-    node* _root{};
+    node *_root{};
 };
 
-#endif  // MOVETRIE_H
+#endif // MOVETRIE_H

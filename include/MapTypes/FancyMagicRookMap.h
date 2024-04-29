@@ -13,10 +13,10 @@
 
 class FancyMagicRookMap
 {
-    using _hashFuncT = FancyMagicHashFunction<SparseRandomGenerator<>>;
+    using _hashFuncT      = FancyMagicHashFunction<SparseRandomGenerator<>>;
     using _underlyingMapT = MovesHashMap<_hashFuncT, RookMapGenerator::MaxRookPossibleNeighborsWithOverlap>;
 
-   public:
+    public:
     constexpr FancyMagicRookMap();
 
     [[nodiscard]] constexpr uint64_t GetMoves(int msbInd, uint64_t fullBoard) const;
@@ -27,7 +27,7 @@ class FancyMagicRookMap
     // class fields
     // ------------------------------
 
-   private:
+    private:
     static constexpr _hashFuncT funcs[Board::BitBoardFields]{
         _hashFuncT(std::make_tuple(1170940307609551394LLU, 12)),
         _hashFuncT(std::make_tuple(864693331908632740LLU, 11)),
@@ -109,11 +109,14 @@ constexpr FancyMagicRookMap::FancyMagicRookMap()
 
         MoveInitializer(
             _maps[i], [](const uint64_t n, const int ind) constexpr { return RookMapGenerator::GenMoves(n, ind); },
-            []([[maybe_unused]] const int, const RookMapGenerator::MasksT& m) constexpr
-            { return RookMapGenerator::GenPossibleNeighborsWithOverlap(m); },
-            [](const uint64_t b, const RookMapGenerator::MasksT& m) constexpr
-            { return RookMapGenerator::StripBlockingNeighbors(b, m); },
-            boardIndex);
+            []([[maybe_unused]] const int, const RookMapGenerator::MasksT &m) constexpr {
+                return RookMapGenerator::GenPossibleNeighborsWithOverlap(m);
+            },
+            [](const uint64_t b, const RookMapGenerator::MasksT &m) constexpr {
+                return RookMapGenerator::StripBlockingNeighbors(b, m);
+            },
+            boardIndex
+        );
     }
 }
 
@@ -123,4 +126,4 @@ constexpr uint64_t FancyMagicRookMap::GetMoves(const int msbInd, const uint64_t 
     return _maps[msbInd][neighbors];
 }
 
-#endif  // FANCYMAGICROOKMAP_H
+#endif // FANCYMAGICROOKMAP_H

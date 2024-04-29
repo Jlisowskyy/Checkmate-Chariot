@@ -7,11 +7,11 @@
 #include "../include/Interface/Logger.h"
 #include "../include/Interface/UCITranslator.h"
 #include "../include/ParseTools.h"
+#include "../include/Search/TranspositionTable.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/TestsAndDebugging/SearchPerfTester.h"
-#include "../include/Search/TranspositionTable.h"
 
-UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream& input)
+UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream &input)
 {
     auto lastCommand = UCICommand::InvalidCommand;
     std::string recordBuffer;
@@ -28,27 +28,27 @@ UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream& i
     return lastCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string& buffer)
+UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string &buffer)
 {
-    using funcT = UCICommand (UCITranslator::*)(const std::string&);
+    using funcT = UCICommand (UCITranslator::*)(const std::string &);
     static std::unordered_map<std::string, funcT> CommandBuff{
-        {std::string("uci"), &UCITranslator::_uciResponse},
-        {std::string("isready"), &UCITranslator::_isReadyResponse},
-        {std::string("setoption"), &UCITranslator::_setoptionResponse},
-        {std::string("ucinewgame"), &UCITranslator::_ucinewgameResponse},
-        {std::string("position"), &UCITranslator::_positionResponse},
-        {std::string("go"), &UCITranslator::_goResponse},
-        {std::string("stop"), &UCITranslator::_stopResponse},
-        {std::string("quit"), &UCITranslator::_quitResponse},
-        {std::string("exit"), &UCITranslator::_quitResponse},
-        {std::string("d"), &UCITranslator::_displayResponse},
-        {std::string("display"), &UCITranslator::_displayResponse},
-        {std::string("disp"), &UCITranslator::_displayResponse},
-        {std::string("fen"), &UCITranslator::_displayFenResponse},
-        {std::string("help"), &UCITranslator::_displayHelpResponse},
-        {std::string("clear"), &UCITranslator::_clearConsole},
-        {std::string("clean"), &UCITranslator::_clearConsole},
-        {std::string("cls"), &UCITranslator::_clearConsole},
+        {       std::string("uci"),         &UCITranslator::_uciResponse},
+        {   std::string("isready"),     &UCITranslator::_isReadyResponse},
+        { std::string("setoption"),   &UCITranslator::_setoptionResponse},
+        {std::string("ucinewgame"),  &UCITranslator::_ucinewgameResponse},
+        {  std::string("position"),    &UCITranslator::_positionResponse},
+        {        std::string("go"),          &UCITranslator::_goResponse},
+        {      std::string("stop"),        &UCITranslator::_stopResponse},
+        {      std::string("quit"),        &UCITranslator::_quitResponse},
+        {      std::string("exit"),        &UCITranslator::_quitResponse},
+        {         std::string("d"),     &UCITranslator::_displayResponse},
+        {   std::string("display"),     &UCITranslator::_displayResponse},
+        {      std::string("disp"),     &UCITranslator::_displayResponse},
+        {       std::string("fen"),  &UCITranslator::_displayFenResponse},
+        {      std::string("help"), &UCITranslator::_displayHelpResponse},
+        {     std::string("clear"),        &UCITranslator::_clearConsole},
+        {     std::string("clean"),        &UCITranslator::_clearConsole},
+        {       std::string("cls"),        &UCITranslator::_clearConsole},
     };
 
     std::string workStr;
@@ -61,13 +61,13 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string& buffer
     return UCICommand::InvalidCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_stopResponse([[maybe_unused]] const std::string&)
+UCITranslator::UCICommand UCITranslator::_stopResponse([[maybe_unused]] const std::string &)
 {
     _engine.StopSearch();
     return UCICommand::stopCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str)
+UCITranslator::UCICommand UCITranslator::_goResponse(const std::string &str)
 {
     std::string workStr;
     size_t pos = ParseTools::ExtractNextWord(str, workStr, 0);
@@ -86,7 +86,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str)
         {
             depth = std::stoi(depthStr);
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             return UCICommand::InvalidCommand;
         }
@@ -105,7 +105,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str)
         {
             depth = std::stoi(depthStr);
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             return UCICommand::InvalidCommand;
         }
@@ -125,7 +125,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str)
         {
             depth = std::stoi(depthStr);
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             return UCICommand::InvalidCommand;
         }
@@ -196,7 +196,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string& str)
     return UCICommand::goCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string& str)
+UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &str)
 {
     std::string workStr;
     size_t pos = ParseTools::ExtractNextWord(str, workStr, 0);
@@ -234,7 +234,7 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string& st
     return UCICommand::positionCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_ucinewgameResponse([[maybe_unused]] const std::string& unused)
+UCITranslator::UCICommand UCITranslator::_ucinewgameResponse([[maybe_unused]] const std::string &unused)
 {
     _engine.RestartEngine();
     _appliedMoves.clear();
@@ -242,7 +242,7 @@ UCITranslator::UCICommand UCITranslator::_ucinewgameResponse([[maybe_unused]] co
     return UCICommand::ucinewgameCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string& str)
+UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string &str)
 {
     std::string workStr;
     size_t pos = ParseTools::ExtractNextWord(str, workStr, 0);
@@ -270,12 +270,12 @@ UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string& s
     return UCICommand::InvalidCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_uciResponse([[maybe_unused]] const std::string& unused)
+UCITranslator::UCICommand UCITranslator::_uciResponse([[maybe_unused]] const std::string &unused)
 {
     GlobalLogger.StartLogging() << "id name " << Engine::GetEngineInfo().name << '\n';
     GlobalLogger.StartLogging() << "id author " << Engine::GetEngineInfo().author << '\n';
 
-    for (const auto& opt : Engine::GetEngineInfo().options)
+    for (const auto &opt : Engine::GetEngineInfo().options)
     {
         GlobalLogger.StartLogging() << *opt.second;
     }
@@ -283,19 +283,19 @@ UCITranslator::UCICommand UCITranslator::_uciResponse([[maybe_unused]] const std
     return UCICommand::uciCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_isReadyResponse([[maybe_unused]] const std::string& unused)
+UCITranslator::UCICommand UCITranslator::_isReadyResponse([[maybe_unused]] const std::string &unused)
 {
     GlobalLogger.StartLogging() << "readyok" << std::endl;
     return UCICommand::isreadyCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_displayResponse([[maybe_unused]] const std::string& unused)
+UCITranslator::UCICommand UCITranslator::_displayResponse([[maybe_unused]] const std::string &unused)
 {
     _engine.WriteBoard();
     return UCICommand::displayCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] const std::string& unused)
+UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] const std::string &unused)
 {
     static auto CustomCommands =
         "In addition to standard UCI commands, these are implemented:\n"
@@ -328,12 +328,12 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
     return UCICommand::helpCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_quitResponse([[maybe_unused]] const std::string& unused)
+UCITranslator::UCICommand UCITranslator::_quitResponse([[maybe_unused]] const std::string &unused)
 {
     return UCICommand::quitCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_clearConsole([[maybe_unused]] const std::string& unused)
+UCITranslator::UCICommand UCITranslator::_clearConsole([[maybe_unused]] const std::string &unused)
 {
 #ifdef __unix__
     system("clear");
@@ -344,7 +344,7 @@ UCITranslator::UCICommand UCITranslator::_clearConsole([[maybe_unused]] const st
     return UCICommand::displayCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_displayFenResponse([[maybe_unused]] const std::string& unused)
+UCITranslator::UCICommand UCITranslator::_displayFenResponse([[maybe_unused]] const std::string &unused)
 {
     GlobalLogger.StartLogging() << "Acquired fen translation:\n" << _engine.GetFenTranslation() << '\n';
     return UCICommand::displayCommand;

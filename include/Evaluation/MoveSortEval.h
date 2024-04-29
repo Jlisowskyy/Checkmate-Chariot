@@ -26,8 +26,9 @@ struct MoveSortEval
     // Class interaction
     // ------------------------------
 
-    static int16_t ApplyAttackFieldEffects(int16_t eval, const uint64_t pawnAttacks, const uint64_t startField,
-                                            const uint64_t targetField)
+    static int16_t ApplyAttackFieldEffects(
+        int16_t eval, const uint64_t pawnAttacks, const uint64_t startField, const uint64_t targetField
+    )
     {
         if ((pawnAttacks & startField) != 0)
             eval += RunAwayPrize;
@@ -37,14 +38,18 @@ struct MoveSortEval
         return eval;
     }
 
-    static int16_t ApplyPromotionEffects(const int16_t eval, const size_t nFig) { return FigureEval[nFig] + eval + PromotionBonus; }
+    static int16_t ApplyPromotionEffects(const int16_t eval, const size_t nFig)
+    {
+        return FigureEval[nFig] + eval + PromotionBonus;
+    }
 
     static int16_t ApplyKilledFigEffect(const int16_t eval, const size_t attackFig, const size_t killedFig)
     {
         return eval + FigureEval[killedFig] - FigureEval[attackFig] + CaptureBonus;
     }
 
-    static int16_t ApplyKillerMoveEffect(const int16_t eval, const KillerTable& kTable, const Move mv, const int depthLeft)
+    static int16_t
+    ApplyKillerMoveEffect(const int16_t eval, const KillerTable &kTable, const Move mv, const int depthLeft)
     {
         return eval + KillerMovePrize * kTable.IsKillerMove(mv, depthLeft);
     }
@@ -54,42 +59,43 @@ struct MoveSortEval
         return eval + CounterMovePrize * (move.GetPackedMove() == counterMove);
     }
 
-    static int16_t ApplyCaptureMostRecentSquareEffect(const int16_t eval, const int mostRecentSquareMsb, const int moveSquare)
+    static int16_t
+    ApplyCaptureMostRecentSquareEffect(const int16_t eval, const int mostRecentSquareMsb, const int moveSquare)
     {
         return eval + MostRecentSquarePrize * (mostRecentSquareMsb == moveSquare);
     }
 
-    static int16_t ApplyHistoryTableBonus(const int16_t eval, const Move mv, const HistoricTable& hTable) {
+    static int16_t ApplyHistoryTableBonus(const int16_t eval, const Move mv, const HistoricTable &hTable)
+    {
         return eval + hTable.GetBonusMove(mv);
     }
-
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
     static constexpr int16_t FigureEval[] = {
-        100,  // wPawnsIndex,
-        300,  // wKnightsIndex,
-        300,  // wBishopsIndex,
-        500,  // wRooksIndex,
-        900,  // wQueensIndex,
-        0,    // wKingIndex,
-        100,  // bPawnsIndex,
-        300,  // bKnightsIndex,
-        300,  // bBishopsIndex,
-        500,  // bRooksIndex,
-        900,  // bQueensIndex,
-        0,    // bKingIndex,
+        100, // wPawnsIndex,
+        300, // wKnightsIndex,
+        300, // wBishopsIndex,
+        500, // wRooksIndex,
+        900, // wQueensIndex,
+        0,   // wKingIndex,
+        100, // bPawnsIndex,
+        300, // bKnightsIndex,
+        300, // bBishopsIndex,
+        500, // bRooksIndex,
+        900, // bQueensIndex,
+        0,   // bKingIndex,
     };
 
     static constexpr int16_t AttackedFigurePenalty = -50;
-    static constexpr int16_t RunAwayPrize = 50;
-    static constexpr int16_t KillerMovePrize = 150;
-    static constexpr int16_t CounterMovePrize = 200;
+    static constexpr int16_t RunAwayPrize          = 50;
+    static constexpr int16_t KillerMovePrize       = 150;
+    static constexpr int16_t CounterMovePrize      = 200;
     static constexpr int16_t MostRecentSquarePrize = 1600;
-    static constexpr int16_t CaptureBonus = 2500;
-    static constexpr int16_t PromotionBonus = 4000;
+    static constexpr int16_t CaptureBonus          = 2500;
+    static constexpr int16_t PromotionBonus        = 4000;
 };
 
-#endif  // MOVESORTEVAL_H
+#endif // MOVESORTEVAL_H

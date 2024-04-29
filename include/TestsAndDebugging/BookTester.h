@@ -21,21 +21,22 @@ struct BookTester
     // Class creation
     // ------------------------------
 
-    BookTester() = delete;
+    BookTester()  = delete;
     ~BookTester() = delete;
 
     // ------------------------------
     // Class interaction
     // ------------------------------
 
-    static void PerformRandomAccessTest(const OpeningBook& book, const std::string& textBookPath,
-                                        uint64_t testPositionCount);
+    static void
+    PerformRandomAccessTest(const OpeningBook &book, const std::string &textBookPath, uint64_t testPositionCount);
 
     // ------------------------------
     // private methods
     // ------------------------------
-   private:
-    static void _testSequence(const OpeningBook& book, const std::vector<std::string>& moves, const std::string& buff);
+
+    private:
+    static void _testSequence(const OpeningBook &book, const std::vector<std::string> &moves, const std::string &buff);
 
     // simply generates vector of indices, indicating which lines will be tested
     static std::vector<uint64_t> _generateTestRecordsNums(uint64_t testPositionCount, uint64_t lineCount);
@@ -44,4 +45,4 @@ struct BookTester
     static uint64_t _getOffset(uint64_t averageOffset);
 };
 
-#endif  // BOOKTESTER_H
+#endif // BOOKTESTER_H
