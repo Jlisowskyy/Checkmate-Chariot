@@ -1,9 +1,9 @@
-name: clang-format codebase
+name: clang-format check
 
 on: [push]
 
 jobs:
-  format:
+  check-formatting:
     runs-on: ubuntu-latest
 
     steps:
@@ -11,21 +11,28 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Install clang-format
-      run: sudo apt-get install clang-format
+      run: sudo apt-get install -y clang-format
 
     - name: Find C++ source files
-      id: files
       run: |
-        echo "::set-output name=cpp_files::$(find . -regex '.*\.\(cpp\|cc\|h\|c\)' -print)"
-    
+        echo "cpp_files<<EOF" >> $GITHUB_ENV
+        find . -regex '.*\.\(cpp\|cc\|h\|c\)' -print >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+
     - name: Check formatting
       run: |
-        FILES=${{ steps.files.outputs.cpp_files }}
-        UNFORMATTED=$(clang-format -style=file $FILES | diff $FILES -)
-        if [ -n "$UNFORMATTED" ]; then
-          echo "The following files are not properly formatted:"
-          echo "$UNFORMATTED"
+        FILES=$(cat $GITHUB_ENV | grep 'cpp_files<<EOF' -A 1 | tail -n 1)
+        FORMATTING_ISSUES=0
+        for FILE in $FILES; do
+          DIFF_OUTPUT=$(clang-format -style=file "$FILE" | diff "$FILE" -)
+          if [ -z "$DIFF_OUTPUT" ]; then
+            echo "::notice::OK: $FILE is properly formatted."
+          else
+            echo "::error file=$FILE::NOT OK: $FILE needs formatting."
+            echo "$DIFF_OUTPUT"
+            FORMATTING_ISSUES=1
+          fi
+        done
+        if [ "$FORMATTING_ISSUES" -ne 0 ]; then
           exit 1
-        else
-          echo "All files are properly formatted."
         fi
