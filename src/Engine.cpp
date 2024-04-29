@@ -10,7 +10,7 @@
 
 void Engine::Initialize()
 {
-    _board = FenTranslator::GetDefault();
+    _board         = FenTranslator::GetDefault();
     _startingBoard = _board;
 }
 
@@ -31,7 +31,7 @@ std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
 
     const auto moves = game.GetMovesFast();
 
-    const auto oldCastling = startingBoard.Castlings;
+    const auto oldCastling  = startingBoard.Castlings;
     const auto oldElPassant = startingBoard.elPassantField;
     for (size_t i = 0; i < moves.size; ++i)
     {
@@ -44,7 +44,7 @@ std::map<std::string, uint64_t> Engine::GetMoveBasedPerft(const int depth)
     return moveMap;
 }
 
-void Engine::SetFenPosition(const std::string& fenStr)
+void Engine::SetFenPosition(const std::string &fenStr)
 {
     // restarting position age
     _age = 1;
@@ -52,8 +52,8 @@ void Engine::SetFenPosition(const std::string& fenStr)
     if (fenStr.length() >= _startposPrefix.length() && fenStr.substr(0, _startposPrefix.length()) == _startposPrefix)
     {
         _isStartPosPlayed = true;
-        _board = FenTranslator::GetDefault();
-        _startingBoard = _board;
+        _board            = FenTranslator::GetDefault();
+        _startingBoard    = _board;
         return;
     }
 
@@ -71,17 +71,17 @@ void Engine::SetStartpos()
     _age = 1;
 
     _isStartPosPlayed = true;
-    _board = FenTranslator::GetDefault();
-    _startingBoard = _board;
+    _board            = FenTranslator::GetDefault();
+    _startingBoard    = _board;
 }
 
-const EngineInfo& Engine::GetEngineInfo() { return engineInfo; }
+const EngineInfo &Engine::GetEngineInfo() { return engineInfo; }
 
-bool Engine::ApplyMoves(const std::vector<std::string>& UCIMoves)
+bool Engine::ApplyMoves(const std::vector<std::string> &UCIMoves)
 {
     Board workBoard = _startingBoard;
 
-    for (auto& move : UCIMoves)
+    for (auto &move : UCIMoves)
         if (!_applyMove(workBoard, move))
             return false;
 
@@ -98,7 +98,7 @@ void Engine::RestartEngine()
     _isStartPosPlayed = true;
 
     // loding default board
-    _board = FenTranslator::GetDefault();
+    _board         = FenTranslator::GetDefault();
     _startingBoard = _board;
 
     // cleaning tt
@@ -112,14 +112,14 @@ Board Engine::GetUnderlyingBoardCopy() const { return _board; }
 
 std::string Engine::GetFenTranslation() const { return FenTranslator::Translate(_board); }
 
-bool Engine::_applyMove(Board& board, const std::string& move)
+bool Engine::_applyMove(Board &board, const std::string &move)
 {
     MoveGenerator mech(board, TManager.GetDefaultStack());
 
     // generating moves
     auto moves = mech.GetMovesFast<false, false>();
 
-    for (size_t i = 0 ; i < moves.size; ++i)
+    for (size_t i = 0; i < moves.size; ++i)
         if (move == moves[i].GetLongAlgebraicNotation())
         {
 
@@ -132,27 +132,24 @@ bool Engine::_applyMove(Board& board, const std::string& move)
     return false;
 }
 
-void Engine::_changeDebugState([[maybe_unused]] Engine& eng, std::string& nPath)
+void Engine::_changeDebugState([[maybe_unused]] Engine &eng, std::string &nPath)
 {
     GlobalLogger.ChangeLogStream(nPath);
 }
 
-void Engine::_changeHashSize([[maybe_unused]]Engine& eng, const lli size)
+void Engine::_changeHashSize([[maybe_unused]] Engine &eng, const lli size)
 {
     if (TTable.ResizeTable(size) == -1)
-        GlobalLogger.StartErrLogging()
-            << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
+        GlobalLogger.StartErrLogging(
+        ) << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
 }
 
-void Engine::_changeBookUsage(Engine& eng, const bool newValue)
-{
-    eng.UseOwnBook = newValue;
-}
+void Engine::_changeBookUsage(Engine &eng, const bool newValue) { eng.UseOwnBook = newValue; }
 
-void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves)
+void Engine::GoMoveTime(const lli time, const std::vector<std::string> &moves)
 {
     if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed == true)
-        if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
+        if (const auto &bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
         {
             GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
             return;
@@ -163,10 +160,10 @@ void Engine::GoMoveTime(const lli time, const std::vector<std::string>& moves)
     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
 }
 
-void Engine::GoDepth(const int depth, const std::vector<std::string>& moves)
+void Engine::GoDepth(const int depth, const std::vector<std::string> &moves)
 {
     if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed == true)
-        if (const auto& bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
+        if (const auto &bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
         {
             GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
             return;

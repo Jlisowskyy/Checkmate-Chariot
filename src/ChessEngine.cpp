@@ -8,7 +8,7 @@
 #include "../include/Engine.h"
 #include "../include/Interface/UCITranslator.h"
 
-void ChessEngineMainEntry(const int argc, const char** argv)
+void ChessEngineMainEntry(const int argc, const char **argv)
 {
     Engine engine{};
     UCITranslator translator{engine};
@@ -19,8 +19,7 @@ void ChessEngineMainEntry(const int argc, const char** argv)
     else
     {
         std::string commandBuffer{};
-        for (int i = 1; i < argc; ++i)
-            commandBuffer += std::string(argv[i]) + '\n';
+        for (int i = 1; i < argc; ++i) commandBuffer += std::string(argv[i]) + '\n';
 
         std::istringstream stream(commandBuffer);
         auto lastCommand = translator.BeginCommandTranslation(stream);
