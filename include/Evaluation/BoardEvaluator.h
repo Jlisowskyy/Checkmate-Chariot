@@ -327,7 +327,8 @@ class BoardEvaluator
         68,  75,  82,  85,  89,  97,  105, 113, 122, 131, 140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
         260, 272, 283, 295, 307, 319, 330, 342, 354, 366, 377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
         494, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
-        500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500};
+        500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500
+    };
 
     // 4x4 mask on the center board used to evaluate center control
     static constexpr uint64_t CenterFieldsMap = []() constexpr
@@ -335,8 +336,7 @@ class BoardEvaluator
         constexpr uint64_t mask = GenMask(0, 63, 8) | GenMask(1, 63, 8) | GenMask(6, 63, 8) | GenMask(7, 63, 8) |
                                   GenMask(0, 8, 1) | GenMask(8, 16, 1) | GenMask(48, 56, 1) | GenMask(56, 64, 1);
         return ~mask;
-    }
-    ();
+    }();
 
     // values used to calculate material value of given board at the mid-game stage
     static constexpr int16_t BasicFigureValues[]{
@@ -382,15 +382,17 @@ class BoardEvaluator
     // Figure-Position bonuses/penalties tables
     // ----------------------------------------------
 
-    static constexpr int16_t BasicBlackPawnPositionValues[]{
-        0,  0,   0,  0, 0,  0,  0,  0,   50,  50, 50, 50, 50, 50, 50, 50, 10, 10, 20, 30, 30,  20,
-        10, 10,  5,  5, 10, 25, 25, 10,  5,   5,  0,  -5, -5, 20, 20, -5, -5, 0,  5,  -5, -10, 0,
-        0,  -10, -5, 5, 10, 15, 15, -20, -20, 15, 15, 10, 0,  0,  0,  0,  0,  0,  0,  0};
+    static constexpr int16_t BasicBlackPawnPositionValues[]{0,   0,  0,  0,   0,  0,  0,   0,  50, 50, 50, 50, 50,
+                                                            50,  50, 50, 10,  10, 20, 30,  30, 20, 10, 10, 5,  5,
+                                                            10,  25, 25, 10,  5,  5,  0,   -5, -5, 20, 20, -5, -5,
+                                                            0,   5,  -5, -10, 0,  0,  -10, -5, 5,  10, 15, 15, -20,
+                                                            -20, 15, 15, 10,  0,  0,  0,   0,  0,  0,  0,  0};
 
     static constexpr int16_t BasicBlackPawnPositionEndValues[]{
         0,  0,  0,  0,  0,   0,   0,   0,   80,  80,  80,  80,  80, 80, 80, 80, 40, 40, 50, 60, 60, 50,
         40, 40, 30, 30, 40,  45,  45,  40,  30,  30,  15,  17,  20, 30, 30, 20, 17, 15, -5, -5, -5, 0,
-        0,  -5, -5, -5, -20, -20, -30, -30, -30, -20, -20, -20, 0,  0,  0,  0,  0,  0,  0,  0};
+        0,  -5, -5, -5, -20, -20, -30, -30, -30, -20, -20, -20, 0,  0,  0,  0,  0,  0,  0,  0
+    };
 
     static constexpr int16_t BasicBlackKnightPositionValues[]{
         -50, -40, -30, -30, -30, -30, -40, -50, -40, -20, 0,   0,   0,   0,   -20, -40, -30, 0,   10,  15,  15, 10,
@@ -404,30 +406,35 @@ class BoardEvaluator
         10,  10,  10,  -10, -10, 5,   0,   0,   0,   0,   5,   -10, -20, -10, -10, -10, -10, -10, -10, -20,
     };
 
-    static constexpr int16_t BasicBlackRookPositionValues[]{
-        0,  0, 0, 0, 0, 0, 0, 0,  5,  10, 10, 10, 10, 10, 10, 5,  -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5,
-        -5, 0, 0, 0, 0, 0, 0, -5, -5, 0,  0,  0,  0,  0,  0,  -5, -5, 0, 0, 0, 0, 0, 0, -5, 0,  0, 5, 5, 5, 5, 0, 0};
+    static constexpr int16_t BasicBlackRookPositionValues[]{0,  0, 0, 0, 0, 0, 0, 0,  5,  10, 10, 10, 10, 10, 10, 5,
+                                                            -5, 0, 0, 0, 0, 0, 0, -5, -5, 0,  0,  0,  0,  0,  0,  -5,
+                                                            -5, 0, 0, 0, 0, 0, 0, -5, -5, 0,  0,  0,  0,  0,  0,  -5,
+                                                            -5, 0, 0, 0, 0, 0, 0, -5, 0,  0,  5,  5,  5,  5,  0,  0};
 
     static constexpr int16_t BasicBlackQueenPositionValues[]{
         -110, -110, -110, -110, -110, -110, -110, -110, -80, -80, -80, -80, -80, -80, -80, -80,
         -60,  -60,  -60,  -60,  -60,  -60,  -60,  -60,  -45, -45, -45, -45, -45, -45, -45, -45,
         -20,  -15,  -15,  -15,  -15,  -15,  -15,  -20,  -10, 5,   5,   5,   5,   5,   5,   -10,
-        -10,  15,   15,   15,   15,   15,   15,   -10,  -20, -10, -10, 30,  30,  -10, -10, -20};
+        -10,  15,   15,   15,   15,   15,   15,   -10,  -20, -10, -10, 30,  30,  -10, -10, -20
+    };
 
     static constexpr int16_t BasicBlackQueenEndPositionValues[]{
         -20, -10, -10, -5,  -5,  -10, -10, -20, -10, 0,  0, 0,   0,   0,   0,   -10, -10, 0,   5,   5,  5, 5,
         0,   -10, -5,  0,   5,   5,   5,   5,   0,   -5, 0, 0,   5,   5,   5,   5,   0,   -5,  -10, 5,  5, 5,
-        5,   5,   0,   -10, -10, 0,   5,   0,   0,   0,  0, -10, -20, -10, -10, -5,  -5,  -10, -10, -20};
+        5,   5,   0,   -10, -10, 0,   5,   0,   0,   0,  0, -10, -20, -10, -10, -5,  -5,  -10, -10, -20
+    };
 
     static constexpr int16_t BasicBlackKingPositionValues[]{
         -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40,
         -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -20, -30, -30, -40, -40, -30, -30, -20, -10, -20, -20, -20,
-        -20, -20, -20, -10, 20,  20,  0,   0,   0,   0,   20,  20,  20,  30,  10,  0,   0,   10,  30,  20};
+        -20, -20, -20, -10, 20,  20,  0,   0,   0,   0,   20,  20,  20,  30,  10,  0,   0,   10,  30,  20
+    };
 
     static constexpr int16_t BasicBlackKingEndPositionValues[]{
         -50, -40, -30, -20, -20, -30, -40, -50, -30, -20, -10, 0,   0,   -10, -20, -30, -30, -10, 20,  30,  30, 20,
         -10, -30, -30, -10, 30,  40,  40,  30,  -10, -30, -30, -10, 30,  40,  40,  30,  -10, -30, -30, -10, 20, 30,
-        30,  20,  -10, -30, -30, -30, 0,   0,   0,   0,   -30, -30, -50, -30, -30, -30, -30, -30, -30, -50};
+        30,  20,  -10, -30, -30, -30, 0,   0,   0,   0,   -30, -30, -50, -30, -30, -30, -30, -30, -30, -50
+    };
 
     static constexpr const int16_t *BasicBlackPositionValues[]{
         BasicBlackPawnPositionValues, BasicBlackKnightPositionValues, BasicBlackBishopPositionValues,
@@ -461,8 +468,7 @@ class BoardEvaluator
         }
 
         return arr;
-    }
-    ();
+    }();
 
     // ------------------------------
     // Material table
@@ -887,11 +893,14 @@ void BoardEvaluator::_processFigEval(
     const uint64_t whiteBitMap, const uint64_t blackBitMap
 )
 {
-    const auto [whiteMidEval, whiteEndEval, whiteControlledFields, wKInfo] = EvalProducerT<MapT, NoOp>(
-    )(bd, whitePinnedFigsBitMap, WHITE, blackPawnControlledFieldsBitMap, whiteBitMap, blackBitMap);
+    const auto [whiteMidEval, whiteEndEval, whiteControlledFields, wKInfo] = EvalProducerT<MapT, NoOp>()(
+        bd, whitePinnedFigsBitMap, WHITE, blackPawnControlledFieldsBitMap, whiteBitMap, blackBitMap
+    );
 
-    const auto [blackMidEval, blackEndEval, blackControlledFields, bKInfo] = EvalProducerT<MapT, ConvertToReversedPos>(
-    )(bd, blackPinnedFigsBitMap, BLACK, whitePawnControlledFieldsBitMap, blackBitMap, whiteBitMap);
+    const auto [blackMidEval, blackEndEval, blackControlledFields, bKInfo] =
+        EvalProducerT<MapT, ConvertToReversedPos>()(
+            bd, blackPinnedFigsBitMap, BLACK, whitePawnControlledFieldsBitMap, blackBitMap, whiteBitMap
+        );
 
     out.midgameEval += whiteMidEval - blackMidEval;
     out.endgameEval += blackEndEval - whiteEndEval;

@@ -258,7 +258,8 @@ int BestMoveSearch::_pwsSearch(
     if (depthLeft >= prevSearchRes.GetDepth() || (!wasTTHit && _age - prevSearchRes.GetAge() >= SearchAgeDiffToReplace))
     {
         const TranspositionTable::HashRecord record{
-            zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age};
+            zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age
+        };
         TTable.Add(record, zHash);
     }
 
@@ -353,7 +354,8 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     if (depthLeft >= prevSearchRes.GetDepth() || (!wasTTHit && _age - prevSearchRes.GetAge() >= SearchAgeDiffToReplace))
     {
         const TranspositionTable::HashRecord record{
-            zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age};
+            zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age
+        };
         TTable.Add(record, zHash);
     }
 

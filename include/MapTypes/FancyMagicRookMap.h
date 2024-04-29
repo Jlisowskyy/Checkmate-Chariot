@@ -108,11 +108,17 @@ constexpr FancyMagicRookMap::FancyMagicRookMap()
         _maps[i].InitFullMask();
 
         MoveInitializer(
-            _maps[i], [](const uint64_t n, const int ind) constexpr { return RookMapGenerator::GenMoves(n, ind); },
-            []([[maybe_unused]] const int, const RookMapGenerator::MasksT &m) constexpr {
+            _maps[i],
+            [](const uint64_t n, const int ind) constexpr
+            {
+                return RookMapGenerator::GenMoves(n, ind);
+            },
+            []([[maybe_unused]] const int, const RookMapGenerator::MasksT &m) constexpr
+            {
                 return RookMapGenerator::GenPossibleNeighborsWithOverlap(m);
             },
-            [](const uint64_t b, const RookMapGenerator::MasksT &m) constexpr {
+            [](const uint64_t b, const RookMapGenerator::MasksT &m) constexpr
+            {
                 return RookMapGenerator::StripBlockingNeighbors(b, m);
             },
             boardIndex

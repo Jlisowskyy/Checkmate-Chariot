@@ -88,21 +88,26 @@ struct Board
     static constexpr size_t SentinelCastlingIndex      = 4;
 
     static constexpr std::array<uint64_t, KingPosCount> DefaultKingBoards{
-        maxMsbPossible >> ConvertToReversedPos(4), maxMsbPossible >> ConvertToReversedPos(60)};
+        maxMsbPossible >> ConvertToReversedPos(4), maxMsbPossible >> ConvertToReversedPos(60)
+    };
     static constexpr std::array<int, CastlingCount> CastlingNewKingPos{
-        ConvertToReversedPos(6), ConvertToReversedPos(2), ConvertToReversedPos(62), ConvertToReversedPos(58)};
+        ConvertToReversedPos(6), ConvertToReversedPos(2), ConvertToReversedPos(62), ConvertToReversedPos(58)
+    };
 
     static constexpr std::array<uint64_t, CastlingCount> CastlingsRookMaps{1LLU << 7, 1LLU, 1LLU << 63, 1LLU << 56};
 
     static constexpr std::array<uint64_t, CastlingCount> CastlingNewRookMaps{
-        1LLU << 5, 1LLU << 3, 1LLU << 61, 1LLU << 59};
+        1LLU << 5, 1LLU << 3, 1LLU << 61, 1LLU << 59
+    };
 
     static constexpr std::array<uint64_t, CastlingCount> CastlingSensitiveFields{
-        1LLU << 6 | 1LLU << 5, 1LLU << 2 | 1LLU << 3, 1LLU << 61 | 1LLU << 62, 1LLU << 58 | 1LLU << 59};
+        1LLU << 6 | 1LLU << 5, 1LLU << 2 | 1LLU << 3, 1LLU << 61 | 1LLU << 62, 1LLU << 58 | 1LLU << 59
+    };
 
     static constexpr std::array<uint64_t, CastlingCount> CastlingTouchedFields{
         1LLU << 6 | 1LLU << 5, 1LLU << 2 | 1LLU << 3 | 1LLU << 1, 1LLU << 61 | 1LLU << 62,
-        1LLU << 58 | 1LLU << 59 | 1LLU << 57};
+        1LLU << 58 | 1LLU << 59 | 1LLU << 57
+    };
 
     std::bitset<CastlingCount + 1> Castlings{0}; // additional sentinel field
     uint64_t ElPassantField                = maxMsbPossible >> InvalidElPassantField;

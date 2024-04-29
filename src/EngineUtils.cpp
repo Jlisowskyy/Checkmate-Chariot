@@ -94,7 +94,8 @@ void DisplayBoard(const Board &bd)
     GlobalLogger.StartLogging() << "Moving color: " << (bd.MovingColor == WHITE ? "white" : "black") << std::endl;
     GlobalLogger.StartLogging() << "Possible castlings:\n";
     static constexpr const char *castlingNames[] = {
-        "White King Side", "White Queen Side", "Black King Side", "Black Queen Side"};
+        "White King Side", "White Queen Side", "Black King Side", "Black Queen Side"
+    };
     for (size_t i = 0; i < Board::CastlingCount; ++i)
     {
         GlobalLogger.StartLogging() << castlingNames[i] << ": " << bd.Castlings[i] << std::endl;
@@ -124,7 +125,8 @@ std::pair<uint64_t, uint64_t> ExtractPositionsFromEncoding(const std::string &en
 
     return {
         ExtractPosFromStr(std::toupper(encoding[0]), std::toupper(encoding[1])),
-        ExtractPosFromStr(std::toupper(encoding[2]), std::toupper(encoding[3]))};
+        ExtractPosFromStr(std::toupper(encoding[2]), std::toupper(encoding[3]))
+    };
 }
 
 std::pair<char, char> ConvertToCharPos(const int boardPosMsb)

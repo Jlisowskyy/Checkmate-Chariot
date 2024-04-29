@@ -1,36 +1,35 @@
-name: clang-format codebase
+name: clang-format check
 
-# Run only on source code change
-on:
-  push:
-    paths:
-      - '**.cpp'
-      - '**.h'
-      - '**.cc'
-    branches: [ main ]
+on: [push]
 
 jobs:
-  format-code:
+  check-formatting:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v2
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    - name: Install Clang-Format
-      run: sudo apt-get install clang-format -y
+    - name: Install clang-format
+      run: sudo apt-get install -y clang-format
 
-    - name: Run Clang-Format
-      run: find . -regex '.*\.\(cpp\|h\|cc\)' -exec clang-format -i {} +
-
-    - name: Commit changes
+    - name: Find C++ source files
+      id: files-finder
       run: |
-        git config --global user.name 'github-actions'
-        git config --global user.email 'github-actions@github.com'
-        git add -A  # Add all modified files to the staging area
-        git commit -m "Apply clang-format changes" || echo "No changes to commit"
-        git push origin
+        {
+          echo 'cpp_files<<EOF'
+          echo $(find . -regex '.*\.\(cpp\|cc\|h\|c\)')
+          echo EOF
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Show found C++ files
+      env:
+        CPP_FILES: ${{ steps.files-finder.outputs.cpp_files}}
+      run: echo "Files found $CPP_FILES"
+
+    - name: Check formatting
+      env:
+        CPP_FILES: ${{ steps.files-finder.outputs.cpp_files}}
+      run: |
+        bash .github/workflows/clang-format-checker.sh $CPP_FILES
+

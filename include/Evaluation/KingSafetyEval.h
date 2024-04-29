@@ -92,8 +92,7 @@ struct KingSafetyEval
         }
 
         return rv;
-    }
-    ();
+    }();
 
     public:
     static constexpr int32_t KingNoShelterPenalty = -50;
