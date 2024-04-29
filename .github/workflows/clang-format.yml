@@ -10,8 +10,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install clang-format
-      run: sudo apt-get install -y clang-format
+    - name: Manually install latest clang-format
+      run: |
+        bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
     - name: Find C++ source files
       id: files-finder
