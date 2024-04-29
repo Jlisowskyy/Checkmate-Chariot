@@ -10,9 +10,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Manually install latest clang-format
+    - name: Install clang-format
       run: |
-        sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+        sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal main"
+        sudo apt update
+        sudo apt install clang-format-17
+
+    - name: Check clang-format version
+      run: clang-format --version
 
     - name: Find C++ source files
       id: files-finder
@@ -32,6 +38,5 @@ jobs:
       env:
         CPP_FILES: ${{ steps.files-finder.outputs.cpp_files}}
       run: |
-        /usr/bin/clang-format --version
         bash .github/workflows/clang-format-checker.sh $CPP_FILES
 
