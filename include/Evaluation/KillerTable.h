@@ -12,10 +12,13 @@
  *      Class used to implement so-called killed heuristic, which depends on observation
  *      that in the same ply depth some moves remain good no matter what was previously player.
  *      KillerTable is used to save all moves that caused a beta cutoff during search in sibling's nodes.
+ *
+ *      Resources: https://www.chessprogramming.org/Killer_Heuristic
  */
 
 class KillerTable
 {
+    // Controls how many moves per ply can be saved
     static constexpr size_t MovesPerPly = 3;
 
     public:
@@ -37,13 +40,16 @@ class KillerTable
     // ------------------------------
 
     // simply clears previously saved moves
-    void ClearPlyFloor(const int depthLeft) { _kTable[depthLeft] = {}; }
+    void ClearPlyFloor(int depthLeft);
 
     // saves move to the table if possible
-    void SaveKillerMove(const Move kMove, const int depthLeft) { _kTable[depthLeft].Push(kMove); }
+    void SaveKillerMove(const Move kMove, const int depthLeft) __attribute__((always_inline))
+    {
+        _kTable[depthLeft].Push(kMove);
+    }
 
     // checks whether actual move is a "killer" move
-    [[nodiscard]] bool IsKillerMove(const Move move, const int depthLeft) const
+    [[nodiscard]] bool IsKillerMove(const Move move, const int depthLeft) const __attribute__((always_inline))
     {
         return _kTable[depthLeft].Contains(move);
     }
@@ -53,13 +59,35 @@ class KillerTable
     // Inner types
     // ------------------------------
 
+    // structure used to save killer moves with MovesPerPly limit
     struct _killerFloor_t
     {
         _killerFloor_t() = default;
 
-        void Push(Move mv);
+        // Saves up to MovePerPly moves. Only first ones, no replacement policy, no duplicates saved.
+        void Push(const Move mv) __attribute__((always_inline))
+        {
+            // all possible slots are used
+            if (last == MovesPerPly)
+                return;
 
-        [[nodiscard]] bool Contains(Move mv) const;
+            // ensuring that no same moves are stored twice
+            for (size_t i = 0; i < last; ++i)
+                if (_killerMovesTable[i] == mv.GetPackedMove())
+                    return;
+
+            // saving move
+            _killerMovesTable[last++] = mv.GetPackedMove();
+        }
+
+        // simply iterates through _killerMovesTable and compares given move to all inside
+        [[nodiscard]] bool Contains(const Move mv) const __attribute__((always_inline))
+        {
+            for (size_t i = 0; i < MovesPerPly; ++i)
+                if (_killerMovesTable[i] == mv.GetPackedMove())
+                    return true;
+            return false;
+        }
 
         PackedMove _killerMovesTable[MovesPerPly]{};
         uint8_t last{};

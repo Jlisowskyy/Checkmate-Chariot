@@ -12,6 +12,8 @@
  *  The idea is that some moves have natural response to be played, especially in close positions.
  *  Table is used to save non-capture moves that caused beta cut-offs in the past as a response to some move.
  *  In move generation, we will make counter-moves more important
+ *
+ *  Resources: https://www.chessprogramming.org/Countermove_Heuristic
  */
 
 struct CounterMoveTable
@@ -33,21 +35,20 @@ struct CounterMoveTable
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] PackedMove GetCounterMove(const Move previousMove) const
+    // Function returns move that is currently saved as counter move for that one
+    [[nodiscard]] PackedMove GetCounterMove(const Move previousMove) const __attribute__((always_inline))
     {
         return _counterMovesTable[previousMove.GetStartBoardIndex()][previousMove.GetTargetField()];
     }
 
-    void SaveCounterMove(const PackedMove counterMove, const Move previousMove)
+    // Simply saves counter move for given move, without checking or considering anything
+    void SaveCounterMove(const PackedMove counterMove, const Move previousMove) __attribute__((always_inline))
     {
         _counterMovesTable[previousMove.GetStartBoardIndex()][previousMove.GetTargetField()] = counterMove;
     }
 
-    void ClearTable()
-    {
-        for (size_t i = 0; i < Board::BitBoardsCount; ++i)
-            for (size_t j = 0; j < Board::BitBoardFields; ++j) _counterMovesTable[i][j] = {};
-    }
+    // Resets all values inside the table to default null move one
+    void ClearTable();
 
     // ------------------------------
     // Class fields

@@ -98,9 +98,10 @@ add_executable(Checkmate-Chariot main.cpp
         src/MapCorrectnessTest.cpp
         src/MapPerformanceTest.cpp
         include/Evaluation/KingSafetyEval.h
-        src/KingSafetyEval.cpp
         include/MoveGeneration/FileMap.h
         include/Evaluation/StructureEvaluator.h
+        src/HistoricTable.cpp
+        src/CounterMoveTable.cpp
 )
 ################################################################################
 #                                  Unit Tests                                  #
