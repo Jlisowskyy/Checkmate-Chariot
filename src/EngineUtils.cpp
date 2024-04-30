@@ -148,3 +148,19 @@ std::string ConvertToStrPos(const int boardPosMsb)
 std::pair<char, char> ConvertToCharPos(const uint64_t boardMap) { return ConvertToCharPos(ExtractMsbPos(boardMap)); }
 
 std::string ConvertToStrPos(const uint64_t boardMap) { return ConvertToStrPos(ExtractMsbPos(boardMap)); }
+void *AlignedAlloc(const size_t alignment, const size_t size)
+{
+#ifdef _MSC_VER
+    return _aligned_malloc(size, alignment);
+#else
+    return std::aligned_alloc(alignment, size);
+#endif
+}
+void AlignedFree(void *ptr)
+{
+#ifdef _MSC_VER
+    _aligned_free(ptr);
+#else
+    std::free(ptr);
+#endif
+}

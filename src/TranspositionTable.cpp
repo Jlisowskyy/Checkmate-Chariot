@@ -10,17 +10,19 @@
 #include <format>
 #include <stdexcept>
 
+#include "../include/EngineUtils.h"
+
 TranspositionTable TTable{};
 
 TranspositionTable::TranspositionTable()
     : _tableSize(StartTableSize), _hashMask(_getPow2ModuloMask(StartTableSize)),
-      _map{static_cast<HashRecord *>(std::aligned_alloc(_entryAlignment, sizeof(HashRecord) * StartTableSize))}
+      _map{static_cast<HashRecord *>(AlignedAlloc(_entryAlignment, sizeof(HashRecord) * StartTableSize))}
 {
     _checkForCorrectAlloc(StartTableSize);
     ClearTable();
 }
 
-TranspositionTable::~TranspositionTable() { free(_map); }
+TranspositionTable::~TranspositionTable() { AlignedFree(_map); }
 
 void TranspositionTable::ClearTable()
 {
@@ -30,14 +32,14 @@ void TranspositionTable::ClearTable()
 
 ssize_t TranspositionTable::ResizeTable(const size_t sizeMB)
 {
-    free(_map);
+    AlignedFree(_map);
     const size_t ceiledSizeMB = std::bit_floor(sizeMB);
     const size_t objSize      = ceiledSizeMB * MB / sizeof(HashRecord);
-    _map                      = static_cast<HashRecord *>(std::aligned_alloc(_entryAlignment, ceiledSizeMB * MB));
+    _map                      = static_cast<HashRecord *>(AlignedAlloc(_entryAlignment, ceiledSizeMB * MB));
 
     if (_map == nullptr)
     {
-        _map = static_cast<HashRecord *>(std::aligned_alloc(_entryAlignment, StartTableSize * sizeof(HashRecord)));
+        _map = static_cast<HashRecord *>(AlignedAlloc(_entryAlignment, StartTableSize * sizeof(HashRecord)));
         _tableSize = StartTableSize;
         _hashMask  = _getPow2ModuloMask(StartTableSize);
         _checkForCorrectAlloc(StartTableSize);

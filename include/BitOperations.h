@@ -7,11 +7,14 @@
 
 #include <cinttypes>
 #include <cstdlib>
+#include <bit>
 
 static constexpr uint64_t maxMsbPossible = 1LLU << 63;
 static constexpr uint64_t minMsbPossible = 1LLU;
 
-constexpr int ExtractMsbPos(const uint64_t x) { return __builtin_clzl(x); }
+constexpr int ExtractMsbPos(const uint64_t x) {
+    return std::countl_zero(x);
+}
 
 constexpr int ConvertToReversedPos(const int x)
 {
@@ -20,7 +23,9 @@ constexpr int ConvertToReversedPos(const int x)
 
 constexpr int ExtractMsbReversedPos(const uint64_t x) { return ConvertToReversedPos(ExtractMsbPos(x)); }
 
-constexpr int ExtractLsbReversedPos(const uint64_t x) { return __builtin_ctzl(x); }
+constexpr int ExtractLsbReversedPos(const uint64_t x) {
+    return std::countr_zero(x);
+}
 
 constexpr int ExtractLsbPos(const uint64_t x) { return ConvertToReversedPos(ExtractLsbReversedPos(x)); }
 
@@ -38,7 +43,7 @@ constexpr uint64_t ExtractLsbBit(const uint64_t x) { return ExtractLsbOwn1(x); }
 
 constexpr uint64_t ClearAFromIntersectingBits(const uint64_t a, const uint64_t b) { return a ^ (a & b); }
 
-constexpr int CountOnesInBoard(const uint64_t num) { return __builtin_popcountll(num); }
+constexpr int CountOnesInBoard(const uint64_t num) { return std::popcount(num); }
 
 constexpr __uint128_t operator""_uint128_t(const char *x)
 {
