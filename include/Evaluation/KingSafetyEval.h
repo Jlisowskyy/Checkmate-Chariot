@@ -6,6 +6,8 @@
 #define KINGSAFETYFIELDS_H
 
 #include "../MoveGeneration/MoveGenerationUtils.h"
+#include "../MoveGeneration/KingMap.h"
+#include "../MoveGeneration/FileMap.h"
 
 /*
  * Structure below gathers all the necessary information about the king safety evaluation.
@@ -39,23 +41,69 @@ struct KingSafetyEval
 
     // This method is used to return fields that controlling by enemy imposes danger to the king.
     // TODO: Currently its simple ring around the king, reconsider and improve.
-    [[nodiscard]] static uint64_t GetSafetyFields(const Board &bd, int col);
+    [[nodiscard]] static uint64_t GetSafetyFields(const Board &bd, const int col) __attribute__((always_inline))
+    {
+        const uint64_t kingMap  = bd.BitBoards[KingMap::GetBoardIndex(col)];
+        const uint64_t kingRing = KingMap::GetMoves(ExtractMsbPos(kingMap)) | kingMap;
+        return kingRing;
+    }
 
-    static void __attribute__((always_inline))
-    UpdateKingAttacks(_kingSafetyInfo_t &info, uint64_t attacks, uint64_t kingRing, int32_t pointsPerAttack);
+    static void UpdateKingAttacks(_kingSafetyInfo_t &info, const uint64_t attacks, const uint64_t kingRing, const int32_t pointsPerAttack) __attribute__((always_inline))
+    {
+        const int32_t kingAttackingCount = CountOnesInBoard(attacks & kingRing);
+
+        info.attackCounts += kingAttackingCount > 0;
+        info.attackPoints += kingAttackingCount * pointsPerAttack;
+    }
 
     // Returns mask that defines the shelter in front of the king;
 
-    [[nodiscard]] static uint64_t GetFrontLineMask(int col, int msbPos);
+    [[nodiscard]] static uint64_t GetFrontLineMask(const int col, const int msbPos) __attribute__((always_inline))
+    { return _kingPawnDefenseFields[col][msbPos]; }
 
     // Returns summed shelter penalty points for both kings.
-    [[nodiscard]] static int32_t EvalKingShelter(const Board &bd);
+    [[nodiscard]] static int32_t EvalKingShelter(const Board &bd)
+    {
+        int32_t eval{};
+        if ((bd.BitBoards[wKingIndex] & KingMap::ShelterLocationMask[WHITE]) != 0 &&
+            CountOnesInBoard(bd.BitBoards[wPawnsIndex] & GetFrontLineMask(WHITE, ExtractMsbPos(bd.BitBoards[wKingIndex]))) <
+                3)
+            eval += KingNoShelterPenalty;
+
+        if ((bd.BitBoards[bKingIndex] & KingMap::ShelterLocationMask[BLACK]) != 0 &&
+            CountOnesInBoard(bd.BitBoards[bPawnsIndex] & GetFrontLineMask(BLACK, ExtractMsbPos(bd.BitBoards[bKingIndex]))) <
+                3)
+            eval += -KingNoShelterPenalty;
+
+        return eval;
+    }
 
     // Returns summed open files penalty points for both kings.
-    [[nodiscard]] static int32_t EvalKingOpenFiles(const Board &bd);
+    [[nodiscard]] static int32_t EvalKingOpenFiles(const Board &bd)
+    {
+        int32_t eval{};
+
+        const auto wSep = FileMap::GetSepFiles(ExtractMsbPos(bd.BitBoards[wKingIndex]));
+        for (size_t i = 0; i < FileMap::FileSepSize; ++i)
+            eval += ((bd.BitBoards[wPawnsIndex] & wSep[i]) == 0) * KingOpenFilePenalty;
+
+        const auto bSep = FileMap::GetSepFiles(ExtractMsbPos(bd.BitBoards[bKingIndex]));
+        for (size_t i = 0; i < FileMap::FileSepSize; ++i)
+            eval -= ((bd.BitBoards[bPawnsIndex] & bSep[i]) == 0) * KingOpenFilePenalty;
+
+        return eval;
+    }
 
     // Returns score for the king ring control.
-    [[nodiscard]] static int32_t ScoreKingRingControl(const _kingSafetyInfo_t& whiteInfo, const _kingSafetyInfo_t& blackInfo);
+    [[nodiscard]] static int32_t ScoreKingRingControl(const _kingSafetyInfo_t& whiteInfo, const _kingSafetyInfo_t& blackInfo) __attribute__((always_inline))
+    {
+        int32_t bonus {};
+
+        bonus += (whiteInfo.attackCounts > 2) * (-_kingSafetyValues[whiteInfo.attackPoints]);
+        bonus += (blackInfo.attackCounts > 2) * (_kingSafetyValues[blackInfo.attackPoints]);
+
+        return bonus;
+    }
     // ------------------------------
     // Class fields
     // ------------------------------

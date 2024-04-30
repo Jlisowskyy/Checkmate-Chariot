@@ -27,22 +27,45 @@ struct MoveSortEval
     // ------------------------------
 
     static int32_t ApplyAttackFieldEffects(
-        int32_t eval, uint64_t pawnAttacks, uint64_t startField, uint64_t targetField
-    );
+        const int32_t eval, const uint64_t pawnAttacks, const uint64_t startField, const uint64_t targetField
+    ) __attribute__((always_inline))
+    {
+        return eval
+               + ((pawnAttacks & startField) != 0) * RunAwayPrize
+               + ((pawnAttacks & targetField) != 0) * AttackedFigurePenalty;
+    }
 
-    static int32_t ApplyPromotionEffects(int32_t eval, size_t nFig);
+    static int32_t ApplyPromotionEffects(const int32_t eval, const size_t nFig) __attribute__((always_inline))
+    {
+        return FigureEval[nFig] + eval + PromotionBonus;
+    }
 
-    static int32_t ApplyKilledFigEffect(int32_t eval, size_t attackFig, size_t killedFig);
+    static int32_t ApplyKilledFigEffect(const int32_t eval, const size_t attackFig, const size_t killedFig) __attribute__((always_inline))
+    {
+        return eval + FigureEval[killedFig] - FigureEval[attackFig] + CaptureBonus;
+    }
 
     static int32_t
-    ApplyKillerMoveEffect(int32_t eval, const KillerTable &kTable, Move mv, int depthLeft);
+    ApplyKillerMoveEffect(const int32_t eval, const KillerTable &kTable, const Move mv, const int depthLeft) __attribute__((always_inline))
+    {
+        return eval + KillerMovePrize * kTable.IsKillerMove(mv, depthLeft);
+    }
 
-    static int32_t ApplyCounterMoveEffect(int32_t eval, PackedMove counterMove, Move move);
+    static int32_t ApplyCounterMoveEffect(const int32_t eval, const PackedMove counterMove, const Move move) __attribute__((always_inline))
+    {
+        return eval + CounterMovePrize * (move.GetPackedMove() == counterMove);
+    }
 
     static int32_t
-    ApplyCaptureMostRecentSquareEffect(int32_t eval, int mostRecentSquareMsb, int moveSquare);
+    ApplyCaptureMostRecentSquareEffect(const int32_t eval, const int mostRecentSquareMsb, const int moveSquare) __attribute__((always_inline))
+    {
+        return eval + MostRecentSquarePrize * (mostRecentSquareMsb == moveSquare);
+    }
 
-    static int32_t ApplyHistoryTableBonus(int32_t eval, Move mv, const HistoricTable &hTable);
+    static int32_t ApplyHistoryTableBonus(const int32_t eval, const Move mv, const HistoricTable &hTable) __attribute__((always_inline))
+    {
+        return eval + hTable.GetBonusMove(mv);
+    }
 
     // ------------------------------
     // Class fields
