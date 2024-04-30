@@ -39,7 +39,7 @@ ssize_t TranspositionTable::ResizeTable(const size_t sizeMB)
 
     if (_map == nullptr)
     {
-        _map = static_cast<HashRecord *>(AlignedAlloc(_entryAlignment, StartTableSize * sizeof(HashRecord)));
+        _map       = static_cast<HashRecord *>(AlignedAlloc(_entryAlignment, StartTableSize * sizeof(HashRecord)));
         _tableSize = StartTableSize;
         _hashMask  = _getPow2ModuloMask(StartTableSize);
         _checkForCorrectAlloc(StartTableSize);

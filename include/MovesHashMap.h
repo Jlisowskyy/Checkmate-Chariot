@@ -156,20 +156,19 @@ void MovesHashMap<HashFuncT, mapAllocSize>::FindHashParameters(
         const int bInd = ConvertToReversedPos(i);
 
         // Possible neighbors generation.
-        const auto tpl1 = nGen(bInd, maps[i].masks);
+        const auto tpl1    = nGen(bInd, maps[i].masks);
         auto possibilities = std::get<0>(tpl1);
         auto posSize       = std::get<1>(tpl1);
 
-        auto getNeighbors =
-            [&]([[maybe_unused]] const int, [[maybe_unused]] const std::array<uint64_t, 4>)
+        auto getNeighbors = [&]([[maybe_unused]] const int, [[maybe_unused]] const std::array<uint64_t, 4>)
         {
             return std::make_pair(std::ref(possibilities), posSize);
         };
 
         // First initial check for correctness
-        auto tpl2 = maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
+        auto tpl2   = maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
         auto result = std::get<0>(tpl2);
-        auto size       = std::get<1>(tpl2);
+        auto size   = std::get<1>(tpl2);
         // If the map is correct, go to the next one
         if (result)
         {
@@ -198,11 +197,10 @@ void MovesHashMap<HashFuncT, mapAllocSize>::FindHashParameters(
             maps[i].HFunc.RollParameters();
             guard.unlock();
 
-            const auto tpl3 =
-                maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
+            const auto tpl3 = maps[i].template IntegrityTest<decltype(getNeighbors), stripFunction>(getNeighbors, bInd);
 
             auto rehashResult = std::get<0>(tpl3);
-            auto rehashedSize       = std::get<1>(tpl3);
+            auto rehashedSize = std::get<1>(tpl3);
 
             wasCollision = !rehashResult;
             nSize        = rehashedSize;

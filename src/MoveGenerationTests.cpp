@@ -448,4 +448,4 @@ std::pair<std::array<int, 2>, pid_t> MoveGenerationTester::_getExternalEnginePro
     };
 }
 
-#endif  // __unix__
+#endif // __unix__

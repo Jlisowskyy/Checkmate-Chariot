@@ -88,9 +88,9 @@ class MoveGenerationTester
 
     public:
     // TODO: temporary to speedup testing
-    static constexpr const char *DefaultPath      = "Tests/correctnesGen/stockfish";
-    static constexpr const char *DefaultTestPath  = "Tests/positionTests.csv";
-    static constexpr const char *DefaultTestPath1 = "Tests/singlePos.csv";
+    static constexpr const char *DefaultPath         = "Tests/correctnesGen/stockfish";
+    static constexpr const char *DefaultTestPath     = "Tests/positionTests.csv";
+    static constexpr const char *DefaultTestPath1    = "Tests/singlePos.csv";
     static constexpr const char *DefaultCompTestPath = "Tests/perfTest1.csv";
     static constexpr const char *DefaultSaveFile     = "test_output.csv";
 
@@ -106,32 +106,19 @@ struct MoveGenerationTester
 {
     MoveGenerationTester([[maybe_unused]] const std::string &) {}
 
-    std::pair<std::string, int> PerformSingleShallowTest(
-        const std::string&, int , const std::vector<std::string> &, bool writeOnOut = false
-    ) const
+    std::pair<std::string, int>
+    PerformSingleShallowTest(const std::string &, int, const std::vector<std::string> &, bool writeOnOut = false) const
     {
         Error();
     }
 
-    void PerformDeepTest(const std::string &, int, const std::vector<std::string> &) const
-    {
-        Error();
-    }
+    void PerformDeepTest(const std::string &, int, const std::vector<std::string> &) const { Error(); }
 
-    void PerformSeriesOfDeepTests(const std::vector<std::pair<std::string, int>> &) const
-    {
-        Error();
-    }
+    void PerformSeriesOfDeepTests(const std::vector<std::pair<std::string, int>> &) const { Error(); }
 
-    bool PerformSeriesOfDeepTestFromFile(const std::string &) const
-    {
-        Error();
-    }
+    bool PerformSeriesOfDeepTestFromFile(const std::string &) const { Error(); }
 
-    bool PerformPerformanceTest(const std::string &, const std::string &) const
-    {
-        Error();
-    }
+    bool PerformPerformanceTest(const std::string &, const std::string &) const { Error(); }
 
     static void Error() const
     {
