@@ -30,15 +30,13 @@ struct MoveSortEval
     // Class interaction
     // ------------------------------
 
-
     // Function applies pawns controlling penalty to the eval
     static int32_t ApplyAttackFieldEffects(
         const int32_t eval, const uint64_t pawnAttacks, const uint64_t startField, const uint64_t targetField
     ) __attribute__((always_inline))
     {
-        return eval
-               + ((pawnAttacks & startField) != 0) * RunAwayPrize
-               + ((pawnAttacks & targetField) != 0) * AttackedFigurePenalty;
+        return eval + ((pawnAttacks & startField) != 0) * RunAwayPrize +
+               ((pawnAttacks & targetField) != 0) * AttackedFigurePenalty;
     }
 
     // Function applies promotion bonus to the eval
@@ -48,33 +46,38 @@ struct MoveSortEval
     }
 
     // Function applies capture bonus and material balance of the move
-    static int32_t ApplyKilledFigEffect(const int32_t eval, const size_t attackFig, const size_t killedFig) __attribute__((always_inline))
+    static int32_t ApplyKilledFigEffect(const int32_t eval, const size_t attackFig, const size_t killedFig)
+        __attribute__((always_inline))
     {
         return eval + FigureEval[killedFig] - FigureEval[attackFig] + CaptureBonus;
     }
 
     // Function applies killer move bonus to the eval
     static int32_t
-    ApplyKillerMoveEffect(const int32_t eval, const KillerTable &kTable, const Move mv, const int depthLeft) __attribute__((always_inline))
+    ApplyKillerMoveEffect(const int32_t eval, const KillerTable &kTable, const Move mv, const int depthLeft)
+        __attribute__((always_inline))
     {
         return eval + KillerMovePrize * kTable.IsKillerMove(mv, depthLeft);
     }
 
     // Function applies Counter Move bonus to the eval
-    static int32_t ApplyCounterMoveEffect(const int32_t eval, const PackedMove counterMove, const Move move) __attribute__((always_inline))
+    static int32_t ApplyCounterMoveEffect(const int32_t eval, const PackedMove counterMove, const Move move)
+        __attribute__((always_inline))
     {
         return eval + CounterMovePrize * (move.GetPackedMove() == counterMove);
     }
 
     // Function applies bonus to the eval if move is a capture of the most recently moved figure
     static int32_t
-    ApplyCaptureMostRecentSquareEffect(const int32_t eval, const int mostRecentSquareMsb, const int moveSquare) __attribute__((always_inline))
+    ApplyCaptureMostRecentSquareEffect(const int32_t eval, const int mostRecentSquareMsb, const int moveSquare)
+        __attribute__((always_inline))
     {
         return eval + MostRecentSquarePrize * (mostRecentSquareMsb == moveSquare);
     }
 
     // Function applies bonus according to the history table
-    static int32_t ApplyHistoryTableBonus(const int32_t eval, Move mv, const HistoricTable &hTable) __attribute__((always_inline))
+    static int32_t ApplyHistoryTableBonus(const int32_t eval, Move mv, const HistoricTable &hTable)
+        __attribute__((always_inline))
     {
         return eval + hTable.GetBonusMove(mv);
     }

@@ -5,9 +5,9 @@
 #ifndef KINGSAFETYFIELDS_H
 #define KINGSAFETYFIELDS_H
 
-#include "../MoveGeneration/MoveGenerationUtils.h"
-#include "../MoveGeneration/KingMap.h"
 #include "../MoveGeneration/FileMap.h"
+#include "../MoveGeneration/KingMap.h"
+#include "../MoveGeneration/MoveGenerationUtils.h"
 
 /*
  * Structure below gathers all the necessary information about the king safety evaluation.
@@ -48,7 +48,9 @@ struct KingSafetyEval
         return kingRing;
     }
 
-    static void UpdateKingAttacks(_kingSafetyInfo_t &info, const uint64_t attacks, const uint64_t kingRing, const int32_t pointsPerAttack) __attribute__((always_inline))
+    static void UpdateKingAttacks(
+        _kingSafetyInfo_t &info, const uint64_t attacks, const uint64_t kingRing, const int32_t pointsPerAttack
+    ) __attribute__((always_inline))
     {
         const int32_t kingAttackingCount = CountOnesInBoard(attacks & kingRing);
 
@@ -59,20 +61,24 @@ struct KingSafetyEval
     // Returns mask that defines the shelter in front of the king;
 
     [[nodiscard]] static uint64_t GetFrontLineMask(const int col, const int msbPos) __attribute__((always_inline))
-    { return _kingPawnDefenseFields[col][msbPos]; }
+    {
+        return _kingPawnDefenseFields[col][msbPos];
+    }
 
     // Returns summed shelter penalty points for both kings.
     [[nodiscard]] static int32_t EvalKingShelter(const Board &bd)
     {
         int32_t eval{};
         if ((bd.BitBoards[wKingIndex] & KingMap::ShelterLocationMask[WHITE]) != 0 &&
-            CountOnesInBoard(bd.BitBoards[wPawnsIndex] & GetFrontLineMask(WHITE, ExtractMsbPos(bd.BitBoards[wKingIndex]))) <
-                3)
+            CountOnesInBoard(
+                bd.BitBoards[wPawnsIndex] & GetFrontLineMask(WHITE, ExtractMsbPos(bd.BitBoards[wKingIndex]))
+            ) < 3)
             eval += KingNoShelterPenalty;
 
         if ((bd.BitBoards[bKingIndex] & KingMap::ShelterLocationMask[BLACK]) != 0 &&
-            CountOnesInBoard(bd.BitBoards[bPawnsIndex] & GetFrontLineMask(BLACK, ExtractMsbPos(bd.BitBoards[bKingIndex]))) <
-                3)
+            CountOnesInBoard(
+                bd.BitBoards[bPawnsIndex] & GetFrontLineMask(BLACK, ExtractMsbPos(bd.BitBoards[bKingIndex]))
+            ) < 3)
             eval += -KingNoShelterPenalty;
 
         return eval;
@@ -95,9 +101,11 @@ struct KingSafetyEval
     }
 
     // Returns score for the king ring control.
-    [[nodiscard]] static int32_t ScoreKingRingControl(const _kingSafetyInfo_t& whiteInfo, const _kingSafetyInfo_t& blackInfo) __attribute__((always_inline))
+    [[nodiscard]] static int32_t
+    ScoreKingRingControl(const _kingSafetyInfo_t &whiteInfo, const _kingSafetyInfo_t &blackInfo)
+        __attribute__((always_inline))
     {
-        int32_t bonus {};
+        int32_t bonus{};
 
         bonus += (whiteInfo.attackCounts > 2) * (-_kingSafetyValues[whiteInfo.attackPoints]);
         bonus += (blackInfo.attackCounts > 2) * (_kingSafetyValues[blackInfo.attackPoints]);
@@ -130,10 +138,11 @@ struct KingSafetyEval
                 uint64_t rightMask{};
 
                 if (xOff - 1 >= 0)
-                    leftMask =
-                        col == WHITE
-                            ? GenMask(startInd - 1, std::min(static_cast<int32_t>(Board::BitBoardFields), startInd + 8), 8)
-                            : GenMask(std::max(xOff - 1, startInd - 8 - 1), startInd, 8);
+                    leftMask = col == WHITE ? GenMask(
+                                                  startInd - 1,
+                                                  std::min(static_cast<int32_t>(Board::BitBoardFields), startInd + 8), 8
+                                              )
+                                            : GenMask(std::max(xOff - 1, startInd - 8 - 1), startInd, 8);
 
                 if (xOff + 1 < 8)
                     rightMask = col == WHITE
@@ -164,7 +173,6 @@ struct KingSafetyEval
     };
 
     public:
-
     // values below are used to construct a key to the king safety lookup table (_kingSafetyValues),
     // which store exponentially scaled king safety values.
     // Key is simply constructed by summing number of attacks * (corresponding coef)

@@ -27,7 +27,8 @@ struct StructureEvaluator
     // ------------------------------
 
     // Method used to evaluate whether rook positioned on rooksMsbPos is on open file. Returns bonus for the given rook.
-    static int32_t EvalRookOnOpenFile(const Board &bd, const int rooksMsbPos, const int col) __attribute__((always_inline))
+    static int32_t EvalRookOnOpenFile(const Board &bd, const int rooksMsbPos, const int col)
+        __attribute__((always_inline))
     {
         const uint64_t allyPawns  = bd.BitBoards[col * Board::BitBoardsPerCol + pawnsIndex];
         const uint64_t enemyPawns = bd.BitBoards[SwapColor(col) * Board::BitBoardsPerCol + pawnsIndex];
@@ -49,7 +50,8 @@ struct StructureEvaluator
 
     // Method used to evaluate doubled pawns. Returns penalty for the given pawn. Currently checks only whether there is
     // another pawn on the same file. TODO: reconsider that to something more complicated and precise.
-    static int32_t EvalDoubledPawn(const uint64_t allyPawns, const int pawnsMsbPos, const int col) __attribute__((always_inline))
+    static int32_t EvalDoubledPawn(const uint64_t allyPawns, const int pawnsMsbPos, const int col)
+        __attribute__((always_inline))
     {
         return ((allyPawns & FileMap::GetFrontFile(pawnsMsbPos, col)) != 0) * DoubledPawnPenalty;
     }
@@ -61,9 +63,10 @@ struct StructureEvaluator
         return ((allyPawns & FileMap::GetNeighborFiles(pawnsMsbPos)) == 0) * IsolatedPawnPenalty;
     }
 
-    // Method used to evaluate passed pawn. Returns bonus for the given pawn when there is no enemy pawn on the same file,
-    // and no enemy pawn on the neighboring files.
-    static int32_t SimplePassedPawn(const uint64_t enemyPawns, const int pawnsMsbPos, const int col) __attribute__((always_inline))
+    // Method used to evaluate passed pawn. Returns bonus for the given pawn when there is no enemy pawn on the same
+    // file, and no enemy pawn on the neighboring files.
+    static int32_t SimplePassedPawn(const uint64_t enemyPawns, const int pawnsMsbPos, const int col)
+        __attribute__((always_inline))
     {
         return ((enemyPawns & FileMap::GetFronFatFile(pawnsMsbPos, col)) == 0) * PassedPawnBonus;
     }
@@ -73,7 +76,6 @@ struct StructureEvaluator
     // ------------------------------
 
     private:
-
     // All bonuses for above methods.
     static constexpr int16_t RookSemiOpenFileBonus = 8;
     static constexpr int16_t CoveredPawnBonus      = 4;

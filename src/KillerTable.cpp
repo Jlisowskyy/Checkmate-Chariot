@@ -4,6 +4,4 @@
 
 #include "../include/Evaluation/KillerTable.h"
 
-void KillerTable::ClearPlyFloor(const int depthLeft) {
-    _kTable[depthLeft] = {};
-}
+void KillerTable::ClearPlyFloor(const int depthLeft) { _kTable[depthLeft] = {}; }

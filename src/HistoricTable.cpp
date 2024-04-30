@@ -6,8 +6,7 @@
 
 void HistoricTable::ClearTable()
 {
-    for (auto & table : _table)
-        std::fill_n(table, Board::BitBoardFields, 0);
+    for (auto &table : _table) std::fill_n(table, Board::BitBoardFields, 0);
 }
 
 void HistoricTable::ScaleTableDown()

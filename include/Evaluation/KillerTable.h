@@ -20,19 +20,20 @@ class KillerTable
 {
     // Controls how many moves per ply can be saved
     static constexpr size_t MovesPerPly = 3;
+
     public:
     // ------------------------------
     // Class creation
     // ------------------------------
 
-    constexpr KillerTable() = default;
+    constexpr KillerTable()  = default;
     constexpr ~KillerTable() = default;
 
-    KillerTable(KillerTable&&) = delete;
-    KillerTable(const KillerTable&) = delete;
+    KillerTable(KillerTable &&)      = delete;
+    KillerTable(const KillerTable &) = delete;
 
-    KillerTable& operator=(const KillerTable&) = delete;
-    KillerTable& operator=(KillerTable&&) = delete;
+    KillerTable &operator=(const KillerTable &) = delete;
+    KillerTable &operator=(KillerTable &&)      = delete;
 
     // ------------------------------
     // Class interaction
@@ -88,7 +89,6 @@ class KillerTable
             return false;
         }
 
-
         PackedMove _killerMovesTable[MovesPerPly]{};
         uint8_t last{};
     };
@@ -100,5 +100,4 @@ class KillerTable
     _killerFloor_t _kTable[MaxSearchDepth]{};
 };
 
-#endif //KILLERTABLE_H
-
+#endif // KILLERTABLE_H

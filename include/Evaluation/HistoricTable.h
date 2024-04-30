@@ -25,9 +25,7 @@ struct HistoricTable
     // Class creation
     // ------------------------------
 
-    HistoricTable(){
-        ClearTable();
-    };
+    HistoricTable() { ClearTable(); };
 
     ~HistoricTable() = default;
 
@@ -42,14 +40,15 @@ struct HistoricTable
     // ------------------------------
 
     // Function takes move and depth and increments the move's value in the table
-    void SetBonusMove(Move mv, int depth)  __attribute__((always_inline))
+    void SetBonusMove(Move mv, int depth) __attribute__((always_inline))
     {
-        _table[mv.GetStartBoardIndex()][mv.GetTargetField()] =
-            static_cast<int16_t>(std::min(_pointScale(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth), Barrier));
+        _table[mv.GetStartBoardIndex()][mv.GetTargetField()] = static_cast<int16_t>(
+            std::min(_pointScale(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth), Barrier)
+        );
     }
 
     // Function returns the value of the move from the table
-    [[nodiscard]] int32_t GetBonusMove(Move mv) const  __attribute__((always_inline))
+    [[nodiscard]] int32_t GetBonusMove(Move mv) const __attribute__((always_inline))
     {
         return _table[mv.GetStartBoardIndex()][mv.GetTargetField()];
     }
