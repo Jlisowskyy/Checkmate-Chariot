@@ -80,7 +80,7 @@ class MoveGenerationTester
 
     void _spawnEngine(const int *inPipeFileDesc, const int *outPipeFileDesc) const;
 
-    std::pair<std::array<int, 2>, pid_t> _getExternalEngineProcess() const;
+    [[nodiscard]] std::pair<std::array<int, 2>, pid_t> _getExternalEngineProcess() const;
 
     // ------------------------------
     // Class fields
@@ -88,10 +88,10 @@ class MoveGenerationTester
 
     public:
     // TODO: temporary to speedup testing
-    static constexpr const char *DefaultPath      = "/home/Jlisowskyy/Repos/ChessEngine/Tests/correctnesGen/stockfish";
-    static constexpr const char *DefaultTestPath  = "/home/Jlisowskyy/Repos/ChessEngine/Tests/positionTests.csv";
-    static constexpr const char *DefaultTestPath1 = "/home/Jlisowskyy/Repos/ChessEngine/Tests/singlePos.csv";
-    static constexpr const char *DefaultCompTestPath = "/home/Jlisowskyy/Repos/ChessEngine/Tests/perfTest1.csv";
+    static constexpr const char *DefaultPath         = "Tests/correctnesGen/stockfish";
+    static constexpr const char *DefaultTestPath     = "Tests/positionTests.csv";
+    static constexpr const char *DefaultTestPath1    = "Tests/singlePos.csv";
+    static constexpr const char *DefaultCompTestPath = "Tests/perfTest1.csv";
     static constexpr const char *DefaultSaveFile     = "test_output.csv";
 
     private:
@@ -104,19 +104,25 @@ class MoveGenerationTester
 
 struct MoveGenerationTester
 {
-    MoveGenerationTester([[maybe_unused]] const std::string &unused) {}
+    MoveGenerationTester([[maybe_unused]] const std::string &) {}
 
-    void PerformSingleTest([[maybe_unused]] const std::string &fenPosition, [[maybe_unused]] const int depth) const
+    std::pair<std::string, int>
+    PerformSingleShallowTest(const std::string &, int, const std::vector<std::string> &, bool writeOnOut = false) const
     {
-        GlobalLogger.StartErrLogging() << "[ ERROR ] Tests supported only under unix compatible platforms!\n";
+        Error();
     }
 
-    void PerformDeepTest(
-        [[maybe_unused]] const std::string &fenPosition, [[maybe_unused]] int depth,
-        [[maybe_unused]] const std::vector<std::string> &moves
-    ) const
+    void PerformDeepTest(const std::string &, int, const std::vector<std::string> &) const { Error(); }
+
+    void PerformSeriesOfDeepTests(const std::vector<std::pair<std::string, int>> &) const { Error(); }
+
+    bool PerformSeriesOfDeepTestFromFile(const std::string &) const { Error(); }
+
+    bool PerformPerformanceTest(const std::string &, const std::string &) const { Error(); }
+
+    static void Error() const
     {
-        PerformSingleTest(fenPosition, depth);
+        GlobalLogger.StartErrLogging() << "[ ERROR ] Tests supported only under unix compatible platforms!\n";
     }
 };
 
