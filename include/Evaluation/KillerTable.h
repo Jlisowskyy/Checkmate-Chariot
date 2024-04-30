@@ -39,19 +39,16 @@ class KillerTable
     // ------------------------------
 
     // simply clears previously saved moves
-    void ClearPlyFloor(const int depthLeft)
-    {
-        _kTable[depthLeft] = {};
-    }
+    void ClearPlyFloor(int depthLeft);
 
     // saves move to the table if possible
-    void SaveKillerMove(const Move kMove, const int depthLeft)
+    void SaveKillerMove(const Move kMove, const int depthLeft) __attribute__((always_inline))
     {
         _kTable[depthLeft].Push(kMove);
     }
 
     // checks whether actual move is a "killer" move
-    [[nodiscard]] bool IsKillerMove(const Move move, const int depthLeft) const
+    [[nodiscard]] bool IsKillerMove(const Move move, const int depthLeft) const __attribute__((always_inline))
     {
         return _kTable[depthLeft].Contains(move);
     }
@@ -67,10 +64,30 @@ class KillerTable
         _killerFloor_t() = default;
 
         // Saves up to MovePerPly moves. Only first ones, no replacement policy, no duplicates saved.
-        void Push(Move mv);
+        void Push(const Move mv) __attribute__((always_inline))
+        {
+            // all possible slots are used
+            if (last == MovesPerPly)
+                return;
+
+            // ensuring that no same moves are stored twice
+            for (size_t i = 0; i < last; ++i)
+                if (_killerMovesTable[i] == mv.GetPackedMove())
+                    return;
+
+            // saving move
+            _killerMovesTable[last++] = mv.GetPackedMove();
+        }
 
         // simply iterates through _killerMovesTable and compares given move to all inside
-        [[nodiscard]] bool Contains(Move mv) const;
+        [[nodiscard]] bool Contains(const Move mv) const __attribute__((always_inline))
+        {
+            for (size_t i = 0; i < MovesPerPly; ++i)
+                if (_killerMovesTable[i] == mv.GetPackedMove())
+                    return true;
+            return false;
+        }
+
 
         PackedMove _killerMovesTable[MovesPerPly]{};
         uint8_t last{};

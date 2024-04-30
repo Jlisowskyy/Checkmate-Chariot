@@ -3,14 +3,7 @@
 //
 
 #include "../include/Evaluation/CounterMoveTable.h"
-PackedMove CounterMoveTable::GetCounterMove(const Move previousMove) const
-{
-    return _counterMovesTable[previousMove.GetStartBoardIndex()][previousMove.GetTargetField()];
-}
-void CounterMoveTable::SaveCounterMove(const PackedMove counterMove, const Move previousMove)
-{
-    _counterMovesTable[previousMove.GetStartBoardIndex()][previousMove.GetTargetField()] = counterMove;
-}
+
 void CounterMoveTable::ClearTable()
 {
     for (auto & from : _counterMovesTable)

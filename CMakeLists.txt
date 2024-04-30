@@ -102,7 +102,6 @@ add_executable(Checkmate-Chariot main.cpp
         include/Evaluation/StructureEvaluator.h
         src/HistoricTable.cpp
         src/CounterMoveTable.cpp
-        src/StructureEvaluator.cpp
 )
 ################################################################################
 #                                  Unit Tests                                  #

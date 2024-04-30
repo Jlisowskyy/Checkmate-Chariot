@@ -108,7 +108,11 @@ class BoardEvaluator
     // ------------------------------
 
     // Wrapper used to run chosen evaluation function
-    [[nodiscard]] static int32_t DefaultFullEvalFunction(Board &bd, int color);
+    [[nodiscard]] static int32_t DefaultFullEvalFunction(Board &bd, const int color) __attribute__((always_inline))
+    {
+        const int whiteEval = Evaluation2(bd);
+        return (color == WHITE ? whiteEval : -whiteEval) / ScoreGrain;
+    }
 
     // function uses only material to evaluate passed board
     [[nodiscard]] static int32_t PlainMaterialEvaluation(const Board &bd);
@@ -126,19 +130,58 @@ class BoardEvaluator
     private:
     // Function counts all figures on the board and returns array with counts of specific figure types,
     // is mainly used to calculate material table index or simply calculate figure values
-    static std::pair<bool, FigureCountsArrayT> __attribute__((always_inline)) _countFigures(const Board &bd);
+    static std::pair<bool, FigureCountsArrayT> _countFigures(const Board &bd) __attribute__((always_inline))
+    {
+        // contains information about maximal number of figures on board that we store inside material table
+        // exceeding one of those values will result in slow material calculation
+        static constexpr size_t OverflowTables[] = {9, 3, 3, 3, 2};
+
+        FigureCountsArrayT rv{};
+        int overflows = 0;
+
+        for (size_t i = pawnsIndex; i < kingIndex; ++i)
+        {
+            rv[i] = CountOnesInBoard(bd.BitBoards[i]);
+            overflows += rv[i] >= OverflowTables[i];
+
+            rv[i + 5] = CountOnesInBoard(bd.BitBoards[i + bPawnsIndex]);
+            overflows += rv[i + 5] >= OverflowTables[i];
+        }
+
+        return {overflows == 0, rv};
+    }
 
     // Function calculates material table index based on passed figure counts
-    static size_t _getMaterialBoardIndex(const FigureCountsArrayT &counts);
+    static size_t _getMaterialBoardIndex(const FigureCountsArrayT &counts) __attribute__((always_inline))
+    {
+        size_t index{};
+
+        for (size_t i = 0; i < counts.size(); ++i) index += counts[i] * FigCoefs[i];
+
+        return index;
+    }
 
     // Function calculates material value based on passed figure counts and actual game phase
     static int32_t _slowMaterialCalculation(const FigureCountsArrayT &figArr, int32_t actPhase);
 
     // Function calculates game phase based on passed figure counts
-    static int32_t _calcPhase(const FigureCountsArrayT &figArr);
+    static int32_t _calcPhase(const FigureCountsArrayT &figArr) __attribute__((always_inline))
+    {
+        int32_t actPhase{};
+
+        // calculating game phase
+        for (size_t j = 0; j < kingIndex; ++j)
+            actPhase += static_cast<int32_t>(figArr[j] + figArr[BlackFigStartIndex + j]) * FigurePhases[j];
+        actPhase = (actPhase * MaxTaperedCoef + (FullPhase / 2)) / FullPhase; // FullPhase / 2 ?
+
+        return actPhase;
+    }
 
     // Function calculates interpolated game value between mig-game and endgame value based on the game phase
-    static int32_t _getTapperedValue(int32_t phase, int32_t midEval, int32_t endEval);
+    static int32_t _getTapperedValue(int32_t phase, int32_t midEval, int32_t endEval) __attribute__((always_inline))
+    {
+        return (endEval * (MaxTaperedCoef - phase) + midEval * phase) / MaxTaperedCoef;
+    }
 
     // Input:
     //  - evaluator - function that takes msbInd as an input and returns value of specific figure on specific field

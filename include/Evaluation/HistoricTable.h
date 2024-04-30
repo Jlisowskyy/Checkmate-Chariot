@@ -42,10 +42,17 @@ struct HistoricTable
     // ------------------------------
 
     // Function takes move and depth and increments the move's value in the table
-    void SetBonusMove(Move mv, int depth);
+    void SetBonusMove(Move mv, int depth)  __attribute__((always_inline))
+    {
+        _table[mv.GetStartBoardIndex()][mv.GetTargetField()] =
+            static_cast<int16_t>(std::min(_pointScale(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth), Barrier));
+    }
 
     // Function returns the value of the move from the table
-    [[nodiscard]] int32_t GetBonusMove(Move mv) const;
+    [[nodiscard]] int32_t GetBonusMove(Move mv) const  __attribute__((always_inline))
+    {
+        return _table[mv.GetStartBoardIndex()][mv.GetTargetField()];
+    }
 
     // Resets the content of the table
     void ClearTable();
@@ -61,7 +68,7 @@ struct HistoricTable
     static constexpr int16_t ScaleFactor = 4;
 
     // Barrier to which all points are capped
-    static constexpr int Barrier = 2400;
+    static constexpr int Barrier = 1200;
 
     private:
     int16_t _table[Board::BitBoardsCount][Board::BitBoardFields]{};
