@@ -6,6 +6,7 @@
 #define TRANSPOSITIONTABLES_H
 
 #include <cinttypes>
+#include <immintrin.h>
 
 #include "../MoveGeneration/Move.h"
 
@@ -123,7 +124,7 @@ struct TranspositionTable
     // Class interaction
     // ------------------------------
 
-    void __attribute__((always_inline)) Add(const HashRecord &record, const uint64_t zHash)
+    void Add(const HashRecord &record, const uint64_t zHash) __attribute__((always_inline))
     {
         // hash uses 48 bytes inside the record while masks uses at least log2(16 * 1024 * 1024 / 32) = 19
         const size_t pos = zHash & _hashMask;
@@ -131,16 +132,21 @@ struct TranspositionTable
         _map[pos] = record;
     }
 
-    [[nodiscard]] HashRecord __attribute__((always_inline)) GetRecord(const uint64_t zHash) const
+    [[nodiscard]] HashRecord GetRecord(const uint64_t zHash) const __attribute__((always_inline))
     {
         const size_t pos = zHash & _hashMask;
         return _map[pos];
     }
 
-    void __attribute__((always_inline)) Prefetch(const uint64_t zHash) const
+    void Prefetch(const uint64_t zHash) __attribute__((always_inline))
     {
         const size_t pos = zHash & _hashMask;
+
+#ifdef __GNUC__
         __builtin_prefetch(static_cast<const void *>(_map + pos));
+#elif defined(__SSE__)
+        _mm_prefetch(static_cast<const void *>(_map + pos), _MM_HINT_T0);
+#endif
     }
 
     void ClearTable();

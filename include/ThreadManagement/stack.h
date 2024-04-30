@@ -49,8 +49,8 @@ template <class ItemT, size_t StackSize> struct stack
     // Class creation
     // ------------------------------
 
-    stack() : _data(static_cast<ItemT *>(malloc(sizeof(ItemT) * StackSize))) {}
-    ~stack() { free(_data); }
+    stack() : _data(static_cast<ItemT *>(AlignedAlloc(sizeof(ItemT), sizeof(ItemT) * StackSize))) {}
+    ~stack() { AlignedFree(_data); }
 
     stack(const stack &) = delete;
     stack(stack &&)      = delete;

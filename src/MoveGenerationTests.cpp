@@ -2,7 +2,6 @@
 // Created by Jlisowskyy on 2/16/24.
 //
 
-#include <csignal>
 #include <cstring>
 #include <format>
 #include <fstream>
@@ -13,10 +12,11 @@
 #include <unistd.h>
 
 #include "../include/Engine.h"
-#include "../include/Interface/Logger.h"
 #include "../include/ParseTools.h"
 #include "../include/TestsAndDebugging/CsvOperator.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
+
+#ifdef __unix__
 
 std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(
     const std::string &fenPosition, const int depth, const std::vector<std::string> &moves, const bool writeOnOut
@@ -447,3 +447,5 @@ std::pair<std::array<int, 2>, pid_t> MoveGenerationTester::_getExternalEnginePro
         proc
     };
 }
+
+#endif // __unix__

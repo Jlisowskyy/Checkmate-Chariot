@@ -21,6 +21,9 @@ constexpr uint64_t ConvertMsbPosToBitMap(int msbPos) { return (maxMsbPossible >>
 
 constexpr uint64_t FilterMoves(uint64_t moves, uint64_t allowedMoves) { return moves & allowedMoves; }
 
+void *AlignedAlloc(size_t alignment, size_t size);
+void AlignedFree(void *ptr);
+
 void DisplayMask(uint64_t mask);
 void DisplayBoard(const Board &bd);
 
