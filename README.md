@@ -33,7 +33,7 @@ Clone the repository to the desired directory:
 
 Use a command below to build the project:
 ```shell
-   cmake CMakeLists.txt ; make
+   cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=RELEASE 
 ```
 
 ## Roadmap
