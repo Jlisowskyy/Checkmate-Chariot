@@ -1,8 +1,17 @@
+################################################################################
+#                                CMake init                                    #
+################################################################################
+
 cmake_minimum_required(VERSION 3.27)
 project(Checkmate-Chariot)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON) # GoogleTest requires at least C++14
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# We C++ 20 is required by the main exec
+
+################################################################################
+#                     Inspecting platform capabilities                         #
+################################################################################
 
 cmake_host_system_information(RESULT LOGICAL_CORES QUERY NUMBER_OF_LOGICAL_CORES)
 configure_file(include/cmakeDefines.h.in include/cmakeDefines.h @ONLY)
@@ -10,6 +19,7 @@ configure_file(include/cmakeDefines.h.in include/cmakeDefines.h @ONLY)
 ################################################################################
 #                         Fetch GoogleTest from github                         #
 ################################################################################
+
 include(FetchContent)
 FetchContent_Declare(
         googletest
@@ -22,6 +32,7 @@ FetchContent_MakeAvailable(googletest)
 ################################################################################
 #                                   Main App                                   #
 ################################################################################
+
 add_executable(Checkmate-Chariot main.cpp
         include/CompilationConstants.h
         include/ChessEngine.h
@@ -103,9 +114,11 @@ add_executable(Checkmate-Chariot main.cpp
         src/HistoricTable.cpp
         src/CounterMoveTable.cpp
 )
+
 ################################################################################
 #                                  Unit Tests                                  #
 ################################################################################
+
 add_executable(Checkmate-Chariot-Tests
         tests/TestingGoogleTests.cc
 )
@@ -117,14 +130,61 @@ target_link_libraries(
 include(GoogleTest)
 gtest_discover_tests(Checkmate-Chariot-Tests)
 
+################################################################################
+#                                  Main exec                                   #
+################################################################################
+
 find_package(OpenMP)
 
 if(OpenMP_CXX_FOUND)
-    target_link_libraries( Checkmate-Chariot PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(Checkmate-Chariot PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-target_compile_options(Checkmate-Chariot PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=1335544322 ;-funroll-loops;-fno-peel-loops;-fno-tracer)
-#target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-ops-limit=133554432;-g;)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_options(Checkmate-Chariot PUBLIC -g;-fconstexpr-steps=133554432;-fopenmp)
+    elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
+        target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-steps=133554432;-O3;-march=native;-fopenmp;-funroll-loops;)
+    elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+        target_compile_options(Checkmate-Chariot PUBLIC -g;-fconstexpr-steps=133554432;-fopenmp;-O2;-march=native;-fopenmp)
+    else()
+        message(FATAL_ERROR "UNKNOWN BUILD TYPE")
+    endif()
+
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-ops-limit=133554432;-g;-fopenmp)
+    elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
+        target_compile_options(Checkmate-Chariot PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=1335544322 ;-funroll-loops;-fno-peel-loops;-fno-tracer)
+    elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+        target_compile_options(Checkmate-Chariot PUBLIC -g;-fconstexpr-ops-limit=133554432;-fopenmp;-O2;-march=native;-fopenmp)
+    else()
+        message(FATAL_ERROR "UNKNOWN BUILD TYPE")
+    endif()
+
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    message(FATAL_ERROR "Not suppoerted yet")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_options(Checkmate-Chariot PUBLIC /constexpr:steps133554432;/Zi;/openmp)
+    elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
+        target_compile_options(Checkmate-Chariot PUBLIC /O2;/openmp;/constexpr:steps133554432)
+    elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+        target_compile_options(Checkmate-Chariot PUBLIC /Zi;/constexpr:steps133554432;-fopenmp;/O2;/openmp)
+    else()
+        message(FATAL_ERROR "UNKNOWN BUILD TYPE")
+    endif()
+
+else()
+    message(FATAL_ERROR "Unknown compiler")
+endif()
+
+################################################################################
+#                                  Post build                                  #
+################################################################################
 
 # Define the source file you want to copy
 set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/resources/uci_ready_long")

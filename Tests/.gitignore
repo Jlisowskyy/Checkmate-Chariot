@@ -1,4 +1,4 @@
 corr*
 perf*
 !*.csv
-
+*_out*

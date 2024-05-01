@@ -9,6 +9,10 @@
 
 #include <csignal>
 
+#elif defined(__WIN32__)
+
+#include <Windows.h>
+
 #endif // __unix__
 
 SearchThreadManager::~SearchThreadManager()
@@ -18,7 +22,7 @@ SearchThreadManager::~SearchThreadManager()
 
 bool SearchThreadManager::goInfinite(const Board &bd, const uint16_t age)
 {
-    if (_isSearchOn == true)
+    if (_isSearchOn)
         return false;
 
     _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, MaxSearchDepth, age);
@@ -29,7 +33,7 @@ bool SearchThreadManager::goInfinite(const Board &bd, const uint16_t age)
 
 std::string SearchThreadManager::stop()
 {
-    if (_isSearchOn == false)
+    if (!_isSearchOn)
         return "";
 
     _cancelThread(0);
@@ -39,7 +43,7 @@ std::string SearchThreadManager::stop()
 
 std::string SearchThreadManager::goMoveTime(const Board &bd, const long long msecs, const uint16_t age)
 {
-    if (_isSearchOn == true)
+    if (_isSearchOn)
         return "";
 
     goInfinite(bd, age);
@@ -49,7 +53,7 @@ std::string SearchThreadManager::goMoveTime(const Board &bd, const long long mse
 
 std::string SearchThreadManager::goDepth(const Board &bd, int depth, const uint16_t age)
 {
-    if (_isSearchOn == true)
+    if (_isSearchOn)
         return "";
 
     _threads[0] =
@@ -78,9 +82,11 @@ void SearchThreadManager::_threadSearchJob(
 
 void SearchThreadManager::_cancelThread(const size_t threadInd)
 {
+    const auto tid = _threads[threadInd]->native_handle();
 #ifdef __unix__
-    const pthread_t tid = _threads[threadInd]->native_handle();
     pthread_kill(tid, SIGUSR1);
+#elif defined(__WIN32__)
+    TerminateThread(tid, 0);
 #endif
 
     _threads[threadInd]->join();
