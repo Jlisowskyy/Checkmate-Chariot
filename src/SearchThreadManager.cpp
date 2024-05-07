@@ -5,11 +5,13 @@
 #include "../include/ThreadManagement/SearchThreadManager.h"
 #include "../include/Search/BestMoveSearch.h"
 
+#include <format>
+
 SearchThreadManager::~SearchThreadManager()
 {
     for (const auto thread : _threads) delete thread;
 }
-bool SearchThreadManager::Go(const Board &bd, uint16_t age, int depth, GoTimeInfo &tInfo) {
+bool SearchThreadManager::Go(const Board &bd, uint16_t age, int depth, const GoTimeInfo &tInfo) {
     // ensuring only one search is running at a time
     if (_isSearchOn) return false;
 
@@ -24,7 +26,10 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, int depth, GoTimeInf
     return true;
 }
 
-bool SearchThreadManager::GoInfinite(const Board &bd, uint16_t age) { return false; }
+bool SearchThreadManager::GoInfinite(const Board &bd, uint16_t age) {
+    auto tInfo = GoTimeInfo::GetInfiniteTime();
+    return Go(bd, age, MaxSearchDepth, tInfo);
+}
 
 void SearchThreadManager::Stop() {
     // avoiding unnecessary actions
@@ -48,4 +53,6 @@ void SearchThreadManager::_threadSearchJob(
 
     BestMoveSearch searcher{*bd, *s, age};
     searcher.IterativeDeepening(&output, depth);
+
+    GlobalLogger.StartLogging() << std::format("bestmove {}\n", output.GetLongAlgebraicNotation());
 }

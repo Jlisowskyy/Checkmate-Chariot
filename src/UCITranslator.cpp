@@ -32,23 +32,23 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string &buffer
 {
     using funcT = UCICommand (UCITranslator::*)(const std::string &);
     static std::unordered_map<std::string, funcT> CommandBuff{
-        {       std::string("uci"),         &UCITranslator::_uciResponse},
-        {   std::string("isready"),     &UCITranslator::_isReadyResponse},
-        { std::string("setoption"),   &UCITranslator::_setoptionResponse},
-        {std::string("ucinewgame"),  &UCITranslator::_ucinewgameResponse},
-        {  std::string("position"),    &UCITranslator::_positionResponse},
-        {        std::string("go"),          &UCITranslator::_goResponse},
-        {      std::string("Stop"),        &UCITranslator::_stopResponse},
-        {      std::string("quit"),        &UCITranslator::_quitResponse},
-        {      std::string("exit"),        &UCITranslator::_quitResponse},
-        {         std::string("d"),     &UCITranslator::_displayResponse},
-        {   std::string("display"),     &UCITranslator::_displayResponse},
-        {      std::string("disp"),     &UCITranslator::_displayResponse},
-        {       std::string("fen"),  &UCITranslator::_displayFenResponse},
-        {      std::string("help"), &UCITranslator::_displayHelpResponse},
-        {     std::string("clear"),        &UCITranslator::_clearConsole},
-        {     std::string("clean"),        &UCITranslator::_clearConsole},
-        {       std::string("cls"),        &UCITranslator::_clearConsole},
+        {       "uci",         &UCITranslator::_uciResponse},
+        {   "isready",     &UCITranslator::_isReadyResponse},
+        { "setoption",   &UCITranslator::_setoptionResponse},
+        {"ucinewgame",  &UCITranslator::_ucinewgameResponse},
+        {  "position",    &UCITranslator::_positionResponse},
+        {        "go",          &UCITranslator::_goResponse},
+        {      "Stop",        &UCITranslator::_stopResponse},
+        {      "quit",        &UCITranslator::_quitResponse},
+        {      "exit",        &UCITranslator::_quitResponse},
+        {         "d",     &UCITranslator::_displayResponse},
+        {   "display",     &UCITranslator::_displayResponse},
+        {      "disp",     &UCITranslator::_displayResponse},
+        {       "fen",  &UCITranslator::_displayFenResponse},
+        {      "help", &UCITranslator::_displayHelpResponse},
+        {     "clear",        &UCITranslator::_clearConsole},
+        {     "clean",        &UCITranslator::_clearConsole},
+        {       "cls",        &UCITranslator::_clearConsole},
     };
 
     std::string workStr;
@@ -69,131 +69,23 @@ UCITranslator::UCICommand UCITranslator::_stopResponse([[maybe_unused]] const st
 
 UCITranslator::UCICommand UCITranslator::_goResponse(const std::string &str)
 {
+    static std::unordered_map<std::string, UCICommand (UCITranslator::*)(const std::string &, size_t)> commands{
+        {"perft", &UCITranslator::_goPerftResponse},
+        {"debug", &UCITranslator::_goDebugResponse},
+        {"deepDebug", &UCITranslator::_goDeepDebugResponse},
+        {"file", &UCITranslator::_goFileResponse},
+        {"perfComp", &UCITranslator::_goPerfCompResponse},
+        {"searchPerf", &UCITranslator::_goSearchPerfResponse},
+    };
+
     std::string workStr;
-    size_t pos = ParseTools::ExtractNextWord(str, workStr, 0);
-    if (pos == 0)
+    if (0 == ParseTools::ExtractNextWord(str, workStr, 0))
         return UCICommand::InvalidCommand;
 
-    if (workStr == "perft")
-    {
-        std::string depthStr{};
-        pos = ParseTools::ExtractNextWord(str, depthStr, pos);
-        if (pos == 0)
-            return UCICommand::InvalidCommand;
-
-        int depth;
-        try
-        {
-            depth = std::stoi(depthStr);
-        }
-        catch (const std::exception &exc)
-        {
-            return UCICommand::InvalidCommand;
-        }
-
-        _engine.GoPerft(depth);
-    }
-    else if (workStr == "debug")
-    {
-        std::string depthStr{};
-        pos = ParseTools::ExtractNextWord(str, depthStr, pos);
-        if (pos == 0)
-            return UCICommand::InvalidCommand;
-
-        int depth;
-        try
-        {
-            depth = std::stoi(depthStr);
-        }
-        catch (const std::exception &exc)
-        {
-            return UCICommand::InvalidCommand;
-        }
-
-        const MoveGenerationTester tester;
-        [[maybe_unused]] auto unused = tester.PerformSingleShallowTest(_fenPosition, depth, _appliedMoves, true);
-    }
-    else if (workStr == "deepDebug")
-    {
-        std::string depthStr{};
-        pos = ParseTools::ExtractNextWord(str, depthStr, pos);
-        if (pos == 0)
-            return UCICommand::InvalidCommand;
-
-        int depth;
-        try
-        {
-            depth = std::stoi(depthStr);
-        }
-        catch (const std::exception &exc)
-        {
-            return UCICommand::InvalidCommand;
-        }
-
-        const MoveGenerationTester tester;
-        tester.PerformDeepTest(_fenPosition, depth, _appliedMoves);
-    }
-    else if (workStr == "file")
-    {
-        std::string path{};
-        ParseTools::ExtractNextWord(str, path, pos);
-        const MoveGenerationTester tester;
-        const bool result = tester.PerformSeriesOfDeepTestFromFile(path);
-
-        if (!result)
-            return UCICommand::InvalidCommand;
-    }
-    else if (workStr == "infinite")
-        _engine.GoInfinite();
-    else if (workStr == "depth")
-    {
-        pos = ParseTools::ExtractNextWord(str, workStr, pos);
-        if (pos == 0)
-            return UCICommand::InvalidCommand;
-        const lli arg = ParseTools::ParseTolli(workStr);
-        if (arg < 0)
-            return UCICommand::InvalidCommand;
-
-        _engine.GoDepth(arg, _appliedMoves);
-    }
-    else if (workStr == "movetime")
-    {
-        pos = ParseTools::ExtractNextWord(str, workStr, pos);
-        if (pos == 0)
-            return UCICommand::InvalidCommand;
-        const lli arg = ParseTools::ParseTolli(workStr);
-        if (arg <= 0)
-            return UCICommand::InvalidCommand;
-
-        _engine.GoMoveTime(arg, _appliedMoves);
-    }
-    else if (workStr == "perfComp")
-    {
-        std::string file1Str{};
-        std::string file2Str{};
-        pos = ParseTools::ExtractNextWord(str, file1Str, pos);
-        if (pos != 0)
-            ParseTools::ExtractNextWord(str, file2Str, pos);
-
-        const MoveGenerationTester tester;
-        bool result = tester.PerformPerformanceTest(file1Str, file2Str);
-        if (!result)
-            return UCICommand::InvalidCommand;
-    }
-    else if (workStr == "searchPerf")
-    {
-        std::string file1Str{};
-        std::string file2Str{};
-        pos = ParseTools::ExtractNextWord(str, file1Str, pos);
-        if (pos != 0)
-            ParseTools::ExtractNextWord(str, file2Str, pos);
-
-        bool result = SearchPerfTester::PerformSearchPerfTest(file1Str, file2Str, _engine.TManager.GetDefaultStack());
-        if (!result)
-            return UCICommand::InvalidCommand;
-    }
-
-    return UCICommand::goCommand;
+    if (auto iter = commands.find(workStr); iter != commands.end())
+        return (this->*(iter->second))(str, workStr.size());
+    else
+        return _goSearchRegular(str);
 }
 
 UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &str)
@@ -213,7 +105,7 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
         _engine.SetFenPosition(_fenPosition);
     }
     else if (workStr == "startpos")
-        _engine.SetStartpos();
+        _engine.SetStartPos();
     else
         return UCICommand::InvalidCommand;
 
@@ -348,4 +240,116 @@ UCITranslator::UCICommand UCITranslator::_displayFenResponse([[maybe_unused]] co
 {
     GlobalLogger.StartLogging() << "Acquired fen translation:\n" << _engine.GetFenTranslation() << '\n';
     return UCICommand::displayCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_goPerftResponse(const std::string &str, size_t pos)
+{
+    std::string depthStr{};
+    pos = ParseTools::ExtractNextWord(str, depthStr, pos);
+    if (pos == 0)
+        return UCICommand::InvalidCommand;
+
+    int depth;
+    try
+    {
+        depth = std::stoi(depthStr);
+    }
+    catch (const std::exception &exc)
+    {
+        return UCICommand::InvalidCommand;
+    }
+
+    _engine.GoPerft(depth);
+    return UCICommand::goCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_goDebugResponse(const std::string &str, size_t pos)
+{
+    std::string depthStr{};
+    pos = ParseTools::ExtractNextWord(str, depthStr, pos);
+    if (pos == 0)
+        return UCICommand::InvalidCommand;
+
+    int depth;
+    try
+    {
+        depth = std::stoi(depthStr);
+    }
+    catch (const std::exception &exc)
+    {
+        return UCICommand::InvalidCommand;
+    }
+
+    const MoveGenerationTester tester;
+    [[maybe_unused]] auto unused = tester.PerformSingleShallowTest(_fenPosition, depth, _appliedMoves, true);
+    return UCICommand::goCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_goDeepDebugResponse(const std::string &str, size_t pos)
+{
+    std::string depthStr{};
+    pos = ParseTools::ExtractNextWord(str, depthStr, pos);
+    if (pos == 0)
+        return UCICommand::InvalidCommand;
+
+    int depth;
+    try
+    {
+        depth = std::stoi(depthStr);
+    }
+    catch (const std::exception &exc)
+    {
+        return UCICommand::InvalidCommand;
+    }
+
+    const MoveGenerationTester tester;
+    tester.PerformDeepTest(_fenPosition, depth, _appliedMoves);
+    return UCICommand::goCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_goFileResponse(const std::string &str, size_t pos)
+{
+    std::string path{};
+    ParseTools::ExtractNextWord(str, path, pos);
+    const MoveGenerationTester tester;
+    const bool result = tester.PerformSeriesOfDeepTestFromFile(path);
+
+    if (!result)
+        return UCICommand::InvalidCommand;
+    return UCICommand::goCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_goPerfCompResponse(const std::string &str, size_t pos)
+{
+    std::string file1Str{};
+    std::string file2Str{};
+    pos = ParseTools::ExtractNextWord(str, file1Str, pos);
+    if (pos != 0)
+        ParseTools::ExtractNextWord(str, file2Str, pos);
+
+    const MoveGenerationTester tester;
+    bool result = tester.PerformPerformanceTest(file1Str, file2Str);
+    if (!result)
+        return UCICommand::InvalidCommand;
+    return UCICommand::goCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_goSearchPerfResponse(const std::string &str, size_t pos)
+{
+    std::string file1Str{};
+    std::string file2Str{};
+    pos = ParseTools::ExtractNextWord(str, file1Str, pos);
+    if (pos != 0)
+        ParseTools::ExtractNextWord(str, file2Str, pos);
+
+    bool result = SearchPerfTester::PerformSearchPerfTest(file1Str, file2Str, _engine.TManager.GetDefaultStack());
+    if (!result)
+        return UCICommand::InvalidCommand;
+    return UCICommand::goCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_goSearchRegular(const std::string &str) {
+    GoInfo info{};
+
+
 }

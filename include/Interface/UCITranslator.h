@@ -97,6 +97,22 @@ class UCITranslator
 
     UCICommand _clearConsole([[maybe_unused]] const std::string &unused);
 
+    UCICommand _goPerftResponse(const std::string &str, size_t pos);
+
+    UCICommand _goDebugResponse(const std::string &str, size_t pos);
+
+    UCICommand _goDeepDebugResponse(const std::string &str, size_t pos);
+
+    UCICommand _goFileResponse(const std::string &str, size_t pos);
+
+    UCICommand _goPerfCompResponse(const std::string &str, size_t pos);
+
+    UCICommand _goSearchPerfResponse(const std::string &str, size_t pos);
+
+    UCICommand _goSearchRegular(const std::string& str);
+
+    size_t _goMoveTimeResponse(const std::string &str, size_t pos);
+
     // ------------------------------
     // private fields
     // ------------------------------

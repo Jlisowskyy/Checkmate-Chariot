@@ -34,7 +34,7 @@ struct SearchThreadManager
 
     [[nodiscard]] StackType &GetDefaultStack() { return _stacks[0]; }
 
-    bool Go(const Board &bd, uint16_t age, int depth,  GoTimeInfo& tInfo);
+    bool Go(const Board &bd, uint16_t age, int depth, const GoTimeInfo& tInfo);
 
     bool GoInfinite(const Board &bd, uint16_t age);
 

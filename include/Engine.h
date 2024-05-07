@@ -42,7 +42,7 @@ class Engine
 
     void SetFenPosition(const std::string &fenStr);
 
-    void SetStartpos();
+    void SetStartPos();
 
     static const EngineInfo &GetEngineInfo();
 
@@ -54,13 +54,11 @@ class Engine
 
     [[nodiscard]] std::string GetFenTranslation() const;
 
-    void GoMoveTime(lli time, const std::vector<std::string> &moves);
-
-    void GoDepth(int depth, const std::vector<std::string> &moves);
-
     void StopSearch();
 
     void GoInfinite();
+
+    void Go(const GoTimeInfo& info, int depth, const std::vector<std::string> &moves);
 
     // ------------------------------
     // private methods

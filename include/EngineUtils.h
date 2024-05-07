@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <climits>
 
 #include "Board.h"
 #include "CompilationConstants.h"
@@ -45,11 +46,22 @@ extern const std::unordered_map<char, size_t> FigCharToIndexMap;
 
 struct GoTimeInfo
 {
-    lli wTime{-1};
-    lli bTime{-1};
-    lli wInc{-1};
-    lli bInc{-1};
-    lli moveTime{-1};
+    static constexpr lli NotSet = -1;
+    static constexpr lli Infinite = LONG_LONG_MAX;
+
+    lli wTime{NotSet};
+    lli bTime{NotSet};
+    lli wInc{NotSet};
+    lli bInc{NotSet};
+    lli moveTime{NotSet};
+
+    static GoTimeInfo GetInfiniteTime() { return GoTimeInfo{NotSet, NotSet, NotSet, NotSet, Infinite}; }
+};
+
+struct GoInfo
+{
+    GoTimeInfo timeInfo{};
+    int depth{};
 };
 
 #endif // ENGINETYPEDEFS_H
