@@ -46,7 +46,7 @@ for engine in e.ext_engines:
     if not os.path.exists(f'{e.exes_path}/{engine}'):
         print(f'{engine} not found, running installer...')
         os.system(f'chmod +x {e.installers_path}/{engine}.sh')
-        os.system(f'./{engine}.sh')
+        os.system(f'./{e.installers_path}/{engine}.sh')
 
 # print elo of each engine
 print('running tests with the following engines:')
