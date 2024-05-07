@@ -30,10 +30,9 @@ ram_per_bot = largest_power_of_2_less_than(ram_per_bot)
 print(f'ram_per_bot: {ram_per_bot}')
 
 each_options = f'-each tc=4+0.04 option.Threads=1 option.Hash={ram_per_bot}'
-#each_options = f'-each tc=4+0.04 option.Threads=1'
 game_options = f'-games 1000 -repeat -gauntlet -concurrency {multiprocessing.cpu_count()}'
 resign_options = f'-resign count=3 score=700 -draw number=40 count=12 score=10'
-output_options = f'-pgn {datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")}-results.pgn 0 -log'
+output_options = f'-pgn {datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")}-results.pgn 0'
 
 # check if c-chess-cli exists
 if not os.path.exists('c-chess-cli'):
@@ -57,7 +56,7 @@ for engine in e.ext_engines:
 # run tests
 
 engine_options = ''
-## add main engine
+# add main engine
 #engine_options += f' -engine cmd=../Checkmate-Chariot name=Checkmate-Chariot'
 
 # add external engines
