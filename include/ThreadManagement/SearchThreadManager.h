@@ -34,13 +34,11 @@ struct SearchThreadManager
 
     [[nodiscard]] StackType &GetDefaultStack() { return _stacks[0]; }
 
+    bool Go(const Board &bd, uint16_t age, int depth,  GoTimeInfo& tInfo);
+
     bool GoInfinite(const Board &bd, uint16_t age);
 
-    std::string GoMoveTime(const Board &bd, long long msecs, uint16_t age);
-
-    std::string GoDepth(const Board &bd, int depth, uint16_t age);
-
-    std::string Stop();
+    void Stop();
 
     // ------------------------------
     // Private class methods
@@ -48,16 +46,7 @@ struct SearchThreadManager
 
     private:
     static void
-    _threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, PackedMove *output, int depth, uint16_t age);
-
-    void _cancelThread(size_t threadInd);
-
-#ifdef __unix__
-
-    static int _setHandler(void (*f)(int), int sigNo);
-    static void _sigusr1Exit(int);
-
-#endif
+    _threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, uint16_t age, int depth);
 
     // ------------------------------
     // Class fields
@@ -68,6 +57,8 @@ struct SearchThreadManager
 
     StackType _stacks[20 + 1]{};
     std::thread *_threads[20 + 1]{};
+
+    static constexpr size_t MainSearchThreadInd = 0;
 };
 
 #endif // SEARCHTHREADMANAGER_H

@@ -43,4 +43,13 @@ std::string ConvertToStrPos(uint64_t boardMap);
 extern const char IndexToFigCharMap[Board::BitBoardsCount];
 extern const std::unordered_map<char, size_t> FigCharToIndexMap;
 
+struct GoTimeInfo
+{
+    lli wTime{-1};
+    lli bTime{-1};
+    lli wInc{-1};
+    lli bInc{-1};
+    lli moveTime{-1};
+};
+
 #endif // ENGINETYPEDEFS_H
