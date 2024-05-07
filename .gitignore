@@ -9,3 +9,5 @@ cmake_install.cmake
 Makefile
 CMakeCache.txt
 Checkmate-Chariot
+EloEval/c-chess-cli*
+EloEval/ReferenceEngines/Exes/*
