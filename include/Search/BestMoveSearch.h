@@ -10,7 +10,7 @@
 #include "../Evaluation/HistoricTable.h"
 #include "../Evaluation/KillerTable.h"
 #include "../Interface/Logger.h"
-#include "../ThreadManagement/stack.h"
+#include "../ThreadManagement/Stack.h"
 
 class BestMoveSearch
 {
@@ -54,7 +54,7 @@ class BestMoveSearch
     // ------------------------------
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board, stack<Move, DefaultStackSize> &s, const uint16_t age)
+    BestMoveSearch(const Board &board, Stack<Move, DefaultStackSize> &s, const uint16_t age)
         : _stack(s), _board(board), _age(age)
     {
     }
@@ -79,9 +79,9 @@ class BestMoveSearch
     [[nodiscard]] int _quiescenceSearch(Board &bd, int alpha, int beta, uint64_t zHash);
     [[nodiscard]] int _zwQuiescenceSearch(Board &bd, int alpha, uint64_t zHash);
 
-    static void _embeddedMoveSort(stack<Move, DefaultStackSize>::stackPayload moves, size_t range);
-    static void _pullMoveToFront(stack<Move, DefaultStackSize>::stackPayload moves, PackedMove mv);
-    static void _fetchBestMove(stack<Move, DefaultStackSize>::stackPayload moves, size_t targetPos);
+    static void _embeddedMoveSort(Stack<Move, DefaultStackSize>::StackPayload moves, size_t range);
+    static void _pullMoveToFront(Stack<Move, DefaultStackSize>::StackPayload moves, PackedMove mv);
+    static void _fetchBestMove(Stack<Move, DefaultStackSize>::StackPayload moves, size_t targetPos);
 
     [[nodiscard]] int _getMateValue(int depthLeft) const;
 
@@ -98,7 +98,7 @@ class BestMoveSearch
 
     static constexpr int MaxAspWindowTries = 4;
 
-    stack<Move, DefaultStackSize> &_stack;
+    Stack<Move, DefaultStackSize> &_stack;
     Board _board;
     const uint16_t _age;
     uint64_t _visitedNodes = 0;

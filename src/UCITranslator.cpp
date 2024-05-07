@@ -38,7 +38,7 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string &buffer
         {std::string("ucinewgame"),  &UCITranslator::_ucinewgameResponse},
         {  std::string("position"),    &UCITranslator::_positionResponse},
         {        std::string("go"),          &UCITranslator::_goResponse},
-        {      std::string("stop"),        &UCITranslator::_stopResponse},
+        {      std::string("Stop"),        &UCITranslator::_stopResponse},
         {      std::string("quit"),        &UCITranslator::_quitResponse},
         {      std::string("exit"),        &UCITranslator::_quitResponse},
         {         std::string("d"),     &UCITranslator::_displayResponse},

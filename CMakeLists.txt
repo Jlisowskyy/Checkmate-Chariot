@@ -90,7 +90,7 @@ add_executable(Checkmate-Chariot main.cpp
         include/Board.h
         src/Board.cpp
         include/MoveGeneration/MoveGenerator.h
-        include/ThreadManagement/stack.h
+        include/ThreadManagement/Stack.h
         include/ThreadManagement/SearchThreadManager.h
         src/SearchThreadManager.cpp
         include/Evaluation/MoveSortEval.h

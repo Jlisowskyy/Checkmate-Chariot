@@ -222,7 +222,7 @@ void MoveGenerationTester::_deepTestRecu(
     chainOut += move + " ==> ";
     moves.push_back(move);
 
-    // if error occured on actual layer stop adding moves to the chain
+    // if error occured on actual layer Stop adding moves to the chain
     if (errDep == 0)
         return;
 
