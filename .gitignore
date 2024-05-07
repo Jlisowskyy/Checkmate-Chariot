@@ -10,9 +10,12 @@ Makefile
 CMakeCache.txt
 Checkmate-Chariot
 
-*_deps/
+cmake-build-debug/*
+cmake-build-debug/
 EloEval/c-chess-cli*
 EloEval/ReferenceEngines/Exes/*
+
+*_deps/
 *.pgn
 *.log
 *__pycache__/
