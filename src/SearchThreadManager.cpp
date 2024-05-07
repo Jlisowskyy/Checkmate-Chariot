@@ -20,59 +20,59 @@ SearchThreadManager::~SearchThreadManager()
     for (const auto thread : _threads) delete thread;
 }
 
-bool SearchThreadManager::goInfinite(const Board &bd, const uint16_t age)
+bool SearchThreadManager::GoInfinite(const Board &bd, uint16_t age)
 {
     if (_isSearchOn)
         return false;
 
-    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, MaxSearchDepth, age);
+    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_searchResult, MaxSearchDepth, age);
     _isSearchOn = true;
 
     return true;
 }
 
-std::string SearchThreadManager::stop()
+std::string SearchThreadManager::Stop()
 {
     if (!_isSearchOn)
         return "";
 
     _cancelThread(0);
     _isSearchOn = false;
-    return _seachResult.GetLongAlgebraicNotation();
+    return _searchResult.GetLongAlgebraicNotation();
 }
 
-std::string SearchThreadManager::goMoveTime(const Board &bd, const long long msecs, const uint16_t age)
+std::string SearchThreadManager::GoMoveTime(const Board &bd, long long msecs, uint16_t age)
 {
     if (_isSearchOn)
         return "";
 
-    goInfinite(bd, age);
+    GoInfinite(bd, age);
     std::this_thread::sleep_for(std::chrono::milliseconds(msecs));
-    return stop();
+    return Stop();
 }
 
-std::string SearchThreadManager::goDepth(const Board &bd, int depth, const uint16_t age)
+std::string SearchThreadManager::GoDepth(const Board &bd, int depth, uint16_t age)
 {
     if (_isSearchOn)
         return "";
 
     _threads[0] =
-        new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, std::min(depth, MaxSearchDepth), age);
+        new std::thread(_threadSearchJob, &bd, &_stacks[0], &_searchResult, std::min(depth, MaxSearchDepth), age);
     _threads[0]->join();
 
     delete _threads[0];
     _threads[0] = nullptr;
     _stacks[0].Clear();
 
-    return _seachResult.GetLongAlgebraicNotation();
+    return _searchResult.GetLongAlgebraicNotation();
 }
 
 void SearchThreadManager::_threadSearchJob(
-    const Board *bd, stack<Move, DefaultStackSize> *s, PackedMove *output, const int depth, const uint16_t age
+    const Board *bd, Stack<Move, DefaultStackSize> *s, PackedMove *output, const int depth, const uint16_t age
 )
 {
 #ifdef __unix__
-    if (_sethandler(_sigusr1_exit, SIGUSR1))
+    if (_setHandler(_sigusr1Exit, SIGUSR1))
         exit(EXIT_FAILURE);
 #endif // __unix__
 
@@ -98,7 +98,7 @@ void SearchThreadManager::_cancelThread(const size_t threadInd)
 
 #ifdef __unix__
 
-int SearchThreadManager::_sethandler(void (*f)(int), int sigNo)
+int SearchThreadManager::_setHandler(void (*f)(int), int sigNo)
 {
     struct sigaction act = {};
     act.sa_handler       = f;
@@ -107,6 +107,6 @@ int SearchThreadManager::_sethandler(void (*f)(int), int sigNo)
     return 0;
 }
 
-void SearchThreadManager::_sigusr1_exit(int) { pthread_exit(nullptr); }
+void SearchThreadManager::_sigusr1Exit(int) { pthread_exit(nullptr); }
 
 #endif

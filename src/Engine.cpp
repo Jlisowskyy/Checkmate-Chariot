@@ -148,7 +148,7 @@ void Engine::GoMoveTime(const lli time, const std::vector<std::string> &moves)
             return;
         }
 
-    auto bestMove = TManager.goMoveTime(_board, time, _age);
+    auto bestMove = TManager.GoMoveTime(_board, time, _age);
 
     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
 }
@@ -162,15 +162,15 @@ void Engine::GoDepth(const int depth, const std::vector<std::string> &moves)
             return;
         }
 
-    auto bestMove = TManager.goDepth(_board, depth, _age);
+    auto bestMove = TManager.GoDepth(_board, depth, _age);
 
     GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
 }
 
 void Engine::StopSearch()
 {
-    if (const auto res = TManager.stop(); !res.empty())
+    if (const auto res = TManager.Stop(); !res.empty())
         GlobalLogger.StartLogging() << std::format("bestmove {}\n", res);
 }
 
-void Engine::GoInfinite() { TManager.goInfinite(_board, _age); }
+void Engine::GoInfinite() { TManager.GoInfinite(_board, _age); }

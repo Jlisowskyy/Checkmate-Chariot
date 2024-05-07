@@ -9,7 +9,7 @@
 #include "../EngineUtils.h"
 #include "../Evaluation/KillerTable.h"
 #include "../Evaluation/MoveSortEval.h"
-#include "../ThreadManagement/stack.h"
+#include "../ThreadManagement/Stack.h"
 #include "BishopMap.h"
 #include "BlackPawnMap.h"
 #include "ChessMechanics.h"
@@ -25,8 +25,8 @@
 
 struct MoveGenerator
 {
-    using stck    = stack<Move, DefaultStackSize>;
-    using payload = stck::stackPayload;
+    using stck    = Stack<Move, DefaultStackSize>;
+    using payload = stck::StackPayload;
 
     // ------------------------------
     // Class inner types
@@ -45,7 +45,7 @@ struct MoveGenerator
     MoveGenerator() = delete;
 
     explicit MoveGenerator(
-        Board &bd, stack<Move, DefaultStackSize> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
+        Board &bd, Stack<Move, DefaultStackSize> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
         const PackedMove counterMove = {}, const int depthLeft = 0, const int mostRecentMovedSquare = 0
     )
         : _mechanics(bd), _threadStack(s), _board(bd), _counterMove(counterMove), _kTable(kt), _hTable(ht),
@@ -140,7 +140,7 @@ struct MoveGenerator
 
     // Move generation components
     ChessMechanics _mechanics;
-    stack<Move, DefaultStackSize> &_threadStack;
+    Stack<Move, DefaultStackSize> &_threadStack;
     Board &_board;
 
     // Heuristic evaluation components

@@ -10,15 +10,15 @@
 
 #include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
-#include "stack.h"
+#include "Stack.h"
 
-class SearchThreadManager
+struct SearchThreadManager
 {
+    using StackType = Stack<Move, DefaultStackSize>;
     // ------------------------------
     // Class creation
     // ------------------------------
 
-    public:
     SearchThreadManager() = default;
     ~SearchThreadManager();
 
@@ -32,15 +32,15 @@ class SearchThreadManager
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] stack<Move, DefaultStackSize> &GetDefaultStack() { return _stacks[0]; }
+    [[nodiscard]] StackType &GetDefaultStack() { return _stacks[0]; }
 
-    bool goInfinite(const Board &bd, uint16_t age);
+    bool GoInfinite(const Board &bd, uint16_t age);
 
-    std::string stop();
+    std::string GoMoveTime(const Board &bd, long long msecs, uint16_t age);
 
-    std::string goMoveTime(const Board &bd, long long msecs, uint16_t age);
+    std::string GoDepth(const Board &bd, int depth, uint16_t age);
 
-    std::string goDepth(const Board &bd, int depth, uint16_t age);
+    std::string Stop();
 
     // ------------------------------
     // Private class methods
@@ -48,14 +48,14 @@ class SearchThreadManager
 
     private:
     static void
-    _threadSearchJob(const Board *bd, stack<Move, DefaultStackSize> *s, PackedMove *output, int depth, uint16_t age);
+    _threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, PackedMove *output, int depth, uint16_t age);
 
     void _cancelThread(size_t threadInd);
 
 #ifdef __unix__
 
-    static int _sethandler(void (*f)(int), int sigNo);
-    static void _sigusr1_exit(int);
+    static int _setHandler(void (*f)(int), int sigNo);
+    static void _sigusr1Exit(int);
 
 #endif
 
@@ -64,9 +64,9 @@ class SearchThreadManager
     // ------------------------------
 
     bool _isSearchOn{false};
-    PackedMove _seachResult{};
+    PackedMove _searchResult{};
 
-    stack<Move, DefaultStackSize> _stacks[20 + 1]{};
+    StackType _stacks[20 + 1]{};
     std::thread *_threads[20 + 1]{};
 };
 
