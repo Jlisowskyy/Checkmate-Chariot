@@ -52,13 +52,15 @@ class Engine
 
     [[nodiscard]] Board GetUnderlyingBoardCopy() const;
 
+    [[nodiscard]] int GetMovingColor() const { return _board.MovingColor; }
+
     [[nodiscard]] std::string GetFenTranslation() const;
 
     void StopSearch();
 
     void GoInfinite();
 
-    void Go(const GoTimeInfo& info, int depth, const std::vector<std::string> &moves);
+    void Go(const GoInfo& info, const std::vector<std::string> &moves);
 
     // ------------------------------
     // private methods

@@ -11,7 +11,7 @@ SearchThreadManager::~SearchThreadManager()
 {
     for (const auto thread : _threads) delete thread;
 }
-bool SearchThreadManager::Go(const Board &bd, uint16_t age, int depth, const GoTimeInfo &tInfo) {
+bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo& info) {
     // ensuring only one search is running at a time
     if (_isSearchOn) return false;
 
@@ -19,7 +19,7 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, int depth, const GoT
     // TODO: Setup time keeper here
 
     // Running up the searching worker
-    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], std::min(depth, MaxSearchDepth), age);
+    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], std::min(info.depth, MaxSearchDepth), age);
     _isSearchOn = true;
 
     // Signaling success
@@ -27,8 +27,10 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, int depth, const GoT
 }
 
 bool SearchThreadManager::GoInfinite(const Board &bd, uint16_t age) {
-    auto tInfo = GoTimeInfo::GetInfiniteTime();
-    return Go(bd, age, MaxSearchDepth, tInfo);
+    GoInfo info;
+    info.timeInfo = GoTimeInfo::GetInfiniteTime();
+    info.depth = MaxSearchDepth;
+    return Go(bd, age, info);
 }
 
 void SearchThreadManager::Stop() {

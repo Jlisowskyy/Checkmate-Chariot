@@ -54,7 +54,7 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string &buffer
     std::string workStr;
     size_t pos = 0;
 
-    while ((pos = ParseTools::ExtractNextWord(buffer, workStr, pos)) != 0)
+    while ((pos = ParseTools::ExtractNextWord(buffer, workStr, pos)) != ParseTools::InvalidNextWorldRead)
         if (auto iter = CommandBuff.find(workStr); iter != CommandBuff.end())
             return (this->*(iter->second))(buffer.substr(pos));
 
@@ -79,7 +79,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string &str)
     };
 
     std::string workStr;
-    if (0 == ParseTools::ExtractNextWord(str, workStr, 0))
+    if (ParseTools::InvalidNextWorldRead == ParseTools::ExtractNextWord(str, workStr, 0))
         return UCICommand::InvalidCommand;
 
     if (auto iter = commands.find(workStr); iter != commands.end())
@@ -92,7 +92,7 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
 {
     std::string workStr;
     size_t pos = ParseTools::ExtractNextWord(str, workStr, 0);
-    if (pos == 0)
+    if (pos == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
 
     const size_t movesCord = str.find("moves", pos);
@@ -138,11 +138,11 @@ UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string &s
 {
     std::string workStr;
     size_t pos = ParseTools::ExtractNextWord(str, workStr, 0);
-    if (pos == 0 || workStr != "name")
+    if (pos == ParseTools::InvalidNextWorldRead || workStr != "name")
         return UCICommand::InvalidCommand;
 
     std::string optionName{};
-    while ((pos = ParseTools::ExtractNextWord(str, workStr, pos)) != 0 && workStr != "value")
+    while ((pos = ParseTools::ExtractNextWord(str, workStr, pos)) != ParseTools::InvalidNextWorldRead && workStr != "value")
     {
         optionName += workStr + ' ';
     }
@@ -246,7 +246,7 @@ UCITranslator::UCICommand UCITranslator::_goPerftResponse(const std::string &str
 {
     std::string depthStr{};
     pos = ParseTools::ExtractNextWord(str, depthStr, pos);
-    if (pos == 0)
+    if (pos == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
 
     int depth;
@@ -267,7 +267,7 @@ UCITranslator::UCICommand UCITranslator::_goDebugResponse(const std::string &str
 {
     std::string depthStr{};
     pos = ParseTools::ExtractNextWord(str, depthStr, pos);
-    if (pos == 0)
+    if (pos == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
 
     int depth;
@@ -289,7 +289,7 @@ UCITranslator::UCICommand UCITranslator::_goDeepDebugResponse(const std::string 
 {
     std::string depthStr{};
     pos = ParseTools::ExtractNextWord(str, depthStr, pos);
-    if (pos == 0)
+    if (pos == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
 
     int depth;
@@ -324,7 +324,7 @@ UCITranslator::UCICommand UCITranslator::_goPerfCompResponse(const std::string &
     std::string file1Str{};
     std::string file2Str{};
     pos = ParseTools::ExtractNextWord(str, file1Str, pos);
-    if (pos != 0)
+    if (pos != ParseTools::InvalidNextWorldRead)
         ParseTools::ExtractNextWord(str, file2Str, pos);
 
     const MoveGenerationTester tester;
@@ -339,7 +339,7 @@ UCITranslator::UCICommand UCITranslator::_goSearchPerfResponse(const std::string
     std::string file1Str{};
     std::string file2Str{};
     pos = ParseTools::ExtractNextWord(str, file1Str, pos);
-    if (pos != 0)
+    if (pos != ParseTools::InvalidNextWorldRead)
         ParseTools::ExtractNextWord(str, file2Str, pos);
 
     bool result = SearchPerfTester::PerformSearchPerfTest(file1Str, file2Str, _engine.TManager.GetDefaultStack());
@@ -349,7 +349,86 @@ UCITranslator::UCICommand UCITranslator::_goSearchPerfResponse(const std::string
 }
 
 UCITranslator::UCICommand UCITranslator::_goSearchRegular(const std::string &str) {
+    static std::unordered_map<std::string, size_t (*)(const std::string &, size_t, GoInfo&)> params {
+        {"movetime", &_goMoveTimeResponse},
+        {"binc", &_goBIncTimeResponse},
+        {"winc", &_goWIncTimeResponse},
+        {"btime", &_goBTimeResponse},
+        {"wtime", &_goWTimeResponse},
+        {"depth", &_goDepthResponse},
+    };
+
     GoInfo info{};
+    std::string workStr{};
+    size_t pos = 0;
 
+    // Parse all parameters
+    while ((pos = ParseTools::ExtractNextWord(str, workStr, pos)) != ParseTools::InvalidNextWorldRead && workStr != "infinite")
+    {
+        // Check if parameter is valid
+        if (auto iter = params.find(workStr); iter != params.end())
+        {
+            pos = (*(iter->second))(str, pos, info);
 
+            // Check whether process was successful
+            if (pos == ParseTools::InvalidNextWorldRead)
+                return UCICommand::InvalidCommand;
+        }
+        else
+            // if not simply stop parsing and proceed to performing search
+            break;
+    }
+
+    // in case infinite parameter was passed there is special case call
+    if (workStr == "infinite")
+        _engine.GoInfinite();
+    else
+        // otherwise perform validation and if succeeded perform search
+    {
+        if (info.depth == GoInfo::NotSet && info.timeInfo.moveTime == GoTimeInfo::NotSet &&
+            !info.timeInfo.IsColorTimeSet(_engine.GetMovingColor()))
+            return UCICommand::InvalidCommand;
+
+        // After passing this checks validation is complete,
+        // all the default parameters are chosen to be able to perform fully valid search.
+
+        _engine.Go(info, _appliedMoves);
+    }
+    return UCICommand::goCommand;
+}
+
+size_t UCITranslator::_goBIncTimeResponse(const std::string &str, const size_t pos, GoInfo &info) {
+    return _msTimeParser(str, pos, info.timeInfo.bInc);
+}
+
+size_t UCITranslator::_goMoveTimeResponse(const std::string &str, const size_t pos, GoInfo &info) {
+    return _msTimeParser(str, pos, info.timeInfo.moveTime);
+}
+
+size_t UCITranslator::_goWIncTimeResponse(const std::string &str, const size_t pos, GoInfo &info) {
+    return _msTimeParser(str, pos, info.timeInfo.wInc);
+}
+
+size_t UCITranslator::_goBTimeResponse(const std::string &str, const size_t pos, GoInfo &info) {
+    return _msTimeParser(str, pos, info.timeInfo.bTime);
+}
+
+size_t UCITranslator::_goWTimeResponse(const std::string &str, const size_t pos, GoInfo &info) {
+    return _msTimeParser(str, pos, info.timeInfo.wTime);
+}
+
+size_t UCITranslator::_goDepthResponse(const std::string &str, size_t pos, GoInfo &info) {
+    return _intParser(str, pos, info.depth);
+}
+
+size_t UCITranslator::_intParser(const std::string &str, size_t pos, int &out) {
+    static constexpr auto convert = [] (const std::string &str) -> int { return std::stoi(str); };
+    return ParseTools::ExtractNextNumeric<int, convert>(str, pos, out);
+}
+
+size_t UCITranslator::_msTimeParser(const std::string &str, size_t pos, lli &out) {
+    static constexpr auto convert = [] (const std::string &str) -> lli { return std::stoll(str); };
+    pos = ParseTools::ExtractNextNumeric<lli, convert>(str, pos, out);
+
+    return out < 1 ? ParseTools::InvalidNextWorldRead : pos;
 }

@@ -139,7 +139,7 @@ void Engine::_changeHashSize([[maybe_unused]] Engine &eng, const lli size)
 
 void Engine::_changeBookUsage(Engine &eng, const bool newValue) { eng.UseOwnBook = newValue; }
 
-void Engine::Go(const GoTimeInfo& info, const int depth, const std::vector<std::string> &moves)
+void Engine::Go(const GoInfo& info, const std::vector<std::string> &moves)
 {
     if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed)
         if (const auto &bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
@@ -148,7 +148,7 @@ void Engine::Go(const GoTimeInfo& info, const int depth, const std::vector<std::
             return;
         }
 
-    TManager.Go(_board, _age, depth, info);
+    TManager.Go(_board, _age, info);
 }
 
 
