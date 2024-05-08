@@ -36,6 +36,7 @@ class [[maybe_unused]] GameTimeManager
     /// update the CurrentTime field.
     /// </summary>
     [[maybe_unused]] static void StartTimerAsync();
+
     /// @brief Force update the CurrentTime field
     [[maybe_unused]] static std::chrono::time_point<std::chrono::system_clock> ForceUpdateCurrentTime();
 
@@ -46,11 +47,19 @@ class [[maybe_unused]] GameTimeManager
     /// </summary>
     static void StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color &color);
 
+    /// <summary> Stop the search management thread </summary>
+    static void StopSearchManagement();
+
     private:
+
     /// @See StartTimerAsync
     [[noreturn]] static void _timer_thread();
+
     /// @See StartSearchManagementAsync
-    [[noreturn]] static void _search_management_thread(const GoTimeInfo &tInfo, const Color &color);
+    static void _search_management_thread(const GoTimeInfo &tInfo, const Color &color);
+
+    /// <summary> Calculate the time in milliseconds for a move </summary>
+    [[maybe_unused]]
     static lli CalculateMsForMove();
 
     // ------------------------------
@@ -60,14 +69,17 @@ class [[maybe_unused]] GameTimeManager
     public:
     /// @brief Time when the timer was started
     static std::chrono::time_point<std::chrono::system_clock> TimeStart;
+
     /// @brief Current time
     static std::chrono::time_point<std::chrono::system_clock> CurrentTime;
+
     /// @brief Flag indicating if the search should stop
     static bool ShouldStop;
 
     private:
     /// @brief Resolution of the timer in milliseconds
     static constexpr uint32_t resolutionMs = 1;
+
     /// @brief Flag indicating if the timer_thread is running
     static bool TimerRunning;
 
