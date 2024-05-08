@@ -48,8 +48,13 @@ void GameTimeManager::_timer_thread()
 void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color &color)
 {
     assert(TimerRunning && "Timer must be running"); // Timer must be running
+    ShouldStop = false;
     std::thread searchManagementThread(_search_management_thread, tInfo, color);
     searchManagementThread.detach();
+}
+
+void GameTimeManager::StopSearchManagement() {
+    ShouldStop = true;
 }
 
 void GameTimeManager::_search_management_thread(const GoTimeInfo &tInfo, const Color &color)
@@ -65,7 +70,6 @@ void GameTimeManager::_search_management_thread(const GoTimeInfo &tInfo, const C
 
     const auto stopTimeCloc = CurrentTime + std::chrono::milliseconds(moveTimeLimitMs);
 
-    ShouldStop = false;
     while (!ShouldStop)
     {
         {
