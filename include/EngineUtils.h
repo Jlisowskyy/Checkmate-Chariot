@@ -46,8 +46,10 @@ extern const std::unordered_map<char, size_t> FigCharToIndexMap;
 
 struct GoTimeInfo
 {
-    static constexpr lli NotSet = -1;
+    bool operator==(const GoTimeInfo &rhs) const = default;
+
     static constexpr lli Infinite = LONG_LONG_MAX;
+    static constexpr lli NotSet = Infinite;
 
     lli wTime{NotSet};
     lli bTime{NotSet};
@@ -56,12 +58,21 @@ struct GoTimeInfo
     lli moveTime{NotSet};
 
     static GoTimeInfo GetInfiniteTime() { return GoTimeInfo{NotSet, NotSet, NotSet, NotSet, Infinite}; }
+
+    [[nodiscard]] bool IsColorTimeSet(int color) const
+    {
+        return color == WHITE ? wTime != NotSet : bTime != NotSet;
+    }
 };
 
 struct GoInfo
 {
+    static constexpr int NotSet = 0;
+
+    bool operator==(const GoInfo &rhs) const = default;
+
     GoTimeInfo timeInfo{};
-    int depth{};
+    int depth {NotSet};
 };
 
 #endif // ENGINETYPEDEFS_H
