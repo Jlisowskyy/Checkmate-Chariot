@@ -11,6 +11,7 @@
 #include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
 #include "Stack.h"
+#include "../cmakeDefines.h"
 
 struct SearchThreadManager
 {
@@ -52,8 +53,8 @@ struct SearchThreadManager
     // ------------------------------
 
     bool _isSearchOn{false};
-    PackedMove _searchResult{};
 
+    // TODO: Implement logical thread detection
     StackType _stacks[20 + 1]{};
     std::thread *_threads[20 + 1]{};
 

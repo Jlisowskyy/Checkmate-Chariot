@@ -89,12 +89,17 @@ class BestMoveSearch
     // Class fields
     // ------------------------------
 
-    static constexpr int MateMargin       = 200;
-    static constexpr int NegativeInfinity = INT16_MIN + 100;
-    static constexpr int PositiveInfinity = INT16_MAX - 100;
+    static constexpr int ReservedValues = 64;
+    static constexpr int InfinityMargin   = MaxSearchDepth + ReservedValues;
+    static constexpr int TimeStopValue = INT16_MAX;
+    static constexpr int NegativeInfinity = INT16_MIN + InfinityMargin;
+    static constexpr int PositiveInfinity = INT16_MAX - InfinityMargin;
 
     static constexpr uint16_t QuisenceAgeDiffToReplace = 16;
     static constexpr uint16_t SearchAgeDiffToReplace   = 10;
+
+    // Initial Aspiration Window Delta its cp value is equal to InitialAspWindowDelta * BoardEvaluator::ScoreGrain (probably 8) ~= 48
+    static constexpr int16_t InitialAspWindowDelta = 6;
 
     static constexpr int MaxAspWindowTries = 4;
 
