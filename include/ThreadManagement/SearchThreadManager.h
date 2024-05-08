@@ -34,7 +34,7 @@ struct SearchThreadManager
 
     [[nodiscard]] StackType &GetDefaultStack() { return _stacks[0]; }
 
-    bool Go(const Board &bd, uint16_t age, int depth, const GoTimeInfo& tInfo);
+    bool Go(const Board &bd, uint16_t age, int depth, const GoTimeInfo &tInfo);
 
     bool GoInfinite(const Board &bd, uint16_t age);
 
@@ -45,8 +45,7 @@ struct SearchThreadManager
     // ------------------------------
 
     private:
-    static void
-    _threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, uint16_t age, int depth);
+    static void _threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, uint16_t age, int depth);
 
     // ------------------------------
     // Class fields

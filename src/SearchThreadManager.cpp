@@ -11,9 +11,11 @@ SearchThreadManager::~SearchThreadManager()
 {
     for (const auto thread : _threads) delete thread;
 }
-bool SearchThreadManager::Go(const Board &bd, uint16_t age, int depth, const GoTimeInfo &tInfo) {
+bool SearchThreadManager::Go(const Board &bd, uint16_t age, int depth, const GoTimeInfo &tInfo)
+{
     // ensuring only one search is running at a time
-    if (_isSearchOn) return false;
+    if (_isSearchOn)
+        return false;
 
     // Setting up time guarding parameters
     // TODO: Setup time keeper here
@@ -26,14 +28,17 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, int depth, const GoT
     return true;
 }
 
-bool SearchThreadManager::GoInfinite(const Board &bd, uint16_t age) {
+bool SearchThreadManager::GoInfinite(const Board &bd, uint16_t age)
+{
     auto tInfo = GoTimeInfo::GetInfiniteTime();
     return Go(bd, age, MaxSearchDepth, tInfo);
 }
 
-void SearchThreadManager::Stop() {
+void SearchThreadManager::Stop()
+{
     // avoiding unnecessary actions
-    if (!_isSearchOn) return;
+    if (!_isSearchOn)
+        return;
 
     // signaling forced abortion
     // TODO: force abort on TM
@@ -45,9 +50,7 @@ void SearchThreadManager::Stop() {
     _isSearchOn = false;
 }
 
-void SearchThreadManager::_threadSearchJob(
-    const Board *bd, Stack<Move, DefaultStackSize> *s, uint16_t age, int depth
-)
+void SearchThreadManager::_threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, uint16_t age, int depth)
 {
     PackedMove output{};
 

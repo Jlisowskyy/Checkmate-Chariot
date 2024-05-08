@@ -8,8 +8,8 @@
 #include <chrono>
 #include <condition_variable>
 
-#include "../EngineUtils.h"
 #include "../Board.h"
+#include "../EngineUtils.h"
 
 class [[maybe_unused]] GameTimeManager
 {
@@ -32,22 +32,26 @@ class [[maybe_unused]] GameTimeManager
     // ------------------------------
 
     /// <summary>
-    /// Start the timer asynchronously, on separate thread. This function will periodically check the current time and update
-    /// the CurrentTime field.
+    /// Start the timer asynchronously, on separate thread. This function will periodically check the current time and
+    /// update the CurrentTime field.
     /// </summary>
     [[maybe_unused]] static void StartTimerAsync();
     /// @brief Force update the CurrentTime field
     [[maybe_unused]] static std::chrono::time_point<std::chrono::system_clock> ForceUpdateCurrentTime();
 
     /// <summary>
-    /// Start the search management asynchronously, on separate thread. This function will periodically check if the engine
-    /// still has time to search for the best move. If the time is up, the variable ShouldStop will be set to true.
+    /// Start the search management asynchronously, on separate thread. This function will periodically check if the
+    /// engine still has time to search for the best move. If the time is up, the variable ShouldStop will be set to
+    /// true.
     /// </summary>
     static void StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color &color);
 
     private:
+    /// @See StartTimerAsync
     [[noreturn]] static void _timer_thread();
-    static void _search_management_thread(const GoTimeInfo &tInfo, const Color &color);
+    /// @See StartSearchManagementAsync
+    [[noreturn]] static void _search_management_thread(const GoTimeInfo &tInfo, const Color &color);
+    static lli CalculateMsForMove();
 
     // ------------------------------
     // Class fields
