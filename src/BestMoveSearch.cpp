@@ -15,14 +15,18 @@
 #include "../include/Search/TranspositionTable.h"
 #include "../include/Search/ZobristHash.h"
 
+#include "../include/ThreadManagement/GameTimeManager.h"
+
 static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 
 void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDepth, const bool writeInfo)
 {
+    // Generate unique hash for the board
     const uint64_t zHash = ZHasher.GenerateHash(_board);
     int32_t eval{};
     int64_t avg{};
 
+    // When the passed depth is 0, we need to evaluate the board statically
     if (maxDepth == 0)
     {
         GlobalLogger.StartLogging() << "info depth 0 score cp "
@@ -30,77 +34,103 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
         return;
     }
 
+    // usual search path
     for (int32_t depth = 1; depth < maxDepth; ++depth)
     {
+        // prepare pv buffers
         PV pv{depth};
         PV pvBuff{depth};
-        // measuring time
-        [[maybe_unused]] auto t1 = std::chrono::steady_clock::now();
+
+        // Search start time point
+        [[maybe_unused]] auto timeStart = std::chrono::steady_clock::now();
 
         // preparing variables used to display statistics
         _currRootDepth = depth;
         _visitedNodes  = 0;
         _cutoffNodes   = 0;
 
-        // cleaning tables used in iteration
-
         if (depth < 5)
         {
+            // cleaning tables used in previous iteration
             _kTable.ClearPlyFloor(depth);
             _histTable.ScaleTableDown();
+
+            // performs the search without aspiration window to gather some initial statistics about the move
             eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, pv, true);
+
+            // if there was call to abort then abort
+            if (eval == TimeStopValue)
+                return;
+
+            // saving the move evaluation to the avg value
+            // TODO: maybe check previous pv for the predicting value?
             avg += depth * eval;
         }
         else
         {
+            // Preparing variables for the aspiration window framework
             const int64_t coefSum      = (depth + 1) * depth / 2;
             const int32_t averageScore = avg / coefSum;
-            int32_t delta              = BoardEvaluator::BasicFigureValues[wPawnsIndex] / 16;
+            int32_t delta              = InitialAspWindowDelta;
             int32_t alpha              = averageScore - delta;
             int32_t beta               = averageScore + delta;
 
-            int tries = 0;
+            // TODO: add some kind of logging inside the debug mode
+            // Aspiration window loop
             while (true)
             {
                 delta += delta;
-                tries++;
-                pvBuff.Clone(pv);
+
+                // cleaning tables used in previous iterations
                 _kTable.ClearPlyFloor(depth);
                 _histTable.ScaleTableDown();
+
+                // cleaning pv in case of retries
+                pvBuff.Clone(pv);
+
                 eval = _pwsSearch(_board, alpha, beta, depth, zHash, {}, pvBuff, true);
+
+                // if there was call to abort then abort
+                if (eval == TimeStopValue)
+                    return;
 
                 if (eval <= alpha)
                 {
+                    // TODO: WTF?
                     beta  = (alpha + beta) / 2;
                     alpha = std::max(alpha - delta, NegativeInfinity);
                 }
                 else if (eval >= beta)
+                    // We failed high so move the upper boundary
                     beta = std::min(beta + delta, PositiveInfinity);
                 else
                     break;
             }
 
-            GlobalLogger.StartLogging() << std::format("[ WARN ] Total aspiration tries: {}\n", tries);
+            // Move the pv from the buffer to the main pv
             pv.Clone(pvBuff);
+
+            // Update avg cumulating variable
             avg += depth * eval;
         }
 
-        // measurement end
-        [[maybe_unused]] auto t2 = std::chrono::steady_clock::now();
+        // Search stop time point
+        [[maybe_unused]] auto timeStop = std::chrono::steady_clock::now();
 
-        // saving move
+        // Saving first move from the PV as the best move
         *output = pv[0];
 
+        // Log info if necessary
         if (writeInfo)
         {
             static constexpr uint64_t MSEC = 1000 * 1000; // in nsecs
-            const uint64_t spentMs         = std::max(1LU, (t2 - t1).count() / MSEC);
+            const uint64_t spentMs         = std::max(1LU, (timeStop - timeStart).count() / MSEC);
             const uint64_t nps             = 1000LLU * _visitedNodes / spentMs;
             const double cutOffPerc        = static_cast<double>(_cutoffNodes) / static_cast<double>(_visitedNodes);
 
             GlobalLogger.StartLogging() << std::format(
                 "info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
-                depth + 1, spentMs, _visitedNodes, nps, eval * BoardEvaluator::ScoreGrain,
+                depth, spentMs, _visitedNodes, nps, eval * BoardEvaluator::ScoreGrain,
                 output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
@@ -119,6 +149,10 @@ int BestMoveSearch::_pwsSearch(
 
     nodeType nType = upperBound;
     PackedMove bestMove{};
+
+    // if we need to stop the search signal it
+    if (GameTimeManager::ShouldStop)
+        return TimeStopValue;
 
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
@@ -159,6 +193,11 @@ int BestMoveSearch::_pwsSearch(
     Move::MakeMove(moves[0], bd);
     _kTable.ClearPlyFloor(depthLeft - 1);
     int bestEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[0], inPV, followPv);
+
+    // if there was call to abort then abort
+    if (bestEval == TimeStopValue)
+        return bestEval;
+
     zHash        = ZHasher.UpdateHash(zHash, moves[0], oldElPassant, oldCastlings);
     Move::UnmakeMove(moves[0], bd, oldCastlings, oldElPassant);
 
@@ -210,12 +249,20 @@ int BestMoveSearch::_pwsSearch(
         _kTable.ClearPlyFloor(depthLeft - 1);
         int moveEval = -_zwSearch(bd, -alpha - 1, depthLeft - 1, zHash, moves[i]);
 
+        // if there was call to abort then abort
+        if (moveEval == TimeStopValue)
+            return moveEval;
+
         // if not, research move
         if (alpha < moveEval && moveEval < beta)
         {
             TTable.Prefetch(zHash);
             _kTable.ClearPlyFloor(depthLeft - 1);
             moveEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV, false);
+
+            // if there was call to abort then abort
+            if (moveEval == TimeStopValue)
+                return moveEval;
 
             if (moveEval > bestEval)
             {
@@ -276,6 +323,10 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     nodeType nType = upperBound;
     PackedMove bestMove{};
 
+    // if we need to stop the search signal it
+    if (GameTimeManager::ShouldStop)
+        return TimeStopValue;
+
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
         return _zwQuiescenceSearch(bd, alpha, zHash);
@@ -326,6 +377,11 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
         Move::MakeMove(moves[i], bd);
         _kTable.ClearPlyFloor(depthLeft - 1);
         const int moveEval = -_zwSearch(bd, -beta, depthLeft - 1, zHash, moves[i]);
+
+        // if there was call to abort then abort
+        if (moveEval == TimeStopValue)
+            return moveEval;
+
         zHash              = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
@@ -367,6 +423,10 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
 int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint64_t zHash)
 {
     assert(beta > alpha);
+
+    // if we need to stop the search signal it
+    if (GameTimeManager::ShouldStop)
+        return TimeStopValue;
 
     int statEval;
     PackedMove bestMove{};
@@ -425,6 +485,11 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         TTable.Prefetch(zHash);
         Move::MakeMove(moves[i], bd);
         const int moveValue = -_quiescenceSearch(bd, -beta, -alpha, zHash);
+
+        // if there was call to abort then abort
+        if (moveValue == TimeStopValue)
+            return moveValue;
+
         zHash               = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
@@ -467,6 +532,10 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     int statEval;
     nodeType nType = upperBound;
     PackedMove bestMove{};
+
+    // if we need to stop the search signal it
+    if (GameTimeManager::ShouldStop)
+        return TimeStopValue;
 
     ++_visitedNodes;
 
@@ -530,6 +599,11 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         TTable.Prefetch(zHash);
         Move::MakeMove(moves[i], bd);
         const int moveValue = -_zwQuiescenceSearch(bd, -beta, zHash);
+
+        // if there was call to abort then abort
+        if (moveValue == TimeStopValue)
+            return moveValue;
+
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
 

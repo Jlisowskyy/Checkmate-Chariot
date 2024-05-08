@@ -4,6 +4,7 @@
 
 #include "../include/ThreadManagement/SearchThreadManager.h"
 #include "../include/Search/BestMoveSearch.h"
+#include "../include/ThreadManagement/GameTimeManager.h"
 
 #include <format>
 
@@ -17,10 +18,10 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo& info) 
         return false;
 
     // Setting up time guarding parameters
-    // TODO: Setup time keeper here
+    GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor));
 
     // Running up the searching worker
-    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], std::min(info.depth, MaxSearchDepth), age);
+    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], age, std::min(info.depth, MaxSearchDepth));
     _isSearchOn = true;
 
     // Signaling success
@@ -41,7 +42,7 @@ void SearchThreadManager::Stop()
         return;
 
     // signaling forced abortion
-    // TODO: force abort on TM
+    GameTimeManager::StopSearchManagement();
 
     _threads[0]->join(); // waiting for the main search thread to finish
     delete _threads[0];
