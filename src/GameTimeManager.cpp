@@ -48,8 +48,21 @@ void GameTimeManager::_timer_thread()
 void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color &color)
 {
     assert(TimerRunning && "Timer must be running"); // Timer must be running
+
     ShouldStop = false;
-    std::thread searchManagementThread(_search_management_thread, tInfo, color);
+
+    // Calculate the time left on the clock, and if time per move is forced by UCI
+    lli timeLeftBoardMs = color == Color::WHITE ? tInfo.wTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.wTime
+                                           : tInfo.bTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.bTime;
+    lli moveTimeLimitMs = tInfo.moveTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.moveTime;
+    if (timeLeftBoardMs == GoTimeInfo::Infinite && moveTimeLimitMs == GoTimeInfo::Infinite)
+    {
+        // No time limit
+        return;
+    }
+
+    // time limit
+    std::thread searchManagementThread(_search_management_thread, tInfo, color, timeLeftBoardMs, moveTimeLimitMs);
     searchManagementThread.detach();
 }
 
@@ -57,18 +70,10 @@ void GameTimeManager::StopSearchManagement() {
     ShouldStop = true;
 }
 
-void GameTimeManager::_search_management_thread(const GoTimeInfo &tInfo, const Color &color)
+void GameTimeManager::_search_management_thread(const GoTimeInfo &tInfo, const Color color, const lli timeLeftBoardMs,
+                                               const lli moveTimeLimitMs)
 {
-    lli timeLeftMs      = color == Color::WHITE ? tInfo.wTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.wTime
-                          : tInfo.bTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite
-                                                              : tInfo.bTime;
-    lli moveTimeLimitMs = tInfo.moveTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.moveTime;
-    assert(
-        (timeLeftMs != GoTimeInfo::Infinite || moveTimeLimitMs != GoTimeInfo::Infinite) &&
-        "At least one of the time limits must be finite"
-    );
-
-    const auto stopTimeCloc = CurrentTime + std::chrono::milliseconds(moveTimeLimitMs);
+    const auto stopTimeCloc = CurrentTime + std::chrono::milliseconds(std::min(timeLeftBoardMs, moveTimeLimitMs));
 
     while (!ShouldStop)
     {
