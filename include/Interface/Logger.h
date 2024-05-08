@@ -1,5 +1,5 @@
 //
-// Created by Jlisowskyy on 12/28/23.
+// Created by wookie on 5/8/24.
 //
 
 #ifndef LOGGER_H
@@ -7,42 +7,105 @@
 
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <mutex>
+
+template <typename T>
+concept Streamable = requires(T a, std::ostream &os) {
+    {
+        os << a
+    } -> std::same_as<std::ostream &>;
+};
 
 class Logger
 {
+    using log_sp = std::shared_ptr<Logger>;
+    // ------------------------------
+    // Class creation
+    // ------------------------------
+
     public:
+    /// <summary> Default constructor, creates a logger with no output stream </summary>
     Logger() = default;
+    /// <summary> Constructor with next handler in the chain </summary>
+    [[maybe_unused]] explicit Logger(Logger *next);
+    [[maybe_unused]] explicit Logger(log_sp next);
+    /// <summary> Constructor with output stream </summary>
+    [[maybe_unused]] explicit Logger(std::ostream &stream);
+    /// <summary> Constructor with next handler in the chain and output stream </summary>
+    [[maybe_unused]] explicit Logger(Logger *next, std::ostream &stream);
+    [[maybe_unused]] explicit Logger(log_sp next, std::ostream &stream);
+    virtual ~Logger() = default;
 
-    Logger(const Logger &) = delete;
+    Logger(const Logger &clone);
+    Logger &operator=(const Logger &rhs);
 
-    Logger &operator=(const Logger &) = delete;
+    // ------------------------------
+    // Class interaction
+    // ------------------------------
 
-    void Log(const std::string &logMessage);
+    /// <summary> Set the next handler in the chain </summary>
+    [[maybe_unused]] virtual log_sp SetNext(Logger *handler);
+    [[maybe_unused]] virtual log_sp SetNext(log_sp handler);
+    [[maybe_unused]] virtual void AppendNext(Logger *handler);
+    [[maybe_unused]] virtual void AppendNext(log_sp handler);
+    /// <summary> Log a message </summary>
+    template <Streamable T> [[maybe_unused]] void Log(const T &logMessage)
+    {
+        if (loggingStream)
+        {
+            std::lock_guard<std::mutex> lock(logGuard);
+            *loggingStream << logMessage;
+        }
+        if (nextHandler != nullptr)
+            nextHandler->Log(logMessage);
+    }
+    /// <summary> Set the output stream </summary>
+    [[maybe_unused]] void SetLoggingStream(std::ostream &stream);
 
-    std::ostream &StartLogging();
-
-    std::ostream &StartErrLogging();
-
-    void LogError(const std::string &logMessage);
-
-    bool ChangeLogStream(const std::string &FileName);
-
-    void ChangeLogStream(std::ostream &stream);
-
-    void CloseFStream();
+    /// <summary> Start logging a message using streams</summary>
+    template <Streamable T> Logger &operator<<(const T &logMessage)
+    {
+        Log(logMessage);
+        return *this;
+    }
+    typedef std::ostream &(*streamFunction)(std::ostream &);
+    Logger &operator<<(streamFunction func);
 
     // ------------------------------
     // class fields
     // ------------------------------
 
     private:
+    std::shared_ptr<Logger> nextHandler = nullptr;
+
+    protected:
     std::mutex logGuard{};
-    std::ofstream loggingFStream{};
-    std::ostream *errLoggingStream = &std::cerr;
-    std::ostream *loggingStream    = &std::cout;
+    std::ostream *loggingStream = nullptr;
 };
 
-extern Logger GlobalLogger;
+class [[maybe_unused]] StdoutLogger : public Logger
+{
+    public:
+    StdoutLogger();
+};
+
+class [[maybe_unused]] StderrLogger : public Logger
+{
+    public:
+    StderrLogger();
+};
+
+class FileLogger : public Logger
+{
+    public:
+    [[maybe_unused]] explicit FileLogger(const std::string &FileName);
+    void ChangeFile(const std::string &FileName);
+
+    protected:
+    std::ofstream loggingFileStream;
+};
+
+extern StdoutLogger GlobalLogger;
 
 #endif // LOGGER_H

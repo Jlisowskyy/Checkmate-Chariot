@@ -36,11 +36,11 @@ void DisplayMask(const uint64_t mask)
         {
             const uint64_t pos = 1LLU << (y + x);
 
-            GlobalLogger.StartLogging() << ' ' << ((pos & mask) != 0 ? 'x' : ' ') << ' ' << (x != 7 ? '|' : '\n');
+            GlobalLogger << ' ' << ((pos & mask) != 0 ? 'x' : ' ') << ' ' << (x != 7 ? '|' : '\n');
         }
 
         if (y != 0)
-            GlobalLogger.StartLogging() << std::string(7 + 3 * 8, '-') << std::endl;
+            GlobalLogger << std::string(7 + 3 * 8, '-') << std::endl;
     }
 }
 
@@ -57,53 +57,53 @@ void DisplayBoard(const Board &bd)
         {
             const uint64_t field = ExtractPosFromStr(static_cast<char>(x + 'a'), static_cast<char>('8' - y));
 
-            GlobalLogger.StartLogging() << ' ';
+            GlobalLogger << ' ';
 
             bool found = false;
             for (size_t desc = 0; desc < Board::BitBoardsCount; ++desc)
             {
                 if ((bd.BitBoards[desc] & field) != 0)
                 {
-                    GlobalLogger.StartLogging() << IndexToFigCharMap[desc];
+                    GlobalLogger << IndexToFigCharMap[desc];
                     found = true;
                     break;
                 }
             }
             if (!found)
-                GlobalLogger.StartLogging() << ' ';
-            GlobalLogger.StartLogging() << ' ';
+                GlobalLogger << ' ';
+            GlobalLogger << ' ';
 
             if (x != LastRowIndex)
-                GlobalLogger.StartLogging() << '|';
+                GlobalLogger << '|';
             else
-                GlobalLogger.StartLogging() << std::format("   {}", static_cast<char>('8' - y));
+                GlobalLogger << std::format("   {}", static_cast<char>('8' - y));
         }
 
-        GlobalLogger.StartLogging() << std::endl;
+        GlobalLogger << std::endl;
         if (y != LastRowIndex)
-            GlobalLogger.StartLogging() << std::string(LastRowIndex + CharsForFig * FigsPerRow, '-') << std::endl;
+            GlobalLogger << std::string(LastRowIndex + CharsForFig * FigsPerRow, '-') << std::endl;
     }
 
-    GlobalLogger.StartLogging() << std::string(LastRowIndex + CharsForFig * FigsPerRow, '-') << std::endl;
+    GlobalLogger << std::string(LastRowIndex + CharsForFig * FigsPerRow, '-') << std::endl;
     for (size_t x = 0; x < FigsPerRow; ++x)
     {
-        GlobalLogger.StartLogging() << ' ' << static_cast<char>('A' + x) << ' ' << ' ';
+        GlobalLogger << ' ' << static_cast<char>('A' + x) << ' ' << ' ';
     }
-    GlobalLogger.StartLogging() << std::endl;
+    GlobalLogger << std::endl;
 
-    GlobalLogger.StartLogging() << "Moving color: " << (bd.MovingColor == WHITE ? "white" : "black") << std::endl;
-    GlobalLogger.StartLogging() << "Possible castlings:\n";
+    GlobalLogger << "Moving color: " << (bd.MovingColor == WHITE ? "white" : "black") << std::endl;
+    GlobalLogger << "Possible castlings:\n";
     static constexpr const char *castlingNames[] = {
         "White King Side", "White Queen Side", "Black King Side", "Black Queen Side"
     };
     for (size_t i = 0; i < Board::CastlingCount; ++i)
     {
-        GlobalLogger.StartLogging() << castlingNames[i] << ": " << bd.Castlings[i] << std::endl;
+        GlobalLogger << castlingNames[i] << ": " << bd.Castlings[i] << std::endl;
     }
 
-    GlobalLogger.StartLogging(
-    ) << "El passant field: "
-      << (bd.ElPassantField == Board::InvalidElPassantBitBoard ? "-" : ConvertToStrPos(bd.ElPassantField)) << std::endl;
+    GlobalLogger << "El passant field: "
+                 << (bd.ElPassantField == Board::InvalidElPassantBitBoard ? "-" : ConvertToStrPos(bd.ElPassantField))
+                 << std::endl;
 }
 
 uint64_t ExtractPosFromStr(int x, const int y)
@@ -164,3 +164,5 @@ void AlignedFree(void *ptr)
     std::free(ptr);
 #endif
 }
+bool GoTimeInfo::IsColorTimeSet(int color) const { return color == WHITE ? wTime != NotSet : bTime != NotSet; }
+GoTimeInfo GoTimeInfo::GetInfiniteTime() { return GoTimeInfo{NotSet, NotSet, NotSet, NotSet, Infinite}; }

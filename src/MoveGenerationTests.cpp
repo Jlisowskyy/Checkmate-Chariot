@@ -35,8 +35,7 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(
         if (!internalEngineMoves.contains(move))
         {
             if (writeOnOut)
-                GlobalLogger.StartLogging()
-                    << std::format("[ ERROR ] Internal Engine didnt detect move: {} on first depth!\n", move);
+                GlobalLogger << std::format("[ ERROR ] Internal Engine didnt detect move: {} on first depth!\n", move);
             return {move, 0};
         }
 
@@ -44,7 +43,7 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(
         if (internalEngineMoves.at(move) != count)
         {
             if (writeOnOut)
-                GlobalLogger.StartLogging() << std::format(
+                GlobalLogger << std::format(
                     "[ ERROR ] Engine detected wrong number on move: {}\nCorrect one: {}\nBut returned: {}\n", move,
                     count, internalEngineMoves.at(move)
                 );
@@ -60,14 +59,14 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(
             if (!externalEngineMoves.contains(move))
             {
                 if (writeOnOut)
-                    GlobalLogger.StartLogging() << std::format("[ ERROR ] Engine made additional move: {}!\n", move);
+                    GlobalLogger << std::format("[ ERROR ] Engine made additional move: {}!\n", move);
 
                 return {move, 0};
             }
     }
 
     if (writeOnOut)
-        GlobalLogger.StartLogging() << "[  OK  ] All moves were generated correctly!\n";
+        GlobalLogger << "[  OK  ] All moves were generated correctly!\n";
 
     return {"", -1};
 }
@@ -81,16 +80,15 @@ void MoveGenerationTester::PerformDeepTest(
     _deepTestRecu(fenPosition, depth, innerMoves, invalidMoveChain);
 
     if (invalidMoveChain.empty())
-        GlobalLogger.StartLogging() << "[  OK  ] No errors occured!\n";
+        GlobalLogger << "[  OK  ] No errors occured!\n";
     else
     {
-        GlobalLogger.StartLogging(
-        ) << std::format("[ ERROR ] Found invalind moves chain:\n\t{}\n", invalidMoveChain + " NULL");
+        GlobalLogger << std::format("[ ERROR ] Found invalind moves chain:\n\t{}\n", invalidMoveChain + " NULL");
 
         std::string moveString{};
         for (const auto &move : innerMoves) moveString += move + ' ';
 
-        GlobalLogger.StartLogging() << std::format("\tReady pos command:\n\tposition startpos moves {}\n", moveString);
+        GlobalLogger << std::format("\tReady pos command:\n\tposition startpos moves {}\n", moveString);
     }
 }
 
@@ -98,8 +96,7 @@ void MoveGenerationTester::PerformSeriesOfDeepTests(const std::vector<std::pair<
 {
     for (const auto &[position, depth] : testPositions)
     {
-        GlobalLogger.StartLogging(
-        ) << std::format("Starting deep debug test on position:\n\t{}\n\tWith depth: {}\n", position, depth);
+        GlobalLogger << std::format("Starting deep debug test on position:\n\t{}\n\tWith depth: {}\n", position, depth);
         PerformDeepTest(position, depth, std::vector<std::string>());
     }
 }
@@ -132,8 +129,8 @@ bool MoveGenerationTester::PerformPerformanceTest(const std::string &inputTestPa
     double internalSum{};
     double externalSum{};
 
-    GlobalLogger.StartLogging() << "All results are displayed in following manner:\n\t Internal Engine time in ms, "
-                                   "External Engine time in ms, ratio (external/internal)\n";
+    GlobalLogger << "All results are displayed in following manner:\n\t Internal Engine time in ms, "
+                    "External Engine time in ms, ratio (external/internal)\n";
 
     for (const auto &[pos, dep] : tests)
     {
@@ -146,7 +143,7 @@ bool MoveGenerationTester::PerformPerformanceTest(const std::string &inputTestPa
 
         results.emplace_back(pos, dep, internalTime, externalTime, ratio);
 
-        GlobalLogger.StartLogging() << std::format(
+        GlobalLogger << std::format(
             "Performed test on position with depth {}:\n\t{}\nAcquired results: {}, {}, {}\n", dep, pos, internalTime,
             externalTime, ratio
         );
@@ -158,7 +155,7 @@ bool MoveGenerationTester::PerformPerformanceTest(const std::string &inputTestPa
         "Average results based on test count:", tCount, internalSum / tCount, externalSum / tCount,
         externalSum / internalSum
     );
-    GlobalLogger.StartLogging() << std::format(
+    GlobalLogger << std::format(
         "Final average results: {}, {}, {}\n", internalSum / tCount, externalSum / tCount, externalSum / internalSum
     );
 
@@ -222,7 +219,7 @@ void MoveGenerationTester::_deepTestRecu(
     chainOut += move + " ==> ";
     moves.push_back(move);
 
-    // if error occured on actual layer stop adding moves to the chain
+    // if error occured on actual layer Stop adding moves to the chain
     if (errDep == 0)
         return;
 

@@ -29,8 +29,13 @@ struct ParseTools
     // returns position after the end of parsed word.
     // If the returned position is equal to 0, then no word was detected.
 
+    static constexpr size_t InvalidNextWorldRead = 0;
+
     template <int (*crit)(int) = isblank>
     static size_t ExtractNextWord(const std::string &str, std::string &wordOut, size_t startPos);
+
+    template <typename NumT, NumT (*convert)(const std::string &), int (*crit)(int) = isblank>
+    static size_t ExtractNextNumeric(const std::string &str, size_t startPos, NumT &out);
 
     // Returns last character present in outBuffer + 1
     static size_t ExtractNextLine(size_t startPos, size_t maxPos, const char *inBuffer, std::string &outBuffer);
@@ -84,6 +89,28 @@ template <int (*crit)(int)> std::vector<std::string> ParseTools::Split(const std
     while ((pos = ParseTools::ExtractNextWord<crit>(text, wordBuffer, pos)) != 0) splittedWords.push_back(wordBuffer);
 
     return splittedWords;
+}
+
+template <typename NumT, NumT (*convert)(const std::string &), int (*crit)(int)>
+size_t ParseTools::ExtractNextNumeric(const std::string &str, size_t startPos, NumT &out)
+{
+    std::string depthStr{};
+    startPos = ParseTools::ExtractNextWord<crit>(str, depthStr, startPos);
+    if (startPos == ParseTools::InvalidNextWorldRead)
+        return ParseTools::InvalidNextWorldRead;
+
+    NumT depth;
+    try
+    {
+        depth = convert(depthStr);
+    }
+    catch (const std::exception &exc)
+    {
+        return ParseTools::InvalidNextWorldRead;
+    }
+
+    out = depth;
+    return startPos;
 }
 
 #endif // PARSETOOLS_H

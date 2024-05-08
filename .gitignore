@@ -9,6 +9,13 @@ cmake_install.cmake
 Makefile
 CMakeCache.txt
 Checkmate-Chariot
+
 cmake-build-debug/*
 cmake-build-debug/
-_deps/
+EloEval/c-chess-cli*
+EloEval/ReferenceEngines/Exes/*
+
+*_deps/*
+*.pgn
+*.log
+*__pycache__/

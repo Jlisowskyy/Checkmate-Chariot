@@ -10,7 +10,7 @@
 
 #include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
-#include "../ThreadManagement/stack.h"
+#include "../ThreadManagement/Stack.h"
 
 struct SearchPerfTester
 {
@@ -26,7 +26,7 @@ struct SearchPerfTester
     // ------------------------------
 
     static bool PerformSearchPerfTest(
-        const std::string &inputTestPath, const std::string &output, stack<Move, DefaultStackSize> &stack
+        const std::string &inputTestPath, const std::string &output, Stack<Move, DefaultStackSize> &stack
     );
 
     // ------------------------------
@@ -35,7 +35,7 @@ struct SearchPerfTester
 
     private:
     [[nodiscard]] static double
-    _performTestCase(const std::string &testCase, int depth, stack<Move, DefaultStackSize> &stack);
+    _performTestCase(const std::string &testCase, int depth, Stack<Move, DefaultStackSize> &stack);
     static void
     _saveResultsToCsv(const std::string &output, const std::vector<std::tuple<std::string, int, double>> &results);
 

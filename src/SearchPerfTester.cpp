@@ -15,7 +15,7 @@
 #include "../include/TestsAndDebugging/CsvOperator.h"
 
 bool SearchPerfTester::PerformSearchPerfTest(
-    const std::string &inputTestPath, const std::string &output, stack<Move, DefaultStackSize> &stack
+    const std::string &inputTestPath, const std::string &output, Stack<Move, DefaultStackSize> &stack
 )
 {
     // reading csv file
@@ -33,13 +33,13 @@ bool SearchPerfTester::PerformSearchPerfTest(
 
         results.emplace_back(testCase, dep, result);
 
-        GlobalLogger.StartLogging() << std::format(
+        GlobalLogger << std::format(
             "Performed test on position with depth {}:\n\t{}\nAcquired results: {}ms\n", dep, testCase, result
         );
     }
 
     results.emplace_back("Average results based on test count:", tests.size(), sumTime / tests.size());
-    GlobalLogger.StartLogging() << std::format("Final average results: {}ms\n", sumTime / tests.size());
+    GlobalLogger << std::format("Final average results: {}ms\n", sumTime / tests.size());
 
     _saveResultsToCsv(output, results);
 
@@ -47,7 +47,7 @@ bool SearchPerfTester::PerformSearchPerfTest(
 }
 
 double
-SearchPerfTester::_performTestCase(const std::string &testCase, const int depth, stack<Move, DefaultStackSize> &stack)
+SearchPerfTester::_performTestCase(const std::string &testCase, const int depth, Stack<Move, DefaultStackSize> &stack)
 {
     Board bd;
     FenTranslator::Translate(testCase, bd);
@@ -60,8 +60,7 @@ SearchPerfTester::_performTestCase(const std::string &testCase, const int depth,
     else
     {
         const int eval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
-        GlobalLogger.StartLogging(
-        ) << std::format("[ INFO ] Evaluation result: {} on position:\n\t{}\n", eval, testCase);
+        GlobalLogger << std::format("[ INFO ] Evaluation result: {} on position:\n\t{}\n", eval, testCase);
     }
     const auto tStop = std::chrono::steady_clock::now();
 
