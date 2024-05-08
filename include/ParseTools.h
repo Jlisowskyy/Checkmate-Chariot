@@ -34,8 +34,8 @@ struct ParseTools
     template <int (*crit)(int) = isblank>
     static size_t ExtractNextWord(const std::string &str, std::string &wordOut, size_t startPos);
 
-    template <typename NumT, NumT (*convert)(const std::string&), int (*crit)(int) = isblank>
-    static size_t ExtractNextNumeric(const std::string &str, size_t startPos, NumT& out);
+    template <typename NumT, NumT (*convert)(const std::string &), int (*crit)(int) = isblank>
+    static size_t ExtractNextNumeric(const std::string &str, size_t startPos, NumT &out);
 
     // Returns last character present in outBuffer + 1
     static size_t ExtractNextLine(size_t startPos, size_t maxPos, const char *inBuffer, std::string &outBuffer);
@@ -112,7 +112,5 @@ size_t ParseTools::ExtractNextNumeric(const std::string &str, size_t startPos, N
     out = depth;
     return startPos;
 }
-
-
 
 #endif // PARSETOOLS_H

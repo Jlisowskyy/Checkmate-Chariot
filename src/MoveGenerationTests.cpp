@@ -35,8 +35,7 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(
         if (!internalEngineMoves.contains(move))
         {
             if (writeOnOut)
-                GlobalLogger
-                    << std::format("[ ERROR ] Internal Engine didnt detect move: {} on first depth!\n", move);
+                GlobalLogger << std::format("[ ERROR ] Internal Engine didnt detect move: {} on first depth!\n", move);
             return {move, 0};
         }
 
@@ -131,7 +130,7 @@ bool MoveGenerationTester::PerformPerformanceTest(const std::string &inputTestPa
     double externalSum{};
 
     GlobalLogger << "All results are displayed in following manner:\n\t Internal Engine time in ms, "
-                                   "External Engine time in ms, ratio (external/internal)\n";
+                    "External Engine time in ms, ratio (external/internal)\n";
 
     for (const auto &[pos, dep] : tests)
     {

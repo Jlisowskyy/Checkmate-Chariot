@@ -29,8 +29,8 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
     // When the passed depth is 0, we need to evaluate the board statically
     if (maxDepth == 0)
     {
-        GlobalLogger << "info depth 0 score cp "
-                                    << BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor) << std::endl;
+        GlobalLogger << "info depth 0 score cp " << BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor)
+                     << std::endl;
         return;
     }
 
@@ -198,7 +198,7 @@ int BestMoveSearch::_pwsSearch(
     if (bestEval == TimeStopValue)
         return bestEval;
 
-    zHash        = ZHasher.UpdateHash(zHash, moves[0], oldElPassant, oldCastlings);
+    zHash = ZHasher.UpdateHash(zHash, moves[0], oldElPassant, oldCastlings);
     Move::UnmakeMove(moves[0], bd, oldCastlings, oldElPassant);
 
     if (bestEval >= alpha)
@@ -382,7 +382,7 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
         if (moveEval == TimeStopValue)
             return moveEval;
 
-        zHash              = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
         if (moveEval > bestEval)
@@ -490,7 +490,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         if (moveValue == TimeStopValue)
             return moveValue;
 
-        zHash               = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
 
         if (moveValue > bestEval)

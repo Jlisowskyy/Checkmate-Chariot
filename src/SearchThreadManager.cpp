@@ -12,7 +12,8 @@ SearchThreadManager::~SearchThreadManager()
 {
     for (const auto thread : _threads) delete thread;
 }
-bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo& info) {
+bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
+{
     // ensuring only one search is running at a time
     if (_isSearchOn)
         return false;
@@ -28,10 +29,11 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo& info) 
     return true;
 }
 
-bool SearchThreadManager::GoInfinite(const Board &bd, uint16_t age) {
+bool SearchThreadManager::GoInfinite(const Board &bd, uint16_t age)
+{
     GoInfo info;
     info.timeInfo = GoTimeInfo::GetInfiniteTime();
-    info.depth = MaxSearchDepth;
+    info.depth    = MaxSearchDepth;
     return Go(bd, age, info);
 }
 

@@ -8,8 +8,8 @@
 #include <cinttypes>
 #include <immintrin.h>
 
-#include "../MoveGeneration/Move.h"
 #include "../EngineUtils.h"
+#include "../MoveGeneration/Move.h"
 
 /*
  *  Class represents transposition table which is used
@@ -43,7 +43,6 @@ struct TranspositionTable
      *
      * We are sure that those 20 bits are same when two distinct items land on the same index
      * */
-
 
     struct alignas(16) HashRecord
     {
@@ -109,7 +108,7 @@ struct TranspositionTable
         nodeType _type;                    // 1 byte
 
         // Mask used to hash age
-        static constexpr uint64_t AgeBytes  = 0xFFFF;
+        static constexpr uint64_t AgeBytes = 0xFFFF;
 
         // Mask used to hash zobrist hash of the position
         static constexpr uint64_t HashBytes = ~AgeBytes;

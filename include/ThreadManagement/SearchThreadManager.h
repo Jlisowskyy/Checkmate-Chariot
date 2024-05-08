@@ -10,8 +10,8 @@
 
 #include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
-#include "Stack.h"
 #include "../cmakeDefines.h"
+#include "Stack.h"
 
 struct SearchThreadManager
 {
@@ -35,7 +35,7 @@ struct SearchThreadManager
 
     [[nodiscard]] StackType &GetDefaultStack() { return _stacks[0]; }
 
-    bool Go(const Board &bd, uint16_t age, const GoInfo& info);
+    bool Go(const Board &bd, uint16_t age, const GoInfo &info);
 
     bool GoInfinite(const Board &bd, uint16_t age);
 

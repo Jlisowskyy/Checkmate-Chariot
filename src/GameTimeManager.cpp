@@ -53,7 +53,8 @@ void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const 
 
     // Calculate the time left on the clock, and if time per move is forced by UCI
     lli timeLeftBoardMs = color == Color::WHITE ? tInfo.wTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.wTime
-                                           : tInfo.bTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.bTime;
+                          : tInfo.bTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite
+                                                              : tInfo.bTime;
     lli moveTimeLimitMs = tInfo.moveTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.moveTime;
     if (timeLeftBoardMs == GoTimeInfo::Infinite && moveTimeLimitMs == GoTimeInfo::Infinite)
     {
@@ -66,12 +67,11 @@ void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const 
     searchManagementThread.detach();
 }
 
-void GameTimeManager::StopSearchManagement() {
-    ShouldStop = true;
-}
+void GameTimeManager::StopSearchManagement() { ShouldStop = true; }
 
-void GameTimeManager::_search_management_thread(const GoTimeInfo &tInfo, const Color color, const lli timeLeftBoardMs,
-                                               const lli moveTimeLimitMs)
+void GameTimeManager::_search_management_thread(
+    const GoTimeInfo &tInfo, const Color color, const lli timeLeftBoardMs, const lli moveTimeLimitMs
+)
 {
     const auto stopTimeCloc = CurrentTime + std::chrono::milliseconds(std::min(timeLeftBoardMs, moveTimeLimitMs));
 

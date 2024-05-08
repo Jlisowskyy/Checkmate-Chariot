@@ -5,9 +5,9 @@
 #ifndef ENGINETYPEDEFS_H
 #define ENGINETYPEDEFS_H
 
+#include <climits>
 #include <cstdint>
 #include <unordered_map>
-#include <climits>
 
 #include "Board.h"
 #include "CompilationConstants.h"
@@ -50,7 +50,7 @@ struct GoTimeInfo
     bool operator==(const GoTimeInfo &rhs) const = default;
 
     static constexpr lli Infinite = LONG_LONG_MAX;
-    static constexpr lli NotSet = Infinite;
+    static constexpr lli NotSet   = Infinite;
 
     lli wTime{NotSet};
     lli bTime{NotSet};
@@ -63,7 +63,6 @@ struct GoTimeInfo
     [[nodiscard]] bool IsColorTimeSet(int color) const;
 };
 
-
 // Structure stores information about search depth and time needed by 'go' function
 struct GoInfo
 {
@@ -72,7 +71,7 @@ struct GoInfo
     bool operator==(const GoInfo &rhs) const = default;
 
     GoTimeInfo timeInfo{};
-    int depth {NotSet};
+    int depth{NotSet};
 };
 
 /*

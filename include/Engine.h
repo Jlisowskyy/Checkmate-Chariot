@@ -61,7 +61,7 @@ class Engine
 
     void GoInfinite();
 
-    void Go(const GoInfo& info, const std::vector<std::string> &moves);
+    void Go(const GoInfo &info, const std::vector<std::string> &moves);
 
     // ------------------------------
     // private methods
@@ -76,7 +76,7 @@ class Engine
 
     static void _changeBookUsage(Engine &eng, bool newValue);
 
-    static void _clearHash([[maybe_unused]]Engine&);
+    static void _clearHash([[maybe_unused]] Engine &);
 
     static void _changeThreadCount([[maybe_unused]] Engine &eng, const lli tCount)
     {
@@ -126,7 +126,7 @@ class Engine
                                                   std::make_pair<std::string, const Option *>("Hash", &HashSize),
                                                   std::make_pair<std::string, const Option *>("OwnBook", &OwnBook),
                                                   std::make_pair<std::string, const Option *>("Clear Hash", &ClearHash),
-        },
+                                                  },
     };
 };
 

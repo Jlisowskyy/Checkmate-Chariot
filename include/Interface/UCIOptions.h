@@ -94,7 +94,10 @@ template <> struct OptionT<Option::OptionType::check> final : Option
     // -------------------------------
 
     private:
-    std::ostream &_printDetails(std::ostream &out) const override { return out << "default " << (defaultValue ? "true" : "false") << '\n'; }
+    std::ostream &_printDetails(std::ostream &out) const override
+    {
+        return out << "default " << (defaultValue ? "true" : "false") << '\n';
+    }
 
     public:
     bool TryChangeValue(std::string &nArg, Engine &eng) const override

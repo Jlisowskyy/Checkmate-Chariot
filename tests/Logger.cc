@@ -2,7 +2,8 @@
 
 #include "../include/Interface/Logger.h"
 
-TEST(Logger, LogSingle){
+TEST(Logger, LogSingle)
+{
     // Arrange
     std::stringstream ss;
     Logger logger(ss);
@@ -12,18 +13,18 @@ TEST(Logger, LogSingle){
     // assert
     std::string expected = "Hello, World!";
     ASSERT_EQ(ss.str(), expected);
-
 }
 
-TEST(Logger, LogInChain) {
+TEST(Logger, LogInChain)
+{
     // Arrange
     std::stringstream ss1;
     std::stringstream ss2;
     std::stringstream ss3;
 
     Logger logger1(ss1);
-    auto* logger2 = new Logger(ss2);
-    auto* logger3 = new Logger(ss3);
+    auto *logger2 = new Logger(ss2);
+    auto *logger3 = new Logger(ss3);
 
     logger1.SetNext(logger2)->SetNext(logger3);
 
@@ -36,15 +37,16 @@ TEST(Logger, LogInChain) {
     ASSERT_EQ(ss3.str(), expected);
 }
 
-TEST(Logger, LogAppendNext) {
+TEST(Logger, LogAppendNext)
+{
     // Arrange
     std::stringstream ss1;
     std::stringstream ss2;
     std::stringstream ss3;
 
     Logger logger1(ss1);
-    auto* logger2 = new Logger(ss2);
-    auto* logger3 = new Logger(ss3);
+    auto *logger2 = new Logger(ss2);
+    auto *logger3 = new Logger(ss3);
 
     logger1.AppendNext(logger2);
     logger1.AppendNext(logger3);

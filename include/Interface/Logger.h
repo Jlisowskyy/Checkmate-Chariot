@@ -7,12 +7,14 @@
 
 #include <fstream>
 #include <iostream>
-#include <mutex>
 #include <memory>
+#include <mutex>
 
-template<typename T>
-concept Streamable = requires(T a, std::ostream& os) {
-    { os << a } -> std::same_as<std::ostream&>;
+template <typename T>
+concept Streamable = requires(T a, std::ostream &os) {
+    {
+        os << a
+    } -> std::same_as<std::ostream &>;
 };
 
 class Logger
@@ -26,17 +28,17 @@ class Logger
     /// <summary> Default constructor, creates a logger with no output stream </summary>
     Logger() = default;
     /// <summary> Constructor with next handler in the chain </summary>
-    [[maybe_unused]] explicit Logger(Logger* next);
+    [[maybe_unused]] explicit Logger(Logger *next);
     [[maybe_unused]] explicit Logger(log_sp next);
     /// <summary> Constructor with output stream </summary>
     [[maybe_unused]] explicit Logger(std::ostream &stream);
     /// <summary> Constructor with next handler in the chain and output stream </summary>
-    [[maybe_unused]] explicit Logger(Logger* next, std::ostream &stream);
+    [[maybe_unused]] explicit Logger(Logger *next, std::ostream &stream);
     [[maybe_unused]] explicit Logger(log_sp next, std::ostream &stream);
     virtual ~Logger() = default;
 
-    Logger(const Logger & clone);
-    Logger &operator=(const Logger & rhs);
+    Logger(const Logger &clone);
+    Logger &operator=(const Logger &rhs);
 
     // ------------------------------
     // Class interaction
@@ -48,7 +50,8 @@ class Logger
     [[maybe_unused]] virtual void AppendNext(Logger *handler);
     [[maybe_unused]] virtual void AppendNext(log_sp handler);
     /// <summary> Log a message </summary>
-    template <Streamable T> [[maybe_unused]] void Log(const T &logMessage){
+    template <Streamable T> [[maybe_unused]] void Log(const T &logMessage)
+    {
         if (loggingStream)
         {
             std::lock_guard<std::mutex> lock(logGuard);
@@ -61,12 +64,13 @@ class Logger
     [[maybe_unused]] void SetLoggingStream(std::ostream &stream);
 
     /// <summary> Start logging a message using streams</summary>
-    template <Streamable T> Logger & operator<<(const T &logMessage){
+    template <Streamable T> Logger &operator<<(const T &logMessage)
+    {
         Log(logMessage);
         return *this;
     }
     typedef std::ostream &(*streamFunction)(std::ostream &);
-    Logger & operator<<(streamFunction func);
+    Logger &operator<<(streamFunction func);
 
     // ------------------------------
     // class fields
@@ -76,7 +80,7 @@ class Logger
     std::shared_ptr<Logger> nextHandler = nullptr;
 
     protected:
-    std::mutex logGuard {};
+    std::mutex logGuard{};
     std::ostream *loggingStream = nullptr;
 };
 

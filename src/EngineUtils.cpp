@@ -102,7 +102,8 @@ void DisplayBoard(const Board &bd)
     }
 
     GlobalLogger << "El passant field: "
-      << (bd.ElPassantField == Board::InvalidElPassantBitBoard ? "-" : ConvertToStrPos(bd.ElPassantField)) << std::endl;
+                 << (bd.ElPassantField == Board::InvalidElPassantBitBoard ? "-" : ConvertToStrPos(bd.ElPassantField))
+                 << std::endl;
 }
 
 uint64_t ExtractPosFromStr(int x, const int y)
@@ -163,7 +164,5 @@ void AlignedFree(void *ptr)
     std::free(ptr);
 #endif
 }
-bool GoTimeInfo::IsColorTimeSet(int color) const {
-    return color == WHITE ? wTime != NotSet : bTime != NotSet;
-}
+bool GoTimeInfo::IsColorTimeSet(int color) const { return color == WHITE ? wTime != NotSet : bTime != NotSet; }
 GoTimeInfo GoTimeInfo::GetInfiniteTime() { return GoTimeInfo{NotSet, NotSet, NotSet, NotSet, Infinite}; }

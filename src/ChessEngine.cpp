@@ -27,7 +27,7 @@ void ChessEngineMainEntry(const int argc, const char **argv)
         // Start the engine without any concerns if there is no command line arguments
         translator.BeginCommandTranslation(std::cin);
     else
-        // Inject all the arguments as single commands to the engine
+    // Inject all the arguments as single commands to the engine
     {
         std::string commandBuffer{};
         for (int i = 1; i < argc; ++i) commandBuffer += std::string(argv[i]) + '\n';

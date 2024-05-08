@@ -51,17 +51,16 @@ class [[maybe_unused]] GameTimeManager
     static void StopSearchManagement();
 
     private:
-
     /// @See StartTimerAsync
     [[noreturn]] static void _timer_thread();
 
     /// @See StartSearchManagementAsync
-    static void _search_management_thread(const GoTimeInfo &tInfo, const Color color, const lli timeLeftBoardMs,
-                                          const lli moveTimeLimitMs);
+    static void _search_management_thread(
+        const GoTimeInfo &tInfo, const Color color, const lli timeLeftBoardMs, const lli moveTimeLimitMs
+    );
 
     /// <summary> Calculate the time in milliseconds for a move </summary>
-    [[maybe_unused]]
-    static lli CalculateMsForMove();
+    [[maybe_unused]] static lli CalculateMsForMove();
 
     // ------------------------------
     // Class fields

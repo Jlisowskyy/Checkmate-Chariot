@@ -127,10 +127,13 @@ bool Engine::_applyMove(Board &board, const std::string &move)
 
 void Engine::_changeDebugState([[maybe_unused]] Engine &eng, std::string &nPath)
 {
-    if (eng._fileLogger == nullptr){
+    if (eng._fileLogger == nullptr)
+    {
         eng._fileLogger = std::make_shared<FileLogger>(nPath);
         GlobalLogger.AppendNext(eng._fileLogger);
-    }else{
+    }
+    else
+    {
         eng._fileLogger->ChangeFile(nPath);
     }
 }
@@ -143,7 +146,7 @@ void Engine::_changeHashSize([[maybe_unused]] Engine &eng, const lli size)
 
 void Engine::_changeBookUsage(Engine &eng, const bool newValue) { eng.UseOwnBook = newValue; }
 
-void Engine::Go(const GoInfo& info, const std::vector<std::string> &moves)
+void Engine::Go(const GoInfo &info, const std::vector<std::string> &moves)
 {
     if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed)
         if (const auto &bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
@@ -155,14 +158,8 @@ void Engine::Go(const GoInfo& info, const std::vector<std::string> &moves)
     TManager.Go(_board, _age, info);
 }
 
-
-void Engine::StopSearch()
-{
-    TManager.Stop();
-}
+void Engine::StopSearch() { TManager.Stop(); }
 
 void Engine::GoInfinite() { TManager.GoInfinite(_board, _age); }
 
-void Engine::_clearHash(Engine &) {
-    TTable.ClearTable();
-}
+void Engine::_clearHash(Engine &) { TTable.ClearTable(); }
