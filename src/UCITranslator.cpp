@@ -38,7 +38,7 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string &buffer
         {"ucinewgame",  &UCITranslator::_ucinewgameResponse},
         {  "position",    &UCITranslator::_positionResponse},
         {        "go",          &UCITranslator::_goResponse},
-        {      "Stop",        &UCITranslator::_stopResponse},
+        {      "stop",        &UCITranslator::_stopResponse},
         {      "quit",        &UCITranslator::_quitResponse},
         {      "exit",        &UCITranslator::_quitResponse},
         {         "d",     &UCITranslator::_displayResponse},
@@ -83,7 +83,7 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string &str)
         return UCICommand::InvalidCommand;
 
     if (auto iter = commands.find(workStr); iter != commands.end())
-        return (this->*(iter->second))(str, workStr.size());
+        return (this->*(iter->second))(str, workStr.size() + 1);
     else
         return _goSearchRegular(str);
 }
@@ -229,7 +229,7 @@ UCITranslator::UCICommand UCITranslator::_clearConsole([[maybe_unused]] const st
 {
 #ifdef __unix__
     system("clear");
-#else
+#elif defined(__WIN32__)
     system("cls");
 #endif
 
@@ -244,20 +244,9 @@ UCITranslator::UCICommand UCITranslator::_displayFenResponse([[maybe_unused]] co
 
 UCITranslator::UCICommand UCITranslator::_goPerftResponse(const std::string &str, size_t pos)
 {
-    std::string depthStr{};
-    pos = ParseTools::ExtractNextWord(str, depthStr, pos);
-    if (pos == ParseTools::InvalidNextWorldRead)
-        return UCICommand::InvalidCommand;
-
     int depth;
-    try
-    {
-        depth = std::stoi(depthStr);
-    }
-    catch (const std::exception &exc)
-    {
+    if (_intParser(str, pos, depth) == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
-    }
 
     _engine.GoPerft(depth);
     return UCICommand::goCommand;
@@ -265,20 +254,9 @@ UCITranslator::UCICommand UCITranslator::_goPerftResponse(const std::string &str
 
 UCITranslator::UCICommand UCITranslator::_goDebugResponse(const std::string &str, size_t pos)
 {
-    std::string depthStr{};
-    pos = ParseTools::ExtractNextWord(str, depthStr, pos);
-    if (pos == ParseTools::InvalidNextWorldRead)
-        return UCICommand::InvalidCommand;
-
     int depth;
-    try
-    {
-        depth = std::stoi(depthStr);
-    }
-    catch (const std::exception &exc)
-    {
+    if (_intParser(str, pos, depth) == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
-    }
 
     const MoveGenerationTester tester;
     [[maybe_unused]] auto unused = tester.PerformSingleShallowTest(_fenPosition, depth, _appliedMoves, true);
@@ -287,20 +265,9 @@ UCITranslator::UCICommand UCITranslator::_goDebugResponse(const std::string &str
 
 UCITranslator::UCICommand UCITranslator::_goDeepDebugResponse(const std::string &str, size_t pos)
 {
-    std::string depthStr{};
-    pos = ParseTools::ExtractNextWord(str, depthStr, pos);
-    if (pos == ParseTools::InvalidNextWorldRead)
-        return UCICommand::InvalidCommand;
-
     int depth;
-    try
-    {
-        depth = std::stoi(depthStr);
-    }
-    catch (const std::exception &exc)
-    {
+    if (_intParser(str, pos, depth) == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
-    }
 
     const MoveGenerationTester tester;
     tester.PerformDeepTest(_fenPosition, depth, _appliedMoves);

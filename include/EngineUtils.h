@@ -44,6 +44,7 @@ std::string ConvertToStrPos(uint64_t boardMap);
 extern const char IndexToFigCharMap[Board::BitBoardsCount];
 extern const std::unordered_map<char, size_t> FigCharToIndexMap;
 
+// Structure stores time information that were parsed and should be passed to 'go' search function
 struct GoTimeInfo
 {
     bool operator==(const GoTimeInfo &rhs) const = default;
@@ -57,22 +58,34 @@ struct GoTimeInfo
     lli bInc{NotSet};
     lli moveTime{NotSet};
 
-    static GoTimeInfo GetInfiniteTime() { return GoTimeInfo{NotSet, NotSet, NotSet, NotSet, Infinite}; }
+    static GoTimeInfo GetInfiniteTime();
 
-    [[nodiscard]] bool IsColorTimeSet(int color) const
-    {
-        return color == WHITE ? wTime != NotSet : bTime != NotSet;
-    }
+    [[nodiscard]] bool IsColorTimeSet(int color) const;
 };
 
+
+// Structure stores information about search depth and time needed by 'go' function
 struct GoInfo
 {
-    static constexpr int NotSet = 0;
+    static constexpr int NotSet = INT_MAX;
 
     bool operator==(const GoInfo &rhs) const = default;
 
     GoTimeInfo timeInfo{};
     int depth {NotSet};
+};
+
+/*
+ * Three types of nodes that we can find during the search.
+ * To get more information about them, please visit:
+ * https://www.chessprogramming.org/Node_Types
+ * */
+
+enum nodeType : uint8_t
+{
+    pvNode,
+    lowerBound,
+    upperBound
 };
 
 #endif // ENGINETYPEDEFS_H

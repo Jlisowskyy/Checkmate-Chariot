@@ -9,6 +9,7 @@
 #include <immintrin.h>
 
 #include "../MoveGeneration/Move.h"
+#include "../EngineUtils.h"
 
 /*
  *  Class represents transposition table which is used
@@ -16,14 +17,11 @@
  *  Improves general performance of ab procedure as well as improves parallelism implementation.
  *  It Allows not recalculating so-called 'transposition' positions, what means same positions that
  *  were obtained by different sequence of moves, which is quit frequent situation in chess.
+ *
+ *  Details:
+ *  https://en.wikipedia.org/wiki/Transposition_table
+ *  https://www.chessprogramming.org/Transposition_Table
  */
-
-enum nodeType : uint8_t
-{
-    pvNode,
-    lowerBound,
-    upperBound
-};
 
 struct TranspositionTable
 {
@@ -35,6 +33,17 @@ struct TranspositionTable
      *  IMPORTANT: the size of hash record should be any number that is power of 2,
      *  to allow fast hashing function to do its job here.
      */
+
+    /*
+     * The structure below stores all useful information about the position for the search algorithm.
+     * Note that it takes only 48 bits of the hash value, and uses 16 bits for the age value.
+     * It is done to reduce the size and the last 16 bits are mostly irrelevant because of the modulo operation.
+     * It worth to say that minimal size set to be 16 MB (2^24 bytes / 2^4 bytes (size of the structure) ~= 2^20).
+     * So the modulo value is always truncating at least 20 bits of the hash value.
+     *
+     * We are sure that those 20 bits are same when two distinct items land on the same index
+     * */
+
 
     struct alignas(16) HashRecord
     {
@@ -70,6 +79,7 @@ struct TranspositionTable
         [[nodiscard]] nodeType GetNodeType() const { return _type; }
         [[nodiscard]] bool IsSameHash(const uint64_t hash) const
         {
+            // Note: Hash is packed together with age, so we need to compare only valuable part
             return (hash & HashBytes) == (_zobristHashAndAgePacked & HashBytes);
         }
 
@@ -98,7 +108,10 @@ struct TranspositionTable
         uint8_t _depth;                    // 1 byte
         nodeType _type;                    // 1 byte
 
+        // Mask used to hash age
         static constexpr uint64_t AgeBytes  = 0xFFFF;
+
+        // Mask used to hash zobrist hash of the position
         static constexpr uint64_t HashBytes = ~AgeBytes;
 
         friend TranspositionTable;
@@ -124,24 +137,34 @@ struct TranspositionTable
     // Class interaction
     // ------------------------------
 
+    // Method adds new record to the table
     void Add(const HashRecord &record, const uint64_t zHash) __attribute__((always_inline))
     {
-        // hash uses 48 bytes inside the record while masks uses at least log2(16 * 1024 * 1024 / 32) = 19
+        // hash uses 48 bytes inside the record while masks uses at least log2(16 * 1024 * 1024 / 16) = 20
         const size_t pos = zHash & _hashMask;
+
+        // if previously field was empty we need to increment the counter of contained records
         _containedRecords += _map[pos].IsEmpty();
+
+        // save the given record
         _map[pos] = record;
     }
 
+    // Methods retrieves record from the table
     [[nodiscard]] HashRecord GetRecord(const uint64_t zHash) const __attribute__((always_inline))
     {
+        //
         const size_t pos = zHash & _hashMask;
         return _map[pos];
     }
 
+    // Method used to prefetch the record from the table short time before accessing it.
+    // If we cannot find appropriate record this function becomes a noop.
     void Prefetch(const uint64_t zHash) __attribute__((always_inline))
     {
         const size_t pos = zHash & _hashMask;
 
+        // If we cannot find appropriate record this function becomes a noop
 #ifdef __GNUC__
         __builtin_prefetch(static_cast<const void *>(_map + pos));
 #elif defined(__SSE__)

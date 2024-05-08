@@ -23,3 +23,8 @@ Definitions:
     - SearchThreadManager - class used to perform all actions that are related to thread managing operations
     - StackPayload - class used to perform push operation on the stack saving at the same time amount of pushed elements,
                      allowing to pop entire chunk at once
+    - Zobrist Hash - hash function used to generate unique hash for each board state, stands as an index to the TT table
+    - ZobristHasher - our implementation of Zobrist Hash
+    - TT, Transposition Table - table that stores information about board states that were already evaluated with all
+                                necessary information to avoid reevaluation.
+
