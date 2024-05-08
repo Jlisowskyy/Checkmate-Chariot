@@ -122,7 +122,7 @@ struct MoveGenerationTester
 
     static void Error() const
     {
-        GlobalLogger.StartErrLogging() << "[ ERROR ] Tests supported only under unix compatible platforms!\n";
+        GlobalLogger << "[ ERROR ] Tests supported only under unix compatible platforms!\n";
     }
 };
 

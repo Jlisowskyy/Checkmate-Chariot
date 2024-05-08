@@ -28,7 +28,7 @@ OpeningBook::OpeningBook(const std::string &bookPath, const bookFileType type)
     }
     catch (const std::exception &exc)
     {
-        GlobalLogger.StartErrLogging() << std::format(
+        GlobalLogger << std::format(
             "[ ERROR ] Book with path: {} was not correctly loaded due to following fact:\n\t{}\n", bookPath, exc.what()
         );
         _isCorrectlyLoaded = false;

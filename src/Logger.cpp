@@ -1,55 +1,79 @@
 //
-// Created by Jlisowskyy on 12/28/23.
+// Created by wookie on 5/8/24.
 //
+
+#include <cassert>
+#include <memory>
 
 #include "../include/Interface/Logger.h"
 
-Logger GlobalLogger{};
+FileLogger GlobalLogger = FileLogger("log.txt");
 
-void Logger::Log(const std::string &logMessage)
-{
-    logGuard.lock();
-    (*loggingStream) << logMessage << std::endl;
-    logGuard.unlock();
+[[maybe_unused]] Logger::Logger(std::ostream &stream) {
+    loggingStream = &stream;
 }
 
-std::ostream &Logger::StartLogging() { return *loggingStream; }
-
-std::ostream &Logger::StartErrLogging() { return *errLoggingStream; }
-
-void Logger::LogError(const std::string &logMessage)
-{
-    logGuard.lock();
-    (*errLoggingStream) << logMessage << std::endl;
-    logGuard.unlock();
+[[maybe_unused]] Logger::Logger(Logger *next) {
+    this->nextHandler = std::shared_ptr<Logger>(next);
 }
 
-bool Logger::ChangeLogStream(const std::string &FileName)
-{
-    if (const std::ofstream nStream{FileName}; !nStream)
-        return false;
-
-    logGuard.lock();
-    CloseFStream();
-    loggingFStream   = std::ofstream{FileName};
-    errLoggingStream = &loggingFStream;
-    loggingStream    = &loggingFStream;
-    logGuard.unlock();
-
-    return true;
+[[maybe_unused]] Logger::Logger(Logger *next, std::ostream &stream) {
+    this->nextHandler = std::shared_ptr<Logger>(next);
+    loggingStream = &stream;
 }
 
-void Logger::ChangeLogStream(std::ostream &stream)
-{
-    logGuard.lock();
-    CloseFStream();
-    errLoggingStream = &stream;
-    loggingStream    = &stream;
-    logGuard.unlock();
+Logger &Logger::operator=(const Logger & rhs) {
+    if (this == &rhs)
+            return *this;
+
+    loggingStream = rhs.loggingStream;
+    nextHandler = std::make_shared<Logger>(rhs.nextHandler.get());
+    return *this;
 }
 
-void Logger::CloseFStream()
-{
-    if (loggingFStream)
-        loggingFStream.close();
+Logger::Logger(const Logger &clone) {
+    loggingStream = clone.loggingStream;
+    nextHandler = std::make_shared<Logger>(clone.nextHandler.get());
+}
+
+[[maybe_unused]] Logger *Logger::SetNext(Logger *handler) {
+    nextHandler = std::make_shared<Logger>(handler);
+    return handler;
+}
+
+[[maybe_unused]] void Logger::SetLoggingStream(std::ostream &stream) {
+    loggingStream = &stream;
+}
+
+Logger &Logger::operator<<(Logger::streamFunction func) {
+    if (loggingStream){
+        func(*loggingStream);
+    }
+
+    if (nextHandler != nullptr)
+        (*nextHandler) << func;
+
+    return *this;
+}
+
+void Logger::AppendNext(Logger *handler) {
+    if (nextHandler == nullptr)
+        nextHandler = std::shared_ptr<Logger>(handler);
+    else
+        nextHandler->AppendNext(handler);
+}
+
+[[maybe_unused]] FileLogger::FileLogger(const std::string &FileName) {
+    loggingFileStream = std::ofstream{FileName};
+    loggingStream = &loggingFileStream;
+    assert(loggingFileStream && "FileLogger: Unable to open file for logging");
+}
+FileLogger::~FileLogger() {
+    loggingFileStream.close();
+}
+StderrLogger::StderrLogger() {
+    loggingStream = &std::cerr;
+}
+StdoutLogger::StdoutLogger() {
+    loggingStream = &std::cout;
 }

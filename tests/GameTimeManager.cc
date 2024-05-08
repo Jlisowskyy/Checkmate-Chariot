@@ -12,8 +12,8 @@ TEST(GameTimeManager, SearchManagerTimerDisabled)
     tInfo.wTime    = 500;
     tInfo.bTime    = 500;
     tInfo.moveTime = 200;
-    // Act
-    // Assert
+    // act
+    // assert
     ASSERT_DEBUG_DEATH(GameTimeManager::StartSearchManagementAsync(tInfo, Color::WHITE), "Timer must be running");
 }
 

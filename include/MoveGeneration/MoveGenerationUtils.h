@@ -61,7 +61,7 @@ inline void DisplayMasks(const uint64_t *masks, const char **names, const size_t
 {
     for (size_t i = 0; i < maskCount; ++i)
     {
-        GlobalLogger.StartLogging() << "Mask name: " << names[i] << std::endl;
+        GlobalLogger << "Mask name: " << names[i];
         DisplayMask(masks[i]);
     }
 }

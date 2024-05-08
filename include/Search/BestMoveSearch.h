@@ -36,7 +36,7 @@ class BestMoveSearch
 
         void Print() const
         {
-            for (int i = 0; i < _depth; ++i) GlobalLogger.StartLogging() << _path[i].GetLongAlgebraicNotation() << ' ';
+            for (int i = 0; i < _depth; ++i) GlobalLogger << _path[i].GetLongAlgebraicNotation() << ' ';
         }
 
         PackedMove operator()(const int depthLeft, const int rootDepth) const { return _path[rootDepth - depthLeft]; }

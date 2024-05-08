@@ -127,14 +127,14 @@ bool Engine::_applyMove(Board &board, const std::string &move)
 
 void Engine::_changeDebugState([[maybe_unused]] Engine &eng, std::string &nPath)
 {
-    GlobalLogger.ChangeLogStream(nPath);
+    auto* fileLogger = new FileLogger(nPath);
+    GlobalLogger.AppendNext(fileLogger);
 }
 
 void Engine::_changeHashSize([[maybe_unused]] Engine &eng, const lli size)
 {
     if (TTable.ResizeTable(size) == -1)
-        GlobalLogger.StartErrLogging(
-        ) << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
+        GlobalLogger << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
 }
 
 void Engine::_changeBookUsage(Engine &eng, const bool newValue) { eng.UseOwnBook = newValue; }
@@ -144,7 +144,7 @@ void Engine::Go(const GoInfo& info, const std::vector<std::string> &moves)
     if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed)
         if (const auto &bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
         {
-            GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
+            GlobalLogger << std::format("bestmove {}\n", bookMove);
             return;
         }
 

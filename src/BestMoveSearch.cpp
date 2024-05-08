@@ -25,7 +25,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
 
     if (maxDepth == 0)
     {
-        GlobalLogger.StartLogging() << "info depth 0 score cp "
+        GlobalLogger << "info depth 0 score cp "
                                     << BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor) << std::endl;
         return;
     }
@@ -80,7 +80,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
                     break;
             }
 
-            GlobalLogger.StartLogging() << std::format("[ WARN ] Total aspiration tries: {}\n", tries);
+            GlobalLogger << std::format("[ WARN ] Total aspiration tries: {}\n", tries);
             pv.Clone(pvBuff);
             avg += depth * eval;
         }
@@ -98,14 +98,14 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
             const uint64_t nps             = 1000LLU * _visitedNodes / spentMs;
             const double cutOffPerc        = static_cast<double>(_cutoffNodes) / static_cast<double>(_visitedNodes);
 
-            GlobalLogger.StartLogging() << std::format(
+            GlobalLogger << std::format(
                 "info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
                 depth + 1, spentMs, _visitedNodes, nps, eval * BoardEvaluator::ScoreGrain,
                 output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
             pv.Print();
-            GlobalLogger.StartLogging() << std::endl;
+            GlobalLogger << std::endl;
         }
     }
 }
