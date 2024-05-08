@@ -236,7 +236,7 @@ int BestMoveSearch::_pwsSearch(
         pv.InsertNext(bestMove, inPV);
     }
 
-    // processsing each move
+    // processing each move
     for (size_t i = 1; i < moves.size; ++i)
     {
         _fetchBestMove(moves, i);
@@ -245,7 +245,7 @@ int BestMoveSearch::_pwsSearch(
         TTable.Prefetch(zHash);
         Move::MakeMove(moves[i], bd);
 
-        // performing checks wether assumed thesis holds
+        // performing checks whether assumed thesis holds
         _kTable.ClearPlyFloor(depthLeft - 1);
         int moveEval = -_zwSearch(bd, -alpha - 1, depthLeft - 1, zHash, moves[i]);
 

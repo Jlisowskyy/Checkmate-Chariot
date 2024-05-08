@@ -158,3 +158,7 @@ void Engine::StopSearch()
 }
 
 void Engine::GoInfinite() { TManager.GoInfinite(_board, _age); }
+
+void Engine::_clearHash(Engine &) {
+    TTable.ClearTable();
+}

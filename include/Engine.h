@@ -71,9 +71,11 @@ class Engine
 
     static void _changeDebugState(Engine &eng, std::string &nPath);
 
-    static void _changeHashSize([[maybe_unused]] Engine &eng, lli size);
+    static void _changeHashSize([[maybe_unused]] Engine &, lli size);
 
     static void _changeBookUsage(Engine &eng, bool newValue);
+
+    static void _clearHash([[maybe_unused]]Engine&);
 
     static void _changeThreadCount([[maybe_unused]] Engine &eng, const lli tCount)
     {
@@ -109,6 +111,7 @@ class Engine
     inline static const OptionT<Option::OptionType::string> DebugLogFile{"Debug Log File", _changeDebugState, ""};
     inline static const OptionT<Option::OptionType::spin> HashSize{"Hash", _changeHashSize, 16, 524289, 16};
     inline static const OptionT<Option::OptionType::check> OwnBook{"OwnBook", _changeBookUsage, true};
+    inline static const OptionT<Option::OptionType::button> ClearHash{"Clear Hash", _clearHash};
 
     inline static const EngineInfo engineInfo = {
         .author = "Jakub Lisowski, Lukasz Kryczka, Jakub Pietrzak Warsaw University of Technology",
@@ -118,7 +121,9 @@ class Engine
                                                   std::make_pair<std::string, const Option *>("Threads", &Threads),
                                                   std::make_pair<std::string, const Option *>("Debug Log File", &DebugLogFile),
                                                   std::make_pair<std::string, const Option *>("Hash", &HashSize),
-                                                  std::make_pair<std::string, const Option *>("OwnBook", &OwnBook)},
+                                                  std::make_pair<std::string, const Option *>("OwnBook", &OwnBook),
+                                                  std::make_pair<std::string, const Option *>("Clear Hash", &ClearHash),
+        },
     };
 };
 
