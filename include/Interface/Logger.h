@@ -17,6 +17,7 @@ concept Streamable = requires(T a, std::ostream& os) {
 
 class Logger
 {
+    using log_sp = std::shared_ptr<Logger>;
     // ------------------------------
     // Class creation
     // ------------------------------
@@ -26,10 +27,13 @@ class Logger
     Logger() = default;
     /// <summary> Constructor with next handler in the chain </summary>
     [[maybe_unused]] explicit Logger(Logger* next);
+    [[maybe_unused]] explicit Logger(log_sp next);
     /// <summary> Constructor with output stream </summary>
     [[maybe_unused]] explicit Logger(std::ostream &stream);
     /// <summary> Constructor with next handler in the chain and output stream </summary>
     [[maybe_unused]] explicit Logger(Logger* next, std::ostream &stream);
+    [[maybe_unused]] explicit Logger(log_sp next, std::ostream &stream);
+    virtual ~Logger() = default;
 
     Logger(const Logger & clone);
     Logger &operator=(const Logger & rhs);
@@ -39,8 +43,10 @@ class Logger
     // ------------------------------
 
     /// <summary> Set the next handler in the chain </summary>
-    [[maybe_unused]] virtual Logger *SetNext(Logger *handler);
+    [[maybe_unused]] virtual log_sp SetNext(Logger *handler);
+    [[maybe_unused]] virtual log_sp SetNext(log_sp handler);
     [[maybe_unused]] virtual void AppendNext(Logger *handler);
+    [[maybe_unused]] virtual void AppendNext(log_sp handler);
     /// <summary> Log a message </summary>
     template <Streamable T> [[maybe_unused]] void Log(const T &logMessage){
         if (loggingStream)
@@ -90,8 +96,6 @@ class FileLogger : public Logger
 {
     public:
     [[maybe_unused]] explicit FileLogger(const std::string &FileName);
-    ~FileLogger();
-
     void ChangeFile(const std::string &FileName);
 
     protected:

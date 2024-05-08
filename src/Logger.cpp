@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <memory>
+#include <utility>
 
 #include "../include/Interface/Logger.h"
 
@@ -16,30 +17,33 @@ StdoutLogger GlobalLogger{};
 [[maybe_unused]] Logger::Logger(Logger *next) {
     this->nextHandler = std::shared_ptr<Logger>(next);
 }
+Logger::Logger(Logger::log_sp next) {
+    this->nextHandler = std::move(next);
+}
 
 [[maybe_unused]] Logger::Logger(Logger *next, std::ostream &stream) {
     this->nextHandler = std::shared_ptr<Logger>(next);
     loggingStream = &stream;
 }
+Logger::Logger(Logger::log_sp next, std::ostream &stream) {
+    this->nextHandler = std::move(next);
+    loggingStream = &stream;
+}
 
 Logger &Logger::operator=(const Logger & rhs) {
     if (this == &rhs)
-            return *this;
+        return *this;
 
     loggingStream = rhs.loggingStream;
-    nextHandler = std::make_shared<Logger>(rhs.nextHandler.get());
+    nextHandler = std::shared_ptr<Logger>(rhs.nextHandler.get());
     return *this;
 }
 
 Logger::Logger(const Logger &clone) {
     loggingStream = clone.loggingStream;
-    nextHandler = std::make_shared<Logger>(clone.nextHandler.get());
+    nextHandler = std::shared_ptr<Logger>(clone.nextHandler.get());
 }
 
-[[maybe_unused]] Logger *Logger::SetNext(Logger *handler) {
-    nextHandler = std::make_shared<Logger>(handler);
-    return handler;
-}
 
 [[maybe_unused]] void Logger::SetLoggingStream(std::ostream &stream) {
     loggingStream = &stream;
@@ -56,9 +60,24 @@ Logger &Logger::operator<<(Logger::streamFunction func) {
     return *this;
 }
 
+[[maybe_unused]] Logger::log_sp Logger::SetNext(Logger *handler) {
+    nextHandler = std::shared_ptr<Logger>(handler);
+    return nextHandler;
+}
+[[maybe_unused]] Logger::log_sp Logger::SetNext(Logger::log_sp handler) {
+    nextHandler = std::move(handler);
+    return nextHandler;
+}
+
 void Logger::AppendNext(Logger *handler) {
     if (nextHandler == nullptr)
         nextHandler = std::shared_ptr<Logger>(handler);
+    else
+        nextHandler->AppendNext(handler);
+}
+void Logger::AppendNext(Logger::log_sp handler) {
+    if (nextHandler == nullptr)
+        nextHandler = std::move(handler);
     else
         nextHandler->AppendNext(handler);
 }
@@ -66,9 +85,7 @@ void Logger::AppendNext(Logger *handler) {
 [[maybe_unused]] FileLogger::FileLogger(const std::string &FileName) {
     ChangeFile(FileName);
 }
-FileLogger::~FileLogger() {
-    loggingFileStream.close();
-}
+
 void FileLogger::ChangeFile(const std::string &FileName) {
     if (loggingFileStream && loggingFileStream.is_open())
         loggingFileStream.close();

@@ -129,7 +129,7 @@ void Engine::_changeDebugState([[maybe_unused]] Engine &eng, std::string &nPath)
 {
     if (eng._fileLogger == nullptr){
         eng._fileLogger = std::make_shared<FileLogger>(nPath);
-        GlobalLogger.AppendNext(eng._fileLogger.get());
+        GlobalLogger.AppendNext(eng._fileLogger);
     }else{
         eng._fileLogger->ChangeFile(nPath);
     }
