@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <map>
+#include <memory>
 
 #include "../include/ThreadManagement/SearchThreadManager.h"
 #include "EngineUtils.h"
@@ -94,6 +95,8 @@ class Engine
     uint16_t _age                                     = 1;
     static constexpr std::string_view _startposPrefix = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
     bool UseOwnBook                                   = false;
+
+    std::shared_ptr<FileLogger> _fileLogger;
 
     public:
     SearchThreadManager TManager{};

@@ -92,10 +92,12 @@ class FileLogger : public Logger
     [[maybe_unused]] explicit FileLogger(const std::string &FileName);
     ~FileLogger();
 
+    void ChangeFile(const std::string &FileName);
+
     protected:
     std::ofstream loggingFileStream;
 };
 
-extern FileLogger GlobalLogger;
+extern StdoutLogger GlobalLogger;
 
 #endif // LOGGER_H

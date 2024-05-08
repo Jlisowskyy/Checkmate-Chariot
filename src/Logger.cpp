@@ -7,7 +7,7 @@
 
 #include "../include/Interface/Logger.h"
 
-FileLogger GlobalLogger = FileLogger("log.txt");
+StdoutLogger GlobalLogger{};
 
 [[maybe_unused]] Logger::Logger(std::ostream &stream) {
     loggingStream = &stream;
@@ -64,12 +64,18 @@ void Logger::AppendNext(Logger *handler) {
 }
 
 [[maybe_unused]] FileLogger::FileLogger(const std::string &FileName) {
-    loggingFileStream = std::ofstream{FileName};
-    loggingStream = &loggingFileStream;
-    assert(loggingFileStream && "FileLogger: Unable to open file for logging");
+    ChangeFile(FileName);
 }
 FileLogger::~FileLogger() {
     loggingFileStream.close();
+}
+void FileLogger::ChangeFile(const std::string &FileName) {
+    if (loggingFileStream && loggingFileStream.is_open())
+        loggingFileStream.close();
+
+    loggingFileStream = std::ofstream{FileName};
+    loggingStream = &loggingFileStream;
+    assert(loggingFileStream && "FileLogger: Unable to open file for logging");
 }
 StderrLogger::StderrLogger() {
     loggingStream = &std::cerr;

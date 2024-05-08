@@ -127,8 +127,12 @@ bool Engine::_applyMove(Board &board, const std::string &move)
 
 void Engine::_changeDebugState([[maybe_unused]] Engine &eng, std::string &nPath)
 {
-    auto* fileLogger = new FileLogger(nPath);
-    GlobalLogger.AppendNext(fileLogger);
+    if (eng._fileLogger == nullptr){
+        eng._fileLogger = std::make_shared<FileLogger>(nPath);
+        GlobalLogger.AppendNext(eng._fileLogger.get());
+    }else{
+        eng._fileLogger->ChangeFile(nPath);
+    }
 }
 
 void Engine::_changeHashSize([[maybe_unused]] Engine &eng, const lli size)
