@@ -33,7 +33,7 @@ FetchContent_MakeAvailable(googletest)
 #                                   Main App                                   #
 ################################################################################
 
-add_executable(Checkmate-Chariot main.cpp
+set(CHECKMATE_CHARIOT_SOURCES
         include/CompilationConstants.h
         include/ChessEngine.h
         src/ChessEngine.cpp
@@ -90,7 +90,7 @@ add_executable(Checkmate-Chariot main.cpp
         include/Board.h
         src/Board.cpp
         include/MoveGeneration/MoveGenerator.h
-        include/ThreadManagement/stack.h
+        include/ThreadManagement/Stack.h
         include/ThreadManagement/SearchThreadManager.h
         src/SearchThreadManager.cpp
         include/Evaluation/MoveSortEval.h
@@ -113,7 +113,17 @@ add_executable(Checkmate-Chariot main.cpp
         include/Evaluation/StructureEvaluator.h
         src/HistoricTable.cpp
         src/CounterMoveTable.cpp
+        include/ThreadManagement/GameTimeManager.h
+        src/GameTimeManager.cpp
 )
+
+# Create a library with the core functionality
+add_library(Checkmate-Core OBJECT ${CHECKMATE_CHARIOT_SOURCES})
+
+# Create the main executable
+add_executable(Checkmate-Chariot main.cpp)
+target_link_libraries(Checkmate-Chariot PRIVATE Checkmate-Core)
+
 
 ################################################################################
 #                                  Unit Tests                                  #
@@ -121,11 +131,11 @@ add_executable(Checkmate-Chariot main.cpp
 
 add_executable(Checkmate-Chariot-Tests
         tests/TestingGoogleTests.cc
+        tests/GameTimeManager.cc
+        tests/Logger.cc
 )
 target_link_libraries(
-        Checkmate-Chariot-Tests
-        GTest::gtest_main
-)
+        Checkmate-Chariot-Tests PRIVATE Checkmate-Core GTest::gtest_main)
 
 include(GoogleTest)
 gtest_discover_tests(Checkmate-Chariot-Tests)
@@ -137,17 +147,17 @@ gtest_discover_tests(Checkmate-Chariot-Tests)
 find_package(OpenMP)
 
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(Checkmate-Chariot PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(Checkmate-Core PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        target_compile_options(Checkmate-Chariot PUBLIC -g;-fconstexpr-steps=133554432;-fopenmp)
+        target_compile_options(Checkmate-Core PUBLIC -g;-fconstexpr-steps=133554432;-fopenmp)
     elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
-        target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-steps=133554432;-O3;-march=native;-fopenmp;-funroll-loops;)
+        target_compile_options(Checkmate-Core PUBLIC -fconstexpr-steps=133554432;-O3;-march=native;-fopenmp;-funroll-loops;)
     elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-        target_compile_options(Checkmate-Chariot PUBLIC -g;-fconstexpr-steps=133554432;-fopenmp;-O2;-march=native;-fopenmp)
+        target_compile_options(Checkmate-Core PUBLIC -g;-fconstexpr-steps=133554432;-fopenmp;-O2;-march=native;-fopenmp)
     else()
         message(FATAL_ERROR "UNKNOWN BUILD TYPE")
     endif()
@@ -155,11 +165,11 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        target_compile_options(Checkmate-Chariot PUBLIC -fconstexpr-ops-limit=133554432;-g;-fopenmp)
+        target_compile_options(Checkmate-Core PUBLIC -fconstexpr-ops-limit=133554432;-g;-fopenmp)
     elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
-        target_compile_options(Checkmate-Chariot PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=1335544322 ;-funroll-loops;-fno-peel-loops;-fno-tracer)
+        target_compile_options(Checkmate-Core PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=1335544322 ;-funroll-loops;-fno-peel-loops;-fno-tracer)
     elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-        target_compile_options(Checkmate-Chariot PUBLIC -g;-fconstexpr-ops-limit=133554432;-fopenmp;-O2;-march=native;-fopenmp)
+        target_compile_options(Checkmate-Core PUBLIC -g;-fconstexpr-ops-limit=133554432;-fopenmp;-O2;-march=native;-fopenmp)
     else()
         message(FATAL_ERROR "UNKNOWN BUILD TYPE")
     endif()
@@ -169,11 +179,11 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        target_compile_options(Checkmate-Chariot PUBLIC /constexpr:steps133554432;/Zi;/openmp)
+        target_compile_options(Checkmate-Core PUBLIC /constexpr:steps133554432;/Zi;/openmp)
     elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
-        target_compile_options(Checkmate-Chariot PUBLIC /O2;/openmp;/constexpr:steps133554432)
+        target_compile_options(Checkmate-Core PUBLIC /O2;/openmp;/constexpr:steps133554432)
     elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-        target_compile_options(Checkmate-Chariot PUBLIC /Zi;/constexpr:steps133554432;-fopenmp;/O2;/openmp)
+        target_compile_options(Checkmate-Core PUBLIC /Zi;/constexpr:steps133554432;-fopenmp;/O2;/openmp)
     else()
         message(FATAL_ERROR "UNKNOWN BUILD TYPE")
     endif()

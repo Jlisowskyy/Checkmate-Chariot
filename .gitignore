@@ -15,7 +15,7 @@ cmake-build-debug/
 EloEval/c-chess-cli*
 EloEval/ReferenceEngines/Exes/*
 
-*_deps/
+*_deps/*
 *.pgn
 *.log
 *__pycache__/

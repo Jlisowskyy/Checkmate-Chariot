@@ -58,7 +58,7 @@ void Engine::SetFenPosition(const std::string &fenStr)
     _startingBoard = _board;
 }
 
-void Engine::SetStartpos()
+void Engine::SetStartPos()
 {
     // restarting position age
     _age = 1;
@@ -127,50 +127,39 @@ bool Engine::_applyMove(Board &board, const std::string &move)
 
 void Engine::_changeDebugState([[maybe_unused]] Engine &eng, std::string &nPath)
 {
-    GlobalLogger.ChangeLogStream(nPath);
+    if (eng._fileLogger == nullptr)
+    {
+        eng._fileLogger = std::make_shared<FileLogger>(nPath);
+        GlobalLogger.AppendNext(eng._fileLogger);
+    }
+    else
+    {
+        eng._fileLogger->ChangeFile(nPath);
+    }
 }
 
 void Engine::_changeHashSize([[maybe_unused]] Engine &eng, const lli size)
 {
     if (TTable.ResizeTable(size) == -1)
-        GlobalLogger.StartErrLogging(
-        ) << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
+        GlobalLogger << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
 }
 
 void Engine::_changeBookUsage(Engine &eng, const bool newValue) { eng.UseOwnBook = newValue; }
 
-void Engine::GoMoveTime(const lli time, const std::vector<std::string> &moves)
+void Engine::Go(const GoInfo &info, const std::vector<std::string> &moves)
 {
-    if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed == true)
+    if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed)
         if (const auto &bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
         {
-            GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
+            GlobalLogger << std::format("bestmove {}\n", bookMove);
             return;
         }
 
-    auto bestMove = TManager.goMoveTime(_board, time, _age);
-
-    GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
+    TManager.Go(_board, _age, info);
 }
 
-void Engine::GoDepth(const int depth, const std::vector<std::string> &moves)
-{
-    if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed == true)
-        if (const auto &bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
-        {
-            GlobalLogger.StartLogging() << std::format("bestmove {}\n", bookMove);
-            return;
-        }
+void Engine::StopSearch() { TManager.Stop(); }
 
-    auto bestMove = TManager.goDepth(_board, depth, _age);
+void Engine::GoInfinite() { TManager.GoInfinite(_board, _age); }
 
-    GlobalLogger.StartLogging() << std::format("bestmove {}\n", bestMove);
-}
-
-void Engine::StopSearch()
-{
-    if (const auto res = TManager.stop(); !res.empty())
-        GlobalLogger.StartLogging() << std::format("bestmove {}\n", res);
-}
-
-void Engine::GoInfinite() { TManager.goInfinite(_board, _age); }
+void Engine::_clearHash(Engine &) { TTable.ClearTable(); }

@@ -28,8 +28,8 @@ bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
     }
     catch (const std::exception &exc)
     {
-        GlobalLogger.LogError(exc.what());
-        GlobalLogger.LogError("[ INFO ] Loading default layout...");
+        GlobalLogger << (exc.what());
+        GlobalLogger << ("[ INFO ] Loading default layout...");
         bd = StartBoard;
         return false;
     }

@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <map>
+#include <memory>
 
 #include "../include/ThreadManagement/SearchThreadManager.h"
 #include "EngineUtils.h"
@@ -42,7 +43,7 @@ class Engine
 
     void SetFenPosition(const std::string &fenStr);
 
-    void SetStartpos();
+    void SetStartPos();
 
     static const EngineInfo &GetEngineInfo();
 
@@ -52,15 +53,15 @@ class Engine
 
     [[nodiscard]] Board GetUnderlyingBoardCopy() const;
 
+    [[nodiscard]] int GetMovingColor() const { return _board.MovingColor; }
+
     [[nodiscard]] std::string GetFenTranslation() const;
-
-    void GoMoveTime(lli time, const std::vector<std::string> &moves);
-
-    void GoDepth(int depth, const std::vector<std::string> &moves);
 
     void StopSearch();
 
     void GoInfinite();
+
+    void Go(const GoInfo &info, const std::vector<std::string> &moves);
 
     // ------------------------------
     // private methods
@@ -71,9 +72,11 @@ class Engine
 
     static void _changeDebugState(Engine &eng, std::string &nPath);
 
-    static void _changeHashSize([[maybe_unused]] Engine &eng, lli size);
+    static void _changeHashSize([[maybe_unused]] Engine &, lli size);
 
     static void _changeBookUsage(Engine &eng, bool newValue);
+
+    static void _clearHash([[maybe_unused]] Engine &);
 
     static void _changeThreadCount([[maybe_unused]] Engine &eng, const lli tCount)
     {
@@ -93,6 +96,8 @@ class Engine
     static constexpr std::string_view _startposPrefix = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
     bool UseOwnBook                                   = false;
 
+    std::shared_ptr<FileLogger> _fileLogger;
+
     public:
     SearchThreadManager TManager{};
 
@@ -109,6 +114,7 @@ class Engine
     inline static const OptionT<Option::OptionType::string> DebugLogFile{"Debug Log File", _changeDebugState, ""};
     inline static const OptionT<Option::OptionType::spin> HashSize{"Hash", _changeHashSize, 16, 524289, 16};
     inline static const OptionT<Option::OptionType::check> OwnBook{"OwnBook", _changeBookUsage, true};
+    inline static const OptionT<Option::OptionType::button> ClearHash{"Clear Hash", _clearHash};
 
     inline static const EngineInfo engineInfo = {
         .author = "Jakub Lisowski, Lukasz Kryczka, Jakub Pietrzak Warsaw University of Technology",
@@ -118,7 +124,9 @@ class Engine
                                                   std::make_pair<std::string, const Option *>("Threads", &Threads),
                                                   std::make_pair<std::string, const Option *>("Debug Log File", &DebugLogFile),
                                                   std::make_pair<std::string, const Option *>("Hash", &HashSize),
-                                                  std::make_pair<std::string, const Option *>("OwnBook", &OwnBook)},
+                                                  std::make_pair<std::string, const Option *>("OwnBook", &OwnBook),
+                                                  std::make_pair<std::string, const Option *>("Clear Hash", &ClearHash),
+                                                  },
     };
 };
 
@@ -132,13 +140,13 @@ template <bool LogToOut> double Engine::GoPerft(const int depth)
     for (const auto &[moveStr, moveCount] : moves)
     {
         if constexpr (LogToOut)
-            GlobalLogger.StartLogging() << std::format("{}: {}\n", moveStr, moveCount);
+            GlobalLogger << std::format("{}: {}\n", moveStr, moveCount);
         totalSum += moveCount;
     }
 
     double spentTime = static_cast<double>((t2 - t1).count()) * 1e-6;
     if constexpr (LogToOut)
-        GlobalLogger.StartLogging() << std::format("Calculated moves: {} in time: {}ms\n", totalSum, spentTime);
+        GlobalLogger << std::format("Calculated moves: {} in time: {}ms\n", totalSum, spentTime);
 
     return spentTime;
 }

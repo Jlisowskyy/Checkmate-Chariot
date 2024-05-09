@@ -10,15 +10,16 @@
 
 #include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
-#include "stack.h"
+#include "../cmakeDefines.h"
+#include "Stack.h"
 
-class SearchThreadManager
+struct SearchThreadManager
 {
+    using StackType = Stack<Move, DefaultStackSize>;
     // ------------------------------
     // Class creation
     // ------------------------------
 
-    public:
     SearchThreadManager() = default;
     ~SearchThreadManager();
 
@@ -32,42 +33,32 @@ class SearchThreadManager
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] stack<Move, DefaultStackSize> &GetDefaultStack() { return _stacks[0]; }
+    [[nodiscard]] StackType &GetDefaultStack() { return _stacks[0]; }
 
-    bool goInfinite(const Board &bd, uint16_t age);
+    bool Go(const Board &bd, uint16_t age, const GoInfo &info);
 
-    std::string stop();
+    bool GoInfinite(const Board &bd, uint16_t age);
 
-    std::string goMoveTime(const Board &bd, long long msecs, uint16_t age);
-
-    std::string goDepth(const Board &bd, int depth, uint16_t age);
+    void Stop();
 
     // ------------------------------
     // Private class methods
     // ------------------------------
 
     private:
-    static void
-    _threadSearchJob(const Board *bd, stack<Move, DefaultStackSize> *s, PackedMove *output, int depth, uint16_t age);
-
-    void _cancelThread(size_t threadInd);
-
-#ifdef __unix__
-
-    static int _sethandler(void (*f)(int), int sigNo);
-    static void _sigusr1_exit(int);
-
-#endif
+    static void _threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, uint16_t age, int depth);
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
     bool _isSearchOn{false};
-    PackedMove _seachResult{};
 
-    stack<Move, DefaultStackSize> _stacks[20 + 1]{};
+    // TODO: Implement logical thread detection
+    StackType _stacks[20 + 1]{};
     std::thread *_threads[20 + 1]{};
+
+    static constexpr size_t MainSearchThreadInd = 0;
 };
 
 #endif // SEARCHTHREADMANAGER_H

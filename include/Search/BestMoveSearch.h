@@ -10,7 +10,7 @@
 #include "../Evaluation/HistoricTable.h"
 #include "../Evaluation/KillerTable.h"
 #include "../Interface/Logger.h"
-#include "../ThreadManagement/stack.h"
+#include "../ThreadManagement/Stack.h"
 
 class BestMoveSearch
 {
@@ -36,7 +36,7 @@ class BestMoveSearch
 
         void Print() const
         {
-            for (int i = 0; i < _depth; ++i) GlobalLogger.StartLogging() << _path[i].GetLongAlgebraicNotation() << ' ';
+            for (int i = 0; i < _depth; ++i) GlobalLogger << _path[i].GetLongAlgebraicNotation() << ' ';
         }
 
         PackedMove operator()(const int depthLeft, const int rootDepth) const { return _path[rootDepth - depthLeft]; }
@@ -54,7 +54,7 @@ class BestMoveSearch
     // ------------------------------
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board, stack<Move, DefaultStackSize> &s, const uint16_t age)
+    BestMoveSearch(const Board &board, Stack<Move, DefaultStackSize> &s, const uint16_t age)
         : _stack(s), _board(board), _age(age)
     {
     }
@@ -79,9 +79,9 @@ class BestMoveSearch
     [[nodiscard]] int _quiescenceSearch(Board &bd, int alpha, int beta, uint64_t zHash);
     [[nodiscard]] int _zwQuiescenceSearch(Board &bd, int alpha, uint64_t zHash);
 
-    static void _embeddedMoveSort(stack<Move, DefaultStackSize>::stackPayload moves, size_t range);
-    static void _pullMoveToFront(stack<Move, DefaultStackSize>::stackPayload moves, PackedMove mv);
-    static void _fetchBestMove(stack<Move, DefaultStackSize>::stackPayload moves, size_t targetPos);
+    static void _embeddedMoveSort(Stack<Move, DefaultStackSize>::StackPayload moves, size_t range);
+    static void _pullMoveToFront(Stack<Move, DefaultStackSize>::StackPayload moves, PackedMove mv);
+    static void _fetchBestMove(Stack<Move, DefaultStackSize>::StackPayload moves, size_t targetPos);
 
     [[nodiscard]] int _getMateValue(int depthLeft) const;
 
@@ -89,16 +89,22 @@ class BestMoveSearch
     // Class fields
     // ------------------------------
 
-    static constexpr int MateMargin       = 200;
-    static constexpr int NegativeInfinity = INT16_MIN + 100;
-    static constexpr int PositiveInfinity = INT16_MAX - 100;
+    static constexpr int ReservedValues   = 64;
+    static constexpr int InfinityMargin   = MaxSearchDepth + ReservedValues;
+    static constexpr int TimeStopValue    = INT16_MAX;
+    static constexpr int NegativeInfinity = INT16_MIN + InfinityMargin;
+    static constexpr int PositiveInfinity = INT16_MAX - InfinityMargin;
 
     static constexpr uint16_t QuisenceAgeDiffToReplace = 16;
     static constexpr uint16_t SearchAgeDiffToReplace   = 10;
 
+    // Initial Aspiration Window Delta its cp value is equal to InitialAspWindowDelta * BoardEvaluator::ScoreGrain
+    // (probably 8) ~= 48
+    static constexpr int16_t InitialAspWindowDelta = 6;
+
     static constexpr int MaxAspWindowTries = 4;
 
-    stack<Move, DefaultStackSize> &_stack;
+    Stack<Move, DefaultStackSize> &_stack;
     Board _board;
     const uint16_t _age;
     uint64_t _visitedNodes = 0;

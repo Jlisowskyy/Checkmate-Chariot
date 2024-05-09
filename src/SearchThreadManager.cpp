@@ -4,109 +4,61 @@
 
 #include "../include/ThreadManagement/SearchThreadManager.h"
 #include "../include/Search/BestMoveSearch.h"
+#include "../include/ThreadManagement/GameTimeManager.h"
 
-#ifdef __unix__
-
-#include <csignal>
-
-#elif defined(__WIN32__)
-
-#include <Windows.h>
-
-#endif // __unix__
+#include <format>
 
 SearchThreadManager::~SearchThreadManager()
 {
     for (const auto thread : _threads) delete thread;
 }
-
-bool SearchThreadManager::goInfinite(const Board &bd, const uint16_t age)
+bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
 {
+    // ensuring only one search is running at a time
     if (_isSearchOn)
         return false;
 
-    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, MaxSearchDepth, age);
+    // Setting up time guarding parameters
+    GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor));
+
+    // Running up the searching worker
+    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], age, std::min(info.depth, MaxSearchDepth));
     _isSearchOn = true;
 
+    // Signaling success
     return true;
 }
 
-std::string SearchThreadManager::stop()
+bool SearchThreadManager::GoInfinite(const Board &bd, uint16_t age)
 {
+    GoInfo info;
+    info.timeInfo = GoTimeInfo::GetInfiniteTime();
+    info.depth    = MaxSearchDepth;
+    return Go(bd, age, info);
+}
+
+void SearchThreadManager::Stop()
+{
+    // avoiding unnecessary actions
     if (!_isSearchOn)
-        return "";
+        return;
 
-    _cancelThread(0);
-    _isSearchOn = false;
-    return _seachResult.GetLongAlgebraicNotation();
-}
+    // signaling forced abortion
+    GameTimeManager::StopSearchManagement();
 
-std::string SearchThreadManager::goMoveTime(const Board &bd, const long long msecs, const uint16_t age)
-{
-    if (_isSearchOn)
-        return "";
-
-    goInfinite(bd, age);
-    std::this_thread::sleep_for(std::chrono::milliseconds(msecs));
-    return stop();
-}
-
-std::string SearchThreadManager::goDepth(const Board &bd, int depth, const uint16_t age)
-{
-    if (_isSearchOn)
-        return "";
-
-    _threads[0] =
-        new std::thread(_threadSearchJob, &bd, &_stacks[0], &_seachResult, std::min(depth, MaxSearchDepth), age);
-    _threads[0]->join();
-
+    _threads[0]->join(); // waiting for the main search thread to finish
     delete _threads[0];
     _threads[0] = nullptr;
-    _stacks[0].Clear();
 
-    return _seachResult.GetLongAlgebraicNotation();
+    _isSearchOn = false;
 }
 
-void SearchThreadManager::_threadSearchJob(
-    const Board *bd, stack<Move, DefaultStackSize> *s, PackedMove *output, const int depth, const uint16_t age
-)
+void SearchThreadManager::_threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, uint16_t age, int depth)
 {
-#ifdef __unix__
-    if (_sethandler(_sigusr1_exit, SIGUSR1))
-        exit(EXIT_FAILURE);
-#endif // __unix__
+    PackedMove output{};
 
     BestMoveSearch searcher{*bd, *s, age};
-    searcher.IterativeDeepening(output, depth);
+    searcher.IterativeDeepening(&output, depth);
+
+    GlobalLogger << std::format("bestmove {}\n", output.GetLongAlgebraicNotation());
 }
-
-void SearchThreadManager::_cancelThread(const size_t threadInd)
-{
-    const auto tid = _threads[threadInd]->native_handle();
-#ifdef __unix__
-    pthread_kill(tid, SIGUSR1);
-#elif defined(__WIN32__)
-    TerminateThread(tid, 0);
-#endif
-
-    _threads[threadInd]->join();
-    delete _threads[threadInd];
-    _threads[threadInd] = nullptr;
-
-    _stacks[threadInd].Clear();
-}
-
-#ifdef __unix__
-
-int SearchThreadManager::_sethandler(void (*f)(int), int sigNo)
-{
-    struct sigaction act = {};
-    act.sa_handler       = f;
-    if (-1 == sigaction(sigNo, &act, nullptr))
-        return -1;
-    return 0;
-}
-
-void SearchThreadManager::_sigusr1_exit(int) { pthread_exit(nullptr); }
-
-#endif
