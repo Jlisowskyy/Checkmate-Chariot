@@ -10,20 +10,21 @@
 
 StdoutLogger GlobalLogger{};
 
-Logger::Logger(Logger *next) { this->nextHandler = std::shared_ptr<Logger>(next); }
-Logger::Logger(Logger::log_sp next) { this->nextHandler = std::move(next); }
-Logger::Logger(std::ostream &stream) { loggingStream = &stream; }
-Logger::Logger(Logger *next, std::ostream &stream)
+Logger::Logger() : LogStream(*this), TraceStream(*this) {}
+Logger::Logger(Logger *next) : Logger() { this->nextHandler = std::shared_ptr<Logger>(next); }
+Logger::Logger(Logger::log_sp next) : Logger() { this->nextHandler = std::move(next); }
+Logger::Logger(std::ostream &stream) : Logger() { loggingStream = &stream; }
+Logger::Logger(Logger *next, std::ostream &stream) : Logger()
 {
     this->nextHandler = std::shared_ptr<Logger>(next);
     loggingStream     = &stream;
 }
-Logger::Logger(Logger::log_sp next, std::ostream &stream)
+Logger::Logger(Logger::log_sp next, std::ostream &stream) : Logger()
 {
     this->nextHandler = std::move(next);
     loggingStream     = &stream;
 }
-Logger::Logger(Logger &&other) noexcept
+Logger::Logger(Logger &&other) noexcept : Logger()
 {
     loggingStream = other.loggingStream;
     nextHandler   = std::move(other.nextHandler);
@@ -38,7 +39,7 @@ Logger &Logger::SetNext(Logger *handler)
     nextHandler = std::move(handler);
     return *(nextHandler.get());
 }
-Logger& Logger::AppendNext(Logger *handler)
+Logger &Logger::AppendNext(Logger *handler)
 {
     if (nextHandler == nullptr)
         nextHandler = std::shared_ptr<Logger>(handler);
@@ -47,7 +48,7 @@ Logger& Logger::AppendNext(Logger *handler)
 
     return *this;
 }
-Logger& Logger::AppendNext(Logger::log_sp handler)
+Logger &Logger::AppendNext(Logger::log_sp handler)
 {
     if (nextHandler == nullptr)
         nextHandler = std::move(handler);
@@ -83,3 +84,15 @@ void FileLogger::ChangeFile(const std::string &FileName)
 }
 StderrLogger::StderrLogger() { loggingStream = &std::cerr; }
 StdoutLogger::StdoutLogger() { loggingStream = &std::cout; }
+Logger::TraceC &Logger::TraceC::operator<<(Logger::streamFunction func)
+{
+#ifdef NDEBUG
+    logger << func;
+#endif
+    return *this;
+}
+Logger::LogC &Logger::LogC::operator<<(Logger::streamFunction func)
+{
+    logger << func;
+    return *this;
+}

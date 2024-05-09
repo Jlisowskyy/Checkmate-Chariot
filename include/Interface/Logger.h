@@ -28,14 +28,66 @@ concept Streamable = requires(T a, std::ostream &os) {
 /// </summary>
 class [[maybe_unused]] Logger
 {
+    protected:
+    class LogC;
+    class TraceC;
+
+    protected:
     using log_sp = std::shared_ptr<Logger>;
+    // ------------------------------
+    // nested classes
+    // ------------------------------
+
+    protected:
+    /// <summary>
+    /// Class that allows for logging to the logger via a stream
+    /// @example Logger logger; logger.LogStream << "Hello, World!";
+    /// </summary>
+    class LogC
+    {
+        public:
+        LogC(Logger &logger) : logger(logger) {}
+        template <Streamable T> LogC &operator<<(const T &logMessage)
+        {
+            logger.Log(logMessage);
+            return *this;
+        }
+        /// <summary> Allow for stream functions to be used with the logger </summary>
+        typedef std::ostream &(*streamFunction)(std::ostream &);
+        LogC &operator<<(streamFunction func);
+
+        private:
+        Logger &logger;
+    };
+
+    /// <summary>
+    /// Class that allows for logging to the logger via a stream if in DEBUG
+    /// @example Logger logger; logger.TraceStream << "Hello, World!";
+    /// </summary>
+    class TraceC
+    {
+        public:
+        TraceC(Logger &logger) : logger(logger) {}
+        template <Streamable T> TraceC &operator<<(const T &logMessage)
+        {
+            logger.Trace(logMessage);
+            return *this;
+        }
+        /// <summary> Allow for stream functions to be used with the logger </summary>
+        typedef std::ostream &(*streamFunction)(std::ostream &);
+        TraceC &operator<<(streamFunction func);
+
+        private:
+        Logger &logger;
+    };
+
     // ------------------------------
     // Class creation
     // ------------------------------
 
     public:
     /// <summary> Default constructor, creates a logger with no output stream </summary>
-    Logger() = default;
+    Logger();
     /// <summary>
     /// Constructor which sets next handler in the chain
     /// @remark this creates a shared pointer to the next handler. If you already have a shared pointer, use the other
@@ -69,6 +121,7 @@ class [[maybe_unused]] Logger
     // Class interaction
     // ------------------------------
 
+    public:
     /// <summary>
     /// Set the next handler in the chain
     /// @remark this creates a shared pointer to the provided handler.
@@ -83,12 +136,12 @@ class [[maybe_unused]] Logger
     /// Append a handler to the end of the chain
     /// @remark this creates a shared pointer to the provided handler.
     /// </summary>
-    virtual Logger& AppendNext(Logger *handler);
+    virtual Logger &AppendNext(Logger *handler);
     /// <summary>
     /// Append a handler to the end of the chain
     /// @remark this assigns the provided shared pointer to the next handler
     /// </summary>
-    virtual Logger& AppendNext(log_sp handler);
+    virtual Logger &AppendNext(log_sp handler);
 
     /// <summary> Log a message </summary>
     template <Streamable T> void Log(const T &logMessage)
@@ -101,9 +154,23 @@ class [[maybe_unused]] Logger
         if (nextHandler != nullptr)
             nextHandler->Log(logMessage);
     }
+    /// <summary> Log a message if in DEBUG</summary>
+    template <Streamable T> void Trace(const T &logMessage)
+    {
+#ifndef NDEBUG
+        if (loggingStream)
+        {
+            std::lock_guard<std::mutex> lock(logGuard);
+            *loggingStream << logMessage;
+        }
+        if (nextHandler != nullptr)
+            nextHandler->Log(logMessage);
+#endif
+    }
     /// <summary> Set the output stream </summary>
     [[maybe_unused]] void SetLoggingStream(std::ostream &stream);
 
+    private:
     /// <summary> Log a message using streams </summary>
     template <Streamable T> Logger &operator<<(const T &logMessage)
     {
@@ -117,6 +184,10 @@ class [[maybe_unused]] Logger
     // ------------------------------
     // class fields
     // ------------------------------
+
+    public:
+    LogC LogStream;
+    TraceC TraceStream;
 
     private:
     std::shared_ptr<Logger> nextHandler = nullptr;
