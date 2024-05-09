@@ -123,6 +123,8 @@ class BoardEvaluator
 
     [[nodiscard]] static int32_t Evaluation2(Board &bd);
 
+    [[nodiscard]] static int32_t InterpGameStage(const Board &bd, int32_t midVal, int32_t endVal);
+
     // ------------------------------
     // Private class methods
     // ------------------------------

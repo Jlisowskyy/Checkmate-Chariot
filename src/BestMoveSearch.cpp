@@ -31,6 +31,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
     {
         GlobalLogger.LogStream << "info depth 0 score cp "
                                << BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor) << std::endl;
+
         return;
     }
 

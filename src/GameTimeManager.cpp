@@ -4,7 +4,10 @@
 
 #include <cassert>
 #include <thread>
+#include <limits>
 
+#include "../include/Board.h"
+#include "../include/Evaluation/BoardEvaluator.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
 
 // Static fields initialization
@@ -45,7 +48,7 @@ void GameTimeManager::_timer_thread()
     return CurrentTime = std::chrono::system_clock::now();
 }
 
-void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color &color)
+void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color color, const Board &bd)
 {
     assert(TimerRunning && "Timer must be running"); // Timer must be running
 
@@ -61,6 +64,8 @@ void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const 
         // No time limit
         return;
     }
+
+    CalculateTimeMsForMove(bd, timeLeftBoardMs);
 
     // time limit
     std::thread searchManagementThread(_search_management_thread, tInfo, color, timeLeftBoardMs, moveTimeLimitMs);
@@ -90,10 +95,15 @@ void GameTimeManager::_search_management_thread(
     }
 }
 
-lli GameTimeManager::CalculateMsForMove()
+lli GameTimeManager::CalculateTimeMsForMove(const Board &bd, const lli timeLeftBoardMs)
 {
     /// @todo Implement this function
     /// Should take in the account the time left for the move and the stage of the game.
     /// And return the time (in milliseconds) that the engine should spend on the move.
+    constexpr int32_t midGameValue = 0;
+    constexpr int32_t endGameValue = std::numeric_limits<int32_t>::max();
+    const int32_t gameStage = BoardEvaluator::InterpGameStage(bd, midGameValue, endGameValue);
+
+    GlobalLogger.TraceStream << "Game stage: " << gameStage << '\n';
     return 0;
 }
