@@ -125,7 +125,11 @@ bool Engine::_applyMove(Board &board, const std::string &move)
     return false;
 }
 
-void Engine::_changeDebugState([[maybe_unused]] Engine &eng, std::string &nPath)
+/// <summary>
+/// If a file logger of the engine is not set, creates a new one, otherwise changes the file of the existing one
+/// @remark This APPENDS a new file logger to the global logger and monitors it's working file
+/// </summary>
+void Engine::_changeOrSetLogFile([[maybe_unused]] Engine &eng, std::string &nPath)
 {
     if (eng._fileLogger == nullptr)
     {

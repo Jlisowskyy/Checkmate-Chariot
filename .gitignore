@@ -19,3 +19,5 @@ EloEval/ReferenceEngines/Exes/*
 *.pgn
 *.log
 *__pycache__/
+
+*include/cmakeDefines.h
