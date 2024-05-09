@@ -46,7 +46,7 @@ struct SearchThreadManager
     // ------------------------------
 
     private:
-    static void _threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, uint16_t age, int depth);
+    static void _threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, bool* guard, uint16_t age, int depth);
 
     // ------------------------------
     // Class fields
