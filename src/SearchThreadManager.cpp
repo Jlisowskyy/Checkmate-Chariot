@@ -60,5 +60,5 @@ void SearchThreadManager::_threadSearchJob(const Board *bd, Stack<Move, DefaultS
     BestMoveSearch searcher{*bd, *s, age};
     searcher.IterativeDeepening(&output, depth);
 
-    GlobalLogger << std::format("bestmove {}\n", output.GetLongAlgebraicNotation());
+    GlobalLogger.LogStream << std::format("bestmove {}\n", output.GetLongAlgebraicNotation());
 }

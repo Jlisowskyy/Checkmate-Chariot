@@ -117,7 +117,7 @@ MovesHashMap<HashFuncT, mapAllocSize>::IntegrityTest(NeighborGeneratorT func, co
         if (const uint64_t oldRecord = (*this)[possibilities[i]]; oldRecord != EmptyField && oldRecord != record)
         {
             if constexpr (ShouldSignal)
-                ParameterSearchLogger << std::format("[ ERROR ] Integrity failed on index: {}", i);
+                ParameterSearchLogger.LogStream << std::format("[ ERROR ] Integrity failed on index: {}", i);
 
             collisionDetected = true;
             break;
@@ -215,7 +215,7 @@ void MovesHashMap<HashFuncT, mapAllocSize>::FindHashParameters(
         // Printing actual parameters
         ParameterSearchLogger.Log("Actual rehashing result:\n{");
         for (size_t j = 0; j < Board::BitBoardFields; ++j)
-            ParameterSearchLogger << '\t' << (finishedMaps[j] ? maps[j].HFunc : funcs[j]) << ",\n";
+            ParameterSearchLogger.LogStream << '\t' << (finishedMaps[j] ? maps[j].HFunc : funcs[j]) << ",\n";
         ParameterSearchLogger.Log(
             std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps, fullSize)
         );
@@ -226,7 +226,7 @@ void MovesHashMap<HashFuncT, mapAllocSize>::FindHashParameters(
     // Print final looking table
     ParameterSearchLogger.Log("Actual rehashing result:\n{");
     for (size_t j = 0; j < Board::BitBoardFields; ++j)
-        ParameterSearchLogger << '\t' << (finishedMaps[j] ? maps[j].HFunc : funcs[j]) << ",\n";
+        ParameterSearchLogger.LogStream << '\t' << (finishedMaps[j] ? maps[j].HFunc : funcs[j]) << ",\n";
     ParameterSearchLogger.Log(std::format("}};\nCurrent correct maps: {},\nWith size: {} bytes", correctMaps, fullSize)
     );
 }
@@ -238,7 +238,7 @@ void MovesHashMap<HashFuncT, mapAllocSize>::FindCollidingIndices(
     const HashFuncT *const funcs, NeighborGeneratorT nGen, MaskInitT mInit
 )
 {
-    ParameterSearchLogger << "Collision detected on indices:\n\t{ ";
+    ParameterSearchLogger.LogStream << "Collision detected on indices:\n\t{ ";
     size_t invalidIndices{};
 
     for (int i = 0; i < static_cast<int>(Board::BitBoardFields); ++i)
@@ -250,7 +250,7 @@ void MovesHashMap<HashFuncT, mapAllocSize>::FindCollidingIndices(
 
         if (result == false)
         {
-            ParameterSearchLogger << std::format("{}, ", i);
+            ParameterSearchLogger.LogStream << std::format("{}, ", i);
             ++invalidIndices;
         }
     }

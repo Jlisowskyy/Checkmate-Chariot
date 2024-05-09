@@ -145,7 +145,7 @@ void Engine::_changeOrSetLogFile([[maybe_unused]] Engine &eng, std::string &nPat
 void Engine::_changeHashSize([[maybe_unused]] Engine &eng, const lli size)
 {
     if (TTable.ResizeTable(size) == -1)
-        GlobalLogger << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
+        GlobalLogger.LogStream << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
 }
 
 void Engine::_changeBookUsage(Engine &eng, const bool newValue) { eng.UseOwnBook = newValue; }
@@ -155,7 +155,7 @@ void Engine::Go(const GoInfo &info, const std::vector<std::string> &moves)
     if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed)
         if (const auto &bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
         {
-            GlobalLogger << std::format("bestmove {}\n", bookMove);
+            GlobalLogger.LogStream << std::format("bestmove {}\n", bookMove);
             return;
         }
 

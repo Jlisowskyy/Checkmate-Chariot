@@ -21,8 +21,8 @@ UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream &i
         lastCommand = _cleanMessage(recordBuffer);
 
         if (lastCommand == UCICommand::InvalidCommand)
-            GlobalLogger << "[ ERROR ] Error uccured during translation or execution.\n Refer to UCI "
-                            "protocl manual to get more detailed information.\n";
+            GlobalLogger.LogStream << "[ ERROR ] Error uccured during translation or execution.\n Refer to UCI "
+                                      "protocl manual to get more detailed information.\n";
     }
 
     return lastCommand;
@@ -165,20 +165,20 @@ UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string &s
 
 UCITranslator::UCICommand UCITranslator::_uciResponse([[maybe_unused]] const std::string &unused)
 {
-    GlobalLogger << "id name " << Engine::GetEngineInfo().name << '\n';
-    GlobalLogger << "id author " << Engine::GetEngineInfo().author << '\n';
+    GlobalLogger.LogStream << "id name " << Engine::GetEngineInfo().name << '\n';
+    GlobalLogger.LogStream << "id author " << Engine::GetEngineInfo().author << '\n';
 
     for (const auto &opt : Engine::GetEngineInfo().options)
     {
-        GlobalLogger << *opt.second;
+        GlobalLogger.LogStream << *opt.second;
     }
-    GlobalLogger << "uciok" << std::endl;
+    GlobalLogger.LogStream << "uciok" << std::endl;
     return UCICommand::uciCommand;
 }
 
 UCITranslator::UCICommand UCITranslator::_isReadyResponse([[maybe_unused]] const std::string &unused)
 {
-    GlobalLogger << "readyok" << std::endl;
+    GlobalLogger.LogStream << "readyok" << std::endl;
     return UCICommand::isreadyCommand;
 }
 
@@ -214,9 +214,9 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
         "   - \"go perfComp /\" - will run tests on perfTest1.csv\n"
         "   - \"go searchPerf\" - will run tests on searchTests.csv\n";
 
-    GlobalLogger << "Help content:\n\n"
-                 << "TODO MAIN HELP\n\n" // TODO
-                 << CustomCommands;
+    GlobalLogger.LogStream << "Help content:\n\n"
+                           << "TODO MAIN HELP\n\n" // TODO
+                           << CustomCommands;
 
     return UCICommand::helpCommand;
 }
@@ -239,7 +239,7 @@ UCITranslator::UCICommand UCITranslator::_clearConsole([[maybe_unused]] const st
 
 UCITranslator::UCICommand UCITranslator::_displayFenResponse([[maybe_unused]] const std::string &unused)
 {
-    GlobalLogger << "Acquired fen translation:\n" << _engine.GetFenTranslation() << '\n';
+    GlobalLogger.LogStream << "Acquired fen translation:\n" << _engine.GetFenTranslation() << '\n';
     return UCICommand::displayCommand;
 }
 

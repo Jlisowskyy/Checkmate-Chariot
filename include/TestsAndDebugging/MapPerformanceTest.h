@@ -83,7 +83,7 @@ double MapPerformanceTester::PerformTest(const std::string &filename, const MapT
     const double timeSpentMs = (timeStop - timeStart).count() * 1e-6;
     const double readPerMs   = mapReads / timeSpentMs;
 
-    GlobalLogger
+    GlobalLogger.LogStream
         << std::format(
                "During the test there was {} reads in total.\nAll done in {}ms.\nWhich outputs {} reads per ms\n",
                mapReads, timeSpentMs, readPerMs

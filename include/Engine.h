@@ -145,13 +145,13 @@ template <bool LogToOut> double Engine::GoPerft(const int depth)
     for (const auto &[moveStr, moveCount] : moves)
     {
         if constexpr (LogToOut)
-            GlobalLogger << std::format("{}: {}\n", moveStr, moveCount);
+            GlobalLogger.LogStream << std::format("{}: {}\n", moveStr, moveCount);
         totalSum += moveCount;
     }
 
     double spentTime = static_cast<double>((t2 - t1).count()) * 1e-6;
     if constexpr (LogToOut)
-        GlobalLogger << std::format("Calculated moves: {} in time: {}ms\n", totalSum, spentTime);
+        GlobalLogger.LogStream << std::format("Calculated moves: {} in time: {}ms\n", totalSum, spentTime);
 
     return spentTime;
 }

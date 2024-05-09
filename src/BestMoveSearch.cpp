@@ -29,8 +29,8 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
     // When the passed depth is 0, we need to evaluate the board statically
     if (maxDepth == 0)
     {
-        GlobalLogger << "info depth 0 score cp " << BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor)
-                     << std::endl;
+        GlobalLogger.LogStream << "info depth 0 score cp "
+                               << BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor) << std::endl;
         return;
     }
 
@@ -128,14 +128,14 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
             const uint64_t nps             = 1000LLU * _visitedNodes / spentMs;
             const double cutOffPerc        = static_cast<double>(_cutoffNodes) / static_cast<double>(_visitedNodes);
 
-            GlobalLogger << std::format(
+            GlobalLogger.LogStream << std::format(
                 "info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
                 depth, spentMs, _visitedNodes, nps, eval * BoardEvaluator::ScoreGrain,
                 output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
             pv.Print();
-            GlobalLogger << std::endl;
+            GlobalLogger.LogStream << std::endl;
         }
     }
 }
