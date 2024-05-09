@@ -10,10 +10,10 @@
 
 StdoutLogger GlobalLogger{};
 
-[[maybe_unused]] Logger::Logger(Logger *next) { this->nextHandler = std::shared_ptr<Logger>(next); }
-[[maybe_unused]] Logger::Logger(Logger::log_sp next) { this->nextHandler = std::move(next); }
-[[maybe_unused]] Logger::Logger(std::ostream &stream) { loggingStream = &stream; }
-[[maybe_unused]] Logger::Logger(Logger *next, std::ostream &stream)
+Logger::Logger(Logger *next) { this->nextHandler = std::shared_ptr<Logger>(next); }
+Logger::Logger(Logger::log_sp next) { this->nextHandler = std::move(next); }
+Logger::Logger(std::ostream &stream) { loggingStream = &stream; }
+Logger::Logger(Logger *next, std::ostream &stream)
 {
     this->nextHandler = std::shared_ptr<Logger>(next);
     loggingStream     = &stream;
@@ -28,7 +28,7 @@ Logger::Logger(Logger &&other) noexcept
     loggingStream = other.loggingStream;
     nextHandler   = std::move(other.nextHandler);
 }
-[[maybe_unused]] Logger &Logger::SetNext(Logger *handler)
+Logger &Logger::SetNext(Logger *handler)
 {
     nextHandler = std::shared_ptr<Logger>(handler);
     return *(nextHandler.get());
@@ -70,7 +70,7 @@ Logger &Logger::operator<<(Logger::streamFunction func)
     return *this;
 }
 
-[[maybe_unused]] FileLogger::FileLogger(const std::string &FileName) { ChangeFile(FileName); }
+FileLogger::FileLogger(const std::string &FileName) { ChangeFile(FileName); }
 
 void FileLogger::ChangeFile(const std::string &FileName)
 {

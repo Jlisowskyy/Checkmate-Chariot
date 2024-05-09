@@ -26,7 +26,7 @@ concept Streamable = requires(T a, std::ostream &os) {
 /// @example Logger logger; logger \<\< "Hello, World!";
 /// @example Logger logger = std::move(StdoutLogger().AppendNext(new FileLogger("log.txt")));
 /// </summary>
-class Logger
+class [[maybe_unused]] Logger
 {
     using log_sp = std::shared_ptr<Logger>;
     // ------------------------------
@@ -41,24 +41,24 @@ class Logger
     /// @remark this creates a shared pointer to the next handler. If you already have a shared pointer, use the other
     /// constructor
     /// </summary>
-    [[maybe_unused]] explicit Logger(Logger *next);
+    explicit Logger(Logger *next);
     /// <summary>
     /// Constructor which sets next handler in the chain. It assigns the provided shared pointer to the next handler
     /// </summary>
-    [[maybe_unused]] explicit Logger(log_sp next);
+    explicit Logger(log_sp next);
     /// <summary> Constructor with output stream </summary>
-    [[maybe_unused]] explicit Logger(std::ostream &stream);
+    explicit Logger(std::ostream &stream);
     /// <summary>
     /// Constructor with next handler in the chain and output stream
     /// @remark this creates a shared pointer to the next handler. If you already have a shared pointer, use the other
     /// constructor
     /// </summary>
-    [[maybe_unused]] explicit Logger(Logger *next, std::ostream &stream);
+    explicit Logger(Logger *next, std::ostream &stream);
     /// <summary>
     /// Constructor with next handler in the chain and output stream.
     /// It assigns the provided shared pointer to the next handler
     /// </summary>
-    [[maybe_unused]] explicit Logger(log_sp next, std::ostream &stream);
+    explicit Logger(log_sp next, std::ostream &stream);
     virtual ~Logger() = default;
 
     Logger(const Logger &loggerToCopy) = delete; // Copy constructor does not make sense
@@ -73,7 +73,7 @@ class Logger
     /// Set the next handler in the chain
     /// @remark this creates a shared pointer to the provided handler.
     /// </summary>
-    [[maybe_unused]] virtual Logger &SetNext(Logger *handler);
+    virtual Logger &SetNext(Logger *handler);
     /// <summary>
     /// Set the next handler in the chain
     /// @remark this assigns the provided shared pointer to the next handler
@@ -83,15 +83,15 @@ class Logger
     /// Append a handler to the end of the chain
     /// @remark this creates a shared pointer to the provided handler.
     /// </summary>
-    [[maybe_unused]] virtual Logger& AppendNext(Logger *handler);
+    virtual Logger& AppendNext(Logger *handler);
     /// <summary>
     /// Append a handler to the end of the chain
     /// @remark this assigns the provided shared pointer to the next handler
     /// </summary>
-    [[maybe_unused]] virtual Logger& AppendNext(log_sp handler);
+    virtual Logger& AppendNext(log_sp handler);
 
     /// <summary> Log a message </summary>
-    template <Streamable T> [[maybe_unused]] void Log(const T &logMessage)
+    template <Streamable T> void Log(const T &logMessage)
     {
         if (loggingStream)
         {
@@ -144,7 +144,7 @@ class [[maybe_unused]] StderrLogger : public Logger
 class FileLogger : public Logger
 {
     public:
-    [[maybe_unused]] explicit FileLogger(const std::string &FileName);
+    explicit FileLogger(const std::string &FileName);
     void ChangeFile(const std::string &FileName);
 
     protected:
