@@ -29,10 +29,10 @@ ram_per_bot = round ( get_usable_ram_linux() / ( multiprocessing.cpu_count() * 2
 ram_per_bot = largest_power_of_2_less_than(ram_per_bot)
 print(f'ram_per_bot: {ram_per_bot}')
 
-each_options = f'-each tc=4+0.04 option.Threads=1 option.Hash={ram_per_bot}'
+each_options = f'-each tc=10+1 option.Threads=1 option.Hash={ram_per_bot}'
 game_options = f'-games 1000 -repeat -gauntlet -concurrency {multiprocessing.cpu_count()}'
 resign_options = f'-resign count=3 score=700 -draw number=40 count=12 score=10'
-output_options = f'-pgn {datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")}-results.pgn 0'
+output_options = f'-pgn {datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")}-results.pgn 0 -log'
 
 # check if c-chess-cli exists
 if not os.path.exists('c-chess-cli'):
@@ -41,12 +41,20 @@ if not os.path.exists('c-chess-cli'):
     os.system('chmod +x c-chess-cli-installer.sh')
     os.system('./c-chess-cli-installer.sh')
 
+# if the exes_path folders do not exist, create them
+if not os.path.exists(e.exes_path):
+    os.makedirs(e.exes_path)
+
 # install missing engines
 for engine in e.ext_engines:
     if not os.path.exists(f'{e.exes_path}/{engine}'):
+        # change folder to installers
         print(f'{engine} not found, running installer...')
         os.system(f'chmod +x {e.installers_path}/{engine}.sh')
-        os.system(f'./{e.installers_path}/{engine}.sh')
+        os.chdir(e.installers_path)
+        os.system(f'./{engine}.sh')
+        # change folder back to root
+        os.chdir('../../')
 
 # print elo of each engine
 print('running tests with the following engines:')
@@ -57,7 +65,7 @@ for engine in e.ext_engines:
 
 engine_options = ''
 # add main engine
-#engine_options += f' -engine cmd=../Checkmate-Chariot name=Checkmate-Chariot'
+engine_options += f' -engine cmd=../Checkmate-Chariot name=Checkmate-Chariot'
 
 # add external engines
 for engine in e.ext_engines:

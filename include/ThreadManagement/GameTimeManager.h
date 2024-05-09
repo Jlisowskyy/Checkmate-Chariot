@@ -56,8 +56,7 @@ class [[maybe_unused]] GameTimeManager
 
     /// @See StartSearchManagementAsync
     static void _search_management_thread(
-        const GoTimeInfo &tInfo, const Color color, const lli timeLeftBoardMs, const lli moveTimeLimitMs
-    );
+        const GoTimeInfo &tInfo, const Color color, const lli timeForMoveMs);
 
     /// <summary> Calculate the time in milliseconds for a move </summary>
     [[maybe_unused]] static lli CalculateTimeMsForMove(const Board &bd, const lli timeLeftBoardMs);

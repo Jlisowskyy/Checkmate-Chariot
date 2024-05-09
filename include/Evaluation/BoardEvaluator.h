@@ -182,7 +182,7 @@ class BoardEvaluator
     // Function calculates interpolated game value between mig-game and endgame value based on the game phase
     static int32_t _getTapperedValue(int32_t phase, int32_t midEval, int32_t endEval) __attribute__((always_inline))
     {
-        return (endEval * (MaxTaperedCoef - phase) + midEval * phase) / MaxTaperedCoef;
+        return (endEval * (MaxTaperedCoef - phase) + midEval * phase) / MaxTaperedCoef; // TODO: This is wrong, endEval and midEval are swapped places
     }
 
     // Input:

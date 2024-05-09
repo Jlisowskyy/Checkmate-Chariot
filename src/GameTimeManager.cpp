@@ -55,30 +55,30 @@ void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const 
     ShouldStop = false;
 
     // Calculate the time left on the clock, and if time per move is forced by UCI
-    lli timeLeftBoardMs = color == Color::WHITE ? tInfo.wTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.wTime
+    const lli timeLeftBoardMs = color == Color::WHITE ? tInfo.wTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.wTime
                           : tInfo.bTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite
                                                               : tInfo.bTime;
-    lli moveTimeLimitMs = tInfo.moveTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.moveTime;
+    const lli moveTimeLimitMs = tInfo.moveTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.moveTime;
     if (timeLeftBoardMs == GoTimeInfo::Infinite && moveTimeLimitMs == GoTimeInfo::Infinite)
     {
         // No time limit
         return;
     }
 
-    CalculateTimeMsForMove(bd, timeLeftBoardMs);
+    const lli calculatedTimeForMoveMs = CalculateTimeMsForMove(bd, timeLeftBoardMs);
+    const lli timeForMoveMs = std::min(calculatedTimeForMoveMs, moveTimeLimitMs);
 
     // time limit
-    std::thread searchManagementThread(_search_management_thread, tInfo, color, timeLeftBoardMs, moveTimeLimitMs);
+    std::thread searchManagementThread(_search_management_thread, tInfo, color, timeForMoveMs);
     searchManagementThread.detach();
 }
 
 void GameTimeManager::StopSearchManagement() { ShouldStop = true; }
 
 void GameTimeManager::_search_management_thread(
-    const GoTimeInfo &tInfo, const Color color, const lli timeLeftBoardMs, const lli moveTimeLimitMs
-)
+    const GoTimeInfo &tInfo, const Color color, const lli timeForMoveMs)
 {
-    const auto stopTimeCloc = CurrentTime + std::chrono::milliseconds(std::min(timeLeftBoardMs, moveTimeLimitMs));
+    const auto stopTimeCloc = CurrentTime + std::chrono::milliseconds(timeForMoveMs);
 
     while (!ShouldStop)
     {
@@ -100,10 +100,9 @@ lli GameTimeManager::CalculateTimeMsForMove(const Board &bd, const lli timeLeftB
     /// @todo Implement this function
     /// Should take in the account the time left for the move and the stage of the game.
     /// And return the time (in milliseconds) that the engine should spend on the move.
-    constexpr int32_t midGameValue = 0;
-    constexpr int32_t endGameValue = std::numeric_limits<int32_t>::max();
-    const int32_t gameStage = BoardEvaluator::InterpGameStage(bd, midGameValue, endGameValue);
+    lli timeLeftBoardNs = timeLeftBoardMs * 1'000'000;
+    lli minTimeForMoveNs = timeLeftBoardNs / 100;
+    lli maxTimeForMoveNs = timeLeftBoardNs / 40;
 
-    GlobalLogger.TraceStream << "Game stage: " << gameStage << '\n';
-    return 0;
+    return BoardEvaluator::InterpGameStage(bd, maxTimeForMoveNs, minTimeForMoveNs) / 1'000'000;
 }
