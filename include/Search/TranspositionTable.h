@@ -137,7 +137,7 @@ struct TranspositionTable
     // ------------------------------
 
     // Method adds new record to the table
-    void Add(const HashRecord &record, const uint64_t zHash) __attribute__((always_inline))
+    void Add(const HashRecord &record, const uint64_t zHash) INLINE
     {
         // hash uses 48 bytes inside the record while masks uses at least log2(16 * 1024 * 1024 / 16) = 20
         const size_t pos = zHash & _hashMask;
@@ -150,7 +150,7 @@ struct TranspositionTable
     }
 
     // Methods retrieves record from the table
-    [[nodiscard]] HashRecord GetRecord(const uint64_t zHash) const __attribute__((always_inline))
+    [[nodiscard]] HashRecord GetRecord(const uint64_t zHash) const INLINE
     {
         //
         const size_t pos = zHash & _hashMask;
@@ -159,7 +159,7 @@ struct TranspositionTable
 
     // Method used to prefetch the record from the table short time before accessing it.
     // If we cannot find appropriate record this function becomes a noop.
-    void Prefetch(const uint64_t zHash) __attribute__((always_inline))
+    void Prefetch(const uint64_t zHash) INLINE
     {
         const size_t pos = zHash & _hashMask;
 

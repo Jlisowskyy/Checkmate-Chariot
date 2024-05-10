@@ -8,6 +8,7 @@
 #include <cinttypes>
 
 #include "../MoveGeneration/Move.h"
+#include "../EngineUtils.h"
 
 /*  Class responsible for hashing the whole board into
  *  unique number, which special property that similar
@@ -28,10 +29,10 @@ struct ZobristHasher
 
     [[nodiscard]] uint64_t GenerateHash(const Board &board) const;
 
-    [[nodiscard]] uint64_t __attribute__((always_inline)) UpdateHash(
+    [[nodiscard]] uint64_t UpdateHash(
         uint64_t oldHash, const Move mv, const uint64_t oldElPassant,
         const std::bitset<Board::CastlingCount + 1> oldCastlings
-    ) const
+    ) const INLINE
     {
         oldHash ^= _colorHash;                                                 // swapping color
         oldHash ^= _mainHashes[mv.GetStartBoardIndex()][mv.GetStartField()];   // placing a figure on target square

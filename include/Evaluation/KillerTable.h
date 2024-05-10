@@ -43,13 +43,13 @@ class KillerTable
     void ClearPlyFloor(int depthLeft);
 
     // saves move to the table if possible
-    void SaveKillerMove(const Move kMove, const int depthLeft) __attribute__((always_inline))
+    void SaveKillerMove(const Move kMove, const int depthLeft) INLINE
     {
         _kTable[depthLeft].Push(kMove);
     }
 
     // checks whether actual move is a "killer" move
-    [[nodiscard]] bool IsKillerMove(const Move move, const int depthLeft) const __attribute__((always_inline))
+    [[nodiscard]] bool IsKillerMove(const Move move, const int depthLeft) const INLINE
     {
         return _kTable[depthLeft].Contains(move);
     }
@@ -65,7 +65,7 @@ class KillerTable
         _killerFloor_t() = default;
 
         // Saves up to MovePerPly moves. Only first ones, no replacement policy, no duplicates saved.
-        void Push(const Move mv) __attribute__((always_inline))
+        void Push(const Move mv) INLINE
         {
             // all possible slots are used
             if (last == MovesPerPly)
@@ -81,7 +81,7 @@ class KillerTable
         }
 
         // simply iterates through _killerMovesTable and compares given move to all inside
-        [[nodiscard]] bool Contains(const Move mv) const __attribute__((always_inline))
+        [[nodiscard]] bool Contains(const Move mv) const INLINE
         {
             for (size_t i = 0; i < MovesPerPly; ++i)
                 if (_killerMovesTable[i] == mv.GetPackedMove())
