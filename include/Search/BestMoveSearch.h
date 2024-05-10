@@ -94,7 +94,6 @@ class BestMoveSearch
     static constexpr int TimeStopValue    = std::numeric_limits<int16_t>::max();
     static constexpr int NegativeInfinity = std::numeric_limits<int16_t>::min() + InfinityMargin;
     static constexpr int PositiveInfinity = std::numeric_limits<int16_t>::max() - InfinityMargin;
-``
     static constexpr uint16_t QuisenceAgeDiffToReplace = 16;
     static constexpr uint16_t SearchAgeDiffToReplace   = 10;
 

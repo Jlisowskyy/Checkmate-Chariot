@@ -29,10 +29,10 @@ struct ZobristHasher
 
     [[nodiscard]] uint64_t GenerateHash(const Board &board) const;
 
-    [[nodiscard]] uint64_t UpdateHash(
+    [[nodiscard]] INLINE uint64_t  UpdateHash(
         uint64_t oldHash, const Move mv, const uint64_t oldElPassant,
         const std::bitset<Board::CastlingCount + 1> oldCastlings
-    ) const INLINE
+    ) const
     {
         oldHash ^= _colorHash;                                                 // swapping color
         oldHash ^= _mainHashes[mv.GetStartBoardIndex()][mv.GetStartField()];   // placing a figure on target square

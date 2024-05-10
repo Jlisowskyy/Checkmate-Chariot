@@ -108,7 +108,7 @@ class BoardEvaluator
     // ------------------------------
 
     // Wrapper used to run chosen evaluation function
-    [[nodiscard]] static int32_t DefaultFullEvalFunction(Board &bd, const int color) INLINE
+    [[nodiscard]] static INLINE int32_t DefaultFullEvalFunction(Board &bd, const int color)
     {
         const int whiteEval = Evaluation2(bd);
         return (color == WHITE ? whiteEval : -whiteEval) / ScoreGrain;
@@ -130,7 +130,7 @@ class BoardEvaluator
     private:
     // Function counts all figures on the board and returns array with counts of specific figure types,
     // is mainly used to calculate material table index or simply calculate figure values
-    static std::pair<bool, FigureCountsArrayT> _countFigures(const Board &bd) INLINE
+    static INLINE std::pair<bool, FigureCountsArrayT> _countFigures(const Board &bd)
     {
         // contains information about maximal number of figures on board that we store inside material table
         // exceeding one of those values will result in slow material calculation
@@ -152,7 +152,7 @@ class BoardEvaluator
     }
 
     // Function calculates material table index based on passed figure counts
-    static size_t _getMaterialBoardIndex(const FigureCountsArrayT &counts) INLINE
+    static INLINE size_t _getMaterialBoardIndex(const FigureCountsArrayT &counts)
     {
         size_t index{};
 
@@ -165,7 +165,7 @@ class BoardEvaluator
     static int32_t _slowMaterialCalculation(const FigureCountsArrayT &figArr, int32_t actPhase);
 
     // Function calculates game phase based on passed figure counts
-    static int32_t _calcPhase(const FigureCountsArrayT &figArr) INLINE
+    static INLINE int32_t _calcPhase(const FigureCountsArrayT &figArr)
     {
         int32_t actPhase{};
 
@@ -178,7 +178,7 @@ class BoardEvaluator
     }
 
     // Function calculates interpolated game value between mig-game and endgame value based on the game phase
-    static int32_t _getTapperedValue(int32_t phase, int32_t midEval, int32_t endEval) INLINE
+    static INLINE int32_t _getTapperedValue(int32_t phase, int32_t midEval, int32_t endEval)
     {
         return (endEval * (MaxTaperedCoef - phase) + midEval * phase) / MaxTaperedCoef;
     }
