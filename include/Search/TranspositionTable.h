@@ -97,7 +97,7 @@ struct TranspositionTable
         // ------------------------------
 
         public:
-        static constexpr int NoEval = INT16_MAX;
+        static constexpr int NoEval = std::numeric_limits<int16_t>::max();
 
         private:
         uint64_t _zobristHashAndAgePacked; // 6 bytes for valuable hash part and 2 bytes for age

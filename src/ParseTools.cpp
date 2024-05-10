@@ -5,6 +5,7 @@
 #include "../include/ParseTools.h"
 
 #include <climits>
+#include <numeric>
 
 size_t
 ParseTools::ExtractNextLine(const size_t startPos, const size_t maxPos, const char *inBuffer, std::string &outBuffer)
@@ -24,7 +25,7 @@ lli ParseTools::ParseTolli(const std::string &str)
     errno        = 0;
     const lli rv = strtoll(str.c_str(), nullptr, 10);
     if (errno != 0)
-        return LONG_LONG_MAX;
+        return std::numeric_limits<lli>::max();
     return rv;
 }
 
