@@ -36,7 +36,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
     }
 
     // usual search path
-    for (int32_t depth = 1; depth < maxDepth; ++depth)
+    for (int32_t depth = 1; depth <= maxDepth; ++depth)
     {
         // prepare pv buffers
         PV pv{depth};
