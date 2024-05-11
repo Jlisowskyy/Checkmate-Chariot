@@ -174,7 +174,7 @@ class BoardEvaluator
         // calculating game phase
         for (size_t j = 0; j < kingIndex; ++j)
             actPhase += static_cast<int32_t>(figArr[j] + figArr[BlackFigStartIndex + j]) * FigurePhases[j];
-        actPhase = (actPhase * MaxTaperedCoef + (FullPhase / 2)) / FullPhase; // FullPhase / 2 ?
+        actPhase = (actPhase * MaxTaperedCoef + (FullPhase / 2)) / FullPhase; // Always round up (+0.5)
 
         return actPhase;
     }
@@ -182,7 +182,8 @@ class BoardEvaluator
     // Function calculates interpolated game value between mig-game and endgame value based on the game phase
     static int32_t _getTapperedValue(int32_t phase, int32_t midEval, int32_t endEval) __attribute__((always_inline))
     {
-        return (endEval * (MaxTaperedCoef - phase) + midEval * phase) / MaxTaperedCoef; // TODO: This is wrong, endEval and midEval are swapped places
+        return (midEval * (MaxTaperedCoef - phase) + endEval * phase) /
+               MaxTaperedCoef;
     }
 
     // Input:
