@@ -1,10 +1,17 @@
 import os
 import multiprocessing
 import datetime
+import subprocess
+import platform
 
 import engines as e
 
-def get_usable_ram_linux():
+
+def get_real_cpu_count_unix():
+    return int(subprocess.check_output("cat /proc/cpuinfo | grep 'cpu cores' | uniq | awk '{print $4}'"
+, shell=True).strip())
+
+def get_usable_ram_unix():
     with open('/proc/meminfo', 'r') as file:
         for line in file:
             if 'MemAvailable' in line:
@@ -25,12 +32,14 @@ def largest_power_of_2_less_than(x):
 
     return power
 
-ram_per_bot = round ( get_usable_ram_linux() / ( multiprocessing.cpu_count() * 2 + 2 ) )
+real_cpu_count = get_real_cpu_count_unix()
+ram_per_bot = round ( get_usable_ram_unix() / ( real_cpu_count * 2 + 2 ) )
 ram_per_bot = largest_power_of_2_less_than(ram_per_bot)
 print(f'ram_per_bot: {ram_per_bot}')
 
 each_options = f'-each tc=10+1 option.Threads=1 option.Hash={ram_per_bot}'
-game_options = f'-games 1000 -repeat -gauntlet -concurrency {multiprocessing.cpu_count()}'
+game_options = f'-games 1000 -repeat -gauntlet -concurrency {real_cpu_count}'
+game_options = f'-games 1000 -repeat -gauntlet -concurrency 8'
 resign_options = f'-resign count=3 score=700 -draw number=40 count=12 score=10'
 output_options = f'-pgn {datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")}-results.pgn 0 -log'
 
