@@ -18,7 +18,7 @@ static constexpr uint64_t msescInNsec = 1000 * 1000; // in nsecs
 
 #ifdef _MSC_VER
 
-// MSVC specofic force inline attribute
+// MSVC specific force inline attribute
 #define INLINE __forceinline
 
 #else
@@ -28,6 +28,7 @@ static constexpr uint64_t msescInNsec = 1000 * 1000; // in nsecs
 
 #endif
 
+// ssize_t is POSIX. This is how we use it on posix+windows
 using signed_size_t = std::make_signed<size_t>::type;
 
 #endif // COMPILATION_CONSTANTS_H
