@@ -65,7 +65,7 @@ void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const 
         return;
     }
 
-    const lli calculatedTimeForMoveMs = CalculateTimeMsForMove(bd, timeLeftBoardMs);
+    const lli calculatedTimeForMoveMs = timeLeftBoardMs != GoTimeInfo::Infinite ? CalculateTimeMsForMove(bd, timeLeftBoardMs) : moveTimeLimitMs;
     const lli timeForMoveMs = std::min(calculatedTimeForMoveMs, moveTimeLimitMs);
 
     // time limit
