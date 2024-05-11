@@ -44,6 +44,17 @@ game_options = f'-games 1000 -repeat -gauntlet -concurrency {real_cpu_count}'
 resign_options = f'-resign count=3 score=700 -draw number=40 count=12 score=10'
 output_options = f'-pgn {datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")}-results.pgn 0 -log'
 
+# check if Checkmate-Chariot exists
+if not os.path.exists('../Checkmate-Chariot'):
+    # Compile Checkmate-Chariot
+    print('Checkmate-Chariot not found, compiling...')
+    os.chdir('../')
+    os.system('chmod +x clean-cmake.sh')
+    os.system('./clean-cmake.sh')
+    os.system('cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Release')
+    os.system(f'make -j {multiprocessing.cpu_count()}')
+    os.chdir('EloEval')
+
 # check if c-chess-cli exists
 if not os.path.exists('c-chess-cli'):
     # run c-chess-cli installer
