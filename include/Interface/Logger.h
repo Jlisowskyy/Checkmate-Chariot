@@ -23,7 +23,8 @@ concept Streamable = requires(T a, std::ostream &os) {
 /// <summary>
 /// Logger class that allows for chaining of loggers and logging to multiple streams
 /// It is thread safe. Logging is done with the << operator or the Log function
-/// @example Logger logger; logger \<\< "Hello, World!";
+/// @example Logger logger; logger.LogStream << "Hello, World!";
+/// @example Logger logger; logger.TraceStream << "Hello, World!";
 /// @example Logger logger = std::move(StdoutLogger().AppendNext(new FileLogger("log.txt")));
 /// </summary>
 class [[maybe_unused]] Logger
