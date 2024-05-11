@@ -635,9 +635,9 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
 
 void BestMoveSearch::_embeddedMoveSort(MoveGenerator::payload moves, const size_t range)
 {
-    for (ssize_t i = 1; i < static_cast<ssize_t>(range); ++i)
+    for (signed_size_t i = 1; i < static_cast<signed_size_t>(range); ++i)
     {
-        ssize_t j      = i - 1;
+        signed_size_t j      = i - 1;
         const auto val = moves[i];
         while (j >= 0 && moves[j].GetEval() < val.GetEval())
         {

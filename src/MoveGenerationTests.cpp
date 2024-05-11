@@ -334,13 +334,13 @@ std::map<std::string, uint64_t> MoveGenerationTester::_getCorrectMovesMap(const 
     std::map<std::string, uint64_t> moveMap{};
     std::stack<std::string> lines{};
 
-    ssize_t size;
+    signed_size_t size;
     std::string lineBuff{};
     while ((size = read(readFileDesc, buf, buffSize)) > 0)
     {
-        ssize_t pos{};
+        signed_size_t pos{};
 
-        while ((pos = static_cast<ssize_t>(ParseTools::ExtractNextLine(pos, size, buf, lineBuff))) < size)
+        while ((pos = static_cast<signed_size_t>(ParseTools::ExtractNextLine(pos, size, buf, lineBuff))) < size)
         {
             _processLine(moveMap, lineBuff);
             lineBuff.clear();

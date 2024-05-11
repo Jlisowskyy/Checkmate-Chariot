@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "../CompilationConstants.h"
+
 /*
  *  Possibly in the future, point structure will be reconsidered.
  *  Especially in a situation when the current one will not be
@@ -67,7 +69,7 @@ class MoveTRIE
     // ------------------------------
 
     private:
-    [[nodiscard]] static ssize_t _findOnArr(const std::string &move, const std::vector<std::string> &moves)
+    [[nodiscard]] static signed_size_t _findOnArr(const std::string &move, const std::vector<std::string> &moves)
         // checks whether passed move is present on moves' vector
         // returns index of the found element or -1 if not found.
         ;

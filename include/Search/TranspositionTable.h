@@ -174,7 +174,7 @@ struct TranspositionTable
     void ClearTable();
 
     // IMPORTANT: function should only be used before any search was concluded, because is fully cleared when resizing
-    ssize_t ResizeTable(size_t sizeMB);
+    signed_size_t ResizeTable(size_t sizeMB);
 
     [[nodiscard]] size_t GetContainedElements() const;
 

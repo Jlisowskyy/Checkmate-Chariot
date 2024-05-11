@@ -3,6 +3,7 @@
 //
 
 #include "../include/OpeningBook/MoveTRIE.h"
+#include "../include/CompilationConstants.h"
 
 void MoveTRIE::AddMoveSequence(const std::vector<std::string> &moves)
 {
@@ -11,7 +12,7 @@ void MoveTRIE::AddMoveSequence(const std::vector<std::string> &moves)
     for (const auto &move : moves)
     {
         // searching for move on array
-        const ssize_t nextInd = _findOnArr(move, root->_moves);
+        const signed_size_t nextInd = _findOnArr(move, root->_moves);
 
         // if not found add move - not the most optimal soultion but correct one
         if (nextInd == -1)
@@ -34,7 +35,7 @@ const std::vector<std::string> &MoveTRIE::FindNextMoves(const std::vector<std::s
 
     for (const auto &move : moves)
     {
-        const ssize_t nextInd = _findOnArr(move, root->_moves);
+        const signed_size_t nextInd = _findOnArr(move, root->_moves);
         if (nextInd == -1)
             return _emptVect;
         root = root->_next[nextInd];
@@ -43,9 +44,9 @@ const std::vector<std::string> &MoveTRIE::FindNextMoves(const std::vector<std::s
     return root->_moves;
 }
 
-ssize_t MoveTRIE::_findOnArr(const std::string &move, const std::vector<std::string> &moves)
+signed_size_t MoveTRIE::_findOnArr(const std::string &move, const std::vector<std::string> &moves)
 {
-    for (ssize_t i = 0; i < static_cast<ssize_t>(moves.size()); ++i)
+    for (signed_size_t i = 0; i < static_cast<signed_size_t>(moves.size()); ++i)
         if (moves[i] == move)
             return i;
     return -1;

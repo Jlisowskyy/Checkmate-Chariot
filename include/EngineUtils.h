@@ -13,18 +13,6 @@
 #include "Board.h"
 #include "CompilationConstants.h"
 
-#ifdef _MSC_VER
-
-// MSVC specofic force inline attribute
-#define INLINE __forceinline
-
-#else
-
-// GNU / CLANG force inline specific attribute
-#define INLINE __attribute__((always_inline))
-
-#endif
-
 constexpr int SwapColor(const int col) { return col ^ 1; }
 
 constexpr uint64_t RemovePiece(uint64_t &bitMap, uint64_t singleBitBitMap) { return bitMap ^= singleBitBitMap; }
