@@ -19,7 +19,7 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
         return false;
 
     // Setting up time guarding parameters
-    GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd);
+    GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd, age);
 
     // Running up the searching worker
     _threads[0] =
