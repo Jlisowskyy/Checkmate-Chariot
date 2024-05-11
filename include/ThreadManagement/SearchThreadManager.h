@@ -21,6 +21,8 @@ struct SearchThreadManager
     // ------------------------------
 
     SearchThreadManager() = default;
+
+    // TODO: Temporary solution, should be expanded with threading model
     ~SearchThreadManager();
 
     SearchThreadManager(const SearchThreadManager &) = delete;
@@ -41,6 +43,9 @@ struct SearchThreadManager
 
     void Stop();
 
+    // TODO: Temporary solution, should be expanded with threading model
+    void Consolidate();
+
     [[nodiscard]] bool IsSearchOn() const { return _isSearchOn; }
 
     // ------------------------------
@@ -58,8 +63,13 @@ struct SearchThreadManager
     bool _isSearchOn{false};
 
     // TODO: Implement logical thread detection
-    StackType _stacks[20 + 1]{};
-    std::thread *_threads[20 + 1]{};
+
+    static constexpr size_t MaxSearchThreads   = 20;
+    static constexpr size_t MaxManagingThreads = 1;
+    static constexpr size_t MaxThreadCount     = MaxSearchThreads + MaxManagingThreads;
+
+    StackType _stacks[MaxThreadCount]{};
+    std::thread *_threads[MaxThreadCount]{};
 
     static constexpr size_t MainSearchThreadInd = 0;
 };

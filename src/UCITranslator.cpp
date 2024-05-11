@@ -59,8 +59,15 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
 
     while ((pos = ParseTools::ExtractNextWord(buffer, workStr, pos)) != ParseTools::InvalidNextWorldRead)
         if (auto iter = CommandBuff.find(workStr); iter != CommandBuff.end())
-            return (this->*(iter->second))(buffer.substr(pos));
+        {
+            auto commandType = (this->*(iter->second))(buffer.substr(pos));
 
+            // Check whether some joining could be done between parsing commands
+            if (commandType != UCICommand::goCommand && !_engine.TManager.IsSearchOn())
+                _engine.TManager.Consolidate();
+
+            return commandType;
+        }
     return UCICommand::InvalidCommand;
 }
 
