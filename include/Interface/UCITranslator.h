@@ -28,6 +28,12 @@
  *  Where "depth" is integer value indicating layers of a traversed move tree.
  */
 
+/*
+ * This class is used as an interface between UCI commands and engine.
+ * Parses, translates and applies commands to the engine.
+ *
+ * */
+
 class UCITranslator
 {
     // --------------------------------------

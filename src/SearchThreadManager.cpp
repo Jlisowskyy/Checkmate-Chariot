@@ -48,8 +48,6 @@ void SearchThreadManager::Stop()
     _threads[0]->join(); // waiting for the main search thread to finish
     delete _threads[0];
     _threads[0] = nullptr;
-
-    _isSearchOn = false;
 }
 
 void SearchThreadManager::_threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, bool* guard, uint16_t age, int depth)
@@ -60,6 +58,6 @@ void SearchThreadManager::_threadSearchJob(const Board *bd, Stack<Move, DefaultS
     BestMoveSearch searcher{*bd, *s, age};
     searcher.IterativeDeepening(&output, depth);
 
-    GlobalLogger.LogStream << std::format("bestmove {}\n", output.GetLongAlgebraicNotation());
+    GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation()) << std::endl;
     *guard = false;
 }
