@@ -14,6 +14,8 @@ static constexpr size_t MB               = 1024 * 1024;
 static constexpr size_t DefaultStackSize = 32 * MB / sizeof(uint64_t);
 static constexpr int MaxSearchDepth      = 128;
 
+static constexpr uint64_t msescInNsec = 1000 * 1000; // in nsecs
+
 #ifdef _MSC_VER
 
 // MSVC specofic force inline attribute

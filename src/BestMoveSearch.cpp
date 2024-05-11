@@ -7,7 +7,6 @@
 #include <cassert>
 #include <chrono>
 #include <format>
-#include <string>
 #include <vector>
 
 #include "../include/Evaluation/BoardEvaluator.h"
@@ -70,7 +69,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
         {
             // Preparing variables for the aspiration window framework
             const int64_t coefSum      = (depth + 1) * depth / 2;
-            const int32_t averageScore = avg / coefSum;
+            const auto averageScore = static_cast<int32_t>(avg / coefSum);
             int32_t delta              = InitialAspWindowDelta;
             int32_t alpha              = averageScore - delta;
             int32_t beta               = averageScore + delta;
@@ -123,8 +122,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
         // Log info if necessary
         if (writeInfo)
         {
-            static constexpr uint64_t MSEC = 1000 * 1000; // in nsecs
-            const uint64_t spentMs         = std::max(1LU, (timeStop - timeStart).count() / MSEC);
+            const uint64_t spentMs         = std::max(static_cast<uint64_t>(1), (timeStop - timeStart).count() / msescInNsec);
             const uint64_t nps             = 1000LLU * _visitedNodes / spentMs;
             const double cutOffPerc        = static_cast<double>(_cutoffNodes) / static_cast<double>(_visitedNodes);
 
@@ -517,7 +515,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     _stack.PopAggregate(moves);
 
     if (prevSearchRes.GetDepth() == 0 ||
-        (wasTTHit == false && _age - prevSearchRes.GetAge() >= QuisenceAgeDiffToReplace))
+        (!wasTTHit && _age - prevSearchRes.GetAge() >= QuisenceAgeDiffToReplace))
     {
         const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
         TTable.Add(record, zHash);
@@ -622,7 +620,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     }
 
     if (prevSearchRes.GetDepth() == 0 ||
-        (wasTTHit == false && _age - prevSearchRes.GetAge() >= QuisenceAgeDiffToReplace))
+        (!wasTTHit && _age - prevSearchRes.GetAge() >= QuisenceAgeDiffToReplace))
     {
         const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
         TTable.Add(record, zHash);
@@ -677,10 +675,10 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
 
     for (size_t i = targetPos; i < moves.size; ++i)
     {
-        if (const int heuresticEval = moves[i].GetEval(); heuresticEval > maxValue)
+        if (const int heuristicEval = moves[i].GetEval(); heuristicEval > maxValue)
         {
             maxInd   = i;
-            maxValue = heuresticEval;
+            maxValue = heuristicEval;
         }
     }
 

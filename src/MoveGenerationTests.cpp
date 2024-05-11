@@ -2,6 +2,8 @@
 // Created by Jlisowskyy on 2/16/24.
 //
 
+#ifdef __unix__
+
 #include <cstring>
 #include <format>
 #include <fstream>
@@ -15,8 +17,6 @@
 #include "../include/ParseTools.h"
 #include "../include/TestsAndDebugging/CsvOperator.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
-
-#ifdef __unix__
 
 std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(
     const std::string &fenPosition, const int depth, const std::vector<std::string> &moves, const bool writeOnOut
