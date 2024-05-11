@@ -84,5 +84,4 @@ template <class RandomGeneratorT = std::mt19937_64> class FancyMagicHashFunction
     uint64_t _offset;
 };
 
-
 #endif // HASHFUNCTIONS_H

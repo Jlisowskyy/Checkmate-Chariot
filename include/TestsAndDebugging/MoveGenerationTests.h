@@ -118,7 +118,11 @@ struct MoveGenerationTester
 
     void PerformSeriesOfDeepTests(const std::vector<std::pair<std::string, int>> &) const { Error(); }
 
-    bool PerformSeriesOfDeepTestFromFile(const std::string &) const { Error(); return false; }
+    bool PerformSeriesOfDeepTestFromFile(const std::string &) const
+    {
+        Error();
+        return false;
+    }
 
     bool PerformPerformanceTest(const std::string &, const std::string &) const
     {

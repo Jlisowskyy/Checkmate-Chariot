@@ -43,13 +43,10 @@ class KillerTable
     void ClearPlyFloor(int depthLeft);
 
     // saves move to the table if possible
-    INLINE void  SaveKillerMove(const Move kMove, const int depthLeft)
-    {
-        _kTable[depthLeft].Push(kMove);
-    }
+    INLINE void SaveKillerMove(const Move kMove, const int depthLeft) { _kTable[depthLeft].Push(kMove); }
 
     // checks whether actual move is a "killer" move
-    [[nodiscard]] INLINE bool  IsKillerMove(const Move move, const int depthLeft) const
+    [[nodiscard]] INLINE bool IsKillerMove(const Move move, const int depthLeft) const
     {
         return _kTable[depthLeft].Contains(move);
     }
@@ -81,7 +78,7 @@ class KillerTable
         }
 
         // simply iterates through _killerMovesTable and compares given move to all inside
-        [[nodiscard]] INLINE bool  Contains(const Move mv) const
+        [[nodiscard]] INLINE bool Contains(const Move mv) const
         {
             for (size_t i = 0; i < MovesPerPly; ++i)
                 if (_killerMovesTable[i] == mv.GetPackedMove())

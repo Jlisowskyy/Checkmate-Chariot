@@ -7,8 +7,8 @@
 
 #include <climits>
 #include <cstdint>
-#include <unordered_map>
 #include <numeric>
+#include <unordered_map>
 
 #include "Board.h"
 #include "CompilationConstants.h"

@@ -5,8 +5,8 @@
 #ifndef HISTORICTABLE_H
 #define HISTORICTABLE_H
 
-#include "../MoveGeneration/Move.h"
 #include "../EngineUtils.h"
+#include "../MoveGeneration/Move.h"
 
 #include <cstring>
 
@@ -41,7 +41,7 @@ struct HistoricTable
     // ------------------------------
 
     // Function takes move and depth and increments the move's value in the table
-    INLINE void  SetBonusMove(Move mv, int depth)
+    INLINE void SetBonusMove(Move mv, int depth)
     {
         _table[mv.GetStartBoardIndex()][mv.GetTargetField()] = static_cast<int16_t>(
             std::min(_pointScale(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth), Barrier)
@@ -49,7 +49,7 @@ struct HistoricTable
     }
 
     // Function returns the value of the move from the table
-    [[nodiscard]] INLINE int32_t  GetBonusMove(Move mv) const
+    [[nodiscard]] INLINE int32_t GetBonusMove(Move mv) const
     {
         return _table[mv.GetStartBoardIndex()][mv.GetTargetField()];
     }

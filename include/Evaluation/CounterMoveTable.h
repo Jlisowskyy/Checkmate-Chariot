@@ -5,8 +5,8 @@
 #ifndef COUNTERMOVETABLE_H
 #define COUNTERMOVETABLE_H
 
-#include "../MoveGeneration/Move.h"
 #include "../EngineUtils.h"
+#include "../MoveGeneration/Move.h"
 
 /*
  *  Class used to implement so-called counter-move heuristic.
@@ -43,7 +43,7 @@ struct CounterMoveTable
     }
 
     // Simply saves counter move for given move, without checking or considering anything
-    INLINE void  SaveCounterMove(const PackedMove counterMove, const Move previousMove)
+    INLINE void SaveCounterMove(const PackedMove counterMove, const Move previousMove)
     {
         _counterMovesTable[previousMove.GetStartBoardIndex()][previousMove.GetTargetField()] = counterMove;
     }
