@@ -111,15 +111,20 @@ struct MoveGenerationTester
     PerformSingleShallowTest(const std::string &, int, const std::vector<std::string> &, bool writeOnOut = false) const
     {
         Error();
+        return {"", 0};
     }
 
     void PerformDeepTest(const std::string &, int, const std::vector<std::string> &) const { Error(); }
 
     void PerformSeriesOfDeepTests(const std::vector<std::pair<std::string, int>> &) const { Error(); }
 
-    bool PerformSeriesOfDeepTestFromFile(const std::string &) const { Error(); }
+    bool PerformSeriesOfDeepTestFromFile(const std::string &) const { Error(); return false; }
 
-    bool PerformPerformanceTest(const std::string &, const std::string &) const { Error(); }
+    bool PerformPerformanceTest(const std::string &, const std::string &) const
+    {
+        Error();
+        return false;
+    }
 
     static void Error() { GlobalLogger << "[ ERROR ] Tests supported only under unix compatible platforms!\n"; }
 };
