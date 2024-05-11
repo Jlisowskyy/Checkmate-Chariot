@@ -310,13 +310,15 @@ void MoveGenerationTester::_processLine(std::map<std::string, uint64_t> &out, co
 
     while ((pos = ParseTools::ExtractNextWord(trimmed, wordBuffer, pos)) != 0)
     {
-        try{
+        try
+        {
             const lli moves = std::stoll(wordBuffer);
-            movesCount = moves;
+            movesCount      = moves;
             wordBuffer.clear();
             break;
         }
-        catch(const std::exception& exc){
+        catch (const std::exception &exc)
+        {
             wordBuffer.clear();
         }
     }

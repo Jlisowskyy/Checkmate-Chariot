@@ -74,11 +74,11 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string &str)
 {
     // Known subcommands of "go" command
     static std::unordered_map<std::string, UCICommand (UCITranslator::*)(const std::string &, size_t)> commands{
-        {     "perft",      &UCITranslator::_goPerftResponse},
-        {     "debug",      &UCITranslator::_goDebugResponse},
-        { "deepDebug",  &UCITranslator::_goDeepDebugResponse},
-        {      "file",       &UCITranslator::_goFileResponse},
-        {  "perfComp",   &UCITranslator::_goPerfCompResponse},
+        {     "perft",       &UCITranslator::_goPerftResponse},
+        {     "debug",       &UCITranslator::_goDebugResponse},
+        { "deepDebug",   &UCITranslator::_goDeepDebugResponse},
+        {      "file",        &UCITranslator::_goFileResponse},
+        {  "perfComp",    &UCITranslator::_goPerfCompResponse},
         {"searchPerf", &UCITranslator::_goSearchPerftResponse},
     };
 
@@ -108,7 +108,8 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
 
     if (workStr == "fen")
     {
-        // If there is no moves token, then assumes that rest of the string is fen position. Otherwise, extract only part [] between "fen [] moves ..."
+        // If there is no moves token, then assumes that rest of the string is fen position. Otherwise, extract only
+        // part [] between "fen [] moves ..."
         _fenPosition = movesCord == std::string::npos ? ParseTools::GetTrimmed(str.substr(pos))
                                                       : ParseTools::GetTrimmed(str.substr(pos, movesCord - pos));
 
@@ -121,7 +122,7 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
     else
         return UCICommand::InvalidCommand;
 
-        // If there are moves token, then apply them
+    // If there are moves token, then apply them
     if (movesCord != std::string::npos)
     {
         // shift by moves length

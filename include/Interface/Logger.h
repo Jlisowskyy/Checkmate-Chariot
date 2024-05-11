@@ -11,7 +11,7 @@
 #include <mutex>
 
 #define WrapTraceMsgError(msg) GlobalLogger.TraceStream << std::format("[ TRACE ][ ERROR ] {}", msg)
-#define WrapTraceMsgInfo(msg) GlobalLogger.TraceStream << std::format("[ TRACE ][ INFO ] {}", msg)
+#define WrapTraceMsgInfo(msg)  GlobalLogger.TraceStream << std::format("[ TRACE ][ INFO ] {}", msg)
 
 /// <summary>
 /// Concept for types that allow streaming (i.e. can be used with std::ostream)

@@ -80,7 +80,6 @@ class UCITranslator
     // ------------------------------
 
     private:
-
     /*
      * Method simply, according to uci spec, parses line until it recognizes command token
      * and dispatchers it to corresponding procedure.
@@ -191,8 +190,8 @@ class UCITranslator
      * */
     static size_t _intParser(const std::string &str, size_t pos, int &out);
 
-
-    /* Method simply parses time given in ms (checking if return >= 1) from the 'str' starting on position 'pos', places the result in 'out'.
+    /* Method simply parses time given in ms (checking if return >= 1) from the 'str' starting on position 'pos', places
+     * the result in 'out'.
      *
      * Returns position of the first character after the parsed int or InvalidToken when parsing is not possible.
      * */
