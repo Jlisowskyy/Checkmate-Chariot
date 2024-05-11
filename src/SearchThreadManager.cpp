@@ -22,7 +22,8 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
     GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd);
 
     // Running up the searching worker
-    _threads[0] = new std::thread(_threadSearchJob, &bd, &_stacks[0], &_isSearchOn, age, std::min(info.depth, MaxSearchDepth));
+    _threads[0] =
+        new std::thread(_threadSearchJob, &bd, &_stacks[0], &_isSearchOn, age, std::min(info.depth, MaxSearchDepth));
 
     // Signaling success
     return true;
@@ -50,7 +51,9 @@ void SearchThreadManager::Stop()
     _threads[0] = nullptr;
 }
 
-void SearchThreadManager::_threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, bool* guard, uint16_t age, int depth)
+void SearchThreadManager::_threadSearchJob(
+    const Board *bd, Stack<Move, DefaultStackSize> *s, bool *guard, uint16_t age, int depth
+)
 {
     PackedMove output{};
 

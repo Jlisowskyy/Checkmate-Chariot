@@ -45,7 +45,7 @@ class [[maybe_unused]] GameTimeManager
     /// engine still has time to search for the best move. If the time is up, the variable ShouldStop will be set to
     /// true.
     /// </summary>
-    static void StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color color, const Board& board);
+    static void StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color color, const Board &board);
 
     /// <summary> Stop the search management thread </summary>
     static void StopSearchManagement();
@@ -55,8 +55,7 @@ class [[maybe_unused]] GameTimeManager
     [[noreturn]] static void _timer_thread();
 
     /// @See StartSearchManagementAsync
-    static void _search_management_thread(
-        const GoTimeInfo &tInfo, const Color color, const lli timeForMoveMs);
+    static void _search_management_thread(const GoTimeInfo &tInfo, const Color color, const lli timeForMoveMs);
 
     /// <summary> Calculate the time in milliseconds for a move </summary>
     [[maybe_unused]] static lli CalculateTimeMsForMove(const Board &bd, const lli timeLeftBoardMs);

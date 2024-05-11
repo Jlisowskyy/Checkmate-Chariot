@@ -366,7 +366,8 @@ int32_t BoardEvaluator::_evaluateFields(Board &bd, int32_t phase)
 /// Interpolates the game stage value between mid and end game values based on the board state.
 /// The game state is determined by the number and weight of figures on the board.
 /// </summary>
-int32_t BoardEvaluator::InterpGameStage(const Board &bd, const int32_t midVal, const int32_t endVal) {
+int32_t BoardEvaluator::InterpGameStage(const Board &bd, const int32_t midVal, const int32_t endVal)
+{
     const auto [isSuccess, counts] = _countFigures(bd);
     const int32_t phase            = _calcPhase(counts);
     return _getTapperedValue(phase, midVal, endVal);

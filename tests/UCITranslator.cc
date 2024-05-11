@@ -1,21 +1,9 @@
 #include <gtest/gtest.h>
 
-TEST(GoCommandTest, Response)
-{
+TEST(GoCommandTest, Response) {}
 
-}
+TEST(GoCommandTest, MoveTimeLimits) {}
 
-TEST(GoCommandTest, MoveTimeLimits)
-{
+TEST(GoCommandTest, DepthLimits) {}
 
-}
-
-TEST(GoCommandTest, DepthLimits)
-{
-
-}
-
-TEST(GoCommandTest, ColorTimeLimits)
-{
-
-}
+TEST(GoCommandTest, ColorTimeLimits) {}
