@@ -54,7 +54,7 @@ std::vector<std::pair<std::string, int>> CsvOperator::ReadPosDepthCsv(const std:
     }
     catch (const std::exception &exc)
     {
-        GlobalLogger << std::format("[ ERROR ] Error occured:\n{}\n", exc.what());
+        GlobalLogger.LogStream << std::format("[ ERROR ] Error occured:\n{}\n", exc.what());
         return {};
     }
 

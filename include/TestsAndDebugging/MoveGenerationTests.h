@@ -130,7 +130,10 @@ struct MoveGenerationTester
         return false;
     }
 
-    static void Error() { GlobalLogger << "[ ERROR ] Tests supported only under unix compatible platforms!\n"; }
+    static void Error()
+    {
+        GlobalLogger.LogStream << "[ ERROR ] Tests supported only under unix compatible platforms!\n";
+    }
 };
 
 #endif // __unix__

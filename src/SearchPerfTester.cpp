@@ -33,13 +33,13 @@ bool SearchPerfTester::PerformSearchPerfTest(
 
         results.emplace_back(testCase, dep, result);
 
-        GlobalLogger << std::format(
+        GlobalLogger.LogStream << std::format(
             "Performed test on position with depth {}:\n\t{}\nAcquired results: {}ms\n", dep, testCase, result
         );
     }
 
     results.emplace_back("Average results based on test count:", tests.size(), sumTime / tests.size());
-    GlobalLogger << std::format("Final average results: {}ms\n", sumTime / tests.size());
+    GlobalLogger.LogStream << std::format("Final average results: {}ms\n", sumTime / tests.size());
 
     _saveResultsToCsv(output, results);
 
@@ -60,7 +60,7 @@ SearchPerfTester::_performTestCase(const std::string &testCase, const int depth,
     else
     {
         const int eval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
-        GlobalLogger << std::format("[ INFO ] Evaluation result: {} on position:\n\t{}\n", eval, testCase);
+        GlobalLogger.LogStream << std::format("[ INFO ] Evaluation result: {} on position:\n\t{}\n", eval, testCase);
     }
     const auto tStop = std::chrono::steady_clock::now();
 

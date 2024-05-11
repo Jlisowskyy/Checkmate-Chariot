@@ -121,8 +121,7 @@ int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT &figAr
     // summing up total material values
     for (size_t j = 0; j < kingIndex; ++j)
     {
-        const int32_t phasedFigVal =
-            (BasicFigureValues[j] * (256 - actPhase) + EndGameFigureValues[j] * actPhase) / 256;
+        const int32_t phasedFigVal = _getTapperedValue(actPhase, BasicFigureValues[j], EndGameFigureValues[j]);
 
         materialValue += static_cast<int32_t>(figArr[j]) * phasedFigVal;
         materialValue -= static_cast<int32_t>(figArr[j + BlackFigStartIndex]) * phasedFigVal;
@@ -361,4 +360,15 @@ int32_t BoardEvaluator::_evaluateFields(Board &bd, int32_t phase)
     result.endgameEval += controlEval;
 
     return _getTapperedValue(phase, result.midgameEval, result.endgameEval);
+}
+
+/// <summary>
+/// Interpolates the game stage value between mid and end game values based on the board state.
+/// The game state is determined by the number and weight of figures on the board.
+/// </summary>
+int32_t BoardEvaluator::InterpGameStage(const Board &bd, const int32_t midVal, const int32_t endVal)
+{
+    const auto [isSuccess, counts] = _countFigures(bd);
+    const int32_t phase            = _calcPhase(counts);
+    return _getTapperedValue(phase, midVal, endVal);
 }

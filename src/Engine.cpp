@@ -125,7 +125,11 @@ bool Engine::_applyMove(Board &board, const std::string &move)
     return false;
 }
 
-void Engine::_changeDebugState([[maybe_unused]] Engine &eng, std::string &nPath)
+/// <summary>
+/// If a file logger of the engine is not set, creates a new one, otherwise changes the file of the existing one
+/// @remark This APPENDS a new file logger to the global logger and monitors it's working file
+/// </summary>
+void Engine::_changeOrSetLogFile([[maybe_unused]] Engine &eng, std::string &nPath)
 {
     if (eng._fileLogger == nullptr)
     {
@@ -141,7 +145,7 @@ void Engine::_changeDebugState([[maybe_unused]] Engine &eng, std::string &nPath)
 void Engine::_changeHashSize([[maybe_unused]] Engine &eng, const lli size)
 {
     if (TTable.ResizeTable(size) == -1)
-        GlobalLogger << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
+        GlobalLogger.LogStream << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
 }
 
 void Engine::_changeBookUsage(Engine &eng, const bool newValue) { eng.UseOwnBook = newValue; }
@@ -151,7 +155,7 @@ void Engine::Go(const GoInfo &info, const std::vector<std::string> &moves)
     if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed)
         if (const auto &bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
         {
-            GlobalLogger << std::format("bestmove {}\n", bookMove);
+            GlobalLogger.LogStream << std::format("bestmove {}\n", bookMove);
             return;
         }
 

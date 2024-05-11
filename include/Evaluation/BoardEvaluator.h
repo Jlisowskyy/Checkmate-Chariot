@@ -123,6 +123,8 @@ class BoardEvaluator
 
     [[nodiscard]] static int32_t Evaluation2(Board &bd);
 
+    [[nodiscard]] static int32_t InterpGameStage(const Board &bd, int32_t midVal, int32_t endVal);
+
     // ------------------------------
     // Private class methods
     // ------------------------------
@@ -141,9 +143,11 @@ class BoardEvaluator
 
         for (size_t i = pawnsIndex; i < kingIndex; ++i)
         {
+            // white figures ranges
             rv[i] = CountOnesInBoard(bd.BitBoards[i]);
             overflows += rv[i] >= OverflowTables[i];
 
+            // black figures ranges
             rv[i + 5] = CountOnesInBoard(bd.BitBoards[i + bPawnsIndex]);
             overflows += rv[i + 5] >= OverflowTables[i];
         }
@@ -172,7 +176,7 @@ class BoardEvaluator
         // calculating game phase
         for (size_t j = 0; j < kingIndex; ++j)
             actPhase += static_cast<int32_t>(figArr[j] + figArr[BlackFigStartIndex + j]) * FigurePhases[j];
-        actPhase = (actPhase * MaxTaperedCoef + (FullPhase / 2)) / FullPhase; // FullPhase / 2 ?
+        actPhase = (actPhase * MaxTaperedCoef + (FullPhase / 2)) / FullPhase; // Always round up (+0.5)
 
         return actPhase;
     }

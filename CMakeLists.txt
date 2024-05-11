@@ -133,6 +133,8 @@ add_executable(Checkmate-Chariot-Tests
         tests/TestingGoogleTests.cc
         tests/GameTimeManager.cc
         tests/Logger.cc
+        tests/UCITranslator.cc
+        tests/BoardEvaluator.cc
 )
 target_link_libraries(
         Checkmate-Chariot-Tests PRIVATE Checkmate-Core GTest::gtest_main)

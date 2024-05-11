@@ -70,7 +70,7 @@ class Engine
     private:
     bool _applyMove(Board &board, const std::string &move);
 
-    static void _changeDebugState(Engine &eng, std::string &nPath);
+    static void _changeOrSetLogFile(Engine &eng, std::string &nPath);
 
     static void _changeHashSize([[maybe_unused]] Engine &, lli size);
 
@@ -96,6 +96,11 @@ class Engine
     static constexpr std::string_view _startposPrefix = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
     bool UseOwnBook                                   = false;
 
+    /// <summary>
+    /// File logger for debugging, settable with UCI command. When set, it exists until the Engine or the GlobalLogger
+    /// is alive
+    /// @see GlobalLogger
+    /// </summary>
     std::shared_ptr<FileLogger> _fileLogger;
 
     public:
@@ -111,7 +116,7 @@ class Engine
 
     // Options available in engine
     inline static const OptionT<Option::OptionType::spin> Threads{"Threads", _changeThreadCount, 1, 1024, 1};
-    inline static const OptionT<Option::OptionType::string> DebugLogFile{"Debug Log File", _changeDebugState, ""};
+    inline static const OptionT<Option::OptionType::string> DebugLogFile{"Debug Log File", _changeOrSetLogFile, ""};
     inline static const OptionT<Option::OptionType::spin> HashSize{"Hash", _changeHashSize, 16, 524289, 16};
     inline static const OptionT<Option::OptionType::check> OwnBook{"OwnBook", _changeBookUsage, true};
     inline static const OptionT<Option::OptionType::button> ClearHash{"Clear Hash", _clearHash};
@@ -140,13 +145,13 @@ template <bool LogToOut> double Engine::GoPerft(const int depth)
     for (const auto &[moveStr, moveCount] : moves)
     {
         if constexpr (LogToOut)
-            GlobalLogger << std::format("{}: {}\n", moveStr, moveCount);
+            GlobalLogger.LogStream << std::format("{}: {}\n", moveStr, moveCount);
         totalSum += moveCount;
     }
 
     double spentTime = static_cast<double>((t2 - t1).count()) * 1e-6;
     if constexpr (LogToOut)
-        GlobalLogger << std::format("Calculated moves: {} in time: {}ms\n", totalSum, spentTime);
+        GlobalLogger.LogStream << std::format("Calculated moves: {} in time: {}ms\n", totalSum, spentTime);
 
     return spentTime;
 }

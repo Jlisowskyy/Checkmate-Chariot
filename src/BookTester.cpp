@@ -48,7 +48,7 @@ void BookTester::_testSequence(const OpeningBook &book, const std::vector<std::s
         const std::vector vect(moves.begin(), moves.begin() + 1);
 
         if (book.GetRandomNextMove(vect).empty())
-            GlobalLogger << std::format(
+            GlobalLogger.LogStream << std::format(
                 "[ ERROR ] Internal consistency of structure was not met!\n\tOn moves: {}\n", buff
             );
     }

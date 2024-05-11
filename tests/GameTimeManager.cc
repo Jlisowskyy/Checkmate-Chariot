@@ -2,6 +2,7 @@
 
 #include "../include/Board.h"
 #include "../include/EngineUtils.h"
+#include "../include/Interface/FenTranslator.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
 
 TEST(GameTimeManager, SearchManagerTimerDisabled)
@@ -12,9 +13,13 @@ TEST(GameTimeManager, SearchManagerTimerDisabled)
     tInfo.wTime    = 500;
     tInfo.bTime    = 500;
     tInfo.moveTime = 200;
-    // act
+
+    Board board = FenTranslator::GetDefault();
+
     // assert
-    ASSERT_DEBUG_DEATH(GameTimeManager::StartSearchManagementAsync(tInfo, Color::WHITE), "Timer must be running");
+    ASSERT_DEBUG_DEATH(
+        GameTimeManager::StartSearchManagementAsync(tInfo, Color::WHITE, board), "Timer must be running"
+    );
 }
 
 TEST(GameTimeManager, ManagerWithFiniteTime)
@@ -26,9 +31,11 @@ TEST(GameTimeManager, ManagerWithFiniteTime)
     tInfo.bTime    = 1000;
     tInfo.moveTime = 1000;
 
+    Board board = FenTranslator::GetDefault();
+
     // Act
     GameTimeManager::StartTimerAsync();
-    GameTimeManager::StartSearchManagementAsync(tInfo, Color::WHITE);
+    GameTimeManager::StartSearchManagementAsync(tInfo, Color::WHITE, board);
 
     // Assert
     ASSERT_EQ(GameTimeManager::ShouldStop, false);
