@@ -41,6 +41,8 @@ struct SearchThreadManager
 
     void Stop();
 
+    [[nodiscard]] bool IsSearchOn() const { return _isSearchOn; }
+
     // ------------------------------
     // Private class methods
     // ------------------------------

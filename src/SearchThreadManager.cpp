@@ -10,7 +10,12 @@
 
 SearchThreadManager::~SearchThreadManager()
 {
-    for (const auto thread : _threads) delete thread;
+    for (const auto thread : _threads)
+        if (thread != nullptr)
+        {
+            thread->join();
+            delete thread;
+        }
 }
 bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
 {
