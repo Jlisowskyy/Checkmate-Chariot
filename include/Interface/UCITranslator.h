@@ -80,49 +80,96 @@ class UCITranslator
     // ------------------------------
 
     private:
-    [[nodiscard]] UCICommand _cleanMessage(const std::string &buffer);
+
+    /*
+     * Method simply, according to uci spec, parses line until it recognizes command token
+     * and dispatchers it to corresponding procedure.
+     *
+     * Returns Invalid command when error occurred. Otherwise, returns command token of processed command.
+     * */
+
+    [[nodiscard]] UCICommand _dispatchCommands(const std::string &buffer);
 
     // ------------------------------
     // Command response methods
     // ------------------------------
 
+    /* "stop" implementation */
     UCICommand _stopResponse([[maybe_unused]] const std::string &unused);
 
+    /* "go" uci command response, simply dispatches processing into subcommand specific functions
+     *
+     * "go" implementation
+     * */
     [[nodiscard]] UCICommand _goResponse(const std::string &str);
 
+    /* method fully processes  fen and startpos subcommand
+     *
+     * "position" implementation
+     * */
     [[nodiscard]] UCICommand _positionResponse(const std::string &str);
 
-    UCICommand _ucinewgameResponse([[maybe_unused]] const std::string &unused);
+    /*
+     *  Method resets engine state and clears all applied moves.
+     *
+     *  Performing actions:
+     *  - Cleaning Transposition table
+     *  - Resetting board
+     *  - Clearing applied moves
+     *
+     * */
+    UCICommand _ucinewgameResponse([[maybe_unused]] const std::string &);
 
+    /* Function simply parses option and tries to apply it on engine.
+     *
+     * "setoption" implementation
+     * */
     [[nodiscard]] UCICommand _setoptionResponse(const std::string &str);
 
-    UCICommand _uciResponse([[maybe_unused]] const std::string &unused);
+    /* "uci" implementation */
+    UCICommand _uciResponse([[maybe_unused]] const std::string &);
 
-    UCICommand _isReadyResponse([[maybe_unused]] const std::string &unused);
+    /* "isready" implementation */
+    UCICommand _isReadyResponse([[maybe_unused]] const std::string &);
 
-    UCICommand _displayResponse([[maybe_unused]] const std::string &unused);
+    /* Own added command to display the board */
+    UCICommand _displayResponse([[maybe_unused]] const std::string &);
 
-    UCICommand _displayFenResponse([[maybe_unused]] const std::string &unused);
+    /* Own added command to display the fen encoded position */
+    UCICommand _displayFenResponse([[maybe_unused]] const std::string &);
 
-    UCICommand _displayHelpResponse([[maybe_unused]] const std::string &unused);
+    /* Own added command to display the help */
+    UCICommand _displayHelpResponse([[maybe_unused]] const std::string &);
 
-    UCICommand _quitResponse([[maybe_unused]] const std::string &unused);
+    /* "quit" implementation - simply returns quit token */
+    UCICommand _quitResponse([[maybe_unused]] const std::string &);
 
-    UCICommand _clearConsole([[maybe_unused]] const std::string &unused);
+    /* Own added command to clear the console */
+    UCICommand _clearConsole([[maybe_unused]] const std::string &);
 
+    /* Simply start perft move */
     UCICommand _goPerftResponse(const std::string &str, size_t pos);
 
+    /* Simply starts debug test - refer to MoveGenerationTester.PerformSingleShallowTest */
     UCICommand _goDebugResponse(const std::string &str, size_t pos);
 
+    /* Simply starts deep debug test - refer to MoveGenerationTester.PerformDeepTest */
     UCICommand _goDeepDebugResponse(const std::string &str, size_t pos);
 
+    /* Simply starts deep series of debug test - refer to MoveGenerationTester.PerformSeriesOfDeepTestFromFile */
     UCICommand _goFileResponse(const std::string &str, size_t pos);
 
+    /* Simply starts deep debug test - refer to MoveGenerationTester.PerformPerformanceTest */
     UCICommand _goPerfCompResponse(const std::string &str, size_t pos);
 
-    UCICommand _goSearchPerfResponse(const std::string &str, size_t pos);
+    /* Simply start search Perft test - refer to MoveGenerationTester.PerformSearchPerfTest */
+    UCICommand _goSearchPerftResponse(const std::string &str, size_t pos);
 
+    /* Regular uci go command */
     UCICommand _goSearchRegular(const std::string &str);
+
+    // ------------------------------
+    /* Go parameter parsing and checking functions */
 
     static size_t _goMoveTimeResponse(const std::string &str, size_t pos, GoInfo &info);
 
@@ -136,8 +183,19 @@ class UCITranslator
 
     static size_t _goDepthResponse(const std::string &str, size_t pos, GoInfo &info);
 
+    // ------------------------------
+
+    /* Method simply parses int from the 'str' starting on position 'pos', places the result in 'out'.
+     *
+     * Returns position of the first character after the parsed int or InvalidToken when parsing is not possible.
+     * */
     static size_t _intParser(const std::string &str, size_t pos, int &out);
 
+
+    /* Method simply parses time given in ms (checking if return >= 1) from the 'str' starting on position 'pos', places the result in 'out'.
+     *
+     * Returns position of the first character after the parsed int or InvalidToken when parsing is not possible.
+     * */
     static size_t _msTimeParser(const std::string &str, size_t pos, lli &out);
 
     // ------------------------------
