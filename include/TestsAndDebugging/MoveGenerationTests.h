@@ -104,6 +104,7 @@ class MoveGenerationTester
 
 struct MoveGenerationTester
 {
+    MoveGenerationTester() = default;
     MoveGenerationTester([[maybe_unused]] const std::string &) {}
 
     std::pair<std::string, int>
