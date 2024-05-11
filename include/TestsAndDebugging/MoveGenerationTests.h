@@ -120,7 +120,7 @@ struct MoveGenerationTester
 
     bool PerformPerformanceTest(const std::string &, const std::string &) const { Error(); }
 
-    static void Error() const { GlobalLogger << "[ ERROR ] Tests supported only under unix compatible platforms!\n"; }
+    static void Error() { GlobalLogger << "[ ERROR ] Tests supported only under unix compatible platforms!\n"; }
 };
 
 #endif // __unix__

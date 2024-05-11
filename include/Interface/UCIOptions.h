@@ -11,6 +11,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "../CompilationConstants.h"
 
