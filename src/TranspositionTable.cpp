@@ -30,7 +30,7 @@ void TranspositionTable::ClearTable()
     _containedRecords = 0;
 }
 
-ssize_t TranspositionTable::ResizeTable(const size_t sizeMB)
+signed_size_t TranspositionTable::ResizeTable(const size_t sizeMB)
 {
     AlignedFree(_map);
     const size_t ceiledSizeMB = std::bit_floor(sizeMB);
@@ -52,7 +52,7 @@ ssize_t TranspositionTable::ResizeTable(const size_t sizeMB)
     _hashMask  = _getPow2ModuloMask(objSize);
     ClearTable();
 
-    return static_cast<ssize_t>(ceiledSizeMB);
+    return static_cast<signed_size_t>(ceiledSizeMB);
 }
 
 size_t TranspositionTable::GetContainedElements() const { return _containedRecords; }

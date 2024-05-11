@@ -5,6 +5,7 @@
 #include "../include/ParseTools.h"
 
 #include <climits>
+#include <numeric>
 
 size_t
 ParseTools::ExtractNextLine(const size_t startPos, const size_t maxPos, const char *inBuffer, std::string &outBuffer)
@@ -24,7 +25,7 @@ lli ParseTools::ParseTolli(const std::string &str)
     errno        = 0;
     const lli rv = strtoll(str.c_str(), nullptr, 10);
     if (errno != 0)
-        return LONG_LONG_MAX;
+        return std::numeric_limits<lli>::max();
     return rv;
 }
 
@@ -59,7 +60,7 @@ std::string ParseTools::GetTrimmed(const std::string &str)
     return str.substr(tLeft, tRight - tLeft);
 }
 
-ssize_t ParseTools::GetLineCountFromFile(std::fstream &stream)
+signed_size_t ParseTools::GetLineCountFromFile(std::fstream &stream)
 {
     if (stream.bad())
         return -1;
@@ -69,7 +70,7 @@ ssize_t ParseTools::GetLineCountFromFile(std::fstream &stream)
     const std::streampos oldPos = stream.tellg();
     stream.seekg(0);
 
-    ssize_t newLineCount{};
+    signed_size_t newLineCount{};
     for (char buff; stream.get(buff);) newLineCount += (buff == '\n');
 
     stream.clear();

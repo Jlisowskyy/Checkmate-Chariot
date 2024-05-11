@@ -7,6 +7,7 @@
 
 #include <climits>
 #include <cstdint>
+#include <numeric>
 #include <unordered_map>
 
 #include "Board.h"
@@ -49,7 +50,7 @@ struct GoTimeInfo
 {
     bool operator==(const GoTimeInfo &rhs) const = default;
 
-    static constexpr lli Infinite = LONG_LONG_MAX;
+    static constexpr lli Infinite = std::numeric_limits<lli>::max();
     static constexpr lli NotSet   = Infinite;
 
     lli wTime{NotSet};
@@ -66,7 +67,7 @@ struct GoTimeInfo
 // Structure stores information about search depth and time needed by 'go' function
 struct GoInfo
 {
-    static constexpr int NotSet = INT_MAX;
+    static constexpr int NotSet = std::numeric_limits<int>::max();
 
     bool operator==(const GoInfo &rhs) const = default;
 

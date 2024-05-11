@@ -78,9 +78,9 @@ void FenTranslator::_extractFiguresEncoding(const Board &bd, std::string &fenPos
 {
     int inSeries{};
 
-    for (ssize_t y = 7; y >= 0; --y)
+    for (signed_size_t y = 7; y >= 0; --y)
     {
-        for (ssize_t x = 0; x < 8; ++x)
+        for (signed_size_t x = 0; x < 8; ++x)
         {
             const int bInd = static_cast<int>(y * 8 + x);
 

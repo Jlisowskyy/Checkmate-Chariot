@@ -51,7 +51,7 @@ struct ParseTools
     template <int (*crit)(int) = isblank>
     [[nodiscard]] static std::vector<std::string> Split(const std::string &text, size_t pos = 0);
 
-    static ssize_t GetLineCountFromFile(std::fstream &stream)
+    static signed_size_t GetLineCountFromFile(std::fstream &stream)
         // returns number of '\n' + 1 when stream is good to read otherwise returns -1
         ;
 

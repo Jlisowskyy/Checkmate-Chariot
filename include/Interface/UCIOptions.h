@@ -5,6 +5,7 @@
 #ifndef UCIOPTIONS_H
 #define UCIOPTIONS_H
 
+#include <algorithm>
 #include <cerrno>
 #include <iostream>
 #include <map>
