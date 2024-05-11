@@ -1,3 +1,5 @@
+#!/bin/python
+
 import os
 import multiprocessing
 import datetime
@@ -39,7 +41,6 @@ print(f'ram_per_bot: {ram_per_bot}')
 
 each_options = f'-each tc=10+1 option.Threads=1 option.Hash={ram_per_bot}'
 game_options = f'-games 1000 -repeat -gauntlet -concurrency {real_cpu_count}'
-game_options = f'-games 1000 -repeat -gauntlet -concurrency 8'
 resign_options = f'-resign count=3 score=700 -draw number=40 count=12 score=10'
 output_options = f'-pgn {datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")}-results.pgn 0 -log'
 
@@ -47,8 +48,8 @@ output_options = f'-pgn {datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")}-res
 if not os.path.exists('c-chess-cli'):
     # run c-chess-cli installer
     print('c-chess-cli not found, running installer...')
-    os.system('chmod +x c-chess-cli-installer.sh')
-    os.system('./c-chess-cli-installer.sh')
+    os.system('chmod +x install-c-chess-cli.sh')
+    os.system('./install-c-chess-cli.sh')
 
 # if the exes_path folders do not exist, create them
 if not os.path.exists(e.exes_path):
