@@ -41,16 +41,16 @@ struct KingSafetyEval
 
     // This method is used to return fields that controlling by enemy imposes danger to the king.
     // TODO: Currently its simple ring around the king, reconsider and improve.
-    [[nodiscard]] static uint64_t GetSafetyFields(const Board &bd, const int col) __attribute__((always_inline))
+    [[nodiscard]] static INLINE uint64_t GetSafetyFields(const Board &bd, const int col)
     {
         const uint64_t kingMap  = bd.BitBoards[KingMap::GetBoardIndex(col)];
         const uint64_t kingRing = KingMap::GetMoves(ExtractMsbPos(kingMap)) | kingMap;
         return kingRing;
     }
 
-    static void UpdateKingAttacks(
+    static INLINE void UpdateKingAttacks(
         _kingSafetyInfo_t &info, const uint64_t attacks, const uint64_t kingRing, const int32_t pointsPerAttack
-    ) __attribute__((always_inline))
+    )
     {
         const int32_t kingAttackingCount = CountOnesInBoard(attacks & kingRing);
 
@@ -60,7 +60,7 @@ struct KingSafetyEval
 
     // Returns mask that defines the shelter in front of the king;
 
-    [[nodiscard]] static uint64_t GetFrontLineMask(const int col, const int msbPos) __attribute__((always_inline))
+    [[nodiscard]] static INLINE uint64_t GetFrontLineMask(const int col, const int msbPos)
     {
         return _kingPawnDefenseFields[col][msbPos];
     }
@@ -101,9 +101,9 @@ struct KingSafetyEval
     }
 
     // Returns score for the king ring control.
-    [[nodiscard]] static int32_t
+    [[nodiscard]] static INLINE int32_t
     ScoreKingRingControl(const _kingSafetyInfo_t &whiteInfo, const _kingSafetyInfo_t &blackInfo)
-        __attribute__((always_inline))
+
     {
         int32_t bonus{};
 

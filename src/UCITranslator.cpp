@@ -259,7 +259,7 @@ UCITranslator::UCICommand UCITranslator::_goDebugResponse(const std::string &str
     if (_intParser(str, pos, depth) == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
 
-    const MoveGenerationTester tester;
+    const MoveGenerationTester tester{};
     [[maybe_unused]] auto unused = tester.PerformSingleShallowTest(_fenPosition, depth, _appliedMoves, true);
     return UCICommand::goCommand;
 }
@@ -270,7 +270,7 @@ UCITranslator::UCICommand UCITranslator::_goDeepDebugResponse(const std::string 
     if (_intParser(str, pos, depth) == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
 
-    const MoveGenerationTester tester;
+    const MoveGenerationTester tester{};
     tester.PerformDeepTest(_fenPosition, depth, _appliedMoves);
     return UCICommand::goCommand;
 }
@@ -279,7 +279,7 @@ UCITranslator::UCICommand UCITranslator::_goFileResponse(const std::string &str,
 {
     std::string path{};
     ParseTools::ExtractNextWord(str, path, pos);
-    const MoveGenerationTester tester;
+    const MoveGenerationTester tester{};
     const bool result = tester.PerformSeriesOfDeepTestFromFile(path);
 
     if (!result)
@@ -295,7 +295,7 @@ UCITranslator::UCICommand UCITranslator::_goPerfCompResponse(const std::string &
     if (pos != ParseTools::InvalidNextWorldRead)
         ParseTools::ExtractNextWord(str, file2Str, pos);
 
-    const MoveGenerationTester tester;
+    const MoveGenerationTester tester{};
     bool result = tester.PerformPerformanceTest(file1Str, file2Str);
     if (!result)
         return UCICommand::InvalidCommand;

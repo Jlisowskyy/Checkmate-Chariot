@@ -7,6 +7,7 @@
 
 #include <cinttypes>
 
+#include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
 
 /*  Class responsible for hashing the whole board into
@@ -28,7 +29,7 @@ struct ZobristHasher
 
     [[nodiscard]] uint64_t GenerateHash(const Board &board) const;
 
-    [[nodiscard]] uint64_t __attribute__((always_inline)) UpdateHash(
+    [[nodiscard]] INLINE uint64_t UpdateHash(
         uint64_t oldHash, const Move mv, const uint64_t oldElPassant,
         const std::bitset<Board::CastlingCount + 1> oldCastlings
     ) const

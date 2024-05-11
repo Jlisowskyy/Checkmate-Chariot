@@ -97,7 +97,7 @@ struct TranspositionTable
         // ------------------------------
 
         public:
-        static constexpr int NoEval = INT16_MAX;
+        static constexpr int NoEval = std::numeric_limits<int16_t>::max();
 
         private:
         uint64_t _zobristHashAndAgePacked; // 6 bytes for valuable hash part and 2 bytes for age
@@ -137,7 +137,7 @@ struct TranspositionTable
     // ------------------------------
 
     // Method adds new record to the table
-    void Add(const HashRecord &record, const uint64_t zHash) __attribute__((always_inline))
+    INLINE void Add(const HashRecord &record, const uint64_t zHash)
     {
         // hash uses 48 bytes inside the record while masks uses at least log2(16 * 1024 * 1024 / 16) = 20
         const size_t pos = zHash & _hashMask;
@@ -150,7 +150,7 @@ struct TranspositionTable
     }
 
     // Methods retrieves record from the table
-    [[nodiscard]] HashRecord GetRecord(const uint64_t zHash) const __attribute__((always_inline))
+    [[nodiscard]] INLINE HashRecord GetRecord(const uint64_t zHash) const
     {
         //
         const size_t pos = zHash & _hashMask;
@@ -159,7 +159,7 @@ struct TranspositionTable
 
     // Method used to prefetch the record from the table short time before accessing it.
     // If we cannot find appropriate record this function becomes a noop.
-    void Prefetch(const uint64_t zHash) __attribute__((always_inline))
+    INLINE void Prefetch(const uint64_t zHash)
     {
         const size_t pos = zHash & _hashMask;
 
@@ -174,7 +174,7 @@ struct TranspositionTable
     void ClearTable();
 
     // IMPORTANT: function should only be used before any search was concluded, because is fully cleared when resizing
-    ssize_t ResizeTable(size_t sizeMB);
+    signed_size_t ResizeTable(size_t sizeMB);
 
     [[nodiscard]] size_t GetContainedElements() const;
 

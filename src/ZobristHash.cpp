@@ -32,7 +32,7 @@ ZobristHasher::ZobristHasher(const uint64_t engineSeed)
     }
 
     // filling el passant BitBoards
-    for (unsigned long &_elPassantHashe : _elPassantHashes) _elPassantHashe = randEngine();
+    for (auto &_elPassantHash : _elPassantHashes) _elPassantHash = randEngine();
 }
 
 uint64_t ZobristHasher::GenerateHash(const Board &board) const
