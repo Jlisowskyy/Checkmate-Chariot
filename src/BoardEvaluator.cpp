@@ -121,8 +121,7 @@ int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT &figAr
     // summing up total material values
     for (size_t j = 0; j < kingIndex; ++j)
     {
-        const int32_t phasedFigVal =
-            (BasicFigureValues[j] * (256 - actPhase) + EndGameFigureValues[j] * actPhase) / 256;
+        const int32_t phasedFigVal = _getTapperedValue(actPhase, BasicFigureValues[j], EndGameFigureValues[j]);
 
         materialValue += static_cast<int32_t>(figArr[j]) * phasedFigVal;
         materialValue -= static_cast<int32_t>(figArr[j + BlackFigStartIndex]) * phasedFigVal;

@@ -143,9 +143,11 @@ class BoardEvaluator
 
         for (size_t i = pawnsIndex; i < kingIndex; ++i)
         {
+            // white figures ranges
             rv[i] = CountOnesInBoard(bd.BitBoards[i]);
             overflows += rv[i] >= OverflowTables[i];
 
+            // black figures ranges
             rv[i + 5] = CountOnesInBoard(bd.BitBoards[i + bPawnsIndex]);
             overflows += rv[i + 5] >= OverflowTables[i];
         }

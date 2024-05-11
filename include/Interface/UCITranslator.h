@@ -41,12 +41,14 @@ class UCITranslator
     // --------------------------------------
 
     public:
+    /* takes a reference to engine instance on which it will operate */
     UCITranslator(Engine &engine) : _engine(engine) {}
 
     // ------------------------------
     // internal types
     // ------------------------------
 
+    /* all known command tokens */
     enum class UCICommand
     {
         InvalidCommand,
@@ -65,6 +67,11 @@ class UCITranslator
     // ------------------------------
     // Clas interaction
     // ------------------------------
+
+    /*
+     * Method parses input from the stream until it receives EOF or quit command.
+     * Returns last processed command to distinguish between quit and EOF.
+     * */
 
     UCICommand BeginCommandTranslation(std::istream &input);
 
