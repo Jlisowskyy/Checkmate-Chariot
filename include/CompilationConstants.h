@@ -28,6 +28,16 @@ static constexpr uint64_t msescInNsec = 1000 * 1000; // in nsecs
 
 #endif
 
+#ifdef __WIN32__
+
+#define SLASH '\\'
+
+#else
+
+#define SLASH '/'
+
+#endif
+
 // ssize_t is POSIX. This is how we use it on posix+windows
 using signed_size_t = std::make_signed<size_t>::type;
 

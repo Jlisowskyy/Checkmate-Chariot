@@ -5,8 +5,8 @@
 #include "../include/EngineUtils.h"
 
 #include <format>
+#include <cstring>
 
-#include "../include/BitOperations.h"
 #include "../include/Interface/Logger.h"
 
 const char IndexToFigCharMap[Board::BitBoardsCount]{
@@ -165,6 +165,21 @@ void AlignedFree(void *ptr)
 #else
     std::free(ptr);
 #endif
+}
+
+std::string GetCurrentTimeStr() {
+    static constexpr size_t BuffSize = 128;
+    char buff[BuffSize]{};
+
+    auto tm = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::strftime(buff, BuffSize, "%H:%M:%S", std::localtime(&tm));
+
+    return std::string{buff};
+}
+
+const char *GetFileName(const char *path) {
+    const char *lastSlash = std::strrchr(path, SLASH);
+    return lastSlash == nullptr ? path : lastSlash + 1;
 }
 
 bool GoTimeInfo::IsColorTimeSet(int color) const { return color == WHITE ? wTime != NotSet : bTime != NotSet; }

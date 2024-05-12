@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <numeric>
 #include <unordered_map>
+#include <chrono>
 
 #include "Board.h"
 #include "CompilationConstants.h"
@@ -28,6 +29,10 @@ void AlignedFree(void *ptr);
 
 void DisplayMask(uint64_t mask);
 void DisplayBoard(const Board &bd);
+
+std::string GetCurrentTimeStr();
+
+const char* GetFileName(const char* path);
 
 // returns 0 if invalid characters were passed
 uint64_t ExtractPosFromStr(int x, int y);
