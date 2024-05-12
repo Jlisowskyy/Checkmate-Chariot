@@ -27,4 +27,5 @@ Definitions:
     - ZobristHasher - our implementation of Zobrist Hash
     - TT, Transposition Table - table that stores information about board states that were already evaluated with all
                                 necessary information to avoid reevaluation.
+    - age - number of ply moves made from the initial state of the game (startpos or given fen position)
 

@@ -16,6 +16,11 @@
 #include "Interface/UCIOptions.h"
 #include "OpeningBook/OpeningBook.h"
 
+/*
+ *  Class simply representing the Engine, with all the necessary methods to interact with it.
+ *
+ * */
+
 class Engine
 {
     // --------------------------------------
@@ -25,42 +30,61 @@ class Engine
     public:
     Engine() = default;
 
+    /* Load with initial state */
     Engine(const Board &bd) : _board(bd), _startingBoard(bd) {}
 
     ~Engine() = default;
 
+    /* Initializes all values to defaults */
     void Initialize();
 
     // ------------------------------
     // Type interaction
     // ------------------------------
 
+    /* Simply writes pretty formated board to the stdout */
     void WriteBoard() const;
 
+    /*
+     * Returns map of moves and their leaf counts its mean number of leafs at the full search tree base - Used for tests only.
+     * Keys are simply uci encoded moves, values are the number of leafs at the end of the search tree.
+     * */
     std::map<std::string, uint64_t> GetPerft(int depth);
 
+    /* Simple wrapper of 'GetPerft' to pretty print the results */
     template <bool LogToOut = true> double GoPerft(int depth);
 
-    void SetFenPosition(const std::string &fenStr);
+    /* Tries to parse given position and applies it to internal boards */
+    bool SetFenPosition(const std::string &fenStr);
 
+    /* Set default board as internal state */
     void SetStartPos();
 
+    /* Returns engine information */
     static const EngineInfo &GetEngineInfo();
 
+    /* Methods tries to parse and apply moves one by one, if the process is successful sets up age to UCIMoves.size+1 */
     bool ApplyMoves(const std::vector<std::string> &UCIMoves);
 
+    /* Restarts the engine up to initial state, sets up the default board and cleans up the Transposition Table */
     void RestartEngine();
 
+    /* Simply copies the board */
     [[nodiscard]] Board GetUnderlyingBoardCopy() const;
 
+    /* Simply returns the moving color */
     [[nodiscard]] int GetMovingColor() const { return _board.MovingColor; }
 
+    /* Returns FEN encoded actual board state */
     [[nodiscard]] std::string GetFenTranslation() const;
 
+    /* Simply issues stop command to the ThreadManager */
     void StopSearch();
 
+    /* Simply issues go infinite command to the ThreadManager */
     void GoInfinite();
 
+    /* Simply issues go command to the ThreadManager */
     void Go(const GoInfo &info, const std::vector<std::string> &moves);
 
     static const std::string& GetDebugEnginePath() { return _debugEnginePath; }
@@ -70,7 +94,13 @@ class Engine
     // ------------------------------
 
     private:
+
+    /* Method simply generates moves and checks whether given moves is on the list if that's true applies the move to the board */
     bool _applyMove(Board &board, const std::string &move);
+
+    // ------------------------------------
+    // UCI option accessing functions
+    // ------------------------------------
 
     static void _changeOrSetLogFile(Engine &eng, std::string &nPath);
 
@@ -80,12 +110,14 @@ class Engine
 
     static void _clearHash([[maybe_unused]] Engine &);
 
+    static void _changeDebugEnginePath(Engine&, std::string& path);
+
+    static void _changeBookPath(Engine& engine, std::string& path);
+
     static void _changeThreadCount([[maybe_unused]] Engine &eng, const lli tCount)
     {
         std::cout << "New thread count: " << tCount << '\n';
     }
-
-    static void _changeDebugEnginePath(Engine&, std::string& path);
 
     // ------------------------------
     // private fields
@@ -93,7 +125,8 @@ class Engine
 
     Board _board{};
     Board _startingBoard{};
-    OpeningBook _book{"uci_ready_long", OpeningBook::bookFileType::text_uci};
+    OpeningBook _book{};
+    std::string _bookPath = _defaultBookPath;
 
     bool _isStartPosPlayed                            = true;
     uint16_t _age                                     = 1;
@@ -112,7 +145,6 @@ class Engine
     public:
     SearchThreadManager TManager{};
 
-
     private:
     // ------------------------------
     // Engine options
@@ -121,6 +153,8 @@ class Engine
     lli _threadCount = 1;
     std::string _debugPath;
 
+    static constexpr const char* _defaultBookPath = "uci_ready_long";
+
     // Options available in engine
     inline static const OptionT<Option::OptionType::spin> Threads{"Threads", _changeThreadCount, 1, 1024, 1};
     inline static const OptionT<Option::OptionType::string> DebugLogFile{"Debug Log File", _changeOrSetLogFile, ""};
@@ -128,6 +162,7 @@ class Engine
     inline static const OptionT<Option::OptionType::check> OwnBook{"OwnBook", _changeBookUsage, true};
     inline static const OptionT<Option::OptionType::button> ClearHash{"Clear Hash", _clearHash};
     inline static const OptionT<Option::OptionType::string> TestEnginePath{"Test Engine Path", _changeDebugEnginePath, ""};
+    inline static const OptionT<Option::OptionType::string> BookPath{"OwnBook Path", _changeBookPath, _defaultBookPath};
 
     inline static const EngineInfo engineInfo = {
         .author = "Jakub Lisowski, Lukasz Kryczka, Jakub Pietrzak Warsaw University of Technology",
@@ -140,6 +175,7 @@ class Engine
                                                   std::make_pair<std::string, const Option *>("OwnBook", &OwnBook),
                                                   std::make_pair<std::string, const Option *>("Clear Hash", &ClearHash),
                                                   std::make_pair<std::string, const Option *>("Test Engine Path", &TestEnginePath),
+                                                  std::make_pair<std::string, const Option *>("OwnBook Path", &BookPath),
                                                   },
     };
 };

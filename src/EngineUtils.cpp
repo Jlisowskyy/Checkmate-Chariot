@@ -152,7 +152,7 @@ std::pair<char, char> ConvertToCharPos(const uint64_t boardMap) { return Convert
 std::string ConvertToStrPos(const uint64_t boardMap) { return ConvertToStrPos(ExtractMsbPos(boardMap)); }
 void *AlignedAlloc(const size_t alignment, const size_t size)
 {
-#ifdef _MSC_VER
+#ifdef __WIN32__
     return _aligned_malloc(size, alignment);
 #else
     return std::aligned_alloc(alignment, size);

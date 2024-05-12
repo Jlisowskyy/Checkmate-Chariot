@@ -5,10 +5,9 @@
 #include "../include/Engine.h"
 #include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
-#include "../include/OpeningBook/OpeningBook.h"
 #include "../include/Search/TranspositionTable.h"
 
-std::string Engine::_debugEnginePath;
+std::string Engine::_debugEnginePath = Engine::_defaultBookPath;
 
 void Engine::Initialize()
 {
@@ -39,25 +38,33 @@ std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
     return moveMap;
 }
 
-void Engine::SetFenPosition(const std::string &fenStr)
+bool Engine::SetFenPosition(const std::string &fenStr)
 {
     // restarting position age
     _age = 1;
 
+    // Validation whether given fenstr is same as startpos, because of some weird uci implementations not using startpos
     if (fenStr.length() >= _startposPrefix.length() && fenStr.substr(0, _startposPrefix.length()) == _startposPrefix)
     {
         _isStartPosPlayed = true;
         _board            = FenTranslator::GetDefault();
         _startingBoard    = _board;
-        return;
+        return true;
     }
 
-    if (FenTranslator::Translate(fenStr, _board) == false)
-        _isStartPosPlayed = true;
-    else
-        _isStartPosPlayed = false;
+    // save previous state
+    const bool prevState = _isStartPosPlayed;
 
+    // Trying to parse the fen string
+    const bool isParsed  = FenTranslator::Translate(fenStr, _board);
+
+    // Change flag state accordingly
+    _isStartPosPlayed = !isParsed && prevState;
+
+    // Setup start board
     _startingBoard = _board;
+
+    return isParsed;
 }
 
 void Engine::SetStartPos()
@@ -150,11 +157,22 @@ void Engine::_changeHashSize([[maybe_unused]] Engine &eng, const lli size)
         GlobalLogger.LogStream << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
 }
 
-void Engine::_changeBookUsage(Engine &eng, const bool newValue) { eng.UseOwnBook = newValue; }
+void Engine::_changeBookUsage(Engine &eng, const bool newValue) {
+    if (newValue)
+    {
+        eng._book.LoadBook(eng._bookPath, OpeningBook::bookFileType::text_uci);
+        TraceIfFalse(eng._book.IsLoadedCorrectly(), "Book was not loaded correctly, disabling it");
+
+        if (eng._book.IsLoadedCorrectly())
+            eng.UseOwnBook = newValue;
+    }
+    else
+        eng.UseOwnBook = false;
+}
 
 void Engine::Go(const GoInfo &info, const std::vector<std::string> &moves)
 {
-    if (UseOwnBook && _book.IsLoadedCorrectly() && _isStartPosPlayed)
+    if (UseOwnBook && _isStartPosPlayed)
         if (const auto &bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
         {
             GlobalLogger.LogStream << std::format("bestmove {}\n", bookMove);
@@ -172,4 +190,7 @@ void Engine::_clearHash(Engine &) { TTable.ClearTable(); }
 
 void Engine::_changeDebugEnginePath(Engine &, std::string &path) {
     _debugEnginePath = path;
+}
+void Engine::_changeBookPath(Engine &engine, std::string &path) {
+    engine._bookPath = path;
 }
