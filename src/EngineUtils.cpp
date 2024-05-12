@@ -166,5 +166,6 @@ void AlignedFree(void *ptr)
     std::free(ptr);
 #endif
 }
+
 bool GoTimeInfo::IsColorTimeSet(int color) const { return color == WHITE ? wTime != NotSet : bTime != NotSet; }
 GoTimeInfo GoTimeInfo::GetInfiniteTime() { return GoTimeInfo{NotSet, NotSet, NotSet, NotSet, Infinite}; }

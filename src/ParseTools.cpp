@@ -20,15 +20,6 @@ ParseTools::ExtractNextLine(const size_t startPos, const size_t maxPos, const ch
     return maxPos;
 }
 
-lli ParseTools::ParseTolli(const std::string &str)
-{
-    errno        = 0;
-    const lli rv = strtoll(str.c_str(), nullptr, 10);
-    if (errno != 0)
-        return std::numeric_limits<lli>::max();
-    return rv;
-}
-
 size_t ParseTools::TrimLeft(const std::string &str)
 {
     size_t ind = 0;

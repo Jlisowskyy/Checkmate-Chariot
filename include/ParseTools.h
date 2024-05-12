@@ -11,6 +11,10 @@
 
 #include "CompilationConstants.h"
 
+/*
+ * Class gathers various tools and utilities used to parse strings.
+ * */
+
 struct ParseTools
 {
     // ------------------------------
@@ -25,35 +29,45 @@ struct ParseTools
     // Class interaction
     // ------------------------------
 
-    // Parses passed string 'str' splitting string into words one by one starting by given position pos.
+    // Parses first found word inside the passed string 'str', starting on given position 'startPos'.
+    // It escapes all characters defined by 'crit' function.
     // returns position after the end of parsed word.
-    // If the returned position is equal to 0, then no word was detected.
+    // If the returned position is equal to InvalidNextWorldRead, then no word was detected.
 
     static constexpr size_t InvalidNextWorldRead = 0;
 
     template <int (*crit)(int) = isblank>
     static size_t ExtractNextWord(const std::string &str, std::string &wordOut, size_t startPos);
 
+    /* Function parses next word with "ExtractNextWord" function and then converts it to the numeric type NumT
+     * with given 'convert' function.
+     *
+     * Return InvalidNextWorldRead when no conversion was possible.
+     * */
     template <typename NumT, NumT (*convert)(const std::string &), int (*crit)(int) = isblank>
     static size_t ExtractNextNumeric(const std::string &str, size_t startPos, NumT &out);
 
-    // Returns last character present in outBuffer + 1
+    // Parses next line from the buffer to the "outBuffer". Returns position after the end of the line or maxPos (if no
+    // new line was found)
     static size_t ExtractNextLine(size_t startPos, size_t maxPos, const char *inBuffer, std::string &outBuffer);
 
-    static lli ParseTolli(const std::string &str);
-
+    // Function returns index of first non-blank character in the string or string length if no such character was
+    // found.
     static size_t TrimLeft(const std::string &str);
 
+    // Function returns index of first non-blank character from the end of the string or 0 if no such character was
+    // found.
     static size_t TrimRight(const std::string &str);
 
+    // Function returns string with all leading and trailing blanks removed.
     static std::string GetTrimmed(const std::string &str);
 
+    // Function splits the text into words, using the 'crit' function to determine the word boundaries.
     template <int (*crit)(int) = isblank>
     [[nodiscard]] static std::vector<std::string> Split(const std::string &text, size_t pos = 0);
 
-    static signed_size_t GetLineCountFromFile(std::fstream &stream)
-        // returns number of '\n' + 1 when stream is good to read otherwise returns -1
-        ;
+    // returns number of '\n' + 1 when stream is good to read otherwise returns -1
+    static signed_size_t GetLineCountFromFile(std::fstream &stream);
 
     // ------------------------------
     // Class fields

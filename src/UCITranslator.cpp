@@ -3,6 +3,7 @@
 //
 
 #include <cstdlib>
+#include <format>
 
 #include "../include/Interface/Logger.h"
 #include "../include/Interface/UCITranslator.h"
@@ -18,17 +19,19 @@ UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream &i
 
     while (lastCommand != UCICommand::quitCommand && std::getline(input, recordBuffer))
     {
-        lastCommand = _cleanMessage(recordBuffer);
+        lastCommand = _dispatchCommands(recordBuffer);
 
         if (lastCommand == UCICommand::InvalidCommand)
             GlobalLogger.LogStream << "[ ERROR ] Error uccured during translation or execution.\n Refer to UCI "
                                       "protocl manual to get more detailed information.\n";
     }
 
+    WrapTraceMsgInfo("UCI command translation finished.");
+
     return lastCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string &buffer)
+UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &buffer)
 {
     using funcT = UCICommand (UCITranslator::*)(const std::string &);
     static std::unordered_map<std::string, funcT> CommandBuff{
@@ -56,8 +59,15 @@ UCITranslator::UCICommand UCITranslator::_cleanMessage(const std::string &buffer
 
     while ((pos = ParseTools::ExtractNextWord(buffer, workStr, pos)) != ParseTools::InvalidNextWorldRead)
         if (auto iter = CommandBuff.find(workStr); iter != CommandBuff.end())
-            return (this->*(iter->second))(buffer.substr(pos));
+        {
+            auto commandType = (this->*(iter->second))(buffer.substr(pos));
 
+            // Check whether some joining could be done between parsing commands
+            if (commandType != UCICommand::goCommand && !_engine.TManager.IsSearchOn())
+                _engine.TManager.Consolidate();
+
+            return commandType;
+        }
     return UCICommand::InvalidCommand;
 }
 
@@ -69,13 +79,14 @@ UCITranslator::UCICommand UCITranslator::_stopResponse([[maybe_unused]] const st
 
 UCITranslator::UCICommand UCITranslator::_goResponse(const std::string &str)
 {
+    // Known subcommands of "go" command
     static std::unordered_map<std::string, UCICommand (UCITranslator::*)(const std::string &, size_t)> commands{
-        {     "perft",      &UCITranslator::_goPerftResponse},
-        {     "debug",      &UCITranslator::_goDebugResponse},
-        { "deepDebug",  &UCITranslator::_goDeepDebugResponse},
-        {      "file",       &UCITranslator::_goFileResponse},
-        {  "perfComp",   &UCITranslator::_goPerfCompResponse},
-        {"searchPerf", &UCITranslator::_goSearchPerfResponse},
+        {     "perft",       &UCITranslator::_goPerftResponse},
+        {     "debug",       &UCITranslator::_goDebugResponse},
+        { "deepDebug",   &UCITranslator::_goDeepDebugResponse},
+        {      "file",        &UCITranslator::_goFileResponse},
+        {  "perfComp",    &UCITranslator::_goPerfCompResponse},
+        {"searchPerf", &UCITranslator::_goSearchPerftResponse},
     };
 
     std::string workStr;
@@ -83,36 +94,48 @@ UCITranslator::UCICommand UCITranslator::_goResponse(const std::string &str)
         return UCICommand::InvalidCommand;
 
     if (auto iter = commands.find(workStr); iter != commands.end())
+        // If subcommand is recognized, call it
         return (this->*(iter->second))(str, workStr.size() + 1);
     else
+        // Otherwise, perform regular search command path
         return _goSearchRegular(str);
 }
 
 UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &str)
 {
     std::string workStr;
+
+    // Extract next token
     size_t pos = ParseTools::ExtractNextWord(str, workStr, 0);
     if (pos == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
 
+    // find position of "moves" token
     const size_t movesCord = str.find("moves", pos);
 
     if (workStr == "fen")
     {
+        // If there is no moves token, then assumes that rest of the string is fen position. Otherwise, extract only
+        // part [] between "fen [] moves ..."
         _fenPosition = movesCord == std::string::npos ? ParseTools::GetTrimmed(str.substr(pos))
                                                       : ParseTools::GetTrimmed(str.substr(pos, movesCord - pos));
 
+        // Load position
         _engine.SetFenPosition(_fenPosition);
     }
     else if (workStr == "startpos")
+        // Reset the position inside the engine
         _engine.SetStartPos();
     else
         return UCICommand::InvalidCommand;
 
+    // If there are moves token, then apply them
     if (movesCord != std::string::npos)
     {
+        // shift by moves length
         pos = movesCord + 5;
 
+        // Parse UCI encoded moves
         const std::vector<std::string> movesVect = ParseTools::Split(str, pos);
 
         if (!_engine.ApplyMoves(movesVect))
@@ -137,10 +160,13 @@ UCITranslator::UCICommand UCITranslator::_ucinewgameResponse([[maybe_unused]] co
 UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string &str)
 {
     std::string workStr;
+
+    // Read next token and expect it to be "name"
     size_t pos = ParseTools::ExtractNextWord(str, workStr, 0);
     if (pos == ParseTools::InvalidNextWorldRead || workStr != "name")
         return UCICommand::InvalidCommand;
 
+    // Read tokens until "value" token is found or line is fully processed
     std::string optionName{};
     while ((pos = ParseTools::ExtractNextWord(str, workStr, pos)) != ParseTools::InvalidNextWorldRead &&
            workStr != "value")
@@ -148,18 +174,23 @@ UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string &s
         optionName += workStr + ' ';
     }
 
-    // space cleaning
+    // removing last added space
     if (!optionName.empty())
         optionName.pop_back();
 
-    // TODO: Consider error mesage here - unrecognized option
+    // Check whether option is valid
     if (!Engine::GetEngineInfo().options.contains(optionName))
+    {
+        WrapTraceMsgError(std::format("Option {} not found.", optionName));
         return UCICommand::InvalidCommand;
+    }
 
-    // argument option
+    // If there is option value given parse it and process it -> then report the outcome
     std::string arg = workStr != "value" ? std::string() : ParseTools::GetTrimmed(str.substr(pos));
     if (Engine::GetEngineInfo().options.at(optionName)->TryChangeValue(arg, _engine))
         return UCICommand::setoptionCommand;
+
+    WrapTraceMsgError(std::format("Option {} refused to process the value: {}", optionName, arg));
     return UCICommand::InvalidCommand;
 }
 
@@ -302,7 +333,7 @@ UCITranslator::UCICommand UCITranslator::_goPerfCompResponse(const std::string &
     return UCICommand::goCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_goSearchPerfResponse(const std::string &str, size_t pos)
+UCITranslator::UCICommand UCITranslator::_goSearchPerftResponse(const std::string &str, size_t pos)
 {
     std::string file1Str{};
     std::string file2Str{};
@@ -318,6 +349,7 @@ UCITranslator::UCICommand UCITranslator::_goSearchPerfResponse(const std::string
 
 UCITranslator::UCICommand UCITranslator::_goSearchRegular(const std::string &str)
 {
+    // all known parameter tokens for go command
     static std::unordered_map<std::string, size_t (*)(const std::string &, size_t, GoInfo &)> params{
         {"movetime", &_goMoveTimeResponse},
         {    "binc", &_goBIncTimeResponse},
@@ -361,7 +393,6 @@ UCITranslator::UCICommand UCITranslator::_goSearchRegular(const std::string &str
 
         // After passing this checks validation is complete,
         // all the default parameters are chosen to be able to perform fully valid search.
-
         _engine.Go(info, _appliedMoves);
     }
     return UCICommand::goCommand;
