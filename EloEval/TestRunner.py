@@ -46,7 +46,7 @@ def run_tests(engines: dict[str, int], each_options, game_options, resign_option
         os.makedirs(e.exes_path)
 
     # install missing engines
-    for engine in e.ext_engines:
+    for engine in engines:
         if not os.path.exists(f'{e.exes_path}/{engine}'):
             # change folder to installers
             print(f'{engine} not found, running installer...')
@@ -58,8 +58,8 @@ def run_tests(engines: dict[str, int], each_options, game_options, resign_option
 
     # print elo of each engine
     print('running tests with the following engines:')
-    for engine in e.ext_engines:
-        print(f'\t{engine} ({e.ext_engines[engine]})')
+    for engine in engines:
+        print(f'\t{engine} ({engines[engine]})')
 
     # run tests
 
@@ -68,7 +68,7 @@ def run_tests(engines: dict[str, int], each_options, game_options, resign_option
     engine_options += f' -engine cmd=../Checkmate-Chariot name=Checkmate-Chariot'
 
     # add external engines
-    for engine in e.ext_engines:
+    for engine in engines:
         engine_options += f' -engine cmd={e.exes_path}/{engine} name={engine}'
 
     print(f'./c-chess-cli {each_options} {game_options} {resign_options} {output_options} {engine_options}')
