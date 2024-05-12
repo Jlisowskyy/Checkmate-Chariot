@@ -4,8 +4,8 @@
 
 #include "../include/EngineUtils.h"
 
-#include <format>
 #include <cstring>
+#include <format>
 
 #include "../include/Interface/Logger.h"
 
@@ -167,7 +167,8 @@ void AlignedFree(void *ptr)
 #endif
 }
 
-std::string GetCurrentTimeStr() {
+std::string GetCurrentTimeStr()
+{
     static constexpr size_t BuffSize = 128;
     char buff[BuffSize]{};
 
@@ -177,7 +178,8 @@ std::string GetCurrentTimeStr() {
     return std::string{buff};
 }
 
-const char *GetFileName(const char *path) {
+const char *GetFileName(const char *path)
+{
     const char *lastSlash = std::strrchr(path, SLASH);
     return lastSlash == nullptr ? path : lastSlash + 1;
 }

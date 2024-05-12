@@ -157,7 +157,10 @@ template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval> MoveGenerator::paylo
     const auto [blockedFigMap, checksCount, checkType] = _mechanics.GetBlockedFieldBitMap(fullMap);
 
     TraceIfFalse(blockedFigMap != 0, "Blocked fig map must at least contains fields controlled by king!");
-    TraceIfFalse(checksCount <= 2, "We consider only 3 states: no-check, single-check, double-check -> invalid result was returned!");
+    TraceIfFalse(
+        checksCount <= 2,
+        "We consider only 3 states: no-check, single-check, double-check -> invalid result was returned!"
+    );
 
     payload results = _threadStack.GetPayload();
 

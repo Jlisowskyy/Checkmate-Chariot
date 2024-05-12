@@ -5,11 +5,11 @@
 #ifndef ENGINETYPEDEFS_H
 #define ENGINETYPEDEFS_H
 
+#include <chrono>
 #include <climits>
 #include <cstdint>
 #include <numeric>
 #include <unordered_map>
-#include <chrono>
 
 #include "Board.h"
 #include "CompilationConstants.h"
@@ -32,7 +32,7 @@ void DisplayBoard(const Board &bd);
 
 std::string GetCurrentTimeStr();
 
-const char* GetFileName(const char* path);
+const char *GetFileName(const char *path);
 
 // returns 0 if invalid characters were passed
 uint64_t ExtractPosFromStr(int x, int y);

@@ -12,11 +12,15 @@
 
 #include "../EngineUtils.h"
 
-#define TraceWithInfo(msg)     GlobalLogger.TraceStream << std::format("[ When: {} ][ File: {}, line: {} ]{}\n", \
-               GetCurrentTimeStr() , GetFileName(__FILE__), __LINE__, msg)
+#define TraceWithInfo(msg)                                                                                             \
+    GlobalLogger.TraceStream << std::format(                                                                           \
+        "[ When: {} ][ File: {}, line: {} ]{}\n", GetCurrentTimeStr(), GetFileName(__FILE__), __LINE__, msg            \
+    )
 #define WrapTraceMsgError(msg) TraceWithInfo(std::format("[ TRACE ][ ERROR ] {}", msg))
 #define WrapTraceMsgInfo(msg)  TraceWithInfo(std::format("[ TRACE ][ INFO ] {}", msg))
-#define TraceIfFalse(cond, msg) if (!(cond)) WrapTraceMsgError(msg)
+#define TraceIfFalse(cond, msg)                                                                                        \
+    if (!(cond))                                                                                                       \
+    WrapTraceMsgError(msg)
 
 /// <summary>
 /// Concept for types that allow streaming (i.e. can be used with std::ostream)

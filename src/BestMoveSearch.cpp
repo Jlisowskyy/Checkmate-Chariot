@@ -308,7 +308,10 @@ int BestMoveSearch::_pwsSearch(
         TTable.Add(record, zHash);
     }
 
-    TraceIfFalse(nType != pvNode || bestMove.IsOkeyMove(), "When the node fails low there should be no best move (null move), otherwise we expect the node to be PV one");
+    TraceIfFalse(
+        nType != pvNode || bestMove.IsOkeyMove(),
+        "When the node fails low there should be no best move (null move), otherwise we expect the node to be PV one"
+    );
 
     return bestEval;
 }
@@ -681,7 +684,10 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
     }
 
     std::swap(moves.data[maxInd], moves.data[targetPos]);
-    TraceIfFalse(maxInd == targetPos || moves.data[targetPos].GetEval() >= moves.data[targetPos + 1].GetEval(), "Move sorting failed!");
+    TraceIfFalse(
+        maxInd == targetPos || moves.data[targetPos].GetEval() >= moves.data[targetPos + 1].GetEval(),
+        "Move sorting failed!"
+    );
 }
 
 int BestMoveSearch::_getMateValue(const int depthLeft) const
