@@ -8,6 +8,8 @@
 #include "../include/OpeningBook/OpeningBook.h"
 #include "../include/Search/TranspositionTable.h"
 
+std::string Engine::_debugEnginePath;
+
 void Engine::Initialize()
 {
     _board         = FenTranslator::GetDefault();
@@ -167,3 +169,7 @@ void Engine::StopSearch() { TManager.Stop(); }
 void Engine::GoInfinite() { TManager.GoInfinite(_board, _age); }
 
 void Engine::_clearHash(Engine &) { TTable.ClearTable(); }
+
+void Engine::_changeDebugEnginePath(Engine &, std::string &path) {
+    _debugEnginePath = path;
+}

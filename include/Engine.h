@@ -63,6 +63,8 @@ class Engine
 
     void Go(const GoInfo &info, const std::vector<std::string> &moves);
 
+    static const std::string& GetDebugEnginePath() { return _debugEnginePath; }
+
     // ------------------------------
     // private methods
     // ------------------------------
@@ -82,6 +84,8 @@ class Engine
     {
         std::cout << "New thread count: " << tCount << '\n';
     }
+
+    static void _changeDebugEnginePath(Engine&, std::string& path);
 
     // ------------------------------
     // private fields
@@ -103,8 +107,11 @@ class Engine
     /// </summary>
     std::shared_ptr<FileLogger> _fileLogger;
 
+    static std::string _debugEnginePath;
+
     public:
     SearchThreadManager TManager{};
+
 
     private:
     // ------------------------------
@@ -120,6 +127,7 @@ class Engine
     inline static const OptionT<Option::OptionType::spin> HashSize{"Hash", _changeHashSize, 16, 524289, 16};
     inline static const OptionT<Option::OptionType::check> OwnBook{"OwnBook", _changeBookUsage, true};
     inline static const OptionT<Option::OptionType::button> ClearHash{"Clear Hash", _clearHash};
+    inline static const OptionT<Option::OptionType::string> TestEnginePath{"Test Engine Path", _changeDebugEnginePath, ""};
 
     inline static const EngineInfo engineInfo = {
         .author = "Jakub Lisowski, Lukasz Kryczka, Jakub Pietrzak Warsaw University of Technology",
@@ -131,6 +139,7 @@ class Engine
                                                   std::make_pair<std::string, const Option *>("Hash", &HashSize),
                                                   std::make_pair<std::string, const Option *>("OwnBook", &OwnBook),
                                                   std::make_pair<std::string, const Option *>("Clear Hash", &ClearHash),
+                                                  std::make_pair<std::string, const Option *>("Test Engine Path", &TestEnginePath),
                                                   },
     };
 };
