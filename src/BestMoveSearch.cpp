@@ -24,6 +24,8 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
     int32_t eval{};
     int64_t avg{};
 
+    TTable.ClearTable();
+
     // When the passed depth is 0, we need to evaluate the board statically
     if (maxDepth == 0)
     {
@@ -58,7 +60,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
             eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, pv, true);
 
             // if there was call to abort then abort
-            if (eval == TimeStopValue)
+            if (std::abs(eval) == TimeStopValue)
                 return;
 
             // saving the move evaluation to the avg value
@@ -90,7 +92,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
                 eval = _pwsSearch(_board, alpha, beta, depth, zHash, {}, pvBuff, true);
 
                 // if there was call to abort then abort
-                if (eval == TimeStopValue)
+                if (std::abs(eval) == TimeStopValue)
                     return;
 
                 if (eval <= alpha)
@@ -193,8 +195,8 @@ int BestMoveSearch::_pwsSearch(
     int bestEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[0], inPV, followPv);
 
     // if there was call to abort then abort
-    if (bestEval == TimeStopValue)
-        return bestEval;
+    if (std::abs(bestEval) == TimeStopValue)
+        return TimeStopValue;
 
     zHash = ZHasher.UpdateHash(zHash, moves[0], oldElPassant, oldCastlings);
     Move::UnmakeMove(moves[0], bd, oldCastlings, oldElPassant);
@@ -248,8 +250,8 @@ int BestMoveSearch::_pwsSearch(
         int moveEval = -_zwSearch(bd, -alpha - 1, depthLeft - 1, zHash, moves[i]);
 
         // if there was call to abort then abort
-        if (moveEval == TimeStopValue)
-            return moveEval;
+        if (std::abs(moveEval) == TimeStopValue)
+            return TimeStopValue;
 
         // if not, research move
         if (alpha < moveEval && moveEval < beta)
@@ -259,8 +261,8 @@ int BestMoveSearch::_pwsSearch(
             moveEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV, false);
 
             // if there was call to abort then abort
-            if (moveEval == TimeStopValue)
-                return moveEval;
+            if (std::abs(moveEval) == TimeStopValue)
+                return TimeStopValue;
 
             if (moveEval > bestEval)
             {
@@ -380,8 +382,8 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
         const int moveEval = -_zwSearch(bd, -beta, depthLeft - 1, zHash, moves[i]);
 
         // if there was call to abort then abort
-        if (moveEval == TimeStopValue)
-            return moveEval;
+        if (std::abs(moveEval) == TimeStopValue)
+            return TimeStopValue;
 
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
@@ -488,8 +490,8 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         const int moveValue = -_quiescenceSearch(bd, -beta, -alpha, zHash);
 
         // if there was call to abort then abort
-        if (moveValue == TimeStopValue)
-            return moveValue;
+        if (std::abs(moveValue) == TimeStopValue)
+            return TimeStopValue;
 
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
@@ -601,8 +603,8 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         const int moveValue = -_zwQuiescenceSearch(bd, -beta, zHash);
 
         // if there was call to abort then abort
-        if (moveValue == TimeStopValue)
-            return moveValue;
+        if (std::abs(moveValue) == TimeStopValue)
+            return TimeStopValue;
 
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
