@@ -8,7 +8,6 @@
 #include "../include/Interface/Logger.h"
 #include "../include/Interface/UCITranslator.h"
 #include "../include/ParseTools.h"
-#include "../include/Search/TranspositionTable.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/TestsAndDebugging/SearchPerfTester.h"
 
@@ -149,11 +148,10 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
     return UCICommand::positionCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_ucinewgameResponse([[maybe_unused]] const std::string &unused)
+UCITranslator::UCICommand UCITranslator::_ucinewgameResponse([[maybe_unused]] const std::string &)
 {
     _engine.RestartEngine();
     _appliedMoves.clear();
-    TTable.ClearTable();
     return UCICommand::ucinewgameCommand;
 }
 
@@ -290,7 +288,7 @@ UCITranslator::UCICommand UCITranslator::_goDebugResponse(const std::string &str
     if (_intParser(str, pos, depth) == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
 
-    const MoveGenerationTester tester{};
+    const MoveGenerationTester tester{Engine::GetDebugEnginePath()};
     [[maybe_unused]] auto unused = tester.PerformSingleShallowTest(_fenPosition, depth, _appliedMoves, true);
     return UCICommand::goCommand;
 }
@@ -301,7 +299,7 @@ UCITranslator::UCICommand UCITranslator::_goDeepDebugResponse(const std::string 
     if (_intParser(str, pos, depth) == ParseTools::InvalidNextWorldRead)
         return UCICommand::InvalidCommand;
 
-    const MoveGenerationTester tester{};
+    const MoveGenerationTester tester{Engine::GetDebugEnginePath()};
     tester.PerformDeepTest(_fenPosition, depth, _appliedMoves);
     return UCICommand::goCommand;
 }
@@ -310,7 +308,7 @@ UCITranslator::UCICommand UCITranslator::_goFileResponse(const std::string &str,
 {
     std::string path{};
     ParseTools::ExtractNextWord(str, path, pos);
-    const MoveGenerationTester tester{};
+    const MoveGenerationTester tester{Engine::GetDebugEnginePath()};
     const bool result = tester.PerformSeriesOfDeepTestFromFile(path);
 
     if (!result)
@@ -326,7 +324,7 @@ UCITranslator::UCICommand UCITranslator::_goPerfCompResponse(const std::string &
     if (pos != ParseTools::InvalidNextWorldRead)
         ParseTools::ExtractNextWord(str, file2Str, pos);
 
-    const MoveGenerationTester tester{};
+    const MoveGenerationTester tester{Engine::GetDebugEnginePath()};
     bool result = tester.PerformPerformanceTest(file1Str, file2Str);
     if (!result)
         return UCICommand::InvalidCommand;

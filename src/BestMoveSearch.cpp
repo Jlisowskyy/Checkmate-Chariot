@@ -122,7 +122,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
         // Log info if necessary
         if (writeInfo)
         {
-            const uint64_t spentMs  = std::max(static_cast<uint64_t>(1), (timeStop - timeStart).count() / msescInNsec);
+            const uint64_t spentMs  = std::max(static_cast<uint64_t>(1), (timeStop - timeStart).count() / MsesInNsec);
             const uint64_t nps      = 1000LLU * _visitedNodes / spentMs;
             const double cutOffPerc = static_cast<double>(_cutoffNodes) / static_cast<double>(_visitedNodes);
 

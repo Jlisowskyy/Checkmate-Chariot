@@ -7,14 +7,19 @@
 
 #include <cinttypes>
 
-using lli = long long int;
+using lli                  = long long int;
+static constexpr size_t MB = 1024 * 1024;
 
 // global defined Stack capacity used to store generated moves per thread
-static constexpr size_t MB               = 1024 * 1024;
 static constexpr size_t DefaultStackSize = 32 * MB / sizeof(uint64_t);
-static constexpr int MaxSearchDepth      = 128;
 
-static constexpr uint64_t msescInNsec = 1000 * 1000; // in nsecs
+/* Defines maximal depth of search allowed across the procjet */
+static constexpr int MaxSearchDepth = 128;
+
+static constexpr uint64_t MsesInNsec = 1000 * 1000;
+
+// ------------------------------
+// Platform specific defines for force inline attribute
 
 #ifdef _MSC_VER
 
@@ -28,6 +33,10 @@ static constexpr uint64_t msescInNsec = 1000 * 1000; // in nsecs
 
 #endif
 
+// ------------------------------
+// ------------------------------
+// Platform specific defines for path separator
+
 #ifdef __WIN32__
 
 #define SLASH '\\'
@@ -38,7 +47,10 @@ static constexpr uint64_t msescInNsec = 1000 * 1000; // in nsecs
 
 #endif
 
-// ssize_t is POSIX. This is how we use it on posix+windows
+// ------------------------------
+
+// ssize_t is defined by POSIX. Such define allows to use it on posix+windows
+
 using signed_size_t = std::make_signed<size_t>::type;
 
 #endif // COMPILATION_CONSTANTS_H

@@ -164,7 +164,7 @@ ChessMechanics::_getRookBlockedMap(uint64_t rookMap, const uint64_t fullMapWoutK
         blockedTiles |= moves;
         checks += ((moves & kingMap) != 0);
 
-        rookMap ^= maxMsbPossible >> msbPos;
+        rookMap ^= MaxMsbPossible >> msbPos;
     }
 
     return {blockedTiles, checks};

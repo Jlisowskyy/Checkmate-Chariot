@@ -79,25 +79,25 @@ BishopMapGenerator::GenPossibleNeighborsWoutOverlap(const int bInd, const MasksT
     const uint64_t bPos = 1LLU << bInd;
     for (int nw = bInd; nw <= NWBorder; nw += NWOffset)
     {
-        const uint64_t nwPos = minMsbPossible << nw;
+        const uint64_t nwPos = MinMsbPossible << nw;
         if (nwPos != bPos && (masks[nwMask] & nwPos) == 0)
             continue;
 
         for (int ne = bInd; ne <= NEBorder; ne += NEOffset)
         {
-            const uint64_t nePos = minMsbPossible << ne;
+            const uint64_t nePos = MinMsbPossible << ne;
             if (nePos != bPos && (masks[neMask] & nePos) == 0)
                 continue;
 
             for (int sw = bInd; sw >= SWBorder; sw += SWOffset)
             {
-                const uint64_t swPos = minMsbPossible << sw;
+                const uint64_t swPos = MinMsbPossible << sw;
                 if (swPos != bPos && (masks[swMask] & swPos) == 0)
                     continue;
 
                 for (int se = bInd; se >= SEBorder; se += SEOffset)
                 {
-                    const uint64_t sePos = minMsbPossible << se;
+                    const uint64_t sePos = MinMsbPossible << se;
                     if (sePos != bPos && (masks[seMask] & sePos) == 0)
                         continue;
 

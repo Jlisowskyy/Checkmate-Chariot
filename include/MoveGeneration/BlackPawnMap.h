@@ -80,7 +80,7 @@ constexpr uint64_t BlackPawnMap::GetPlainMoves(const uint64_t pawnBit, const uin
 
 constexpr uint64_t BlackPawnMap::GetMoves(const int msbPos, const uint64_t fullMap, const uint64_t enemyMap)
 {
-    const uint64_t pawnBit     = maxMsbPossible >> msbPos;
+    const uint64_t pawnBit     = MaxMsbPossible >> msbPos;
     const uint64_t attackMoves = GetAttackFields(pawnBit) & enemyMap;
     const uint64_t plainMoves  = GetPlainMoves(pawnBit, fullMap);
 

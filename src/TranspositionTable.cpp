@@ -45,12 +45,18 @@ signed_size_t TranspositionTable::ResizeTable(const size_t sizeMB)
         _checkForCorrectAlloc(StartTableSize);
         ClearTable();
 
+        WrapTraceMsgError(std::format(
+            "Not able to allocate enough memory for TTable, resizing to default size ({}MB)", StartTableSizeMB
+        ));
+
         return -1;
     }
 
     _tableSize = objSize;
     _hashMask  = _getPow2ModuloMask(objSize);
     ClearTable();
+
+    WrapTraceMsgInfo(std::format("TTable resized to {}MB", ceiledSizeMB));
 
     return static_cast<signed_size_t>(ceiledSizeMB);
 }

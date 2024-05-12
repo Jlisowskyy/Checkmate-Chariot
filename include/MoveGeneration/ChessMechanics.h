@@ -114,7 +114,7 @@ template <class MoveGeneratorT> uint64_t ChessMechanics::_blockIterativeGenerato
     while (board != 0)
     {
         const int figPos = ExtractMsbPos(board);
-        board ^= (maxMsbPossible >> figPos);
+        board ^= (MaxMsbPossible >> figPos);
 
         blockedMap |= mGen(figPos);
     }
@@ -158,7 +158,7 @@ ChessMechanics::_getPinnedFigMaps(const uint64_t fullMap, const uint64_t possibl
     {
         const int msbPos = ExtractMsbPos(pinningFigs);
         pinnedFigMap |= MoveMapT::GetMoves(msbPos, fullMap) & kingFigPerspectiveAttackedFigs;
-        pinningFigs ^= maxMsbPossible >> msbPos;
+        pinningFigs ^= MaxMsbPossible >> msbPos;
     }
 
     return {pinnedFigMap, allowedTilesFigMap};
