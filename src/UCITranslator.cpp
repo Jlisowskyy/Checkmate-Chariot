@@ -8,7 +8,6 @@
 #include "../include/Interface/Logger.h"
 #include "../include/Interface/UCITranslator.h"
 #include "../include/ParseTools.h"
-#include "../include/Search/TranspositionTable.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/TestsAndDebugging/SearchPerfTester.h"
 
