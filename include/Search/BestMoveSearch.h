@@ -91,7 +91,7 @@ class BestMoveSearch
 
     static constexpr int ReservedValues                = 64;
     static constexpr int InfinityMargin                = MaxSearchDepth + ReservedValues;
-    static constexpr int TimeStopValue                 = std::numeric_limits<int16_t>::max();
+    static constexpr int TimeStopValue                 = std::numeric_limits<int16_t>::max() - 10;
     static constexpr int NegativeInfinity              = std::numeric_limits<int16_t>::min() + InfinityMargin;
     static constexpr int PositiveInfinity              = std::numeric_limits<int16_t>::max() - InfinityMargin;
     static constexpr uint16_t QuisenceAgeDiffToReplace = 16;
