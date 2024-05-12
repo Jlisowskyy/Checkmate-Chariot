@@ -88,11 +88,11 @@ void MapCorrectnessTester::PerformTest(const std::string &filename, const MapT &
                 lastErrorMove           = move;
                 lastErrorMoveCorrectOne = correctMoves[i][figNum];
                 lastErrorMap            = fullMap;
-                lastFigPos              = maxMsbPossible >> msbPos;
+                lastFigPos              = MaxMsbPossible >> msbPos;
             }
 
             ++figNum;
-            figureMap ^= maxMsbPossible >> msbPos;
+            figureMap ^= MaxMsbPossible >> msbPos;
         }
     }
 

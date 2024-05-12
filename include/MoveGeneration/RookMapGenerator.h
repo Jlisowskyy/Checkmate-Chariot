@@ -152,25 +152,25 @@ RookMapGenerator::GenPossibleNeighborsWoutOverlap(const int bInd, const MasksT &
     const uint64_t bPos = 1LLU << bInd;
     for (int westCord = bInd; westCord > westBarrier; westCord += WestOffset)
     {
-        const uint64_t westPos = minMsbPossible << westCord;
+        const uint64_t westPos = MinMsbPossible << westCord;
         if (westPos != bPos && (masks[wMask] & westPos) == 0)
             continue;
 
         for (int eastCord = bInd; eastCord < eastBarrier; eastCord += EastOffset)
         {
-            const uint64_t eastPos = minMsbPossible << eastCord;
+            const uint64_t eastPos = MinMsbPossible << eastCord;
             if (eastPos != bPos && (masks[eMask] & eastPos) == 0)
                 continue;
 
             for (int northCord = bInd; northCord < northBarrier; northCord += NorthOffset)
             {
-                const uint64_t northPos = minMsbPossible << northCord;
+                const uint64_t northPos = MinMsbPossible << northCord;
                 if (northPos != bPos && (masks[nMask] & northPos) == 0)
                     continue;
 
                 for (int southCord = bInd; southCord > southBarrier; southCord += SouthOffset)
                 {
-                    const uint64_t southPos = minMsbPossible << southCord;
+                    const uint64_t southPos = MinMsbPossible << southCord;
                     if (southPos != bPos && (masks[sMask] & southPos) == 0)
                         continue;
 

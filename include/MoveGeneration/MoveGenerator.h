@@ -350,7 +350,7 @@ void MoveGenerator::_processElPassantMoves(
 
     while (possiblePawnsToMove)
     {
-        const uint64_t pawnMap = maxMsbPossible >> ExtractMsbPos(possiblePawnsToMove);
+        const uint64_t pawnMap = MaxMsbPossible >> ExtractMsbPos(possiblePawnsToMove);
 
         // checking whether move would affect horizontal line attacks on king
         const uint64_t processedPawns      = pawnMap | _board.ElPassantField;
@@ -446,7 +446,7 @@ void MoveGenerator::_processFigMoves(
     {
         // processing moves
         const int figPos        = ExtractMsbPos(unpinnedOnes);
-        const uint64_t figBoard = maxMsbPossible >> figPos;
+        const uint64_t figBoard = MaxMsbPossible >> figPos;
 
         // selecting allowed moves if in check
         const uint64_t figMoves = [&]() constexpr
@@ -491,7 +491,7 @@ void MoveGenerator::_processFigMoves(
     {
         // processing moves
         const int figPos            = ExtractMsbPos(pinnedOnes);
-        const uint64_t figBoard     = maxMsbPossible >> figPos;
+        const uint64_t figBoard     = MaxMsbPossible >> figPos;
         const uint64_t allowedTiles = _mechanics.GenerateAllowedTilesForPrecisedPinnedFig(figBoard, fullMap);
         const uint64_t figMoves     = MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap & allowedTiles;
         // TODO: check applied here?
@@ -530,7 +530,7 @@ void MoveGenerator::_processNonAttackingMoves(
     {
         // extracting moves
         const int movePos        = ExtractMsbPos(nonAttackingMoves);
-        const uint64_t moveBoard = maxMsbPossible >> movePos;
+        const uint64_t moveBoard = MaxMsbPossible >> movePos;
 
         if constexpr (!promotePawns)
         // simple figure case
@@ -618,7 +618,7 @@ void MoveGenerator::_processAttackingMoves(
     {
         // extracting moves
         const int movePos        = ExtractMsbPos(attackingMoves);
-        const uint64_t moveBoard = maxMsbPossible >> movePos;
+        const uint64_t moveBoard = MaxMsbPossible >> movePos;
         const size_t attackedFigBoardIndex =
             _mechanics.GetIndexOfContainingBitBoard(moveBoard, SwapColor(_board.MovingColor));
 
@@ -741,7 +741,7 @@ void MoveGenerator::_processPlainKingMoves(
 
             results.Push(_threadStack, mv);
 
-            nonAttackingMoves ^= (maxMsbPossible >> newPos);
+            nonAttackingMoves ^= (MaxMsbPossible >> newPos);
         }
 
     // processing slightly more complicated attacking moves
@@ -749,7 +749,7 @@ void MoveGenerator::_processPlainKingMoves(
     {
         // extracting new king position data
         const int newPos            = ExtractMsbPos(attackingMoves);
-        const uint64_t newKingBoard = maxMsbPossible >> newPos;
+        const uint64_t newKingBoard = MaxMsbPossible >> newPos;
 
         // finding an attacked figure
         const size_t attackedFigBoardIndex =

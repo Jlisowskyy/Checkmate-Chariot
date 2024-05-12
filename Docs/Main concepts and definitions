@@ -5,12 +5,14 @@ Definitions:
     - pinned figure - figure that is located on the same line as the king and can't move because it would expose the king to check
     - unpinned figure - figure that is not pinned
     - MapT - type that defines moves possible to be made by a figure
-    - msbPos - way to index bits in a integer number from msb bit to lsb bit
+    - msb** - way to index bits in a integer number from msb bit to lsb bit
                                          msb, .............., lsb
                e.g for uint8_t index are: 0, 1, 2, 3, 4, 5, 6, 7
-    - lsbPos - way to index bits in a integer number from lsb bit to msb
+    - lsb** - way to index bits in a integer number from lsb bit to msb
                                          msb, .............., lsb
                e.g for uint8_t index are: 7, 6, 5, 4, 3, 2, 1, 0
+    - **Pos - position of the figure on the board, according to above mentioned indexing (msb or lsb),
+              first one in sorted ascending order
     - king ring - fields around king, which control by enemy imposes danger to the game
     - Board evaluation - Process of static evaluation of the whole board state.
                          This is metric that guides search directions

@@ -148,7 +148,7 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
     return UCICommand::positionCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_ucinewgameResponse([[maybe_unused]] const std::string &unused)
+UCITranslator::UCICommand UCITranslator::_ucinewgameResponse([[maybe_unused]] const std::string &)
 {
     _engine.RestartEngine();
     _appliedMoves.clear();

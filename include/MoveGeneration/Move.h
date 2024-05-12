@@ -174,19 +174,19 @@ class Move
         TraceIfFalse(mv.IsOkeyMove(), "Given move is not valid!");
 
         // removing the old piece from the board
-        bd.BitBoards[mv.GetStartBoardIndex()] ^= maxMsbPossible >> mv.GetStartField();
+        bd.BitBoards[mv.GetStartBoardIndex()] ^= MaxMsbPossible >> mv.GetStartField();
 
         // placing the figure on new field
-        bd.BitBoards[mv.GetTargetBoardIndex()] |= maxMsbPossible >> mv.GetTargetField();
+        bd.BitBoards[mv.GetTargetBoardIndex()] |= MaxMsbPossible >> mv.GetTargetField();
 
         // removing the killed figure in case no figure is killed index should be indicating to the sentinel
-        bd.BitBoards[mv.GetKilledBoardIndex()] ^= maxMsbPossible >> mv.GetKilledFigureField();
+        bd.BitBoards[mv.GetKilledBoardIndex()] ^= MaxMsbPossible >> mv.GetKilledFigureField();
 
         // applying new castling rights
         bd.Castlings = mv.GetCastlingRights();
 
         // applying new el passant field
-        bd.ElPassantField = maxMsbPossible >> mv.GetElPassantField();
+        bd.ElPassantField = MaxMsbPossible >> mv.GetElPassantField();
 
         // applying additional castling operation
         const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
@@ -208,13 +208,13 @@ class Move
         bd.ChangePlayingColor();
 
         // placing the piece on old board
-        bd.BitBoards[mv.GetStartBoardIndex()] |= maxMsbPossible >> mv.GetStartField();
+        bd.BitBoards[mv.GetStartBoardIndex()] |= MaxMsbPossible >> mv.GetStartField();
 
         // removing the figure from the new field
-        bd.BitBoards[mv.GetTargetBoardIndex()] ^= maxMsbPossible >> mv.GetTargetField();
+        bd.BitBoards[mv.GetTargetBoardIndex()] ^= MaxMsbPossible >> mv.GetTargetField();
 
         // placing the killed figure in good place
-        bd.BitBoards[mv.GetKilledBoardIndex()] |= maxMsbPossible >> mv.GetKilledFigureField();
+        bd.BitBoards[mv.GetKilledBoardIndex()] |= MaxMsbPossible >> mv.GetKilledFigureField();
 
         // recovering old castlings
         bd.Castlings = castlings;

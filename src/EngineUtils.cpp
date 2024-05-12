@@ -147,8 +147,6 @@ std::string ConvertToStrPos(const int boardPosMsb)
     return rv;
 }
 
-std::pair<char, char> ConvertToCharPos(const uint64_t boardMap) { return ConvertToCharPos(ExtractMsbPos(boardMap)); }
-
 std::string ConvertToStrPos(const uint64_t boardMap) { return ConvertToStrPos(ExtractMsbPos(boardMap)); }
 void *AlignedAlloc(const size_t alignment, const size_t size)
 {
