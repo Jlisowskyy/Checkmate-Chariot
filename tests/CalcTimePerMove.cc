@@ -3,6 +3,10 @@
 //
 
 #include <gtest/gtest.h>
+<<<<<<< HEAD
+=======
+#include <chrono>
+>>>>>>> 1ef9c0082a7962a7698dabdb223373bcdf8c3898
 
 #include "../include/ThreadManagement/GameTimeManager.h"
 #include "../include/Interface/FenTranslator.h"
