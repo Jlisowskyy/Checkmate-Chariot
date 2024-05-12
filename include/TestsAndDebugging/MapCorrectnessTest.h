@@ -14,6 +14,7 @@
 
 #include "../BitOperations.h"
 #include "../EngineUtils.h"
+#include "../Interface/Logger.h"
 
 /*              IMPORTANT NOTES
  *  All files containing maps used to test must follow this scheme:
@@ -97,15 +98,15 @@ void MapCorrectnessTester::PerformTest(const std::string &filename, const MapT &
     }
 
     // Test summary
-    std::cout << "Test finished!!\n" << std::format("Total errors encountered: {}\n", errorCount);
-    std::cout << std::format("Processed records: {}\nTotally checked: {} moves\n", recordCount, moveCount);
+    GlobalLogger.LogStream << "Test finished!!\n" << std::format("Total errors encountered: {}\n", errorCount);
+    GlobalLogger.LogStream << std::format("Processed records: {}\nTotally checked: {} moves\n", recordCount, moveCount);
     if (errorCount)
     {
-        std::cout << std::format("________Last error move on field {}:\n\n", ConvertToStrPos(lastFigPos));
+        GlobalLogger.LogStream << std::format("________Last error move on field {}:\n\n", ConvertToStrPos(lastFigPos));
         DisplayMask(lastErrorMove);
-        std::cout << "________Correct move:\n\n";
+        GlobalLogger.LogStream << "________Correct move:\n\n";
         DisplayMask(lastErrorMoveCorrectOne);
-        std::cout << "________On map:\n\n";
+        GlobalLogger.LogStream << "________On map:\n\n";
         DisplayMask(lastErrorMap);
     }
 }

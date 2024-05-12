@@ -116,7 +116,7 @@ class Engine
 
     static void _changeThreadCount([[maybe_unused]] Engine &eng, const lli tCount)
     {
-        std::cout << "New thread count: " << tCount << '\n';
+        GlobalLogger.LogStream << "New thread count: " << tCount << '\n';
     }
 
     // ------------------------------
