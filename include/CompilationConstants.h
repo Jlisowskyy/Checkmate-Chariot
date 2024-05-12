@@ -34,7 +34,6 @@ static constexpr uint64_t MsesInNsec = 1000 * 1000;
 #endif
 
 // ------------------------------
-
 // ------------------------------
 // Platform specific defines for path separator
 
@@ -51,6 +50,7 @@ static constexpr uint64_t MsesInNsec = 1000 * 1000;
 // ------------------------------
 
 // ssize_t is defined by POSIX. Such define allows to use it on posix+windows
+
 using signed_size_t = std::make_signed<size_t>::type;
 
 #endif // COMPILATION_CONSTANTS_H
