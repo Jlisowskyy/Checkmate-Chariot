@@ -42,9 +42,7 @@ class UCITranslator
 
     public:
     /* takes a reference to engine instance on which it will operate */
-    UCITranslator(Engine &engine) : _engine(engine) {
-        _engine.Initialize();
-    }
+    UCITranslator(Engine &engine) : _engine(engine) { _engine.Initialize(); }
 
     // ------------------------------
     // internal types

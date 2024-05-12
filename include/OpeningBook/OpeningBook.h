@@ -5,8 +5,8 @@
 #ifndef OPENINGBOOK_H
 #define OPENINGBOOK_H
 
-#include "MoveTRIE.h"
 #include "../Interface/Logger.h"
+#include "MoveTRIE.h"
 
 #include <string>
 
@@ -36,7 +36,8 @@ struct OpeningBook
     // Class interaction
     // ------------------------------
 
-    void LoadBook(const std::string &bookPath, bookFileType type){
+    void LoadBook(const std::string &bookPath, bookFileType type)
+    {
         if (_isCorrectlyLoaded)
         {
             WrapTraceMsgError("Opening book was already loaded, skipping the loading process");
@@ -61,7 +62,8 @@ struct OpeningBook
         catch (const std::exception &exc)
         {
             GlobalLogger.LogStream << std::format(
-                "[ ERROR ] Book with path: {} was not correctly loaded due to following fact:\n\t{}\n", bookPath, exc.what()
+                "[ ERROR ] Book with path: {} was not correctly loaded due to following fact:\n\t{}\n", bookPath,
+                exc.what()
             );
             _isCorrectlyLoaded = false;
         }

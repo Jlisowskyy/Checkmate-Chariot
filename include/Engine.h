@@ -46,8 +46,8 @@ class Engine
     void WriteBoard() const;
 
     /*
-     * Returns map of moves and their leaf counts its mean number of leafs at the full search tree base - Used for tests only.
-     * Keys are simply uci encoded moves, values are the number of leafs at the end of the search tree.
+     * Returns map of moves and their leaf counts its mean number of leafs at the full search tree base - Used for tests
+     * only. Keys are simply uci encoded moves, values are the number of leafs at the end of the search tree.
      * */
     std::map<std::string, uint64_t> GetPerft(int depth);
 
@@ -87,15 +87,15 @@ class Engine
     /* Simply issues go command to the ThreadManager */
     void Go(const GoInfo &info, const std::vector<std::string> &moves);
 
-    static const std::string& GetDebugEnginePath() { return _debugEnginePath; }
+    static const std::string &GetDebugEnginePath() { return _debugEnginePath; }
 
     // ------------------------------
     // private methods
     // ------------------------------
 
     private:
-
-    /* Method simply generates moves and checks whether given moves is on the list if that's true applies the move to the board */
+    /* Method simply generates moves and checks whether given moves is on the list if that's true applies the move to
+     * the board */
     bool _applyMove(Board &board, const std::string &move);
 
     // ------------------------------------
@@ -110,9 +110,9 @@ class Engine
 
     static void _clearHash([[maybe_unused]] Engine &);
 
-    static void _changeDebugEnginePath(Engine&, std::string& path);
+    static void _changeDebugEnginePath(Engine &, std::string &path);
 
-    static void _changeBookPath(Engine& engine, std::string& path);
+    static void _changeBookPath(Engine &engine, std::string &path);
 
     static void _changeThreadCount([[maybe_unused]] Engine &eng, const lli tCount)
     {
@@ -153,7 +153,7 @@ class Engine
     lli _threadCount = 1;
     std::string _debugPath;
 
-    static constexpr const char* _defaultBookPath = "uci_ready_long";
+    static constexpr const char *_defaultBookPath = "uci_ready_long";
 
     // Options available in engine
     inline static const OptionT<Option::OptionType::spin> Threads{"Threads", _changeThreadCount, 1, 1024, 1};
@@ -161,7 +161,9 @@ class Engine
     inline static const OptionT<Option::OptionType::spin> HashSize{"Hash", _changeHashSize, 16, 524289, 16};
     inline static const OptionT<Option::OptionType::check> OwnBook{"OwnBook", _changeBookUsage, true};
     inline static const OptionT<Option::OptionType::button> ClearHash{"Clear Hash", _clearHash};
-    inline static const OptionT<Option::OptionType::string> TestEnginePath{"Test Engine Path", _changeDebugEnginePath, ""};
+    inline static const OptionT<Option::OptionType::string> TestEnginePath{
+        "Test Engine Path", _changeDebugEnginePath, ""
+    };
     inline static const OptionT<Option::OptionType::string> BookPath{"OwnBook Path", _changeBookPath, _defaultBookPath};
 
     inline static const EngineInfo engineInfo = {

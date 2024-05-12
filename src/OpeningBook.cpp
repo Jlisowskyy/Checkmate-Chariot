@@ -11,10 +11,7 @@
 #include "../include/Interface/Logger.h"
 #include "../include/ParseTools.h"
 
-OpeningBook::OpeningBook(const std::string &bookPath, const bookFileType type)
-{
-    LoadBook(bookPath, type);
-}
+OpeningBook::OpeningBook(const std::string &bookPath, const bookFileType type) { LoadBook(bookPath, type); }
 
 void OpeningBook::SaveToBinary([[maybe_unused]] const std::string &outputPath) const
 {

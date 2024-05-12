@@ -12,9 +12,9 @@
 #include "BitOperations.h"
 
 /*
- * Given enum defines values and order of both colors. All indexing schemes used across the projects follows given order.
- * It is important to keep it consistent across the project.
- * It is also very useful when performing some indexing and color switching operations.
+ * Given enum defines values and order of both colors. All indexing schemes used across the projects follows given
+ * order. It is important to keep it consistent across the project. It is also very useful when performing some indexing
+ * and color switching operations.
  * */
 
 enum Color : int
@@ -22,7 +22,6 @@ enum Color : int
     WHITE,
     BLACK,
 };
-
 
 /*
  * Given enum defines indexing order of all BitBoards inside the board.
@@ -89,11 +88,13 @@ enum CastlingPossibilities : size_t
  *  It defines representation of the board state.
  *  Currently, it consists of:
  *      - BitBoards: 12 bitboards representing all pieces of both colors with one additional sentinel board at the end.
- *        Such representation allows to easily iterate over all pieces of given color and perform operation with very fast bit operations.
- *        Additionally, sentinel allows to unconditionally treats all move types without any additional checks.
+ *        Such representation allows to easily iterate over all pieces of given color and perform operation with very
+ * fast bit operations. Additionally, sentinel allows to unconditionally treats all move types without any additional
+ * checks.
  *      - Single ElPassantField: 64-bit integer representing field where en passant is possible.
  *      - Single MovingColor: integer representing color of the player who is currently moving.
- *      - Castlings: bitset representing all castling possibilities for both colors with one additional sentinel field at the end.
+ *      - Castlings: bitset representing all castling possibilities for both colors with one additional sentinel field
+ * at the end.
  *
  * */
 
@@ -134,19 +135,22 @@ struct Board
         ConvertToReversedPos(6), ConvertToReversedPos(2), ConvertToReversedPos(62), ConvertToReversedPos(58)
     };
 
-    static constexpr std::array<uint64_t, CastlingCount> CastlingsRookMaps{MinMsbPossible << 7, MinMsbPossible, MinMsbPossible << 63, MinMsbPossible << 56};
+    static constexpr std::array<uint64_t, CastlingCount> CastlingsRookMaps{
+        MinMsbPossible << 7, MinMsbPossible, MinMsbPossible << 63, MinMsbPossible << 56
+    };
 
     static constexpr std::array<uint64_t, CastlingCount> CastlingNewRookMaps{
         MinMsbPossible << 5, MinMsbPossible << 3, MinMsbPossible << 61, MinMsbPossible << 59
     };
 
     static constexpr std::array<uint64_t, CastlingCount> CastlingSensitiveFields{
-        MinMsbPossible << 6 | MinMsbPossible << 5, MinMsbPossible << 2 | MinMsbPossible << 3, MinMsbPossible << 61 | MinMsbPossible << 62, MinMsbPossible << 58 | MinMsbPossible << 59
+        MinMsbPossible << 6 | MinMsbPossible << 5, MinMsbPossible << 2 | MinMsbPossible << 3,
+        MinMsbPossible << 61 | MinMsbPossible << 62, MinMsbPossible << 58 | MinMsbPossible << 59
     };
 
     static constexpr std::array<uint64_t, CastlingCount> CastlingTouchedFields{
-        MinMsbPossible << 6 | MinMsbPossible << 5, MinMsbPossible << 2 | MinMsbPossible << 3 | MinMsbPossible << 1, MinMsbPossible << 61 | MinMsbPossible << 62,
-        MinMsbPossible << 58 | MinMsbPossible << 59 | MinMsbPossible << 57
+        MinMsbPossible << 6 | MinMsbPossible << 5, MinMsbPossible << 2 | MinMsbPossible << 3 | MinMsbPossible << 1,
+        MinMsbPossible << 61 | MinMsbPossible << 62, MinMsbPossible << 58 | MinMsbPossible << 59 | MinMsbPossible << 57
     };
 
     std::bitset<CastlingCount + 1> Castlings{0}; // additional sentinel field

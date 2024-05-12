@@ -7,14 +7,14 @@
 
 #include <cinttypes>
 
-using lli = long long int;
-static constexpr size_t MB               = 1024 * 1024;
+using lli                  = long long int;
+static constexpr size_t MB = 1024 * 1024;
 
 // global defined Stack capacity used to store generated moves per thread
 static constexpr size_t DefaultStackSize = 32 * MB / sizeof(uint64_t);
 
 /* Defines maximal depth of search allowed across the procjet */
-static constexpr int MaxSearchDepth      = 128;
+static constexpr int MaxSearchDepth = 128;
 
 static constexpr uint64_t MsesInNsec = 1000 * 1000;
 
@@ -34,7 +34,6 @@ static constexpr uint64_t MsesInNsec = 1000 * 1000;
 #endif
 
 // ------------------------------
-
 
 // ------------------------------
 // Platform specific defines for path separator

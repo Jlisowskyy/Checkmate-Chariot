@@ -56,7 +56,7 @@ bool Engine::SetFenPosition(const std::string &fenStr)
     const bool prevState = _isStartPosPlayed;
 
     // Trying to parse the fen string
-    const bool isParsed  = FenTranslator::Translate(fenStr, _board);
+    const bool isParsed = FenTranslator::Translate(fenStr, _board);
 
     // Change flag state accordingly
     _isStartPosPlayed = !isParsed && prevState;
@@ -157,7 +157,8 @@ void Engine::_changeHashSize([[maybe_unused]] Engine &eng, const lli size)
         GlobalLogger.LogStream << std::format("[ ERROR ] not able to resize the table with passed size {} MB\n", size);
 }
 
-void Engine::_changeBookUsage(Engine &eng, const bool newValue) {
+void Engine::_changeBookUsage(Engine &eng, const bool newValue)
+{
     if (newValue)
     {
         eng._book.LoadBook(eng._bookPath, OpeningBook::bookFileType::text_uci);
@@ -188,9 +189,5 @@ void Engine::GoInfinite() { TManager.GoInfinite(_board, _age); }
 
 void Engine::_clearHash(Engine &) { TTable.ClearTable(); }
 
-void Engine::_changeDebugEnginePath(Engine &, std::string &path) {
-    _debugEnginePath = path;
-}
-void Engine::_changeBookPath(Engine &engine, std::string &path) {
-    engine._bookPath = path;
-}
+void Engine::_changeDebugEnginePath(Engine &, std::string &path) { _debugEnginePath = path; }
+void Engine::_changeBookPath(Engine &engine, std::string &path) { engine._bookPath = path; }
