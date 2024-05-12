@@ -11,8 +11,6 @@
 #include "BishopMap.h"
 #include "RookMap.h"
 
-#include <cassert>
-
 struct ChessMechanics
 {
     // ------------------------------
@@ -93,8 +91,8 @@ struct ChessMechanics
 template <ChessMechanics::PinnedFigGen genType>
 std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMap(const int col, const uint64_t fullMap) const
 {
-    assert(fullMap != 0);
-    assert(col == 1 || col == 0);
+    TraceIfFalse(fullMap != 0, "Full map is empty!");
+    TraceIfFalse(col == 1 || col == 0, "Invalid color!");
 
     const size_t enemyCord = SwapColor(col) * Board::BitBoardsPerCol;
 

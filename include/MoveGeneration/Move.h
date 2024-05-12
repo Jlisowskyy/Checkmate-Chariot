@@ -6,9 +6,9 @@
 #define MOVE_H
 
 #include <array>
-#include <cassert>
 
 #include "../Board.h"
+#include "../Interface/Logger.h"
 
 // TODO: repair description
 
@@ -171,7 +171,7 @@ class Move
 
     static void MakeMove(const Move mv, Board &bd)
     {
-        assert(mv.IsOkeyMove());
+        TraceIfFalse(mv.IsOkeyMove(), "Given move is not valid!");
 
         // removing the old piece from the board
         bd.BitBoards[mv.GetStartBoardIndex()] ^= maxMsbPossible >> mv.GetStartField();
@@ -203,7 +203,7 @@ class Move
         const Move mv, Board &bd, const std::bitset<Board::CastlingCount + 1> castlings, const uint64_t oldElPassant
     )
     {
-        assert(mv.IsOkeyMove());
+        TraceIfFalse(mv.IsOkeyMove(), "Given move is not valid!");
 
         bd.ChangePlayingColor();
 

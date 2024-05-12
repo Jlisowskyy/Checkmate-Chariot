@@ -5,6 +5,7 @@
 #ifndef ENGINETYPEDEFS_H
 #define ENGINETYPEDEFS_H
 
+#include <chrono>
 #include <climits>
 #include <cstdint>
 #include <numeric>
@@ -28,6 +29,10 @@ void AlignedFree(void *ptr);
 
 void DisplayMask(uint64_t mask);
 void DisplayBoard(const Board &bd);
+
+std::string GetCurrentTimeStr();
+
+const char *GetFileName(const char *path);
 
 // returns 0 if invalid characters were passed
 uint64_t ExtractPosFromStr(int x, int y);

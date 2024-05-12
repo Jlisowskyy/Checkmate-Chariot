@@ -4,7 +4,6 @@
 
 #include "../include/Search/BestMoveSearch.h"
 
-#include <cassert>
 #include <chrono>
 #include <format>
 #include <vector>
@@ -144,7 +143,7 @@ int BestMoveSearch::_pwsSearch(
     bool followPv
 )
 {
-    assert(alpha < beta);
+    TraceIfFalse(alpha < beta, "Alpha is not less than beta");
 
     nodeType nType = upperBound;
     PackedMove bestMove{};
@@ -309,7 +308,10 @@ int BestMoveSearch::_pwsSearch(
         TTable.Add(record, zHash);
     }
 
-    assert(nType != pvNode || bestMove.IsOkeyMove());
+    TraceIfFalse(
+        nType != pvNode || bestMove.IsOkeyMove(),
+        "When the node fails low there should be no best move (null move), otherwise we expect the node to be PV one"
+    );
 
     return bestEval;
 }
@@ -421,7 +423,7 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
 
 int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint64_t zHash)
 {
-    assert(beta > alpha);
+    TraceIfFalse(beta > alpha, "Beta is not greater than alpha");
 
     // if we need to stop the search signal it
     if (GameTimeManager::ShouldStop)
@@ -647,7 +649,7 @@ void BestMoveSearch::_embeddedMoveSort(MoveGenerator::payload moves, const size_
 
 void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const PackedMove mv)
 {
-    assert(mv.IsOkeyMove());
+    TraceIfFalse(mv.IsOkeyMove(), "Given move to find is a null move!");
 
     // preparing sentinel
     const Move sentinelOld = moves.data[moves.size];
@@ -664,7 +666,7 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Packed
     if (ind != moves.size)
         std::swap(moves.data[ind], moves.data[0]);
 
-    assert(ind != moves.size);
+    TraceIfFalse(ind != moves.size, "Move stored inside the TT was not found in the moves list!");
 }
 
 void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t targetPos)
@@ -682,7 +684,10 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
     }
 
     std::swap(moves.data[maxInd], moves.data[targetPos]);
-    assert(maxInd == targetPos || moves.data[targetPos].GetEval() >= moves.data[targetPos + 1].GetEval());
+    TraceIfFalse(
+        maxInd == targetPos || moves.data[targetPos].GetEval() >= moves.data[targetPos + 1].GetEval(),
+        "Move sorting failed!"
+    );
 }
 
 int BestMoveSearch::_getMateValue(const int depthLeft) const

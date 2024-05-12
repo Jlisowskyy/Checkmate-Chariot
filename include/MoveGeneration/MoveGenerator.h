@@ -156,7 +156,11 @@ template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval> MoveGenerator::paylo
     const uint64_t fullMap                             = _mechanics.GetFullBitMap();
     const auto [blockedFigMap, checksCount, checkType] = _mechanics.GetBlockedFieldBitMap(fullMap);
 
-    assert(blockedFigMap != 0 && checksCount <= 2);
+    TraceIfFalse(blockedFigMap != 0, "Blocked fig map must at least contains fields controlled by king!");
+    TraceIfFalse(
+        checksCount <= 2,
+        "We consider only 3 states: no-check, single-check, double-check -> invalid result was returned!"
+    );
 
     payload results = _threadStack.GetPayload();
 
@@ -183,7 +187,7 @@ template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval> MoveGenerator::paylo
 template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval>
 void MoveGenerator::_noCheckGen(payload &results, const uint64_t fullMap, const uint64_t blockedFigMap)
 {
-    assert(fullMap != 0);
+    TraceIfFalse(fullMap != 0, "Full map is empty!");
 
     [[maybe_unused]] const auto [pinnedFigsMap, _] =
         _mechanics.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(_board.MovingColor, fullMap);
@@ -236,8 +240,8 @@ void MoveGenerator::_singleCheckGen(
     payload &results, const uint64_t fullMap, const uint64_t blockedFigMap, const int checkType
 )
 {
-    assert(fullMap != 0);
-    assert(checkType == simpleFigCheck || checkType == slidingFigCheck);
+    TraceIfFalse(fullMap != 0, "Full map is empty!");
+    TraceIfFalse(checkType == simpleFigCheck || checkType == slidingFigCheck, "Invalid check type!");
 
     static constexpr uint64_t UNUSED = 0;
 
@@ -333,7 +337,7 @@ void MoveGenerator::_processElPassantMoves(
     payload &results, const uint64_t fullMap, const uint64_t pinnedFigMap, const uint64_t allowedMoveFilter
 )
 {
-    assert(fullMap != 0);
+    TraceIfFalse(fullMap != 0, "Full map is empty!");
 
     if (_board.ElPassantField == Board::InvalidElPassantBitBoard)
         return;
@@ -421,8 +425,8 @@ void MoveGenerator::_processFigMoves(
     const uint64_t pinnedFigMap, const uint64_t figureSelector, const uint64_t allowedMoveSelector
 )
 {
-    assert(enemyMap != 0);
-    assert(allyMap != 0);
+    TraceIfFalse(enemyMap != 0, "Enemy map is empty!");
+    TraceIfFalse(allyMap != 0, "Ally map is empty!");
 
     const uint64_t fullMap = enemyMap | allyMap;
     uint64_t pinnedOnes    = pinnedFigMap & _board.BitBoards[MapT::GetBoardIndex(_board.MovingColor)];
@@ -520,7 +524,7 @@ void MoveGenerator::_processNonAttackingMoves(
     const uint64_t startField, const std::bitset<Board::CastlingCount + 1> castlings
 ) const
 {
-    assert(figBoardIndex < Board::BitBoardsCount);
+    TraceIfFalse(figBoardIndex < Board::BitBoardsCount, "Invalid figure board index!");
 
     while (nonAttackingMoves)
     {
@@ -608,7 +612,7 @@ void MoveGenerator::_processAttackingMoves(
     const uint64_t startField, const std::bitset<Board::CastlingCount + 1> castlings
 ) const
 {
-    assert(figBoardIndex < Board::BitBoardsCount);
+    TraceIfFalse(figBoardIndex < Board::BitBoardsCount, "Invalid figure board index!");
 
     while (attackingMoves)
     {
@@ -690,8 +694,8 @@ void MoveGenerator::_processPlainKingMoves(
     payload &results, const uint64_t blockedFigMap, const uint64_t allyMap, const uint64_t enemyMap
 ) const
 {
-    assert(allyMap != 0);
-    assert(enemyMap != 0);
+    TraceIfFalse(allyMap != 0, "Ally map is empty!");
+    TraceIfFalse(enemyMap != 0, "Enemy map is empty!");
 
     static constexpr size_t CastlingPerColor = 2;
 
@@ -782,7 +786,7 @@ void MoveGenerator::_processPlainKingMoves(
 template <bool ApplyHeuristicEval>
 void MoveGenerator::_processKingCastlings(payload &results, const uint64_t blockedFigMap, const uint64_t fullMap) const
 {
-    assert(fullMap != 0);
+    TraceIfFalse(fullMap != 0, "Full map is empty!");
 
     for (size_t i = 0; i < Board::CastlingsPerColor; ++i)
         if (const size_t castlingIndex = _board.MovingColor * Board::CastlingsPerColor + i;
