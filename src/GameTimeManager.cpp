@@ -9,6 +9,7 @@
 #include "../include/Board.h"
 #include "../include/Evaluation/BoardEvaluator.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
+#include "../include/ThreadManagement/GameTImeManagerUtils.h"
 
 // Static fields initialization
 bool GameTimeManager::TimerRunning = false;
@@ -74,9 +75,8 @@ void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const 
     lli incrementMs = (color == Color::BLACK ? tInfo.bInc : tInfo.wInc);
     incrementMs = incrementMs == GoTimeInfo::NotSet ? 0 : incrementMs;
 
-    const lli timeForMoveMs = CalculateTimeMsForMove(bd, timeLimitClockMs, timeLimitPerMoveMs, incrementMs, moveAge);
+    const lli timeForMoveMs = CalculateTimeMsPerMove(bd, timeLimitClockMs, timeLimitPerMoveMs, incrementMs, moveAge);
 
-    GlobalLogger.TraceStream << "[ INFO ] Time allocated for search: " << timeForMoveMs << " ms";
     // const lli timeForMoveMs = 0;
 
     // time limit
@@ -105,7 +105,7 @@ void GameTimeManager::_search_management_thread(const std::chrono::time_point<st
     }
 }
 
-lli GameTimeManager::CalculateTimeMsForMove(const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs,
+lli GameTimeManager::CalculateTimeMsPerMove(const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs,
                                             const lli incrementMs,
                                             const uint16_t moveAge) {
     /*
@@ -132,15 +132,90 @@ lli GameTimeManager::CalculateTimeMsForMove(const Board &bd, const lli timeLimit
      * But the weight of the move has to be calculated in a smart way, so that slicing time using it, will still yield
      * times that follow our model of distribution and importance (adhere to 1) and adhere to (2)
      *
-     * num 3 is something im still thinking about
      */
 
+    /*
+     * The equation for the time per move is:
+     * ---------------------------------- Equation ----------------------------------
+     *
+     *                                                 scale
+     *                    f(x) = -( x ⋅(x - xlimit) ) ⋅----- + xmin
+     *                                                   q
+     *
+     * --------------------------------- Variables ----------------------------------
+     * x - game stage
+     * xlimit - max game stage
+     * xmin - min time per move
+     * scale - this is a scaling factor for the parabola
+     *
+     *             2
+     *     (xlimit)
+     * q = --------- - is the peak of the quadratic function, used to normalize it to
+     *         4       [0, 1] and then scale it
+     *
+     * ------------------------------------------------------------------------------
+     */
+
+    /*
+     * ------------------------ The function should satisfy -------------------------
+     *
+     *                    b
+     *               em  /  /                       scale        \
+     *             ----- |  | -( x ⋅(x - xlimit) ) ⋅----- + xmin |  dx = timeleft
+     *             b - a /  \                         q          /
+     *                    a
+     *
+     * --------------------------------- Variables ----------------------------------
+     *
+     * a - current game stage
+     * b = xlimit - max game stage
+     * em - expected moves to game finish
+     * timeleft - time left on the clock
+     *
+     * --------------------------------- Reasoning ----------------------------------
+     *
+     * 1. The integral of the function divided by the interval yields it's average
+     * value E[f(x)].
+     * 2. We probe the function in an almost uniform manner, and we want the sum of
+     * those probes (em - expected moves) to be equal to the time left on the clock.
+     * 3. Adjusting the scale will enforce that this is true.
+     */
+
+    /*
+     * ------------------------------ Solve for scale -------------------------------
+     * ---------------------------------- Equation ----------------------------------
+     *
+     *                              2
+     *                           3 b  (- timeleft + em × xmin)
+     *                  -scale = ----------------------------
+     *                                        2         2
+     *                              2 em (- 2a  + ab + b ) # TODO: Wrong formula
+     *
+     * ------------------------------------------------------------------------------
+     */
+
+
     constexpr int32_t minGameStage = 0;
-    constexpr int32_t maxGameStage = std::numeric_limits<int32_t>::max() / 1000;
-    const int32_t gameStage = BoardEvaluator::InterpGameStage(bd, minGameStage, maxGameStage);
-    const lli gameStageFactor = (gameStage) * (gameStage - maxGameStage);
+    constexpr int32_t maxGameStage = (int32_t)ConstexprMath::sqrt(std::numeric_limits<int32_t>::max()) / 2;
 
-    const lli minTimePerMove = incrementMs + timeLimitPerMoveMs / 1;
+    const int32_t a = BoardEvaluator::InterpGameStage(bd, minGameStage, maxGameStage);
+    constexpr double b = maxGameStage;
+    const int32_t em = (int32_t)(40 * ((b - a)/b)); // TODO: this is a temporary value and should be calculated
+    const int32_t xmin = (int32_t) ((double)timeLimitClockMs / (double)((double)em / 2)); // TODO: this is a temporary value and should be calculated
 
-    return 0;
+    GlobalLogger.TraceStream << std::format("[ INFO ] Calculating time for this move \n");
+    GlobalLogger.TraceStream << std::format("[ INFO ] Game stage: {}/{} \n", a, b);
+    GlobalLogger.TraceStream << std::format("[ INFO ] Expected moves to game finish: {} \n", em);
+    GlobalLogger.TraceStream << std::format("[ INFO ] MinMoveTimeMs: {} \n", xmin);
+
+    // Calculate the scale
+    const double q = (double)(b * b) / 4;
+    const double scale = ( (double)(xmin * (b-a) - ((double)timeLimitClockMs * (b-a) / em) ) * q)
+            / ( (double)(b*b*b - a*a*a) / 3 - (double)((b * b - a * a) / 2) * b );
+    GlobalLogger.TraceStream << std::format("[ INFO ] Scale: {} \n", scale);
+    // Evaluate the quadratic function
+    const double timeForMoveMs = (- (a * (a - b) ) * 4 * scale / (b * b) ) + xmin + (double)incrementMs;
+    GlobalLogger.TraceStream << std::format("[ INFO ] Time calculated for this move: {} \n", std::min(std::abs(timeForMoveMs), (double)timeLimitPerMoveMs));
+
+    return (lli)std::min(std::abs(timeForMoveMs), (double)timeLimitPerMoveMs);
 }

@@ -50,18 +50,18 @@ class [[maybe_unused]] GameTimeManager
     /// <summary> Stop the search management thread </summary>
     static void StopSearchManagement();
 
+    /// <summary> Calculate the time in milliseconds for a move </summary>
+    [[maybe_unused]] static lli
+    CalculateTimeMsPerMove(const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs,
+                           const lli incrementMs,
+                           const uint16_t moveAge);
+
     private:
     /// @See StartTimerAsync
     [[noreturn]] static void _timer_thread();
 
     /// @See StartSearchManagementAsync
     static void _search_management_thread(std::chrono::time_point<std::chrono::system_clock> moveStartTimeMs, const GoTimeInfo &tInfo, const Color color, const lli timeForMoveMs);
-
-    /// <summary> Calculate the time in milliseconds for a move </summary>
-    [[maybe_unused]] static lli
-    CalculateTimeMsForMove(const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs,
-                           const lli incrementMs,
-                           const uint16_t moveAge);
 
     // ------------------------------
     // Class fields

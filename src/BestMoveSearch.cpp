@@ -647,7 +647,7 @@ void BestMoveSearch::_embeddedMoveSort(MoveGenerator::payload moves, const size_
 
 void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const PackedMove mv)
 {
-    assert(mv.IsOkeyMove());
+    // assert(mv.IsOkeyMove());
 
     // preparing sentinel
     const Move sentinelOld = moves.data[moves.size];

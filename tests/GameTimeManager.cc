@@ -18,7 +18,7 @@ TEST(GameTimeManager, SearchManagerTimerDisabled)
 
     // assert
     ASSERT_DEBUG_DEATH(
-        GameTimeManager::StartSearchManagementAsync(tInfo, Color::WHITE, board), "Timer must be running"
+        GameTimeManager::StartSearchManagementAsync(tInfo, Color::WHITE, board, 0), "Timer must be running"
     );
 }
 
@@ -35,7 +35,7 @@ TEST(GameTimeManager, ManagerWithFiniteTime)
 
     // Act
     GameTimeManager::StartTimerAsync();
-    GameTimeManager::StartSearchManagementAsync(tInfo, Color::WHITE, board);
+    GameTimeManager::StartSearchManagementAsync(tInfo, Color::WHITE, board, 0);
 
     // Assert
     ASSERT_EQ(GameTimeManager::ShouldStop, false);
