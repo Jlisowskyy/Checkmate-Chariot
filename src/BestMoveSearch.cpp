@@ -14,7 +14,6 @@
 #include "../include/Search/ZobristHash.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
 
-
 static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 
 void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDepth, const bool writeInfo)

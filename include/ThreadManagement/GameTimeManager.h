@@ -50,13 +50,9 @@ class [[maybe_unused]] GameTimeManager
     /// <summary> Stop the search management thread </summary>
     static void StopSearchManagement();
 
-    static auto GetCurrentTime(){
-        return CurrentTime;
-    }
+    static auto GetCurrentTime() { return CurrentTime; }
 
-    static bool GetShouldStop(){
-        return ShouldStop;
-    }
+    static bool GetShouldStop() { return ShouldStop; }
 
     private:
     /// @See StartTimerAsync

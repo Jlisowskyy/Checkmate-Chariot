@@ -14,8 +14,8 @@
 
 /*
  * Class defines our search algorithm.
- * It uses PVS (Principal Variation Search) with aspiration windows combined with iterative deepening as a main framework.
- * All is built in so call NegaMax framework.
+ * It uses PVS (Principal Variation Search) with aspiration windows combined with iterative deepening as a main
+ * framework. All is built in so call NegaMax framework.
  *
  * References:
  * - PVS: https://www.chessprogramming.org/Principal_Variation_Search
@@ -75,19 +75,18 @@ class BestMoveSearch
             memcpy(_path + 1, pv._path, (_depth - 1) * sizeof(PackedMove));
         }
 
-        void SetDepth(const int depth)
-        {
-            _depth = depth;
-        }
+        void SetDepth(const int depth) { _depth = depth; }
 
         /* Set a new depth and clears the path on that depth range */
-        void Clear(const int nDepth) {
+        void Clear(const int nDepth)
+        {
             SetDepth(nDepth);
             memset(_path, 0, _depth * sizeof(PackedMove));
         }
 
         /* Clones the path from the given PV*/
-        void Clone(const PV &pv) {
+        void Clone(const PV &pv)
+        {
             _depth = pv._depth;
             memcpy(_path, pv._path, (_depth) * sizeof(PackedMove));
         }
@@ -105,12 +104,14 @@ class BestMoveSearch
         [[nodiscard]] bool IsFilled() const
         {
             for (int i = 0; i < _depth; ++i)
-                if (_path[i].IsEmpty()) return false;
+                if (_path[i].IsEmpty())
+                    return false;
 
             return true;
         }
 
-        /* Returns the move on the given depth, with respect to given 'rootDepth' where depth is same as in search function */
+        /* Returns the move on the given depth, with respect to given 'rootDepth' where depth is same as in search
+         * function */
         PackedMove operator()(const int depthLeft, const int rootDepth) const { return _path[rootDepth - depthLeft]; }
 
         /* returns the move */
