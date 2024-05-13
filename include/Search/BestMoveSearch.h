@@ -178,6 +178,7 @@ class BestMoveSearch
 
     Stack<Move, DefaultStackSize> &_stack;
     Board _board;
+    PV _pv{};
     const uint16_t _age;
     uint64_t _visitedNodes = 0;
     uint64_t _cutoffNodes  = 0;

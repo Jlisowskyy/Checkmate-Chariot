@@ -33,8 +33,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
     int32_t eval{};
     int64_t avg{};
 
-    // prepare pv buffers
-    PV pv{};
+    // prepare pv buffer
     PV pvBuff{};
 
     // usual search path
@@ -51,15 +50,15 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
         if (depth < 5)
         {
             // set according depth inside the pv buffer
-            pv.SetDepth(depth);
+            _pv.SetDepth(depth);
 
             // cleaning tables used in previous iteration
             _kTable.ClearPlyFloor(depth);
             _histTable.ScaleTableDown();
 
             // performs the search without aspiration window to gather some initial statistics about the move
-            eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, pv, true);
-            TraceIfFalse(pv.IsFilled(), "PV buffer is not filled after the search!");
+            eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, _pv, true);
+            TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // if there was call to abort then abort
             if (std::abs(eval) == TimeStopValue)
@@ -89,7 +88,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
                 _histTable.ScaleTableDown();
 
                 // cleaning pv in case of retries
-                pvBuff.Clone(pv);
+                pvBuff.Clone(_pv);
 
                 eval = _pwsSearch(_board, alpha, beta, depth, zHash, {}, pvBuff, true);
 
@@ -111,9 +110,9 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
             }
 
             // Move the pv from the buffer to the main pv
-            pv.Clone(pvBuff);
+            _pv.Clone(pvBuff);
 
-            TraceIfFalse(pv.IsFilled(), "PV buffer is not filled after the search!");
+            TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // Update avg cumulating variable
             avg += depth * eval;
@@ -123,7 +122,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
         [[maybe_unused]] auto timeStop = GameTimeManager::GetCurrentTime();
 
         // Saving first move from the PV as the best move
-        *output = pv[0];
+        *output = _pv[0];
 
         // Log info if necessary
         if (writeInfo)
@@ -138,7 +137,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
                 output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
-            pv.Print();
+            _pv.Print();
             GlobalLogger.LogStream << std::endl;
         }
     }
@@ -185,10 +184,10 @@ int BestMoveSearch::_pwsSearch(
         _fetchBestMove(moves, 0);
     else
     {
-        if (pv(depthLeft, _currRootDepth).IsEmpty())
-            pv.Print();
+        if (_pv(depthLeft, _currRootDepth).IsEmpty())
+            _pv.Print();
 
-        _pullMoveToFront(moves, pv(depthLeft, _currRootDepth));
+        _pullMoveToFront(moves, _pv(depthLeft, _currRootDepth));
     }
 
     // saving old params
