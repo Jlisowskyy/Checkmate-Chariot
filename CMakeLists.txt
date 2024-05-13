@@ -115,6 +115,8 @@ set(CHECKMATE_CHARIOT_SOURCES
         src/CounterMoveTable.cpp
         include/ThreadManagement/GameTimeManager.h
         src/GameTimeManager.cpp
+        include/ThreadManagement/GameTimeManagerUtils.h
+        src/GameTimeManagerUtils.cpp
 )
 
 # Create a library with the core functionality
@@ -135,6 +137,7 @@ add_executable(Checkmate-Chariot-Tests
         tests/Logger.cc
         tests/UCITranslator.cc
         tests/BoardEvaluator.cc
+        tests/CalcTimePerMove.cc
 )
 target_link_libraries(
         Checkmate-Chariot-Tests PRIVATE Checkmate-Core GTest::gtest_main)

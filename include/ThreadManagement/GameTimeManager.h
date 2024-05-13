@@ -10,6 +10,7 @@
 
 #include "../Board.h"
 #include "../EngineUtils.h"
+#include "../Interface/Logger.h"
 
 class [[maybe_unused]] GameTimeManager
 {
@@ -61,7 +62,8 @@ class [[maybe_unused]] GameTimeManager
     [[noreturn]] static void _timer_thread();
 
     /// @See StartSearchManagementAsync
-    static void _search_management_thread(std::chrono::time_point<std::chrono::system_clock> moveStartTimeMs, const GoTimeInfo &tInfo, const Color color, const lli timeForMoveMs);
+    static void _search_management_thread(const std::chrono::time_point<std::chrono::system_clock> moveStartTimeMs,
+                                          const lli timeForMoveMs);
 
     // ------------------------------
     // Class fields
@@ -87,6 +89,8 @@ class [[maybe_unused]] GameTimeManager
     // Wake on update mechanism
     static std::condition_variable cv;
     static std::mutex mtx;
+
+    static FileLogger fileLogger;
 };
 
 #endif // CHECKMATE_CHARIOT_GAMETIMER_H

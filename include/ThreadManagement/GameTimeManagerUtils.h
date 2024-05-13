@@ -4,7 +4,18 @@
 
 #ifndef CHECKMATE_CHARIOT_GAMETIMEMANAGERUTILS_H
 #define CHECKMATE_CHARIOT_GAMETIMEMANAGERUTILS_H
+
+#include <condition_variable>
+#include <chrono>
+#include <thread>
+#include <cassert>
 #include <limits>
+
+#include "../Interface/Logger.h"
+#include "../EngineUtils.h"
+#include "../Board.h"
+#include "../Evaluation/BoardEvaluator.h"
+#include "GameTimeManager.h"
 
 /*
  * Solution from: https://stackoverflow.com/questions/8622256/in-c11-is-sqrt-defined-as-constexpr
@@ -12,6 +23,33 @@
  * (We don't need to worry about the performance of this function at runtime)
  * In my usage I also don't worry that much about the precision of the result
  */
+
+class GameTimeManagerUtils {
+
+public:
+    GameTimeManagerUtils()  = delete;
+    ~GameTimeManagerUtils() = delete;
+
+    GameTimeManagerUtils(const GameTimeManagerUtils &) = delete;
+    GameTimeManagerUtils(GameTimeManagerUtils &&)      = delete;
+
+    // ------------------------------
+    // Class interaction
+    // ------------------------------
+
+
+    // ------------------------------
+    // Class creation - Singleton
+    // ------------------------------
+    /// <summary>
+    /// Parse the GoTimeInfo struct and return a tuple with the time limit for the clock, the time limit per move and the increment
+    /// </summary>
+    /// <param name="tInfo">The GoTimeInfo struct</param>
+    /// <param name="color">The color of the player</param>
+    /// <returns>A tuple with the time limit for the clock, the time limit per move and the increment</returns>
+    static std::tuple<lli, lli, lli>
+    ParseGoTimeInfo(const GoTimeInfo &tInfo, const Color &color);
+};
 
 namespace ConstexprMath
 {

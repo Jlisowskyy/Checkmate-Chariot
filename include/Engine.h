@@ -55,6 +55,8 @@ class Engine
 
     [[nodiscard]] int GetMovingColor() const { return _board.MovingColor; }
 
+    [[nodiscard]] uint16_t GetAge() const { return _age; }
+
     [[nodiscard]] std::string GetFenTranslation() const;
 
     void StopSearch();

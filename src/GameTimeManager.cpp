@@ -9,7 +9,7 @@
 #include "../include/Board.h"
 #include "../include/Evaluation/BoardEvaluator.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
-#include "../include/ThreadManagement/GameTImeManagerUtils.h"
+#include "../include/ThreadManagement/GameTimeManagerUtils.h"
 
 // Static fields initialization
 bool GameTimeManager::TimerRunning = false;
@@ -18,6 +18,7 @@ std::chrono::time_point<std::chrono::system_clock> GameTimeManager::TimeStart;
 std::chrono::time_point<std::chrono::system_clock> GameTimeManager::CurrentTime;
 std::mutex GameTimeManager::mtx;
 std::condition_variable GameTimeManager::cv;
+FileLogger GameTimeManager::fileLogger = FileLogger("GameTimeManager.log");
 
 void GameTimeManager::StartTimerAsync()
 {
@@ -58,12 +59,7 @@ void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const 
 
     ShouldStop = false;
 
-    // Get the time left for the engine to play (on the clock)
-    lli timeLimitClockMs = (color == Color::BLACK ? tInfo.bTime : tInfo.wTime);
-    timeLimitClockMs = timeLimitClockMs == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : timeLimitClockMs;
-
-    // Get the time limit per move
-    const lli timeLimitPerMoveMs = tInfo.moveTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.moveTime;
+    auto [timeLimitClockMs, timeLimitPerMoveMs, incrementMs] = GameTimeManagerUtils::ParseGoTimeInfo(tInfo, color);
 
     // If both time limits are not set, then there is no time limit
     if (timeLimitClockMs == GoTimeInfo::Infinite && timeLimitPerMoveMs == GoTimeInfo::Infinite)
@@ -71,22 +67,20 @@ void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const 
         return;
     }
 
-    // Get the increment
-    lli incrementMs = (color == Color::BLACK ? tInfo.bInc : tInfo.wInc);
-    incrementMs = incrementMs == GoTimeInfo::NotSet ? 0 : incrementMs;
-
     const lli timeForMoveMs = CalculateTimeMsPerMove(bd, timeLimitClockMs, timeLimitPerMoveMs, incrementMs, moveAge);
 
     // const lli timeForMoveMs = 0;
 
     // time limit
-    std::thread searchManagementThread(_search_management_thread, moveStartTimeMs, tInfo, color, timeForMoveMs);
+    std::thread searchManagementThread(_search_management_thread, moveStartTimeMs, timeForMoveMs);
     searchManagementThread.detach();
 }
 
 void GameTimeManager::StopSearchManagement() { ShouldStop = true; }
 
-void GameTimeManager::_search_management_thread(const std::chrono::time_point<std::chrono::system_clock> moveStartTimeMs, const GoTimeInfo &tInfo, const Color color, const lli timeForMoveMs)
+void
+GameTimeManager::_search_management_thread(const std::chrono::time_point<std::chrono::system_clock> moveStartTimeMs,
+                                           const lli timeForMoveMs)
 {
     const auto moveStopTimeMs  = moveStartTimeMs + std::chrono::milliseconds(timeForMoveMs);
 
@@ -200,7 +194,8 @@ lli GameTimeManager::CalculateTimeMsPerMove(const Board &bd, const lli timeLimit
 
     const int32_t a = BoardEvaluator::InterpGameStage(bd, minGameStage, maxGameStage);
     constexpr double b = maxGameStage;
-    const int32_t em = (int32_t)(40 * ((b - a)/b)); // TODO: this is a temporary value and should be calculated
+    const int32_t em = (int32_t)(50 - moveAge/2);
+    //const int32_t em = (int32_t)(47 * ((b - a)/b) + 3); // TODO: this is a temporary value and should be calculated
     const int32_t xmin = (int32_t) ((double)timeLimitClockMs / (double)((double)em / 2)); // TODO: this is a temporary value and should be calculated
 
     GlobalLogger.TraceStream << std::format("[ INFO ] Calculating time for this move \n");
@@ -208,14 +203,41 @@ lli GameTimeManager::CalculateTimeMsPerMove(const Board &bd, const lli timeLimit
     GlobalLogger.TraceStream << std::format("[ INFO ] Expected moves to game finish: {} \n", em);
     GlobalLogger.TraceStream << std::format("[ INFO ] MinMoveTimeMs: {} \n", xmin);
 
-    // Calculate the scale
-    const double q = (double)(b * b) / 4;
-    const double scale = ( (double)(xmin * (b-a) - ((double)timeLimitClockMs * (b-a) / em) ) * q)
-            / ( (double)(b*b*b - a*a*a) / 3 - (double)((b * b - a * a) / 2) * b );
-    GlobalLogger.TraceStream << std::format("[ INFO ] Scale: {} \n", scale);
-    // Evaluate the quadratic function
-    const double timeForMoveMs = (- (a * (a - b) ) * 4 * scale / (b * b) ) + xmin + (double)incrementMs;
-    GlobalLogger.TraceStream << std::format("[ INFO ] Time calculated for this move: {} \n", std::min(std::abs(timeForMoveMs), (double)timeLimitPerMoveMs));
+    double timeForMoveMs = 0;
+    if (timeLimitClockMs <= 10) {
+        // For really short time limits just divide the time left by the expected moves
+        timeForMoveMs = (double)timeLimitClockMs / (double)em;
+        timeForMoveMs = timeForMoveMs < 1 ? 1 : timeForMoveMs;
+        GlobalLogger.TraceStream << std::format("[ INFO ] Time is really short, calculating with: 'time left divided by expected moves': {} \n", timeForMoveMs);
 
-    return (lli)std::min(std::abs(timeForMoveMs), (double)timeLimitPerMoveMs);
+    } else {
+        // Calculate the scale
+        const double q = (double)(b * b) / 4;
+
+        //const double scale = ( (double)(xmin * (b-a) - ((double)timeLimitClockMs * (b-a) / em) ) * q)
+        //        / ( (double)(b*b*b - a*a*a) / 3 - (double)((b * b - a * a) / 2) * b );
+
+        const double scale = - (3 * b * b * ((double) -timeLimitClockMs + (em * xmin) ) ) /
+                             (2* em * (a - b) * (2 * a + b) );
+
+        assert(scale >= 0 && "Scale must be positive");
+        GlobalLogger.TraceStream << std::format("[ INFO ] Scale: {} \n", scale);
+
+        // Evaluate the quadratic function
+        timeForMoveMs = (- (a * (a - b) ) * scale / q ) + xmin + (double)incrementMs;
+    }
+
+    timeForMoveMs = std::max(timeForMoveMs, (double)xmin);
+    timeForMoveMs = std::min(timeForMoveMs, (double)timeLimitPerMoveMs);
+    const lli ans = (lli)timeForMoveMs;
+    GlobalLogger.TraceStream << std::format("[ INFO ] Time calculated for this move: {}", ans) << std::endl;
+    fileLogger.LogStream << std::format(",({}, {})", (double)(50-em), (double)timeForMoveMs) << std::flush;
+
+    assert(ans >= 0 && "Time for move must be positive");
+    assert(ans <= timeLimitPerMoveMs && "Time for move must be less than the time limit per move");
+    assert(ans <= timeLimitClockMs && "Time for move must be less than the time limit on the clock");
+    assert(ans >= xmin && "Time for move must be greater or equal to the min time per move");
+    assert(ans > 0 && "Time for move must be greater than 0");
+
+    return ans;
 }
