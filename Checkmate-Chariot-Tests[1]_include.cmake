@@ -1,0 +1,5 @@
+if(EXISTS "/home/wookie/Projects/Checkmate-Chariot/Checkmate-Chariot-Tests[1]_tests.cmake")
+  include("/home/wookie/Projects/Checkmate-Chariot/Checkmate-Chariot-Tests[1]_tests.cmake")
+else()
+  add_test(Checkmate-Chariot-Tests_NOT_BUILT Checkmate-Chariot-Tests_NOT_BUILT)
+endif()
