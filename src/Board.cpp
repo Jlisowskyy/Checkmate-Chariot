@@ -3,6 +3,7 @@
 //
 
 #include "../include/Board.h"
+#include "../include/Interface/Logger.h"
 
 #include <format>
 #include <iostream>
@@ -12,7 +13,7 @@ bool Board::Comp(const Board &a, const Board &b)
     for (int i = 0; i < 12; ++i)
         if (a.BitBoards[i] != b.BitBoards[i])
         {
-            std::cout << std::format("Invalid board: {}\n", i);
+            GlobalLogger.LogStream << std::format("Invalid board: {}\n", i);
             return false;
         }
 

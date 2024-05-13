@@ -10,8 +10,6 @@
 #include "../include/MoveGeneration/RookMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
 
-#include <cassert>
-
 bool ChessMechanics::IsCheck() const
 {
     [[maybe_unused]] const auto [unused1, checksCount, unused2] = GetBlockedFieldBitMap(GetFullBitMap());
@@ -30,7 +28,7 @@ uint64_t ChessMechanics::GetFullBitMap() const
 // Gets occupancy maps, which simply indicates wheter some field is occupied or not, by desired color figures.
 uint64_t ChessMechanics::GetColBitMap(const int col) const
 {
-    assert(col == 1 || col == 0);
+    TraceIfFalse(col == 1 || col == 0, "Invalid color!");
 
     uint64_t map = 0;
     for (size_t i = 0; i < Board::BitBoardsPerCol; ++i) map |= _board.BitBoards[Board::BitBoardsPerCol * col + i];
@@ -39,8 +37,8 @@ uint64_t ChessMechanics::GetColBitMap(const int col) const
 
 size_t ChessMechanics::GetIndexOfContainingBitBoard(uint64_t map, int col) const
 {
-    assert(col == 1 || col == 0);
-    assert(map != 0);
+    TraceIfFalse(col == 1 || col == 0, "Invalid color!");
+    TraceIfFalse(map != 0, "BitMap is empty!");
 
     const size_t range    = Board::BitBoardsPerCol * col + kingIndex;
     const size_t startInd = Board::BitBoardsPerCol * col;
@@ -70,7 +68,7 @@ size_t ChessMechanics::GetIndexOfContainingBitBoard(uint64_t map, int col) const
 
 std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldBitMap(uint64_t fullMap) const
 {
-    assert(fullMap != 0);
+    TraceIfFalse(fullMap != 0, "Full map is empty!");
 
     uint8_t checksCount{};
     uint8_t chT{};
@@ -153,7 +151,7 @@ uint64_t ChessMechanics::GetAllowedTilesWhenCheckedByNonSliding() const
 std::pair<uint64_t, uint8_t>
 ChessMechanics::_getRookBlockedMap(uint64_t rookMap, const uint64_t fullMapWoutKing, const uint64_t kingMap)
 {
-    assert(kingMap != 0);
+    TraceIfFalse(kingMap != 0, "King map is empty!");
 
     uint64_t blockedTiles{};
     uint8_t checks{};
@@ -166,7 +164,7 @@ ChessMechanics::_getRookBlockedMap(uint64_t rookMap, const uint64_t fullMapWoutK
         blockedTiles |= moves;
         checks += ((moves & kingMap) != 0);
 
-        rookMap ^= maxMsbPossible >> msbPos;
+        rookMap ^= MaxMsbPossible >> msbPos;
     }
 
     return {blockedTiles, checks};
@@ -174,8 +172,8 @@ ChessMechanics::_getRookBlockedMap(uint64_t rookMap, const uint64_t fullMapWoutK
 
 uint64_t ChessMechanics::GenerateAllowedTilesForPrecisedPinnedFig(const uint64_t figBoard, const uint64_t fullMap) const
 {
-    assert(fullMap != 0);
-    assert(CountOnesInBoard(figBoard) == 1);
+    TraceIfFalse(fullMap != 0, "Full map is empty!");
+    TraceIfFalse(CountOnesInBoard(figBoard) == 1, "Only one figure should be pinned!");
 
     const int msbPos         = ExtractMsbPos(figBoard);
     const uint64_t KingBoard = _board.BitBoards[_board.MovingColor * Board::BitBoardsPerCol + kingIndex];

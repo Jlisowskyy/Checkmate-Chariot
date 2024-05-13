@@ -11,29 +11,7 @@
 #include "../include/Interface/Logger.h"
 #include "../include/ParseTools.h"
 
-OpeningBook::OpeningBook(const std::string &bookPath, const bookFileType type)
-{
-    try
-    {
-        switch (type)
-        {
-        case bookFileType::binary:
-            _readBinaryBook(bookPath);
-            break;
-        case bookFileType::text_uci:
-            _readTextBook(bookPath);
-            break;
-        }
-        _isCorrectlyLoaded = true;
-    }
-    catch (const std::exception &exc)
-    {
-        GlobalLogger.LogStream << std::format(
-            "[ ERROR ] Book with path: {} was not correctly loaded due to following fact:\n\t{}\n", bookPath, exc.what()
-        );
-        _isCorrectlyLoaded = false;
-    }
-}
+OpeningBook::OpeningBook(const std::string &bookPath, const bookFileType type) { LoadBook(bookPath, type); }
 
 void OpeningBook::SaveToBinary([[maybe_unused]] const std::string &outputPath) const
 {

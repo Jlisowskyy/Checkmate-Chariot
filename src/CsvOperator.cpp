@@ -36,7 +36,7 @@ std::vector<std::pair<std::string, int>> CsvOperator::ReadPosDepthCsv(std::ifstr
         if (pos == 0)
             throw std::runtime_error("missing second argument: expected two values fen position and depth");
 
-        records.back().second = static_cast<int>(ParseTools::ParseTolli(innerBuf));
+        records.back().second = static_cast<int>(std::stoll(innerBuf));
     }
 
     return records;

@@ -4,11 +4,9 @@
 
 #include "../include/MoveGeneration/MoveGenerator.h"
 
-#include <cassert>
-
 std::map<std::string, uint64_t> MoveGenerator::GetCountedMoves(const int depth)
 {
-    assert(depth >= 1);
+    TraceIfFalse(depth >= 1, "Depth must be at least 1!");
 
     std::map<std::string, uint64_t> rv{};
 

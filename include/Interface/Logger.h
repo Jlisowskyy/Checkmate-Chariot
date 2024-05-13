@@ -10,6 +10,18 @@
 #include <memory>
 #include <mutex>
 
+#include "../EngineUtils.h"
+
+#define TraceWithInfo(msg)                                                                                             \
+    (GlobalLogger.TraceStream << std::format(                                                                          \
+         "[ When: {} ][ File: {}, line: {} ]{}\n", GetCurrentTimeStr(), GetFileName(__FILE__), __LINE__, msg           \
+     ))
+#define WrapTraceMsgError(msg) TraceWithInfo(std::format("[ TRACE ][ ERROR ] {}", msg))
+#define WrapTraceMsgInfo(msg)  TraceWithInfo(std::format("[ TRACE ][ INFO ] {}", msg))
+#define TraceIfFalse(cond, msg)                                                                                        \
+    if (!(cond))                                                                                                       \
+    WrapTraceMsgError(msg)
+
 /// <summary>
 /// Concept for types that allow streaming (i.e. can be used with std::ostream)
 /// </summary>
@@ -69,7 +81,7 @@ class [[maybe_unused]] Logger
     {
         public:
         TraceC(Logger &logger) : logger(logger) {}
-        template <Streamable T> TraceC &operator<<(const T &logMessage)
+        template <Streamable T> TraceC &INLINE operator<<(const T &logMessage)
         {
             logger.Trace(logMessage);
             return *this;
@@ -156,7 +168,7 @@ class [[maybe_unused]] Logger
             nextHandler->Log(logMessage);
     }
     /// <summary> Log a message if in DEBUG</summary>
-    template <Streamable T> void Trace(const T &logMessage)
+    template <Streamable T> void INLINE Trace([[maybe_unused]] const T &logMessage)
     {
 #ifndef NDEBUG
         if (loggingStream)
