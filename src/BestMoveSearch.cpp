@@ -14,17 +14,11 @@
 #include "../include/Search/ZobristHash.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
 
-#include "../include/ThreadManagement/GameTimeManager.h"
 
 static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 
 void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDepth, const bool writeInfo)
 {
-    // Generate unique hash for the board
-    const uint64_t zHash = ZHasher.GenerateHash(_board);
-    int32_t eval{};
-    int64_t avg{};
-
     // When the passed depth is 0, we need to evaluate the board statically
     if (maxDepth == 0)
     {
@@ -34,13 +28,18 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
         return;
     }
 
+    // Generate unique hash for the board
+    const uint64_t zHash = ZHasher.GenerateHash(_board);
+    int32_t eval{};
+    int64_t avg{};
+
+    // prepare pv buffers
+    PV pv{};
+    PV pvBuff{};
+
     // usual search path
     for (int32_t depth = 1; depth <= maxDepth; ++depth)
     {
-        // prepare pv buffers
-        PV pv{depth};
-        PV pvBuff{depth};
-
         // Search start time point
         [[maybe_unused]] auto timeStart = GameTimeManager::GetCurrentTime();
 
@@ -51,12 +50,16 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
 
         if (depth < 5)
         {
+            // set according depth inside the pv buffer
+            pv.SetDepth(depth);
+
             // cleaning tables used in previous iteration
             _kTable.ClearPlyFloor(depth);
             _histTable.ScaleTableDown();
 
             // performs the search without aspiration window to gather some initial statistics about the move
             eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, pv, true);
+            TraceIfFalse(pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // if there was call to abort then abort
             if (std::abs(eval) == TimeStopValue)
@@ -109,6 +112,8 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
 
             // Move the pv from the buffer to the main pv
             pv.Clone(pvBuff);
+
+            TraceIfFalse(pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // Update avg cumulating variable
             avg += depth * eval;
@@ -179,7 +184,12 @@ int BestMoveSearch::_pwsSearch(
     else if (!followPv || depthLeft == 1)
         _fetchBestMove(moves, 0);
     else
+    {
+        if (pv(depthLeft, _currRootDepth).IsEmpty())
+            pv.Print();
+
         _pullMoveToFront(moves, pv(depthLeft, _currRootDepth));
+    }
 
     // saving old params
     const auto oldCastlings = bd.Castlings;

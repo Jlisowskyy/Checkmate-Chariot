@@ -12,17 +12,62 @@
 #include "../Interface/Logger.h"
 #include "../ThreadManagement/Stack.h"
 
+/*
+ * Class defines our search algorithm.
+ * It uses PVS (Principal Variation Search) with aspiration windows combined with iterative deepening as a main framework.
+ * All is built in so call NegaMax framework.
+ *
+ * References:
+ * - PVS: https://www.chessprogramming.org/Principal_Variation_Search
+ * - PV PATH: https://www.chessprogramming.org/Principal_Variation
+ * - zero window search: https://www.chessprogramming.org/Null_Window
+ * - alpha-beta: https://www.chessprogramming.org/Alpha-Beta
+ * - aspiration windows: https://www.chessprogramming.org/Aspiration_Windows
+ * - iterative deepening: https://www.chessprogramming.org/Iterative_Deepening
+ * - Transposition table: https://www.chessprogramming.org/Transposition_Table
+ * - move ordering: https://www.chessprogramming.org/Move_Ordering
+ * - quiescence search: https://www.chessprogramming.org/Quiescence_Search
+ * - NegaMax: https://www.chessprogramming.org/Negamax, https://www.wikipedia.org/wiki/Negamax
+ *
+ *
+ * Other used features:
+ * - Transposition table
+ * - move ordering
+ * - quiescence search
+ * - pv saving and following
+ *
+ * Given 'depth' parameter defines how many layers should be searched more. When referring to depth in the code, that
+ * means that the search tree grows from bottom to top.
+ *
+ * When referring to ply search tree, it grows from top to bottom.
+ * */
+
 class BestMoveSearch
 {
     // ------------------------------
     // Class inner types
     // ------------------------------
 
+    /*
+     * Class defines container for Principal Variation path. That means the path of moves that are considered to be the
+     * best ones in the current position.
+     *
+     * It defines all necessary methods to work with the path.
+     *
+     * It stores the path in the array of PackedMoves and the depth of the path.
+     * All operations depend on the depth of the path stored internally.
+     *
+     * */
+
     struct PV
     {
-        PV() = delete;
+        PV() = default;
+        explicit PV(const int depth) : _depth(depth) {}
 
-        PV(const int depth) : _depth(depth) {}
+        /*
+         * Inserts the given move 'mv' as af first in the array and then pastes the rest of the other PV path 'pv',
+         * according to internal depth field.
+         * */
 
         void InsertNext(const PackedMove mv, const PV &pv)
         {
@@ -30,22 +75,50 @@ class BestMoveSearch
             memcpy(_path + 1, pv._path, (_depth - 1) * sizeof(PackedMove));
         }
 
-        void Clear() { memset(_path, 0, _depth * sizeof(PackedMove)); }
-
-        void Clone(const PV &pv) { memcpy(_path, pv._path, (_depth) * sizeof(PackedMove)); }
-
-        void Print() const
+        void SetDepth(const int depth)
         {
-            for (int i = 0; i < _depth; ++i) GlobalLogger.LogStream << _path[i].GetLongAlgebraicNotation() << ' ';
+            _depth = depth;
         }
 
+        /* Set a new depth and clears the path on that depth range */
+        void Clear(const int nDepth) {
+            SetDepth(nDepth);
+            memset(_path, 0, _depth * sizeof(PackedMove));
+        }
+
+        /* Clones the path from the given PV*/
+        void Clone(const PV &pv) {
+            _depth = pv._depth;
+            memcpy(_path, pv._path, (_depth) * sizeof(PackedMove));
+        }
+
+        /* Prints the path to the Logger */
+        void Print() const
+        {
+            std::string buff{};
+            for (int i = 0; i < _depth; ++i) buff += _path[i].GetLongAlgebraicNotation() + ' ';
+
+            GlobalLogger.LogStream << buff;
+        }
+
+        /* Debug function to check internal state of the PV */
+        [[nodiscard]] bool IsFilled() const
+        {
+            for (int i = 0; i < _depth; ++i)
+                if (_path[i].IsEmpty()) return false;
+
+            return true;
+        }
+
+        /* Returns the move on the given depth, with respect to given 'rootDepth' where depth is same as in search function */
         PackedMove operator()(const int depthLeft, const int rootDepth) const { return _path[rootDepth - depthLeft]; }
 
+        /* returns the move */
         PackedMove operator[](const int ply) const { return _path[ply]; }
 
         private:
         PackedMove _path[MaxSearchDepth + 1]{};
-        const int _depth;
+        int _depth{1};
     };
 
     public:
