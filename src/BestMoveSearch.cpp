@@ -12,6 +12,7 @@
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/Search/TranspositionTable.h"
 #include "../include/Search/ZobristHash.h"
+#include "../include/ThreadManagement/GameTimeManager.h"
 
 #include "../include/ThreadManagement/GameTimeManager.h"
 
@@ -23,8 +24,6 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
     const uint64_t zHash = ZHasher.GenerateHash(_board);
     int32_t eval{};
     int64_t avg{};
-
-    TTable.ClearTable();
 
     // When the passed depth is 0, we need to evaluate the board statically
     if (maxDepth == 0)
@@ -43,7 +42,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
         PV pvBuff{depth};
 
         // Search start time point
-        [[maybe_unused]] auto timeStart = std::chrono::steady_clock::now();
+        [[maybe_unused]] auto timeStart = GameTimeManager::GetCurrentTime();
 
         // preparing variables used to display statistics
         _currRootDepth = depth;
@@ -116,7 +115,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
         }
 
         // Search stop time point
-        [[maybe_unused]] auto timeStop = std::chrono::steady_clock::now();
+        [[maybe_unused]] auto timeStop = GameTimeManager::GetCurrentTime();
 
         // Saving first move from the PV as the best move
         *output = pv[0];
@@ -151,7 +150,7 @@ int BestMoveSearch::_pwsSearch(
     PackedMove bestMove{};
 
     // if we need to stop the search signal it
-    if (GameTimeManager::ShouldStop)
+    if (GameTimeManager::GetShouldStop())
         return TimeStopValue;
 
     // last depth static eval needed or prev pv node value
@@ -327,7 +326,7 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     PackedMove bestMove{};
 
     // if we need to stop the search signal it
-    if (GameTimeManager::ShouldStop)
+    if (GameTimeManager::GetShouldStop())
         return TimeStopValue;
 
     // last depth static eval needed or prev pv node value
@@ -428,7 +427,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     TraceIfFalse(beta > alpha, "Beta is not greater than alpha");
 
     // if we need to stop the search signal it
-    if (GameTimeManager::ShouldStop)
+    if (GameTimeManager::GetShouldStop())
         return TimeStopValue;
 
     int statEval;
@@ -536,7 +535,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     PackedMove bestMove{};
 
     // if we need to stop the search signal it
-    if (GameTimeManager::ShouldStop)
+    if (GameTimeManager::GetShouldStop())
         return TimeStopValue;
 
     ++_visitedNodes;

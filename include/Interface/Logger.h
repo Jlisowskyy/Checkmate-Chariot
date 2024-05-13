@@ -81,7 +81,7 @@ class [[maybe_unused]] Logger
     {
         public:
         TraceC(Logger &logger) : logger(logger) {}
-        template <Streamable T> TraceC &operator<<(const T &logMessage)
+        template <Streamable T> TraceC & INLINE operator<<(const T &logMessage)
         {
             logger.Trace(logMessage);
             return *this;
@@ -168,7 +168,7 @@ class [[maybe_unused]] Logger
             nextHandler->Log(logMessage);
     }
     /// <summary> Log a message if in DEBUG</summary>
-    template <Streamable T> void Trace(const T &logMessage)
+    template <Streamable T> void INLINE Trace([[maybe_unused]] const T &logMessage)
     {
 #ifndef NDEBUG
         if (loggingStream)

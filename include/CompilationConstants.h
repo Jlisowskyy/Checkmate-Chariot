@@ -21,6 +21,8 @@ static constexpr uint64_t MsesInNsec = 1000 * 1000;
 // ------------------------------
 // Platform specific defines for force inline attribute
 
+#ifndef PREVENT_FORCE_INLINE
+
 #ifdef _MSC_VER
 
 // MSVC specific force inline attribute
@@ -32,6 +34,8 @@ static constexpr uint64_t MsesInNsec = 1000 * 1000;
 #define INLINE __attribute__((always_inline))
 
 #endif
+
+#endif // PREVENT_FORCE_INLINE
 
 // ------------------------------
 // ------------------------------
