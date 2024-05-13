@@ -51,6 +51,10 @@ class [[maybe_unused]] GameTimeManager
     /// <summary> Stop the search management thread </summary>
     static void StopSearchManagement();
 
+    static auto GetCurrentTime() { return CurrentTime; }
+
+    static bool GetShouldStop() { return ShouldStop; }
+
     /// <summary> Calculate the time in milliseconds for a move </summary>
     [[maybe_unused]] static lli
     CalculateTimeMsPerMove(const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs,

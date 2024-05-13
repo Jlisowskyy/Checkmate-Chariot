@@ -4,9 +4,9 @@
 
 #include "../include/EngineUtils.h"
 
+#include <cstring>
 #include <format>
 
-#include "../include/BitOperations.h"
 #include "../include/Interface/Logger.h"
 
 const char IndexToFigCharMap[Board::BitBoardsCount]{
@@ -147,12 +147,10 @@ std::string ConvertToStrPos(const int boardPosMsb)
     return rv;
 }
 
-std::pair<char, char> ConvertToCharPos(const uint64_t boardMap) { return ConvertToCharPos(ExtractMsbPos(boardMap)); }
-
 std::string ConvertToStrPos(const uint64_t boardMap) { return ConvertToStrPos(ExtractMsbPos(boardMap)); }
 void *AlignedAlloc(const size_t alignment, const size_t size)
 {
-#ifdef _MSC_VER
+#ifdef __WIN32__
     return _aligned_malloc(size, alignment);
 #else
     return std::aligned_alloc(alignment, size);
@@ -166,5 +164,23 @@ void AlignedFree(void *ptr)
     std::free(ptr);
 #endif
 }
+
+std::string GetCurrentTimeStr()
+{
+    static constexpr size_t BuffSize = 128;
+    char buff[BuffSize]{};
+
+    auto tm = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::strftime(buff, BuffSize, "%H:%M:%S", std::localtime(&tm));
+
+    return std::string{buff};
+}
+
+const char *GetFileName(const char *path)
+{
+    const char *lastSlash = std::strrchr(path, SLASH);
+    return lastSlash == nullptr ? path : lastSlash + 1;
+}
+
 bool GoTimeInfo::IsColorTimeSet(int color) const { return color == WHITE ? wTime != NotSet : bTime != NotSet; }
 GoTimeInfo GoTimeInfo::GetInfiniteTime() { return GoTimeInfo{NotSet, NotSet, NotSet, NotSet, Infinite}; }

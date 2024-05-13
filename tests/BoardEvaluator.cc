@@ -20,3 +20,15 @@ TEST(BoardEvaluator, TapperedEvalHighLow)
     ASSERT_LT(BoardEvaluator::InterpGameStage(avgBoard, 0, maxEval), maxEval);
     ASSERT_GT(BoardEvaluator::InterpGameStage(avgBoard, 0, maxEval), 0);
 }
+
+TEST(BoardEvaluator, NeutralPosition)
+{
+    // Arrange
+    Board board = FenTranslator::GetDefault();
+
+    // Act
+    const int eval = BoardEvaluator::DefaultFullEvalFunction(board, board.MovingColor);
+
+    // Assert
+    ASSERT_EQ(eval, 0);
+}

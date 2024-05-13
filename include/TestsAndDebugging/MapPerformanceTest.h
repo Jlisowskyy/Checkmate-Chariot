@@ -75,7 +75,7 @@ double MapPerformanceTester::PerformTest(const std::string &filename, const MapT
             trulyNotRandomNumber += move;
 
             ++mapReads;
-            figureMap ^= maxMsbPossible >> msbPos;
+            figureMap ^= MaxMsbPossible >> msbPos;
         }
     }
 

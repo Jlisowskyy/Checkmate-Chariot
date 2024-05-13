@@ -88,7 +88,7 @@ void FileLogger::ChangeFile(const std::string &FileName, const std::ios_base::op
 
 StderrLogger::StderrLogger() { loggingStream = &std::cerr; }
 StdoutLogger::StdoutLogger() { loggingStream = &std::cout; }
-Logger::TraceC &Logger::TraceC::operator<<(Logger::streamFunction func)
+Logger::TraceC &Logger::TraceC::operator<<([[maybe_unused]] Logger::streamFunction func)
 {
 #ifndef NDEBUG
     logger << func;

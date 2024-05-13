@@ -75,7 +75,7 @@ struct KingMap
 
         for (const int field : fields)
         {
-            base |= minMsbPossible << field;
+            base |= MinMsbPossible << field;
         }
 
         std::array<uint64_t, 2> rv{};

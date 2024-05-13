@@ -4,7 +4,6 @@
 
 #include "../include/Search/BestMoveSearch.h"
 
-#include <cassert>
 #include <chrono>
 #include <format>
 #include <vector>
@@ -13,18 +12,12 @@
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/Search/TranspositionTable.h"
 #include "../include/Search/ZobristHash.h"
-
 #include "../include/ThreadManagement/GameTimeManager.h"
 
 static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 
 void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDepth, const bool writeInfo)
 {
-    // Generate unique hash for the board
-    const uint64_t zHash = ZHasher.GenerateHash(_board);
-    int32_t eval{};
-    int64_t avg{};
-
     // When the passed depth is 0, we need to evaluate the board statically
     if (maxDepth == 0)
     {
@@ -34,15 +27,19 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
         return;
     }
 
+    // Generate unique hash for the board
+    const uint64_t zHash = ZHasher.GenerateHash(_board);
+    int32_t eval{};
+    int64_t avg{};
+
+    // prepare pv buffer
+    PV pvBuff{};
+
     // usual search path
     for (int32_t depth = 1; depth <= maxDepth; ++depth)
     {
-        // prepare pv buffers
-        PV pv{depth};
-        PV pvBuff{depth};
-
         // Search start time point
-        [[maybe_unused]] auto timeStart = std::chrono::steady_clock::now();
+        [[maybe_unused]] auto timeStart = GameTimeManager::GetCurrentTime();
 
         // preparing variables used to display statistics
         _currRootDepth = depth;
@@ -51,15 +48,19 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
 
         if (depth < 5)
         {
+            // set according depth inside the pv buffer
+            _pv.SetDepth(depth);
+
             // cleaning tables used in previous iteration
             _kTable.ClearPlyFloor(depth);
             _histTable.ScaleTableDown();
 
             // performs the search without aspiration window to gather some initial statistics about the move
-            eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, pv, true);
+            eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, _pv, true);
+            TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // if there was call to abort then abort
-            if (eval == TimeStopValue)
+            if (std::abs(eval) == TimeStopValue)
                 return;
 
             // saving the move evaluation to the avg value
@@ -74,6 +75,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
             int32_t delta           = InitialAspWindowDelta;
             int32_t alpha           = averageScore - delta;
             int32_t beta            = averageScore + delta;
+            pvBuff.SetDepth(depth);
 
             // TODO: add some kind of logging inside the debug mode
             // Aspiration window loop
@@ -85,13 +87,10 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
                 _kTable.ClearPlyFloor(depth);
                 _histTable.ScaleTableDown();
 
-                // cleaning pv in case of retries
-                pvBuff.Clone(pv);
-
                 eval = _pwsSearch(_board, alpha, beta, depth, zHash, {}, pvBuff, true);
 
                 // if there was call to abort then abort
-                if (eval == TimeStopValue)
+                if (std::abs(eval) == TimeStopValue)
                     return;
 
                 if (eval <= alpha)
@@ -108,22 +107,24 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
             }
 
             // Move the pv from the buffer to the main pv
-            pv.Clone(pvBuff);
+            _pv.Clone(pvBuff);
+
+            TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // Update avg cumulating variable
             avg += depth * eval;
         }
 
         // Search stop time point
-        [[maybe_unused]] auto timeStop = std::chrono::steady_clock::now();
+        [[maybe_unused]] auto timeStop = GameTimeManager::GetCurrentTime();
 
         // Saving first move from the PV as the best move
-        *output = pv[0];
+        *output = _pv[0];
 
         // Log info if necessary
         if (writeInfo)
         {
-            const uint64_t spentMs  = std::max(static_cast<uint64_t>(1), (timeStop - timeStart).count() / msescInNsec);
+            const uint64_t spentMs  = std::max(static_cast<uint64_t>(1), (timeStop - timeStart).count() / MsesInNsec);
             const uint64_t nps      = 1000LLU * _visitedNodes / spentMs;
             const double cutOffPerc = static_cast<double>(_cutoffNodes) / static_cast<double>(_visitedNodes);
 
@@ -133,7 +134,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
                 output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
-            pv.Print();
+            _pv.Print();
             GlobalLogger.LogStream << std::endl;
         }
     }
@@ -144,13 +145,13 @@ int BestMoveSearch::_pwsSearch(
     bool followPv
 )
 {
-    assert(alpha < beta);
+    TraceIfFalse(alpha < beta, "Alpha is not less than beta");
 
     nodeType nType = upperBound;
     PackedMove bestMove{};
 
     // if we need to stop the search signal it
-    if (GameTimeManager::ShouldStop)
+    if (GameTimeManager::GetShouldStop())
         return TimeStopValue;
 
     // last depth static eval needed or prev pv node value
@@ -179,7 +180,7 @@ int BestMoveSearch::_pwsSearch(
     else if (!followPv || depthLeft == 1)
         _fetchBestMove(moves, 0);
     else
-        _pullMoveToFront(moves, pv(depthLeft, _currRootDepth));
+        _pullMoveToFront(moves, _pv(depthLeft, _currRootDepth));
 
     // saving old params
     const auto oldCastlings = bd.Castlings;
@@ -194,8 +195,8 @@ int BestMoveSearch::_pwsSearch(
     int bestEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[0], inPV, followPv);
 
     // if there was call to abort then abort
-    if (bestEval == TimeStopValue)
-        return bestEval;
+    if (std::abs(bestEval) == TimeStopValue)
+        return TimeStopValue;
 
     zHash = ZHasher.UpdateHash(zHash, moves[0], oldElPassant, oldCastlings);
     Move::UnmakeMove(moves[0], bd, oldCastlings, oldElPassant);
@@ -249,8 +250,8 @@ int BestMoveSearch::_pwsSearch(
         int moveEval = -_zwSearch(bd, -alpha - 1, depthLeft - 1, zHash, moves[i]);
 
         // if there was call to abort then abort
-        if (moveEval == TimeStopValue)
-            return moveEval;
+        if (std::abs(moveEval) == TimeStopValue)
+            return TimeStopValue;
 
         // if not, research move
         if (alpha < moveEval && moveEval < beta)
@@ -260,8 +261,8 @@ int BestMoveSearch::_pwsSearch(
             moveEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV, false);
 
             // if there was call to abort then abort
-            if (moveEval == TimeStopValue)
-                return moveEval;
+            if (std::abs(moveEval) == TimeStopValue)
+                return TimeStopValue;
 
             if (moveEval > bestEval)
             {
@@ -309,7 +310,10 @@ int BestMoveSearch::_pwsSearch(
         TTable.Add(record, zHash);
     }
 
-    assert(nType != pvNode || bestMove.IsOkeyMove());
+    TraceIfFalse(
+        nType != pvNode || bestMove.IsOkeyMove(),
+        "When the node fails low there should be no best move (null move), otherwise we expect the node to be PV one"
+    );
 
     return bestEval;
 }
@@ -323,7 +327,7 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     PackedMove bestMove{};
 
     // if we need to stop the search signal it
-    if (GameTimeManager::ShouldStop)
+    if (GameTimeManager::GetShouldStop())
         return TimeStopValue;
 
     // last depth static eval needed or prev pv node value
@@ -378,8 +382,8 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
         const int moveEval = -_zwSearch(bd, -beta, depthLeft - 1, zHash, moves[i]);
 
         // if there was call to abort then abort
-        if (moveEval == TimeStopValue)
-            return moveEval;
+        if (std::abs(moveEval) == TimeStopValue)
+            return TimeStopValue;
 
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
@@ -421,10 +425,10 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
 
 int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint64_t zHash)
 {
-    assert(beta > alpha);
+    TraceIfFalse(beta > alpha, "Beta is not greater than alpha");
 
     // if we need to stop the search signal it
-    if (GameTimeManager::ShouldStop)
+    if (GameTimeManager::GetShouldStop())
         return TimeStopValue;
 
     int statEval;
@@ -486,8 +490,8 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         const int moveValue = -_quiescenceSearch(bd, -beta, -alpha, zHash);
 
         // if there was call to abort then abort
-        if (moveValue == TimeStopValue)
-            return moveValue;
+        if (std::abs(moveValue) == TimeStopValue)
+            return TimeStopValue;
 
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
@@ -532,7 +536,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     PackedMove bestMove{};
 
     // if we need to stop the search signal it
-    if (GameTimeManager::ShouldStop)
+    if (GameTimeManager::GetShouldStop())
         return TimeStopValue;
 
     ++_visitedNodes;
@@ -599,8 +603,8 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         const int moveValue = -_zwQuiescenceSearch(bd, -beta, zHash);
 
         // if there was call to abort then abort
-        if (moveValue == TimeStopValue)
-            return moveValue;
+        if (std::abs(moveValue) == TimeStopValue)
+            return TimeStopValue;
 
         Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
         zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
@@ -647,7 +651,7 @@ void BestMoveSearch::_embeddedMoveSort(MoveGenerator::payload moves, const size_
 
 void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const PackedMove mv)
 {
-    // assert(mv.IsOkeyMove());
+    TraceIfFalse(mv.IsOkeyMove(), "Given move to find is a null move!");
 
     // preparing sentinel
     const Move sentinelOld = moves.data[moves.size];
@@ -664,7 +668,7 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Packed
     if (ind != moves.size)
         std::swap(moves.data[ind], moves.data[0]);
 
-    assert(ind != moves.size);
+    TraceIfFalse(ind != moves.size, "Move stored inside the TT was not found in the moves list!");
 }
 
 void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t targetPos)
@@ -682,7 +686,10 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
     }
 
     std::swap(moves.data[maxInd], moves.data[targetPos]);
-    assert(maxInd == targetPos || moves.data[targetPos].GetEval() >= moves.data[targetPos + 1].GetEval());
+    TraceIfFalse(
+        maxInd == targetPos || moves.data[targetPos].GetEval() >= moves.data[targetPos + 1].GetEval(),
+        "Move sorting failed!"
+    );
 }
 
 int BestMoveSearch::_getMateValue(const int depthLeft) const

@@ -48,7 +48,7 @@ uint64_t ZobristHasher::GenerateHash(const Board &board) const
         {
             const int boardMapPos = ExtractMsbPos(boardMap);
             hash ^= _mainHashes[boardInd][boardMapPos];
-            boardMap ^= maxMsbPossible >> boardMapPos;
+            boardMap ^= MaxMsbPossible >> boardMapPos;
         }
     }
 

@@ -8,10 +8,7 @@
 
 #include <format>
 
-SearchThreadManager::~SearchThreadManager()
-{
-    for (const auto thread : _threads) delete thread;
-}
+SearchThreadManager::~SearchThreadManager() { Consolidate(); }
 bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
 {
     // ensuring only one search is running at a time
@@ -22,8 +19,10 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
     GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd, age);
 
     // Running up the searching worker
-    _threads[0] =
-        new std::thread(_threadSearchJob, &bd, &_stacks[0], &_isSearchOn, age, std::min(info.depth, MaxSearchDepth));
+    _threads[MainSearchThreadInd] = new std::thread(
+        _threadSearchJob, &bd, &_stacks[MainSearchThreadInd], &_isSearchOn, age, std::min(info.depth, MaxSearchDepth)
+    );
+    WrapTraceMsgInfo("Search thread started");
 
     // Signaling success
     return true;
@@ -46,9 +45,10 @@ void SearchThreadManager::Stop()
     // signaling forced abortion
     GameTimeManager::StopSearchManagement();
 
-    _threads[0]->join(); // waiting for the main search thread to finish
-    delete _threads[0];
-    _threads[0] = nullptr;
+    _threads[MainSearchThreadInd]->join(); // waiting for the main search thread to finish
+    delete _threads[MainSearchThreadInd];
+    _threads[MainSearchThreadInd] = nullptr;
+    WrapTraceMsgInfo("Search thread stopped successfully");
 }
 
 void SearchThreadManager::_threadSearchJob(
@@ -63,4 +63,15 @@ void SearchThreadManager::_threadSearchJob(
 
     GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation()) << std::endl;
     *guard = false;
+}
+void SearchThreadManager::Consolidate()
+{
+    if (_threads[MainSearchThreadInd] != nullptr)
+    {
+        _threads[MainSearchThreadInd]->join();
+        delete _threads[MainSearchThreadInd];
+        _threads[MainSearchThreadInd] = nullptr;
+    }
+
+    WrapTraceMsgInfo("Thread manager consolidated successfully");
 }
