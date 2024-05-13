@@ -472,7 +472,7 @@ UCITranslator::UCICommand UCITranslator::_calculateTimePerMove(const std::string
 
     lli timePerMove = GameTimeManager::CalculateTimeMsPerMove(board, timeLimitClockMs, timeLimitPerMoveMs, incrementMs, age);
 
-    GlobalLogger.TraceStream << "[ INFO ] Time per move: " << timePerMove << std::endl;
+    GlobalLogger.LogStream << "Calculated time per move:" << timePerMove << std::endl;
     timePerMoveLogger.LogStream << timePerMove << std::endl;
 
     return UCITranslator::UCICommand::debugCommand;
