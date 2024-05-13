@@ -76,6 +76,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
             int32_t delta           = InitialAspWindowDelta;
             int32_t alpha           = averageScore - delta;
             int32_t beta            = averageScore + delta;
+            pvBuff.SetDepth(depth);
 
             // TODO: add some kind of logging inside the debug mode
             // Aspiration window loop
@@ -86,9 +87,6 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
                 // cleaning tables used in previous iterations
                 _kTable.ClearPlyFloor(depth);
                 _histTable.ScaleTableDown();
-
-                // cleaning pv in case of retries
-                pvBuff.Clone(_pv);
 
                 eval = _pwsSearch(_board, alpha, beta, depth, zHash, {}, pvBuff, true);
 
@@ -183,12 +181,7 @@ int BestMoveSearch::_pwsSearch(
     else if (!followPv || depthLeft == 1)
         _fetchBestMove(moves, 0);
     else
-    {
-        if (_pv(depthLeft, _currRootDepth).IsEmpty())
-            _pv.Print();
-
         _pullMoveToFront(moves, _pv(depthLeft, _currRootDepth));
-    }
 
     // saving old params
     const auto oldCastlings = bd.Castlings;
