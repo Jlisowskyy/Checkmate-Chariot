@@ -10,6 +10,7 @@
 #include "../include/ParseTools.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/TestsAndDebugging/SearchPerfTester.h"
+#include "../include/Search/ZobristHash.h"
 
 UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream &input)
 {
@@ -51,6 +52,7 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         {     "clear",        &UCITranslator::_clearConsole},
         {     "clean",        &UCITranslator::_clearConsole},
         {       "cls",        &UCITranslator::_clearConsole},
+        {        "zv",        &UCITranslator::_searchZobrist}
     };
 
     std::string workStr;
@@ -236,6 +238,7 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
         "                \"input file\" must be containg csv records in given manner: \"fen position\", \"depth\"\n"
         "- go searchPerf \"input file \" \"output file \" - runs straight alpha beta prunning performance tests "
         "               on the framework.\n"
+        "- zv \"bitDiffs\" - searches for seed with given bit differences guaranteed.\n\n\n"
         "Where \"depth\" is integer value indicating layers of traversed move tree.\n\n\n"
         "Additional notes:\n"
         "   - \"go file / \" - will run tests on singlePos.csv\n"
@@ -444,4 +447,15 @@ size_t UCITranslator::_msTimeParser(const std::string &str, size_t pos, lli &out
     pos = ParseTools::ExtractNextNumeric<lli, convert>(str, pos, out);
 
     return out < 1 ? ParseTools::InvalidNextWorldRead : pos;
+}
+UCITranslator::UCICommand UCITranslator::_searchZobrist(const std::string &str)
+{
+    int bitDiffs;
+    if (_intParser(str, 0, bitDiffs) == ParseTools::InvalidNextWorldRead)
+        return UCICommand::InvalidCommand;
+
+    [[maybe_unused]] auto _ =
+        ZobristHasher::SearchForSeed(ZobristHasher::BaseSeed, bitDiffs, Debug);
+
+    return UCITranslator::UCICommand::isreadyCommand;
 }

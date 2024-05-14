@@ -119,18 +119,19 @@ bool ZobristHasher::ValidateQuality(const int diffBits, bool log) const {
 
     return true;
 }
-uint64_t ZobristHasher::SearchForSeed(const uint64_t startSeed, const int bitDiffs, bool log) {
+
+uint64_t ZobristHasher::SearchForSeed(const uint64_t startSeed, const int bitDiffs, const bool log) {
     std::mt19937_64 randEngine{static_cast<uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
     uint64_t seed = startSeed;
 
     for (int triesLeft = MaxRetries; triesLeft > 0; --triesLeft)
     {
-        GlobalLogger.LogStream << std::format("Starting test on seed: {}", seed) << std::endl;
+        if (log) GlobalLogger.LogStream << std::format("Starting test on seed: {}", seed) << std::endl;
         ZobristHasher hasher{seed};
 
         if (hasher.ValidateQuality(bitDiffs, log))
         {
-            if (log) GlobalLogger.LogStream << std::format("Seed found: {}", seed) << std::endl;
+            GlobalLogger.LogStream << std::format("Seed found: {}", seed) << std::endl;
             return seed;
         }
 

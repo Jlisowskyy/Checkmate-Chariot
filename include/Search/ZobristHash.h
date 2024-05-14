@@ -69,7 +69,7 @@ struct ZobristHasher
     // ------------------------------
     public:
     static constexpr uint64_t BaseSeed = 0x194814141LLU;
-    static constexpr int MaxRetries = 1000;
+    static constexpr int MaxRetries = MinMsbPossible << 24;
 
     private:
     static constexpr size_t CastlingHashesCount = 32; // 2^(4 + 1) each castling property can be either 1 or 0
