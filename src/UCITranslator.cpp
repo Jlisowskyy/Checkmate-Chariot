@@ -54,7 +54,7 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         {     "clean",         &UCITranslator::_clearConsole},
         {       "cls",         &UCITranslator::_clearConsole},
         {      "ctpm", &UCITranslator::_calculateTimePerMove}, // Calculate time per move
-        {        "zv",       &UCITranslator::_searchZobrist},
+        {        "zv",        &UCITranslator::_searchZobrist},
     };
 
     std::string workStr;
@@ -511,6 +511,7 @@ UCITranslator::UCICommand UCITranslator::_calculateTimePerMove(const std::string
     timePerMoveLogger.LogStream << timePerMove << std::endl;
 
     return UCITranslator::UCICommand::debugCommand;
+}
 
 UCITranslator::UCICommand UCITranslator::_searchZobrist(const std::string &str)
 {
@@ -521,5 +522,4 @@ UCITranslator::UCICommand UCITranslator::_searchZobrist(const std::string &str)
     [[maybe_unused]] auto _ = ZobristHasher::SearchForSeed(ZobristHasher::BaseSeed, bitDiffs, Debug);
 
     return UCITranslator::UCICommand::isreadyCommand;
-
 }
