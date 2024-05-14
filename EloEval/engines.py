@@ -1,5 +1,6 @@
 exes_path = 'ReferenceEngines/Exes'
 installers_path = 'ReferenceEngines/DownloadScripts'
+elo_eval_path = 'EloEval'
 
 # it is assumed all installers and exes have the same name as provided here
 ext_engines = {
