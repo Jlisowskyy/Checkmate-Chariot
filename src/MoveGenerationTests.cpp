@@ -92,7 +92,7 @@ void MoveGenerationTester::PerformDeepTest(
         std::string moveString{};
         for (const auto &move : innerMoves) moveString += move + ' ';
 
-        GlobalLogger.LogStream << std::format("\tReady pos command:\n\tposition startpos moves {}\n", moveString);
+        GlobalLogger.LogStream << std::format("\tReady pos command:\n\tposition fen {} moves {}\n", fenPosition, moveString);
     }
 }
 
@@ -414,7 +414,7 @@ void MoveGenerationTester::_spawnEngine(const int *const inPipeFileDesc, const i
     close(outPipeFileDesc[WritePipe]);
     close(inPipeFileDesc[ReadPipe]);
 
-    // executing desired enginef
+    // executing desired engine
     execl(_enginePath.c_str(), "stockfish", nullptr);
 }
 

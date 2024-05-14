@@ -101,6 +101,8 @@ void DisplayBoard(const Board &bd)
         GlobalLogger.LogStream << castlingNames[i] << ": " << bd.Castlings[i] << std::endl;
     }
 
+    DisplayMask(bd.ElPassantField);
+
     GlobalLogger.LogStream << "El passant field: "
                            << (bd.ElPassantField == Board::InvalidElPassantBitBoard
                                    ? "-"
@@ -140,7 +142,7 @@ std::pair<char, char> ConvertToCharPos(const int boardPosMsb)
 std::string ConvertToStrPos(const int boardPosMsb)
 {
     static constexpr size_t PosStrSize = 2;
-    std::string rv{PosStrSize};
+    std::string rv = "xx";
     auto [c1, c2] = ConvertToCharPos(boardPosMsb);
     rv[0]         = c1;
     rv[1]         = c2;
