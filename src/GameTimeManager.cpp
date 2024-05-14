@@ -207,7 +207,7 @@ lli GameTimeManager::CalculateTimeMsPerMove(const Board &bd, const lli timeLimit
     if (timeLimitClockMs <= 10) {
         // For really short time limits just divide the time left by the expected moves
         timeForMoveMs = (double)timeLimitClockMs / (double)em;
-        timeForMoveMs = timeForMoveMs < 1 ? 1 : timeForMoveMs;
+        timeForMoveMs = timeForMoveMs + incrementMs < 1 ? 1 : timeForMoveMs;
         GlobalLogger.TraceStream << std::format("[ INFO ] Time is really short, calculating with: 'time left divided by expected moves': {} \n", timeForMoveMs);
 
     } else {
