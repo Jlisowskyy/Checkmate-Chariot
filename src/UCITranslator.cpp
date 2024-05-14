@@ -11,6 +11,7 @@
 #include "../include/Search/ZobristHash.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/TestsAndDebugging/SearchPerfTester.h"
+#include "../include/ThreadManagement/GameTimeManagerUtils.h"
 
 UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream &input)
 {
@@ -35,24 +36,25 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
 {
     using funcT = UCICommand (UCITranslator::*)(const std::string &);
     static std::unordered_map<std::string, funcT> CommandBuff{
-        {       "uci",         &UCITranslator::_uciResponse},
-        {   "isready",     &UCITranslator::_isReadyResponse},
-        { "setoption",   &UCITranslator::_setoptionResponse},
-        {"ucinewgame",  &UCITranslator::_ucinewgameResponse},
-        {  "position",    &UCITranslator::_positionResponse},
-        {        "go",          &UCITranslator::_goResponse},
-        {      "stop",        &UCITranslator::_stopResponse},
-        {      "quit",        &UCITranslator::_quitResponse},
-        {      "exit",        &UCITranslator::_quitResponse},
-        {         "d",     &UCITranslator::_displayResponse},
-        {   "display",     &UCITranslator::_displayResponse},
-        {      "disp",     &UCITranslator::_displayResponse},
-        {       "fen",  &UCITranslator::_displayFenResponse},
-        {      "help", &UCITranslator::_displayHelpResponse},
-        {     "clear",        &UCITranslator::_clearConsole},
-        {     "clean",        &UCITranslator::_clearConsole},
-        {       "cls",        &UCITranslator::_clearConsole},
-        {        "zv",       &UCITranslator::_searchZobrist}
+        {       "uci",          &UCITranslator::_uciResponse},
+        {   "isready",      &UCITranslator::_isReadyResponse},
+        { "setoption",    &UCITranslator::_setoptionResponse},
+        {"ucinewgame",   &UCITranslator::_ucinewgameResponse},
+        {  "position",     &UCITranslator::_positionResponse},
+        {        "go",           &UCITranslator::_goResponse},
+        {      "stop",         &UCITranslator::_stopResponse},
+        {      "quit",         &UCITranslator::_quitResponse},
+        {      "exit",         &UCITranslator::_quitResponse},
+        {         "d",      &UCITranslator::_displayResponse},
+        {   "display",      &UCITranslator::_displayResponse},
+        {      "disp",      &UCITranslator::_displayResponse},
+        {       "fen",   &UCITranslator::_displayFenResponse},
+        {      "help",  &UCITranslator::_displayHelpResponse},
+        {     "clear",         &UCITranslator::_clearConsole},
+        {     "clean",         &UCITranslator::_clearConsole},
+        {       "cls",         &UCITranslator::_clearConsole},
+        {      "ctpm", &UCITranslator::_calculateTimePerMove}, // Calculate time per move
+        {        "zv",        &UCITranslator::_searchZobrist},
     };
 
     std::string workStr;
@@ -448,6 +450,69 @@ size_t UCITranslator::_msTimeParser(const std::string &str, size_t pos, lli &out
 
     return out < 1 ? ParseTools::InvalidNextWorldRead : pos;
 }
+
+UCITranslator::UCICommand UCITranslator::_calculateTimePerMove(const std::string &str)
+{
+    static FileLogger timePerMoveLogger("timePerMove.log");
+
+    static std::unordered_map<std::string, size_t (*)(const std::string &, size_t, lli &)> params{
+        {"movetime", &_msTimeParser},
+        {    "binc", &_msTimeParser},
+        {    "winc", &_msTimeParser},
+        {   "btime", &_msTimeParser},
+        {   "wtime", &_msTimeParser},
+    };
+
+    GoTimeInfo info{};
+    std::string workStr{};
+    size_t pos = 0;
+
+    std::unordered_map<std::string, lli *> infoArgs{
+        {   "wtime",    &info.wTime},
+        {   "btime",    &info.bTime},
+        {    "winc",     &info.wInc},
+        {    "binc",     &info.bInc},
+        {"movetime", &info.moveTime},
+    };
+
+    // Parse all parameters
+    while ((pos = ParseTools::ExtractNextWord(str, workStr, pos)) != ParseTools::InvalidNextWorldRead)
+    {
+        // Check if parameter is valid
+        if (auto iter = params.find(workStr); iter != params.end())
+        {
+            pos = (*(iter->second))(str, pos, *infoArgs[workStr]);
+
+            // Check whether process was successful
+            if (pos == ParseTools::InvalidNextWorldRead)
+                return UCICommand::InvalidCommand;
+        }
+        else
+            // if not simply stop parsing and proceed to performing search
+            break;
+    }
+
+    Board board  = _engine.GetUnderlyingBoardCopy();
+    uint16_t age = _engine.GetAge();
+
+    auto [timeLimitClockMs, timeLimitPerMoveMs, incrementMs] =
+        GameTimeManagerUtils::ParseGoTimeInfo(info, (Color)_engine.GetMovingColor());
+    if (timeLimitClockMs == GoTimeInfo::Infinite && timeLimitPerMoveMs == GoTimeInfo::Infinite)
+        return UCICommand::InvalidCommand;
+
+    GlobalLogger.TraceStream << "[ INFO ] Time limit clock: " << timeLimitClockMs << std::endl;
+    GlobalLogger.TraceStream << "[ INFO ] Time limit per move: " << timeLimitPerMoveMs << std::endl;
+    GlobalLogger.TraceStream << "[ INFO ] Increment: " << incrementMs << std::endl;
+
+    lli timePerMove =
+        GameTimeManager::CalculateTimeMsPerMove(board, timeLimitClockMs, timeLimitPerMoveMs, incrementMs, age);
+
+    GlobalLogger.LogStream << "Calculated time per move:" << timePerMove << std::endl;
+    timePerMoveLogger.LogStream << timePerMove << std::endl;
+
+    return UCITranslator::UCICommand::debugCommand;
+}
+
 UCITranslator::UCICommand UCITranslator::_searchZobrist(const std::string &str)
 {
     int bitDiffs;

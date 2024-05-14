@@ -34,6 +34,19 @@ def largest_power_of_2_less_than(x):
 
 
 def run_tests(engines: dict[str, int], each_options, game_options, resign_options, output_options):
+    # check if we are in the correct directory (EloEval or ../EloEval)
+    # if in EloEval, change directory to root
+    if os.path.basename(os.getcwd()) == 'EloEval':
+        os.chdir('../')
+
+    # check if the EloEval folder exists
+    if not os.path.exists(f'{e.elo_eval_path}'):
+        print('EloEval folder not found, please run this script from the root or EloEval folder of the repository.')
+        return
+
+    # install things from EloEval folder
+    os.chdir(f'{e.elo_eval_path}')
+
     # check if c-chess-cli exists
     if not os.path.exists('c-chess-cli'):
         # run c-chess-cli installer
@@ -61,15 +74,17 @@ def run_tests(engines: dict[str, int], each_options, game_options, resign_option
     for engine in engines:
         print(f'\t{engine} ({engines[engine]})')
 
-    # run tests
+    # go back to root
+    os.chdir('../')
 
+    # run tests
     engine_options = ''
     # add main engine
-    engine_options += f' -engine cmd=../Checkmate-Chariot name=Checkmate-Chariot'
+    engine_options += f' -engine cmd=./Checkmate-Chariot name=Checkmate-Chariot'
 
     # add external engines
     for engine in engines:
-        engine_options += f' -engine cmd={e.exes_path}/{engine} name={engine}'
+        engine_options += f' -engine cmd={e.elo_eval_path}/{e.exes_path}/{engine} name={engine}'
 
-    print(f'./c-chess-cli {each_options} {game_options} {resign_options} {output_options} {engine_options}')
-    os.system(f'./c-chess-cli {each_options} {game_options} {resign_options} {output_options} {engine_options}')
+    print(f'./{e.elo_eval_path}/c-chess-cli {each_options} {game_options} {resign_options} {output_options} {engine_options}')
+    os.system(f'./{e.elo_eval_path}/c-chess-cli {each_options} {game_options} {resign_options} {output_options} {engine_options}')

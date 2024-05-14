@@ -10,7 +10,6 @@
 
 #include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
-#include "../cmakeDefines.h"
 #include "Stack.h"
 
 struct SearchThreadManager

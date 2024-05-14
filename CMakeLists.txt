@@ -115,6 +115,8 @@ set(CHECKMATE_CHARIOT_SOURCES
         src/CounterMoveTable.cpp
         include/ThreadManagement/GameTimeManager.h
         src/GameTimeManager.cpp
+        include/ThreadManagement/GameTimeManagerUtils.h
+        src/GameTimeManagerUtils.cpp
 )
 
 # Create a library with the core functionality

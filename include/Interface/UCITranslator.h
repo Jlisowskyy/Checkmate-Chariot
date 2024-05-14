@@ -6,6 +6,7 @@
 #define UCITRANSLATOR_H
 
 #include "../Engine.h"
+#include "../ThreadManagement/GameTimeManager.h"
 
 /*
  *                  ADDITIONAL NOTES
@@ -62,6 +63,7 @@ class UCITranslator
         quitCommand,
         displayCommand,
         helpCommand,
+        debugCommand,
     };
 
     // ------------------------------
@@ -92,6 +94,8 @@ class UCITranslator
     // ------------------------------
     // Command response methods
     // ------------------------------
+
+    UCICommand _calculateTimePerMove(const std::string &unused);
 
     /* "stop" implementation */
     UCICommand _stopResponse([[maybe_unused]] const std::string &unused);

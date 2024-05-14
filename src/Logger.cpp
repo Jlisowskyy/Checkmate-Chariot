@@ -71,22 +71,23 @@ Logger &Logger::operator<<(Logger::streamFunction func)
     return *this;
 }
 
-FileLogger::FileLogger(const std::string &FileName) { ChangeFile(FileName); }
+FileLogger::FileLogger(const std::string &FileName, std::ios_base::openmode mode) { ChangeFile(FileName, mode); }
 
-void FileLogger::ChangeFile(const std::string &FileName)
+void FileLogger::ChangeFile(const std::string &FileName, const std::ios_base::openmode mode)
 {
     if (loggingFileStream && loggingFileStream.is_open())
         loggingFileStream.close();
 
-    loggingFileStream = std::ofstream{FileName};
+    loggingFileStream = std::ofstream{FileName, mode};
     loggingStream     = &loggingFileStream;
     assert(loggingFileStream && "FileLogger: Unable to open file for logging");
 }
+
 StderrLogger::StderrLogger() { loggingStream = &std::cerr; }
 StdoutLogger::StdoutLogger() { loggingStream = &std::cout; }
 Logger::TraceC &Logger::TraceC::operator<<([[maybe_unused]] Logger::streamFunction func)
 {
-#ifdef NDEBUG
+#ifndef NDEBUG
     logger << func;
 #endif
     return *this;
