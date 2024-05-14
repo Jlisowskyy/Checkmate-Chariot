@@ -65,10 +65,7 @@ constexpr uint64_t ClearAFromIntersectingBits(const uint64_t a, const uint64_t b
 constexpr int CountOnesInBoard(const uint64_t bitMap) { return std::popcount(bitMap); }
 
 /* Count same bits */
-constexpr int CountSameBits(const uint64_t a, const uint64_t b)
-{
-    return std::popcount((a & b) | ((~a) & (~b)));
-}
+constexpr int CountSameBits(const uint64_t a, const uint64_t b) { return std::popcount((a & b) | ((~a) & (~b))); }
 
 /*          IMPORTANT NOTES:
  *  Function assumes that containerPos is already set to 1

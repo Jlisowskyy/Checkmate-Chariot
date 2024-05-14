@@ -59,17 +59,17 @@ struct ZobristHasher
     // ------------------------------
 
     private:
-
-    [[nodiscard]] static bool _validateNum(uint64_t a, uint64_t b, int diffBits, int& sameCount, bool log = false);
+    [[nodiscard]] static bool _validateNum(uint64_t a, uint64_t b, int diffBits, int &sameCount, bool log = false);
 
     [[nodiscard]] bool _validateCase(uint64_t num, int diffBits, bool log = false) const;
 
     // ------------------------------
     // Class fields
     // ------------------------------
+
     public:
     static constexpr uint64_t BaseSeed = 7084466601545828732LLU; // 17 unique bits guaranteed by this seed
-    static constexpr int MaxRetries = MinMsbPossible << 24;
+    static constexpr int MaxRetries    = MinMsbPossible << 24;
 
     private:
     static constexpr size_t CastlingHashesCount = 32; // 2^(4 + 1) each castling property can be either 1 or 0

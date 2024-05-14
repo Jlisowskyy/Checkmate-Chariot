@@ -100,6 +100,7 @@ struct TranspositionTable
         static constexpr int NoEval = std::numeric_limits<int16_t>::max();
 
 #ifdef NDEBUG // otherwise used inside the asserts out of the container
+
         private:
 #endif
 

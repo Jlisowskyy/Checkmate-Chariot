@@ -8,10 +8,7 @@
 
 ZobristHasher ZHasher{ZobristHasher::BaseSeed};
 
-ZobristHasher::ZobristHasher(const uint64_t engineSeed)
-{
-    RollParameters(engineSeed);
-}
+ZobristHasher::ZobristHasher(const uint64_t engineSeed) { RollParameters(engineSeed); }
 
 uint64_t ZobristHasher::GenerateHash(const Board &board) const
 {
@@ -42,7 +39,8 @@ uint64_t ZobristHasher::GenerateHash(const Board &board) const
 
     return hash;
 }
-void ZobristHasher::RollParameters(const uint64_t seed) {
+void ZobristHasher::RollParameters(const uint64_t seed)
+{
     std::mt19937_64 randEngine{seed};
 
     // filling board hashes except sentinel board
@@ -65,8 +63,11 @@ void ZobristHasher::RollParameters(const uint64_t seed) {
     for (auto &_elPassantHash : _elPassantHashes) _elPassantHash = randEngine();
 }
 
-#define CheckNum(a, b) if (_validateNum(a, b, diffBits, sameCount, log) == false) return false;
-bool ZobristHasher::_validateCase(const uint64_t num, const int diffBits, const bool log) const {
+#define CheckNum(a, b)                                                                                                 \
+    if (_validateNum(a, b, diffBits, sameCount, log) == false)                                                         \
+        return false;
+bool ZobristHasher::_validateCase(const uint64_t num, const int diffBits, const bool log) const
+{
     int sameCount{};
 
     // filling board hashes except sentinel board
@@ -85,12 +86,14 @@ bool ZobristHasher::_validateCase(const uint64_t num, const int diffBits, const 
     return true;
 }
 
-bool ZobristHasher::_validateNum(const uint64_t a, const uint64_t b, const int diffBits, int &sameCount, const bool log) {
+bool ZobristHasher::_validateNum(const uint64_t a, const uint64_t b, const int diffBits, int &sameCount, const bool log)
+{
     const int diff = CountSameBits(a, b);
 
     if (diff == 0 && ++sameCount == 2)
     {
-        if (log) GlobalLogger.LogStream << "Two same hashes found!" << std::endl;
+        if (log)
+            GlobalLogger.LogStream << "Two same hashes found!" << std::endl;
         return false;
     }
 
@@ -102,8 +105,11 @@ bool ZobristHasher::_validateNum(const uint64_t a, const uint64_t b, const int d
     return result;
 }
 
-#define CheckCase(num) if (_validateCase(num, diffBits, log) == false) return false;
-bool ZobristHasher::ValidateQuality(const int diffBits, bool log) const {
+#define CheckCase(num)                                                                                                 \
+    if (_validateCase(num, diffBits, log) == false)                                                                    \
+        return false;
+bool ZobristHasher::ValidateQuality(const int diffBits, bool log) const
+{
     // filling board hashes except sentinel board
     for (size_t bd = 0; bd < Board::BitBoardsCount; ++bd)
         for (size_t field = 0; field < Board::BitBoardFields; ++field) CheckCase(_mainHashes[bd][field]);
@@ -120,13 +126,15 @@ bool ZobristHasher::ValidateQuality(const int diffBits, bool log) const {
     return true;
 }
 
-uint64_t ZobristHasher::SearchForSeed(const uint64_t startSeed, const int bitDiffs, const bool log) {
+uint64_t ZobristHasher::SearchForSeed(const uint64_t startSeed, const int bitDiffs, const bool log)
+{
     std::mt19937_64 randEngine{static_cast<uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
     uint64_t seed = startSeed;
 
     for (int triesLeft = MaxRetries; triesLeft > 0; --triesLeft)
     {
-        if (log) GlobalLogger.LogStream << std::format("Starting test on seed: {}", seed) << std::endl;
+        if (log)
+            GlobalLogger.LogStream << std::format("Starting test on seed: {}", seed) << std::endl;
         ZobristHasher hasher{seed};
 
         if (hasher.ValidateQuality(bitDiffs, log))

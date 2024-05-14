@@ -16,8 +16,15 @@
 
 static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 
+#ifndef NDEBUG
 #define TestNullMove() TraceIfFalse(!record._madeMove.IsEmpty(), "Received empty move inside the TT")
-#define TestTTAdd() TraceIfFalse(record._type != nodeType::upperBound, "Received upper board node inside the TT!"); TestNullMove()
+#define TestTTAdd()                                                                                                    \
+    TraceIfFalse(record._type != nodeType::upperBound, "Received upper board node inside the TT!");                    \
+    TestNullMove()
+#else
+#define TestNullMove()
+#define TestTTAdd()
+#endif
 
 void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDepth, const bool writeInfo)
 {
