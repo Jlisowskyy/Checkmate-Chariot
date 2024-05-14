@@ -110,7 +110,7 @@ class BoardEvaluator
     // Wrapper used to run chosen evaluation function
     [[nodiscard]] static INLINE int32_t DefaultFullEvalFunction(Board &bd, const int color)
     {
-        const int whiteEval = NaiveEvaluation(bd);
+        const int whiteEval = Evaluation2(bd);
         return (color == WHITE ? whiteEval : -whiteEval) / ScoreGrain;
     }
 
@@ -280,7 +280,7 @@ class BoardEvaluator
 
     public:
     // The value below ensures that resulted evaluation score will be rounded  value divisible by ScoreGrain
-    static constexpr int32_t ScoreGrain = 1;
+    static constexpr int32_t ScoreGrain = 8;
 
     // All belows values are used to calculate material table index, they symbolize coefficients for each figure type
     static constexpr size_t BlackPawnCoef   = MaterialTableSize / 9;

@@ -99,7 +99,10 @@ struct TranspositionTable
         public:
         static constexpr int NoEval = std::numeric_limits<int16_t>::max();
 
+#ifdef NDEBUG // otherwise used inside the asserts out of the container
         private:
+#endif
+
         uint64_t _zobristHashAndAgePacked; // 6 bytes for valuable hash part and 2 bytes for age
         PackedMove _madeMove;              // 2 Bytes
         int16_t _eval;                     // 2 bytes
