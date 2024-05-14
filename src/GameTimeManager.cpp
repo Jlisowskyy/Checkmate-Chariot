@@ -67,7 +67,11 @@ void GameTimeManager::StartSearchManagementAsync(const GoTimeInfo &tInfo, const 
         return;
     }
 
-    const lli timeForMoveMs = CalculateTimeMsPerMove(bd, timeLimitClockMs, timeLimitPerMoveMs, incrementMs, moveAge);
+    lli timeForMoveMs = timeLimitPerMoveMs; // Default to max time per move
+    if (timeLimitClockMs != GoTimeInfo::Infinite)
+    { // If there is a time limit on the clock calculate the time for the move
+        timeForMoveMs = CalculateTimeMsPerMove(bd, timeLimitClockMs, timeLimitPerMoveMs, incrementMs, moveAge);
+    }
 
     // const lli timeForMoveMs = 0;
 
@@ -187,7 +191,6 @@ lli GameTimeManager::CalculateTimeMsPerMove(const Board &bd, const lli timeLimit
      *
      * ------------------------------------------------------------------------------
      */
-
 
     constexpr int32_t minGameStage = 0;
     constexpr int32_t maxGameStage = (int32_t)ConstexprMath::sqrt(std::numeric_limits<int32_t>::max()) / 2;

@@ -2,9 +2,12 @@
 
 #include "../include/Interface/FenTranslator.h"
 #include "../include/ThreadManagement/SearchThreadManager.h"
+#include "../include/ThreadManagement/GameTimeManager.h"
 
 TEST(GoCommandTest, stopCommandResponse)
 {
+    GameTimeManager::StartTimerAsync();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     SearchThreadManager threadManager{};
     Board board = FenTranslator::GetDefault();
 
