@@ -46,7 +46,8 @@ class [[maybe_unused]] GameTimeManager
     /// engine still has time to search for the best move. If the time is up, the variable ShouldStop will be set to
     /// true.
     /// </summary>
-    static void StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color color, const Board &bd, const uint16_t moveAge);
+    static void
+    StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color color, const Board &bd, const uint16_t moveAge);
 
     /// <summary> Stop the search management thread </summary>
     static void StopSearchManagement();
@@ -56,18 +57,19 @@ class [[maybe_unused]] GameTimeManager
     static bool GetShouldStop() { return ShouldStop; }
 
     /// <summary> Calculate the time in milliseconds for a move </summary>
-    [[maybe_unused]] static lli
-    CalculateTimeMsPerMove(const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs,
-                           const lli incrementMs,
-                           const uint16_t moveAge);
+    [[maybe_unused]] static lli CalculateTimeMsPerMove(
+        const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs, const lli incrementMs,
+        const uint16_t moveAge
+    );
 
     private:
     /// @See StartTimerAsync
     [[noreturn]] static void _timer_thread();
 
     /// @See StartSearchManagementAsync
-    static void _search_management_thread(const std::chrono::time_point<std::chrono::system_clock> moveStartTimeMs,
-                                          const lli timeForMoveMs);
+    static void _search_management_thread(
+        const std::chrono::time_point<std::chrono::system_clock> moveStartTimeMs, const lli timeForMoveMs
+    );
 
     // ------------------------------
     // Class fields

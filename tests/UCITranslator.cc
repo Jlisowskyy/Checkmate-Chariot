@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include "../include/Interface/FenTranslator.h"
-#include "../include/ThreadManagement/SearchThreadManager.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
+#include "../include/ThreadManagement/SearchThreadManager.h"
 
 TEST(GoCommandTest, stopCommandResponse)
 {

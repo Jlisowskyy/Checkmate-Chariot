@@ -227,10 +227,14 @@ class [[maybe_unused]] StderrLogger : public Logger
 /// <summary> Logger that logs to a file </summary>
 class FileLogger : public Logger
 {
-private:
+    private:
+
     public:
-    explicit FileLogger(const std::string &FileName, std::ios_base::openmode mode = std::ios_base::out | std::ios_base::app);
-    void ChangeFile(const std::string &FileName, std::ios_base::openmode mode = std::ios_base::out | std::ios_base::app);
+    explicit FileLogger(
+        const std::string &FileName, std::ios_base::openmode mode = std::ios_base::out | std::ios_base::app
+    );
+    void
+    ChangeFile(const std::string &FileName, std::ios_base::openmode mode = std::ios_base::out | std::ios_base::app);
 
     protected:
     std::ofstream loggingFileStream;

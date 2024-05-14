@@ -71,9 +71,7 @@ Logger &Logger::operator<<(Logger::streamFunction func)
     return *this;
 }
 
-FileLogger::FileLogger(const std::string &FileName, std::ios_base::openmode mode) {
-    ChangeFile(FileName, mode);
-}
+FileLogger::FileLogger(const std::string &FileName, std::ios_base::openmode mode) { ChangeFile(FileName, mode); }
 
 void FileLogger::ChangeFile(const std::string &FileName, const std::ios_base::openmode mode)
 {
@@ -84,7 +82,6 @@ void FileLogger::ChangeFile(const std::string &FileName, const std::ios_base::op
     loggingStream     = &loggingFileStream;
     assert(loggingFileStream && "FileLogger: Unable to open file for logging");
 }
-
 
 StderrLogger::StderrLogger() { loggingStream = &std::cerr; }
 StdoutLogger::StdoutLogger() { loggingStream = &std::cout; }

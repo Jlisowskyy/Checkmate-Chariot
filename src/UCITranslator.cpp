@@ -35,24 +35,24 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
 {
     using funcT = UCICommand (UCITranslator::*)(const std::string &);
     static std::unordered_map<std::string, funcT> CommandBuff{
-        {       "uci",         &UCITranslator::_uciResponse},
-        {   "isready",     &UCITranslator::_isReadyResponse},
-        { "setoption",   &UCITranslator::_setoptionResponse},
-        {"ucinewgame",  &UCITranslator::_ucinewgameResponse},
-        {  "position",    &UCITranslator::_positionResponse},
-        {        "go",          &UCITranslator::_goResponse},
-        {      "stop",        &UCITranslator::_stopResponse},
-        {      "quit",        &UCITranslator::_quitResponse},
-        {      "exit",        &UCITranslator::_quitResponse},
-        {         "d",     &UCITranslator::_displayResponse},
-        {   "display",     &UCITranslator::_displayResponse},
-        {      "disp",     &UCITranslator::_displayResponse},
-        {       "fen",  &UCITranslator::_displayFenResponse},
-        {      "help", &UCITranslator::_displayHelpResponse},
-        {     "clear",        &UCITranslator::_clearConsole},
-        {     "clean",        &UCITranslator::_clearConsole},
-        {       "cls",        &UCITranslator::_clearConsole},
-        { "ctpm", &UCITranslator::_calculateTimePerMove }, // Calculate time per move
+        {       "uci",          &UCITranslator::_uciResponse},
+        {   "isready",      &UCITranslator::_isReadyResponse},
+        { "setoption",    &UCITranslator::_setoptionResponse},
+        {"ucinewgame",   &UCITranslator::_ucinewgameResponse},
+        {  "position",     &UCITranslator::_positionResponse},
+        {        "go",           &UCITranslator::_goResponse},
+        {      "stop",         &UCITranslator::_stopResponse},
+        {      "quit",         &UCITranslator::_quitResponse},
+        {      "exit",         &UCITranslator::_quitResponse},
+        {         "d",      &UCITranslator::_displayResponse},
+        {   "display",      &UCITranslator::_displayResponse},
+        {      "disp",      &UCITranslator::_displayResponse},
+        {       "fen",   &UCITranslator::_displayFenResponse},
+        {      "help",  &UCITranslator::_displayHelpResponse},
+        {     "clear",         &UCITranslator::_clearConsole},
+        {     "clean",         &UCITranslator::_clearConsole},
+        {       "cls",         &UCITranslator::_clearConsole},
+        {      "ctpm", &UCITranslator::_calculateTimePerMove}, // Calculate time per move
     };
 
     std::string workStr;
@@ -448,26 +448,27 @@ size_t UCITranslator::_msTimeParser(const std::string &str, size_t pos, lli &out
     return out < 1 ? ParseTools::InvalidNextWorldRead : pos;
 }
 
-UCITranslator::UCICommand UCITranslator::_calculateTimePerMove(const std::string &str) {
+UCITranslator::UCICommand UCITranslator::_calculateTimePerMove(const std::string &str)
+{
     static FileLogger timePerMoveLogger("timePerMove.log");
 
     static std::unordered_map<std::string, size_t (*)(const std::string &, size_t, lli &)> params{
-            {"movetime", &_msTimeParser},
-            {    "binc", &_msTimeParser},
-            {    "winc", &_msTimeParser},
-            {   "btime",    &_msTimeParser},
-            {   "wtime",    &_msTimeParser},
+        {"movetime", &_msTimeParser},
+        {    "binc", &_msTimeParser},
+        {    "winc", &_msTimeParser},
+        {   "btime", &_msTimeParser},
+        {   "wtime", &_msTimeParser},
     };
 
     GoTimeInfo info{};
     std::string workStr{};
     size_t pos = 0;
 
-    std::unordered_map<std::string, lli*> infoArgs{
-        {"wtime", &info.wTime},
-        {"btime", &info.bTime},
-        {"winc", &info.wInc},
-        {"binc", &info.bInc},
+    std::unordered_map<std::string, lli *> infoArgs{
+        {   "wtime",    &info.wTime},
+        {   "btime",    &info.bTime},
+        {    "winc",     &info.wInc},
+        {    "binc",     &info.bInc},
         {"movetime", &info.moveTime},
     };
 
@@ -488,10 +489,11 @@ UCITranslator::UCICommand UCITranslator::_calculateTimePerMove(const std::string
             break;
     }
 
-    Board board = _engine.GetUnderlyingBoardCopy();
+    Board board  = _engine.GetUnderlyingBoardCopy();
     uint16_t age = _engine.GetAge();
 
-    auto [ timeLimitClockMs, timeLimitPerMoveMs, incrementMs ] = GameTimeManagerUtils::ParseGoTimeInfo(info, (Color)_engine.GetMovingColor());
+    auto [timeLimitClockMs, timeLimitPerMoveMs, incrementMs] =
+        GameTimeManagerUtils::ParseGoTimeInfo(info, (Color)_engine.GetMovingColor());
     if (timeLimitClockMs == GoTimeInfo::Infinite && timeLimitPerMoveMs == GoTimeInfo::Infinite)
         return UCICommand::InvalidCommand;
 
@@ -499,7 +501,8 @@ UCITranslator::UCICommand UCITranslator::_calculateTimePerMove(const std::string
     GlobalLogger.TraceStream << "[ INFO ] Time limit per move: " << timeLimitPerMoveMs << std::endl;
     GlobalLogger.TraceStream << "[ INFO ] Increment: " << incrementMs << std::endl;
 
-    lli timePerMove = GameTimeManager::CalculateTimeMsPerMove(board, timeLimitClockMs, timeLimitPerMoveMs, incrementMs, age);
+    lli timePerMove =
+        GameTimeManager::CalculateTimeMsPerMove(board, timeLimitClockMs, timeLimitPerMoveMs, incrementMs, age);
 
     GlobalLogger.LogStream << "Calculated time per move:" << timePerMove << std::endl;
     timePerMoveLogger.LogStream << timePerMove << std::endl;
