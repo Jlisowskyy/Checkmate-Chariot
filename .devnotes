@@ -5,7 +5,7 @@ Important todos:
     - implement interuptible go depth and go movetime
     - checks wtf is going on castling inside MoveGenerator especially what tf + 1 offset means
 
-    - Check for bugs in search why returns null move
+    - CheckNum for bugs in search why returns null move
     - Improve checking wheter positions is in check simply by evaluating all moves by king
 
     - Investigate using previous entries from TT as hint for asipration windows

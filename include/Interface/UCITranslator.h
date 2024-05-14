@@ -117,6 +117,9 @@ class UCITranslator
      *  - Clearing applied moves
      *
      * */
+
+    UCICommand _searchZobrist(const std::string &str);
+
     UCICommand _ucinewgameResponse([[maybe_unused]] const std::string &);
 
     /* Function simply parses option and tries to apply it on engine.
