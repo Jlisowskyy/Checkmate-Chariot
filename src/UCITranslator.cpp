@@ -61,7 +61,7 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         {
             auto commandType = (this->*(iter->second))(buffer.substr(pos));
 
-            // Check whether some joining could be done between parsing commands
+            // CheckNum whether some joining could be done between parsing commands
             if (commandType != UCICommand::goCommand && !_engine.TManager.IsSearchOn())
                 _engine.TManager.Consolidate();
 
@@ -176,7 +176,7 @@ UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string &s
     if (!optionName.empty())
         optionName.pop_back();
 
-    // Check whether option is valid
+    // CheckNum whether option is valid
     if (!Engine::GetEngineInfo().options.contains(optionName))
     {
         WrapTraceMsgError(std::format("Option {} not found.", optionName));
@@ -365,12 +365,12 @@ UCITranslator::UCICommand UCITranslator::_goSearchRegular(const std::string &str
     while ((pos = ParseTools::ExtractNextWord(str, workStr, pos)) != ParseTools::InvalidNextWorldRead &&
            workStr != "infinite")
     {
-        // Check if parameter is valid
+        // CheckNum if parameter is valid
         if (auto iter = params.find(workStr); iter != params.end())
         {
             pos = (*(iter->second))(str, pos, info);
 
-            // Check whether process was successful
+            // CheckNum whether process was successful
             if (pos == ParseTools::InvalidNextWorldRead)
                 return UCICommand::InvalidCommand;
         }

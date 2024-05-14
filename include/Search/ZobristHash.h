@@ -49,15 +49,27 @@ struct ZobristHasher
         return oldHash;
     }
 
+    [[nodiscard]] bool ValidateQuality(int diffBits, bool log = false) const;
+    [[nodiscard]] static uint64_t SearchForSeed(uint64_t startSeed, int bitDiffs, bool log = false);
+
+    void RollParameters(uint64_t seed);
+
     // ------------------------------
     // Private class methods
     // ------------------------------
 
+    private:
+
+    [[nodiscard]] static bool _validateNum(uint64_t a, uint64_t b, int diffBits, int& sameCount, bool log = false);
+
+    [[nodiscard]] bool _validateCase(uint64_t num, int diffBits, bool log = false) const;
+
     // ------------------------------
     // Class fields
     // ------------------------------
-
+    public:
     static constexpr uint64_t BaseSeed = 0x194814141LLU;
+    static constexpr int MaxRetries = 1000;
 
     private:
     static constexpr size_t CastlingHashesCount = 32; // 2^(4 + 1) each castling property can be either 1 or 0
