@@ -16,6 +16,16 @@
 
 static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 
+#ifndef NDEBUG
+#define TestNullMove() TraceIfFalse(!record._madeMove.IsEmpty(), "Received empty move inside the TT")
+#define TestTTAdd()                                                                                                    \
+    TraceIfFalse(record._type != nodeType::upperBound, "Received upper board node inside the TT!");                    \
+    TestNullMove()
+#else
+#define TestNullMove()
+#define TestTTAdd()
+#endif
+
 void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDepth, const bool writeInfo)
 {
     // When the passed depth is 0, we need to evaluate the board statically
@@ -175,12 +185,12 @@ int BestMoveSearch::_pwsSearch(
 
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
-    if (wasTTHit && prevSearchRes.GetNodeType() != upperBound)
-        _pullMoveToFront(moves, prevSearchRes.GetMove());
-    else if (!followPv || depthLeft == 1)
-        _fetchBestMove(moves, 0);
-    else
+    if (followPv && depthLeft != 1)
         _pullMoveToFront(moves, _pv(depthLeft, _currRootDepth));
+    else if (wasTTHit && prevSearchRes.GetNodeType() != upperBound)
+        _pullMoveToFront(moves, prevSearchRes.GetMove());
+    else
+        _fetchBestMove(moves, 0);
 
     // saving old params
     const auto oldCastlings = bd.Castlings;
@@ -224,6 +234,7 @@ int BestMoveSearch::_pwsSearch(
                                                             depthLeft, lowerBound,
                                                             _age};
                 TTable.Add(record, zHash);
+                TestTTAdd();
             }
 
             _stack.PopAggregate(moves);
@@ -666,9 +677,12 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Packed
 
     // if move found swapping
     if (ind != moves.size)
+    {
         std::swap(moves.data[ind], moves.data[0]);
+        return;
+    }
 
-    TraceIfFalse(ind != moves.size, "Move stored inside the TT was not found in the moves list!");
+    WrapTraceMsgError("Move stored inside the TT was not found in the moves list!");
 }
 
 void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t targetPos)

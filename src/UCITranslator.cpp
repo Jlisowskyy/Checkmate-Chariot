@@ -8,6 +8,7 @@
 #include "../include/Interface/Logger.h"
 #include "../include/Interface/UCITranslator.h"
 #include "../include/ParseTools.h"
+#include "../include/Search/ZobristHash.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/TestsAndDebugging/SearchPerfTester.h"
 #include "../include/ThreadManagement/GameTimeManagerUtils.h"
@@ -53,6 +54,7 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         {     "clean",         &UCITranslator::_clearConsole},
         {       "cls",         &UCITranslator::_clearConsole},
         {      "ctpm", &UCITranslator::_calculateTimePerMove}, // Calculate time per move
+        {        "zv",       &UCITranslator::_searchZobrist},
     };
 
     std::string workStr;
@@ -63,7 +65,7 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         {
             auto commandType = (this->*(iter->second))(buffer.substr(pos));
 
-            // Check whether some joining could be done between parsing commands
+            // CheckNum whether some joining could be done between parsing commands
             if (commandType != UCICommand::goCommand && !_engine.TManager.IsSearchOn())
                 _engine.TManager.Consolidate();
 
@@ -178,7 +180,7 @@ UCITranslator::UCICommand UCITranslator::_setoptionResponse(const std::string &s
     if (!optionName.empty())
         optionName.pop_back();
 
-    // Check whether option is valid
+    // CheckNum whether option is valid
     if (!Engine::GetEngineInfo().options.contains(optionName))
     {
         WrapTraceMsgError(std::format("Option {} not found.", optionName));
@@ -238,6 +240,7 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
         "                \"input file\" must be containg csv records in given manner: \"fen position\", \"depth\"\n"
         "- go searchPerf \"input file \" \"output file \" - runs straight alpha beta prunning performance tests "
         "               on the framework.\n"
+        "- zv \"bitDiffs\" - searches for seed with given bit differences guaranteed.\n\n\n"
         "Where \"depth\" is integer value indicating layers of traversed move tree.\n\n\n"
         "Additional notes:\n"
         "   - \"go file / \" - will run tests on singlePos.csv\n"
@@ -367,12 +370,12 @@ UCITranslator::UCICommand UCITranslator::_goSearchRegular(const std::string &str
     while ((pos = ParseTools::ExtractNextWord(str, workStr, pos)) != ParseTools::InvalidNextWorldRead &&
            workStr != "infinite")
     {
-        // Check if parameter is valid
+        // CheckNum if parameter is valid
         if (auto iter = params.find(workStr); iter != params.end())
         {
             pos = (*(iter->second))(str, pos, info);
 
-            // Check whether process was successful
+            // CheckNum whether process was successful
             if (pos == ParseTools::InvalidNextWorldRead)
                 return UCICommand::InvalidCommand;
         }
@@ -508,4 +511,15 @@ UCITranslator::UCICommand UCITranslator::_calculateTimePerMove(const std::string
     timePerMoveLogger.LogStream << timePerMove << std::endl;
 
     return UCITranslator::UCICommand::debugCommand;
+
+UCITranslator::UCICommand UCITranslator::_searchZobrist(const std::string &str)
+{
+    int bitDiffs;
+    if (_intParser(str, 0, bitDiffs) == ParseTools::InvalidNextWorldRead)
+        return UCICommand::InvalidCommand;
+
+    [[maybe_unused]] auto _ = ZobristHasher::SearchForSeed(ZobristHasher::BaseSeed, bitDiffs, Debug);
+
+    return UCITranslator::UCICommand::isreadyCommand;
+
 }
