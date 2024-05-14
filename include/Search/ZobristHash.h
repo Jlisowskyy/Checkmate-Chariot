@@ -68,7 +68,7 @@ struct ZobristHasher
     // Class fields
     // ------------------------------
     public:
-    static constexpr uint64_t BaseSeed = 0x194814141LLU;
+    static constexpr uint64_t BaseSeed = 7084466601545828732LLU; // 17 unique bits guaranteed by this seed
     static constexpr int MaxRetries = MinMsbPossible << 24;
 
     private:
