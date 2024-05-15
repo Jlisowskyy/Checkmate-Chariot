@@ -6,14 +6,11 @@
 2. [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
-3. [Roadmap](#roadmap)
+3. [Roadmap](#features)
 4. [License](#license)
 ## Introduction
 
-This project is a unique implementation of a chess engine, serving as my primary focus and source of enjoyment in programming.
-It's a platform for exploring various intriguing programming schemes and algorithms.
-The goal is to create the most powerful algorithm I can, while ensuring well-tested software.
-While I strive to incorporate my own ideas and solutions, I occasionally draw inspiration from state-of-the-art ideas.
+This project is a unique implementation of a chess engine, developed by Jakub Lisowski, Łukasz Kryczka, and Jakub Pietrzak from the Warsaw University of Technology. It serves as our primary focus and source of enjoyment in programming, providing a platform for exploring various intriguing programming schemes and algorithms. Our goal is to create the most powerful algorithm we can while ensuring well-tested software. While we strive to incorporate our own ideas and solutions, we occasionally draw inspiration from state-of-the-art concepts. This README will guide you through the key aspects of our engine, including its unique features and functionalities.
 
 ## Getting Started
 
@@ -35,19 +32,49 @@ Use a command below to build the project:
 ```shell
    cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=RELEASE 
 ```
+## Features
 
-## Roadmap
+### Board Representation
+- **Bitboards:** Utilizes bitboard structures for efficient board state representation.
+- **Supports FEN Strings:** Loads board positions from FEN strings for flexible game setup.
+- **Move Generation:** Implements comprehensive move generation including all standard chess moves, castling, en passant, and promotions.
+- **Board State Management:** Maintains current board state with functionalities to make and unmake moves.
 
-Progress in this repository may be slower due to demanding university duties.
-However, plans include the incorporation of the following features:
+### Board Evaluation - a feature that is currently worked on the most
+- **Material Count:** Considers the material balance of pieces.
+- **Special Pawn Evaluation:** Includes specific evaluations for passed, isolated, and doubled pawns.
+- **King Safety:** Evaluates attacked squares around kings.
+- **Separate Middlegame and Endgame Tables:** Uses distinct evaluation metrics for different game phases.
 
-- [x] Working UCI interface
-- [x] Rook and Bishop moves generation implemented and tested
-- [ ] Move generation implemented and well tested
-- [ ] Opening book implemented and collected
-- [ ] Search algorithm implemented and well tested
-- [ ] Parallel implementation of search algorithm
-- [ ] Evaluation stage of the board implemented
+### Opening Book
+- **Predefined Openings:** Contains a rich database of opening moves from professional games.
+- **Move Selection:** Selects optimal opening moves to transition into a favorable middle game.
+- **Learning Capabilities:** Can update the opening book based on game outcomes to improve future performance.
+- The engine starts with a random move from the opening book
+
+### Best Move Search
+- **Negamax Algorithm:** Implements the negamax variant of the minimax algorithm for simplicity.
+- **Alpha-Beta Pruning:** Uses alpha-beta pruning to reduce the number of nodes evaluated in the search tree.
+- **Iterative Deepening:** Implements iterative deepening to progressively deepen the search depth.
+- **Transposition Tables:** Utilizes transposition tables to store and retrieve previously evaluated positions.
+- **Quiescence Search:** Extends search in tactical positions to avoid horizon effect.
+- **Advanced Pruning Techniques:** Includes null move pruning, reverse futility pruning, and delta pruning.
+- **Late Move Reductions:** Reduces the search depth for late moves to improve efficiency.
+- **Principal Variation Search:** Focuses on the most promising moves to find the best line of play.
+
+### Move Sorting and Evaluation
+- **Move Ordering:** Sorts moves to prioritize captures, checks, and promotions.
+- **MVV-LVA:** Uses Most Valuable Victim - Least Valuable Attacker heuristic for move ordering.
+- **Killer Moves:** Remembers two killer moves per depth to enhance search efficiency.
+- **History Heuristic:** Sorts moves based on their historical effectiveness.
+
+### Time Management
+- **Dynamic Time Allocation:** Adjusts time usage based on the number of moves played and remaining time.
+- This is currently work-in-progress
+
+### UCI Interface
+- **Supported Commands:** Full UCI implementation
+- **Hash Size Configuration:** Allows setting the hash size via the "Hash" UCI option, with a default of 256 MB.
 
 ## License
 
