@@ -32,7 +32,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
     if (maxDepth == 0)
     {
         GlobalLogger.LogStream << "info depth 0 score cp "
-                               << BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor) << std::endl;
+                               << BoardEvaluator<EvalMode::BaseMode>::DefaultFullEvalFunction(_board, _board.MovingColor) << std::endl;
 
         return;
     }
@@ -140,7 +140,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
 
             GlobalLogger.LogStream << std::format(
                 "info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
-                depth, spentMs, _visitedNodes, nps, eval * BoardEvaluator::ScoreGrain,
+                depth, spentMs, _visitedNodes, nps, eval * BoardEvaluator<EvalMode::BaseMode>::ScoreGrain,
                 output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
@@ -455,7 +455,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     if (wasTTHit && prevSearchRes.GetStatVal() != NO_EVAL)
         statEval = prevSearchRes.GetStatVal();
     else
-        statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
+        statEval = BoardEvaluator<EvalMode::BaseMode>::DefaultFullEvalFunction(bd, bd.MovingColor);
 
     int bestEval = statEval;
 
@@ -570,10 +570,10 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         if (prevSearchRes.GetStatVal() != NO_EVAL)
             statEval = prevSearchRes.GetStatVal();
         else
-            statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
+            statEval = BoardEvaluator<EvalMode::BaseMode>::DefaultFullEvalFunction(bd, bd.MovingColor);
     }
     else
-        statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
+        statEval = BoardEvaluator<EvalMode::BaseMode>::DefaultFullEvalFunction(bd, bd.MovingColor);
 
     int bestEval = statEval;
     if (bestEval >= beta)

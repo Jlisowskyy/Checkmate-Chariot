@@ -199,7 +199,7 @@ lli GameTimeManager::CalculateTimeMsPerMove(
     constexpr int32_t minGameStage = 0;
     constexpr int32_t maxGameStage = (int32_t)ConstexprMath::sqrt(std::numeric_limits<int32_t>::max()) / 2;
 
-    const int32_t a    = BoardEvaluator::InterpGameStage(bd, minGameStage, maxGameStage);
+    const int32_t a    = BoardEvaluator<EvalMode::BaseMode>::InterpGameStage(bd, minGameStage, maxGameStage);
     constexpr double b = maxGameStage;
     const int32_t em   = (int32_t)(50 - moveAge / 2);
     // const int32_t em = (int32_t)(47 * ((b - a)/b) + 3); // TODO: this is a temporary value and should be calculated

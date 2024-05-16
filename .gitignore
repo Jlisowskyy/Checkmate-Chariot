@@ -1,5 +1,6 @@
 build/
 .idea/
+cmake*
 python\ scripts/
 *.exec
 *.out
