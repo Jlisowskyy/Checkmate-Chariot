@@ -18,7 +18,6 @@ std::chrono::time_point<std::chrono::system_clock> GameTimeManager::TimeStart;
 std::chrono::time_point<std::chrono::system_clock> GameTimeManager::CurrentTime;
 std::mutex GameTimeManager::mtx;
 std::condition_variable GameTimeManager::cv;
-FileLogger GameTimeManager::fileLogger = FileLogger("GameTimeManager.log");
 
 void GameTimeManager::StartTimerAsync()
 {
@@ -203,8 +202,8 @@ lli GameTimeManager::CalculateTimeMsPerMove(
     constexpr double b = maxGameStage;
     const int32_t em   = (int32_t)(50 - moveAge / 2);
     // const int32_t em = (int32_t)(47 * ((b - a)/b) + 3); // TODO: this is a temporary value and should be calculated
-    const int32_t xmin = (int32_t)((double)timeLimitClockMs / (double)((double)em / 2)
-    ); // TODO: this is a temporary value and should be calculated
+    const int32_t xmin = (int32_t) (((double)timeLimitClockMs / ((double) em)) / 4);
+    // TODO: this is a temporary value and should be calculated
 
     GlobalLogger.TraceStream << std::format("[ INFO ] Calculating time for this move \n");
     GlobalLogger.TraceStream << std::format("[ INFO ] Game stage: {}/{} \n", a, b);
@@ -227,11 +226,11 @@ lli GameTimeManager::CalculateTimeMsPerMove(
         // Calculate the scale
         const double q = (double)(b * b) / 4;
 
-        // const double scale = ( (double)(xmin * (b-a) - ((double)timeLimitClockMs * (b-a) / em) ) * q)
-        //         / ( (double)(b*b*b - a*a*a) / 3 - (double)((b * b - a * a) / 2) * b );
+        const double scale = ( (double)(xmin * (b-a) - ((double)timeLimitClockMs * (b-a) / em) ) * q)
+                 / ( (double)(b*b*b - a*a*a) / 3 - (double)((b * b - a * a) / 2) * b );
 
-        const double scale =
-            -(3 * b * b * ((double)-timeLimitClockMs + (em * xmin))) / (2 * em * (a - b) * (2 * a + b));
+        //const double scale =
+        //    -(3 * b * b * ((double)-timeLimitClockMs + (em * xmin))) / (2 * em * (a - b) * (2 * a + b));
 
         assert(scale >= 0 && "Scale must be positive");
         GlobalLogger.TraceStream << std::format("[ INFO ] Scale: {} \n", scale);
@@ -244,7 +243,6 @@ lli GameTimeManager::CalculateTimeMsPerMove(
     timeForMoveMs = std::min(timeForMoveMs, (double)timeLimitPerMoveMs);
     const lli ans = (lli)timeForMoveMs;
     GlobalLogger.TraceStream << std::format("[ INFO ] Time calculated for this move: {}", ans) << std::endl;
-    fileLogger.LogStream << std::format(",({}, {})", (double)(50 - em), (double)timeForMoveMs) << std::flush;
 
     assert(ans >= 0 && "Time for move must be positive");
     assert(ans <= timeLimitPerMoveMs && "Time for move must be less than the time limit per move");

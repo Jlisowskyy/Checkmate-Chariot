@@ -95,8 +95,6 @@ class [[maybe_unused]] GameTimeManager
     // Wake on update mechanism
     static std::condition_variable cv;
     static std::mutex mtx;
-
-    static FileLogger fileLogger;
 };
 
 #endif // CHECKMATE_CHARIOT_GAMETIMER_H
