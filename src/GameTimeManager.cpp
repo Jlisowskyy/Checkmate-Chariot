@@ -188,20 +188,23 @@ lli GameTimeManager::CalculateTimeMsPerMove(
      *
      *                              2
      *                           3 b  (- timeleft + em × xmin)
-     *                  -scale = ----------------------------
-     *                                        2         2
-     *                              2 em (- 2a  + ab + b ) # TODO: Wrong formula
+     *                   scale = ----------------------------
+     *                              2 em (a - b) (2 a + b)
      *
      * ------------------------------------------------------------------------------
      */
 
-    constexpr int32_t minGameStage = 0;
-    constexpr int32_t maxGameStage = (int32_t)ConstexprMath::sqrt(std::numeric_limits<int32_t>::max()) / 2;
+    //constexpr int32_t minGameStage = 0;
+    //constexpr int32_t maxGameStage = (int32_t)ConstexprMath::sqrt(std::numeric_limits<int32_t>::max()) / 2;
 
-    const int32_t a    = BoardEvaluator::InterpGameStage(bd, minGameStage, maxGameStage);
-    constexpr double b = maxGameStage;
-    const int32_t em   = (int32_t)(50 - moveAge / 2);
-    // const int32_t em = (int32_t)(47 * ((b - a)/b) + 3); // TODO: this is a temporary value and should be calculated
+    //const int32_t a    = BoardEvaluator::InterpGameStage(bd, minGameStage, maxGameStage);
+    //constexpr double b = maxGameStage;
+
+    const int32_t maxMoveAge = 40;
+    const double a = moveAge / 2 * 1'000;
+    const double b = maxMoveAge * 1'000;
+
+    const int32_t em   = (int32_t)(maxMoveAge - moveAge / 2);
     const int32_t xmin = (int32_t) (((double)timeLimitClockMs / ((double) em)) / 4);
     // TODO: this is a temporary value and should be calculated
 
@@ -226,11 +229,11 @@ lli GameTimeManager::CalculateTimeMsPerMove(
         // Calculate the scale
         const double q = (double)(b * b) / 4;
 
-        const double scale = ( (double)(xmin * (b-a) - ((double)timeLimitClockMs * (b-a) / em) ) * q)
-                 / ( (double)(b*b*b - a*a*a) / 3 - (double)((b * b - a * a) / 2) * b );
+        // This is an alternative way to calculate the scale (it's equivalent to the one below)
+        // const double scale = ( (double)(xmin * (b-a) - ((double)timeLimitClockMs * (b-a) / em) ) * q)
+        //          / ( (double)(b*b*b - a*a*a) / 3 - (double)((b * b - a * a) / 2) * b );
 
-        //const double scale =
-        //    -(3 * b * b * ((double)-timeLimitClockMs + (em * xmin))) / (2 * em * (a - b) * (2 * a + b));
+        const double scale = (3 * b * b * (double)(-timeLimitClockMs + em * xmin)) / (2 * em * (a-b) * (2*a + b) );
 
         assert(scale >= 0 && "Scale must be positive");
         GlobalLogger.TraceStream << std::format("[ INFO ] Scale: {} \n", scale);
