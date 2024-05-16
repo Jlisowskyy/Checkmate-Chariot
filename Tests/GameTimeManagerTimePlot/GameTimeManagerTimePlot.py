@@ -60,6 +60,7 @@ class ChessEngine:
 
             time_for_game_ms -= int(time_allocated)
 
+        print(f'Time left: {time_for_game_ms} ms')
         return time_per_move_history
 
 

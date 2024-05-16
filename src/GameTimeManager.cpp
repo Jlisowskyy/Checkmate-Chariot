@@ -110,33 +110,42 @@ lli GameTimeManager::CalculateTimeMsPerMove(
 )
 {
     /*
-     * Main ideas:
+     * --------------------------------- Main Idea ----------------------------------
      * 1. In calculations, mitigate the fact that the time is constantly decreasing
      * 2. Try to predict the number of moves the game will take
      * 3. Give weights to moves depending on the stage of the game
      *
-     * 1: (for simplicity, assuming the the moves are equally important)
+     * ----------------------------------- Idea 1 -----------------------------------
+     * (for simplicity, assuming the the moves are equally important)
      * if we expect the game to end in 40 moves, we take 1/40 of the time.
      * if we expect the game to end in 10 moves, we take 1/10 of the time. etc
      *
-     * This ensures that even though the total time on the clock is decreasing, we are taking the same amount of
-     * time per move (time decrease mitigation in calculations)
+     * This ensures that even though the total time on the clock is decreasing,
+     * we are taking the same amount of time per move (time decrease mitigation
+     * in calculations)
      *
-     * 2: (still assuming the moves are equally important)
-     * As the game progresses, we can keep track of the derivative of the phase of the game. If it's progressing
-     * very slowly, we predict that the game will take longer, and adjust the expected 'num of moves to game finish'
+     * ----------------------------------- Idea 2 -----------------------------------
+     * (still assuming the moves are equally important)
+     * As the game progresses, we can keep track of the derivative of the phase of
+     * the game. If it's progressing very slowly, we predict that the game will take
+     * longer, and adjust the expected 'num of moves to game finish'
      *
-     * 3: Moves have a weight distribution depending on the stage of the game
+     * ----------------------------------- Idea 3 -----------------------------------
+     * Moves have a weight distribution depending on the stage of the game:
      * early-game and late-game are less important. Mid-game is the most important
      *
-     * The percentage of time to be taken needs to be calculated relative to the weight of the move.
-     * But the weight of the move has to be calculated in a smart way, so that slicing time using it, will still yield
-     * times that follow our model of distribution and importance (adhere to 1) and adhere to (2)
+     * The percentage of time to be taken needs to be calculated relative to the
+     * weight of the move. But the weight of the move has to be calculated in a
+     * smart way, so that slicing time using it, will still yield times that follow
+     * our model of distribution and importance (adhere to 1) and adhere to (2)
      *
+     * ------------------------------------------------------------------------------
+
      */
 
     /*
-     * The equation for the time per move is:
+     *
+     * ------------------------- Calculating time per move --------------------------
      * ---------------------------------- Equation ----------------------------------
      *
      *                                                 scale
@@ -160,11 +169,11 @@ lli GameTimeManager::CalculateTimeMsPerMove(
     /*
      * ------------------------ The function should satisfy -------------------------
      *
-     *                    b
-     *               em  /  /                       scale        \
-     *             ----- |  | -( x ⋅(x - xlimit) ) ⋅----- + xmin |  dx = timeleft
-     *             b - a /  \                         q          /
-     *                    a
+     *                              b
+     *                         em   /
+     *                       -----  | f(x) dx = timeleft
+     *                       b - a  /
+     *                              a
      *
      * --------------------------------- Variables ----------------------------------
      *
@@ -206,7 +215,6 @@ lli GameTimeManager::CalculateTimeMsPerMove(
 
     const int32_t em   = (int32_t)(maxMoveAge - moveAge / 2);
     const int32_t xmin = (int32_t) (((double)timeLimitClockMs / ((double) em)) / 4);
-    // TODO: this is a temporary value and should be calculated
 
     GlobalLogger.TraceStream << std::format("[ INFO ] Calculating time for this move \n");
     GlobalLogger.TraceStream << std::format("[ INFO ] Game stage: {}/{} \n", a, b);
@@ -247,7 +255,6 @@ lli GameTimeManager::CalculateTimeMsPerMove(
 #endif
     }
 
-    timeForMoveMs = std::max(timeForMoveMs, (double)xmin);
     timeForMoveMs = std::min(timeForMoveMs, (double)timeLimitPerMoveMs);
     const lli ans = (lli) timeForMoveMs;
 
