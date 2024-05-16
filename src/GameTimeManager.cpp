@@ -209,7 +209,7 @@ lli GameTimeManager::CalculateTimeMsPerMove(
     //const int32_t a    = BoardEvaluator::InterpGameStage(bd, minGameStage, maxGameStage);
     //constexpr double b = maxGameStage;
 
-    const int32_t maxMoveAge = 40;
+    const int32_t maxMoveAge = 40 + moveAge / 2;
     const double a = (moveAge / 2) * 1'000;
     const double b = maxMoveAge * 1'000;
 
