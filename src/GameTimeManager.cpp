@@ -201,7 +201,7 @@ lli GameTimeManager::CalculateTimeMsPerMove(
     //constexpr double b = maxGameStage;
 
     const int32_t maxMoveAge = 40;
-    const double a = moveAge / 2 * 1'000;
+    const double a = (moveAge / 2) * 1'000;
     const double b = maxMoveAge * 1'000;
 
     const int32_t em   = (int32_t)(maxMoveAge - moveAge / 2);
@@ -226,25 +226,31 @@ lli GameTimeManager::CalculateTimeMsPerMove(
     }
     else
     {
+#ifndef NDEBUG
+        // Debug mode
+        // Evaluate the quadratic function by hand
+
         // Calculate the scale
-        const double q = (double)(b * b) / 4;
-
-        // This is an alternative way to calculate the scale (it's equivalent to the one below)
-        // const double scale = ( (double)(xmin * (b-a) - ((double)timeLimitClockMs * (b-a) / em) ) * q)
-        //          / ( (double)(b*b*b - a*a*a) / 3 - (double)((b * b - a * a) / 2) * b );
-
-        const double scale = (3 * b * b * (double)(-timeLimitClockMs + em * xmin)) / (2 * em * (a-b) * (2*a + b) );
+        const double scale = (3 * b * b * (double)(-timeLimitClockMs + em * xmin)) / (2 * em * (a-b) * (2 * a + b) );
 
         assert(scale >= 0 && "Scale must be positive");
         GlobalLogger.TraceStream << std::format("[ INFO ] Scale: {} \n", scale);
 
         // Evaluate the quadratic function
+        const double q = (double)(b * b) / 4;
         timeForMoveMs = (-(a * (a - b)) * scale / q) + xmin + (double)incrementMs;
+#else
+        // Release mode
+        // Evaluate the quadratic function using the simplified and optimized formula
+        timeForMoveMs = xmin + (double)incrementMs +
+                ( (6 * a * (double)(timeLimitClockMs - em * xmin)) / (em * (2 * a + b) ) );
+#endif
     }
 
     timeForMoveMs = std::max(timeForMoveMs, (double)xmin);
     timeForMoveMs = std::min(timeForMoveMs, (double)timeLimitPerMoveMs);
-    const lli ans = (lli)timeForMoveMs;
+    const lli ans = (lli) timeForMoveMs;
+
     GlobalLogger.TraceStream << std::format("[ INFO ] Time calculated for this move: {}", ans) << std::endl;
 
     assert(ans >= 0 && "Time for move must be positive");
