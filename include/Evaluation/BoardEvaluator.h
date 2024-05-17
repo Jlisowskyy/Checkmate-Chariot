@@ -13,17 +13,15 @@
 #include "../MoveGeneration/FileMap.h"
 
 #include "../MoveGeneration/BlackPawnMap.h"
-#include "../MoveGeneration/WhitePawnMap.h"
 #include "../MoveGeneration/KnightMap.h"
 #include "../MoveGeneration/QueenMap.h"
+#include "../MoveGeneration/WhitePawnMap.h"
 
 /*      Collection of evaluation functions
  *
  *  Additional notes:
  *  - currently only full board evaluation is possible
  */
-
-
 
 // TODO:
 // - apply additional prize for exchanges in winning positions
@@ -120,19 +118,17 @@ class BoardEvaluator
         return (color == WHITE ? whiteEval : -whiteEval) / ScoreGrain;
     }
 
-    template<EvalMode mode = EvalMode::BaseMode>
-    [[nodiscard]] static INLINE int32_t Evaluation2(Board &bd)
+    template <EvalMode mode = EvalMode::BaseMode> [[nodiscard]] static INLINE int32_t Evaluation2(Board &bd)
     {
         const auto [isSuccess, counts] = _countFigures(bd);
         const int32_t phase            = _calcPhase(counts);
 
         const int32_t materialEval =
-                isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation<mode>(counts, phase);
+            isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation<mode>(counts, phase);
         const int32_t positionEval = _evaluateFields<mode>(bd, phase);
 
         print<mode>(std::format("Material: {}", materialEval));
         print<mode>(std::format("Position: {}", positionEval));
-
 
         return materialEval + positionEval;
     }
@@ -185,7 +181,7 @@ class BoardEvaluator
     }
 
     // Function calculates material value based on passed figure counts and actual game phase
-    template<EvalMode mode = EvalMode::BaseMode>
+    template <EvalMode mode = EvalMode::BaseMode>
     static int32_t _slowMaterialCalculation(const FigureCountsArrayT &figArr, int32_t actPhase);
 
     // Function calculates game phase based on passed figure counts
@@ -209,7 +205,7 @@ class BoardEvaluator
 
     // Function evaluates pawns on the board, based on position and structures, returns values for both colors
     // In short is simple wrapper that runs _processPawnEval for both colors and aggregate results
-    template<EvalMode mode = EvalMode::BaseMode>
+    template <EvalMode mode = EvalMode::BaseMode>
     static _fieldEvalInfo_t
     _evaluatePawns(Board &bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs, uint64_t fullMap);
 
@@ -222,23 +218,21 @@ class BoardEvaluator
     //  - isolated pawns
     //  - passed pawns
     template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)>
-    static evalResult
-    _processPawnEval(Board &bd, uint64_t pinnedFigs, uint64_t fullMap);
+    static evalResult _processPawnEval(Board &bd, uint64_t pinnedFigs, uint64_t fullMap);
 
     // Function performs king position evaluation
-    template<EvalMode mode = EvalMode::BaseMode>
-    static void _evaluateKings(Board &bd, _fieldEvalInfo_t &io);
+    template <EvalMode mode = EvalMode::BaseMode> static void _evaluateKings(Board &bd, _fieldEvalInfo_t &io);
 
     // Function performs positional evaluation of the whole board, simply iterates through all figure types and append
     // the results to the output. Output is tapered based on given phase.
-    template<EvalMode mode = EvalMode::BaseMode>
-    static int32_t _evaluateFields(Board &bd, int32_t phase);
+    template <EvalMode mode = EvalMode::BaseMode> static int32_t _evaluateFields(Board &bd, int32_t phase);
 
     // Function takes as a template argument Map of given figure and one of belows function that is used to evaluate
     // specific figure on both colors and append the result to given out object.
     // PawnControlledFields - means fields that pawns are attacking
     // ColorBitMap - map of figures with given color
-    template <EvalMode mode, class MapT, template <EvalMode, class, int (*fieldValueAccess)(int msbPos)> class EvalProducerT>
+    template <
+        EvalMode mode, class MapT, template <EvalMode, class, int (*fieldValueAccess)(int msbPos)> class EvalProducerT>
     static void _processFigEval(
         _fieldEvalInfo_t &out, Board &bd, const uint64_t blackPinnedFigsBitMap, const uint64_t whitePinnedFigsBitMap,
         const uint64_t whitePawnControlledFieldsBitMap, const uint64_t blackPawnControlledFieldsBitMap,
@@ -255,7 +249,7 @@ class BoardEvaluator
             );
 
         out.midgameEval += whiteMidEval - blackMidEval;
-        out.endgameEval += whiteEndEval- blackEndEval;
+        out.endgameEval += whiteEndEval - blackEndEval;
         out.whiteControlledFields |= whiteControlledFields;
         out.blackControlledFields |= blackControlledFields;
         out.whiteKingSafety.attackCounts += wKInfo.attackCounts;
@@ -263,7 +257,6 @@ class BoardEvaluator
         out.blackKingSafety.attackCounts += bKInfo.attackCounts;
         out.blackKingSafety.attackPoints += bKInfo.attackPoints;
     }
-
 
     // ------------------------------------------
     // Similar figure types positional eval
@@ -277,11 +270,10 @@ class BoardEvaluator
 
     template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)> struct _processKnightEval
     {
-        evalResult
-            operator()(
-                Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns, const uint64_t,
-                const uint64_t
-            )
+        evalResult operator()(
+            Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
+            const uint64_t, const uint64_t
+        )
         {
             int32_t midEval{};
             int32_t interEval{};
@@ -328,7 +320,9 @@ class BoardEvaluator
                 endEval += mobCount * KnightMobilityBonusEnd;
 
                 // adding king attack info
-                KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
+                KingSafetyEval::UpdateKingAttacks<mode>(
+                    kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints
+                );
 
                 // adding field values
                 interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
@@ -342,7 +336,6 @@ class BoardEvaluator
             return {midEval, endEval, controlledFields, kInfo};
         }
     };
-
 
     template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)> struct _processBishopEval
     {
@@ -408,7 +401,9 @@ class BoardEvaluator
                 endEval += movesCount * BishopMobilityBonusEnd;
 
                 // adding king attack info
-                KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
+                KingSafetyEval::UpdateKingAttacks<mode>(
+                    kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints
+                );
 
                 RemovePiece(unpinnedBishops, figMap);
             }
@@ -503,7 +498,7 @@ class BoardEvaluator
 
     template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)> struct _processQueenEval
     {
-        evalResult  operator()(
+        evalResult operator()(
             Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
             const uint64_t allyMap, const uint64_t enemyMap
         )
@@ -573,7 +568,6 @@ class BoardEvaluator
 
             return {midEval, endEval, controlledFields, kInfo};
         }
-
     };
 
     // ------------------------------
@@ -875,8 +869,8 @@ class BoardEvaluator
     static MaterialArrayT _materialTable;
 };
 
-template<EvalMode mode>
-void BoardEvaluator::_evaluateKings(Board &bd, BoardEvaluator::_fieldEvalInfo_t &io) {
+template <EvalMode mode> void BoardEvaluator::_evaluateKings(Board &bd, BoardEvaluator::_fieldEvalInfo_t &io)
+{
     io.midgameEval += BasicBlackKingPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])] -
                       BasicBlackKingPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.BitBoards[bKingIndex]))];
     io.endgameEval += BasicBlackKingEndPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])] -
@@ -892,8 +886,9 @@ void BoardEvaluator::_evaluateKings(Board &bd, BoardEvaluator::_fieldEvalInfo_t 
     io.endgameEval += kingRingSafety;
 }
 
-template<EvalMode mode>
-BoardEvaluator::_fieldEvalInfo_t BoardEvaluator::_evaluatePawns(Board &bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs, uint64_t fullMap)
+template <EvalMode mode>
+BoardEvaluator::_fieldEvalInfo_t
+BoardEvaluator::_evaluatePawns(Board &bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs, uint64_t fullMap)
 {
     _fieldEvalInfo_t rv{};
 
@@ -914,7 +909,8 @@ BoardEvaluator::_fieldEvalInfo_t BoardEvaluator::_evaluatePawns(Board &bd, uint6
 }
 
 template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)>
-BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uint64_t fullMap)
+BoardEvaluator::evalResult
+BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uint64_t fullMap)
 {
     int32_t midEval{};
     int32_t interEval{};
@@ -969,7 +965,9 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board &bd, const uin
 
         const uint64_t attackFields = MapT::GetAttackFields(figMap);
 
-        KingSafetyEval::UpdateKingAttacks<mode>(kInfo, attackFields, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
+        KingSafetyEval::UpdateKingAttacks<mode>(
+            kInfo, attackFields, kingRing, KingSafetyEval::KingMinorPieceAttackPoints
+        );
 
         // adding field values
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
@@ -1001,8 +999,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board &bd, const uin
     return {midEval, endEval, pawnControlledFields, kInfo};
 }
 
-template<EvalMode mode>
-int32_t BoardEvaluator::_evaluateFields(Board &bd, int32_t phase)
+template <EvalMode mode> int32_t BoardEvaluator::_evaluateFields(Board &bd, int32_t phase)
 {
     static constexpr void (*EvalFunctions[])(
         _fieldEvalInfo_t &, Board &, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t
@@ -1054,7 +1051,7 @@ int32_t BoardEvaluator::_evaluateFields(Board &bd, int32_t phase)
     return _getTapperedValue(phase, result.midgameEval, result.endgameEval);
 }
 
-template<EvalMode mode>
+template <EvalMode mode>
 inline int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT &figArr, int32_t actPhase)
 {
     int32_t materialValue{};

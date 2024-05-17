@@ -10,11 +10,11 @@ BoardEvaluator::MaterialArrayT BoardEvaluator::_materialTable = []() -> Material
     auto _reverseMaterialIndex = [](const size_t index) -> FigureCountsArrayT
     {
         return {
-                (index % BlackPawnCoef) / WhitePawnCoef,     (index % BlackKnightCoef) / WhiteKnightCoef,
-                (index % BlackBishopCoef) / WhiteBishopCoef, (index % BlackRookCoef) / WhiteRookCoef,
-                (index % BlackQueenCoef) / WhiteQueenCoef,   index / BlackPawnCoef,
-                (index % WhitePawnCoef) / BlackKnightCoef,   (index % WhiteKnightCoef) / BlackBishopCoef,
-                (index % WhiteBishopCoef) / BlackRookCoef,   (index % WhiteRookCoef) / BlackQueenCoef,
+            (index % BlackPawnCoef) / WhitePawnCoef,     (index % BlackKnightCoef) / WhiteKnightCoef,
+            (index % BlackBishopCoef) / WhiteBishopCoef, (index % BlackRookCoef) / WhiteRookCoef,
+            (index % BlackQueenCoef) / WhiteQueenCoef,   index / BlackPawnCoef,
+            (index % WhitePawnCoef) / BlackKnightCoef,   (index % WhiteKnightCoef) / BlackBishopCoef,
+            (index % WhiteBishopCoef) / BlackRookCoef,   (index % WhiteRookCoef) / BlackQueenCoef,
         };
     };
 

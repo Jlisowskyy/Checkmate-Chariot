@@ -45,7 +45,7 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         {      "stop",         &UCITranslator::_stopResponse},
         {      "quit",         &UCITranslator::_quitResponse},
         {      "exit",         &UCITranslator::_quitResponse},
-{      "eval",           &UCITranslator::_evalPositionStatic},
+        {      "eval",   &UCITranslator::_evalPositionStatic},
         {         "d",      &UCITranslator::_displayResponse},
         {   "display",      &UCITranslator::_displayResponse},
         {      "disp",      &UCITranslator::_displayResponse},
@@ -156,8 +156,8 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
 UCITranslator::UCICommand UCITranslator::_evalPositionStatic(const std::string &str)
 {
     std::string workStr;
-    Board b=_engine.GetUnderlyingBoardCopy();
-    int32_t eval=BoardEvaluator::Evaluation2<EvalMode::PrintMode>(b);
+    Board b      = _engine.GetUnderlyingBoardCopy();
+    int32_t eval = BoardEvaluator::Evaluation2<EvalMode::PrintMode>(b);
     return UCICommand::evalCommand;
 }
 
