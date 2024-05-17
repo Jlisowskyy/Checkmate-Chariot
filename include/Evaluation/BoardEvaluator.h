@@ -67,17 +67,11 @@
  *
  * */
 
-enum class EvalMode
-{
-    BaseMode,
-    PrintMode
-};
-
 template<EvalMode mode>
 void print(const std::string &str)
 {
     if constexpr (mode==EvalMode::PrintMode)
-        std::cout<<str;
+        GlobalLogger.LogStream << str;
 }
 
 class BoardEvaluator
@@ -132,7 +126,7 @@ class BoardEvaluator
         return (color == WHITE ? whiteEval : -whiteEval) / ScoreGrain;
     }
 
-    template<EvalMode mode>
+    template<EvalMode mode = EvalMode::BaseMode>
     [[nodiscard]] static INLINE int32_t Evaluation2(Board &bd)
     {
         const auto [isSuccess, counts] = _countFigures(bd);
@@ -192,7 +186,7 @@ class BoardEvaluator
     }
 
     // Function calculates material value based on passed figure counts and actual game phase
-    template<EvalMode mode>
+    template<EvalMode mode = EvalMode::BaseMode>
     static int32_t _slowMaterialCalculation(const FigureCountsArrayT &figArr, int32_t actPhase);
 
     // Function calculates game phase based on passed figure counts
@@ -216,7 +210,7 @@ class BoardEvaluator
 
     // Function evaluates pawns on the board, based on position and structures, returns values for both colors
     // In short is simple wrapper that runs _processPawnEval for both colors and aggregate results
-    template<EvalMode mode>
+    template<EvalMode mode = EvalMode::BaseMode>
     static _fieldEvalInfo_t
     _evaluatePawns(Board &bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs, uint64_t fullMap);
 
@@ -233,12 +227,12 @@ class BoardEvaluator
     _processPawnEval(Board &bd, uint64_t pinnedFigs, uint64_t fullMap);
 
     // Function performs king position evaluation
-    template<EvalMode mode>
+    template<EvalMode mode = EvalMode::BaseMode>
     static void _evaluateKings(Board &bd, _fieldEvalInfo_t &io);
 
     // Function performs positional evaluation of the whole board, simply iterates through all figure types and append
     // the results to the output. Output is tapered based on given phase.
-    template<EvalMode mode>
+    template<EvalMode mode = EvalMode::BaseMode>
     static int32_t _evaluateFields(Board &bd, int32_t phase);
 
     // Function takes as a template argument Map of given figure and one of belows function that is used to evaluate
