@@ -89,10 +89,7 @@ class Engine
     /* Simply issues go command to the ThreadManager */
     void Go(const GoInfo &info, const std::vector<std::string> &moves);
 
-    void GoPonder()
-    {
-
-    }
+    void PonderHit();
 
     static const std::string &GetDebugEnginePath() { return _debugEnginePath; }
 

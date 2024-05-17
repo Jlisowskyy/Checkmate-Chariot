@@ -14,6 +14,7 @@
 // Static fields initialization
 bool GameTimeManager::TimerRunning = false;
 bool GameTimeManager::ShouldStop   = false;
+GoTimeInfo GameTimeManager::_ponderTimes = {};
 std::chrono::time_point<std::chrono::system_clock> GameTimeManager::TimeStart;
 std::chrono::time_point<std::chrono::system_clock> GameTimeManager::CurrentTime;
 std::mutex GameTimeManager::mtx;
@@ -253,4 +254,13 @@ lli GameTimeManager::CalculateTimeMsPerMove(
     assert(ans > 0 && "Time for move must be greater than 0");
 
     return ans;
+}
+
+void GameTimeManager::StartPonder(const GoTimeInfo &tInfo) {
+    _ponderTimes = tInfo;
+    ShouldStop = false;
+}
+
+void GameTimeManager::PonderHit(Color color, const Board &bd, uint16_t moveAge) {
+    StartSearchManagementAsync(_ponderTimes, color, bd, moveAge);
 }

@@ -15,8 +15,14 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
     if (_isSearchOn)
         return false;
 
+    _isPonderOn = info.isPonderSearch;
+
     // Setting up time guarding parameters
-    GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd, age);
+    if (!info.isPonderSearch)
+        GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd, age);
+    else {
+        GameTimeManager::StartPonder(info.timeInfo);
+    }
 
     // Running up the searching worker
     _threads[MainSearchThreadInd] = new std::thread(
