@@ -45,6 +45,7 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         {      "stop",         &UCITranslator::_stopResponse},
         {      "quit",         &UCITranslator::_quitResponse},
         {      "exit",         &UCITranslator::_quitResponse},
+{      "eval",           &UCITranslator::_evalPositionStatic},
         {         "d",      &UCITranslator::_displayResponse},
         {   "display",      &UCITranslator::_displayResponse},
         {      "disp",      &UCITranslator::_displayResponse},
@@ -150,6 +151,13 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
         _appliedMoves.clear();
 
     return UCICommand::positionCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_evalPositionStatic(const std::string &str)
+{
+    std::string workStr;
+    std::cout<<"evaluating..."<<std::endl;
+    return UCICommand::evalCommand;
 }
 
 UCITranslator::UCICommand UCITranslator::_ucinewgameResponse([[maybe_unused]] const std::string &)
