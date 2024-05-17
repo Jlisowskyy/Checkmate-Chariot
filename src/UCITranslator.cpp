@@ -156,7 +156,8 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
 UCITranslator::UCICommand UCITranslator::_evalPositionStatic(const std::string &str)
 {
     std::string workStr;
-    std::cout<<"evaluating..."<<std::endl;
+    Board b=_engine.GetUnderlyingBoardCopy();
+    int32_t eval=BoardEvaluator::Evaluation2<EvalMode::PrintMode>(b);
     return UCICommand::evalCommand;
 }
 

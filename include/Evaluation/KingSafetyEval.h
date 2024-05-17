@@ -9,6 +9,7 @@
 #include "../MoveGeneration/KingMap.h"
 #include "../MoveGeneration/MoveGenerationUtils.h"
 
+
 /*
  * Structure below gathers all the necessary information about the king safety evaluation.
  * In short king's safety evaluation depends on:
@@ -112,8 +113,11 @@ struct KingSafetyEval
     {
         int32_t bonus{};
 
-        bonus += (whiteInfo.attackCounts > 2) * (-_kingSafetyValues[whiteInfo.attackPoints]);
-        bonus += (blackInfo.attackCounts > 2) * (_kingSafetyValues[blackInfo.attackPoints]);
+        bonus += (whiteInfo.attackCounts > 0) * (_kingSafetyValues[whiteInfo.attackPoints]);
+        bonus += (blackInfo.attackCounts > 0) * (-_kingSafetyValues[blackInfo.attackPoints]);
+
+        print<mode>(std::format("KingRing: [{} {}]",
+                          (whiteInfo.attackCounts > 0) * (_kingSafetyValues[whiteInfo.attackPoints]),(blackInfo.attackCounts > 0) * (-_kingSafetyValues[blackInfo.attackPoints])));
 
         return bonus;
     }

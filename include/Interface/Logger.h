@@ -22,6 +22,8 @@
     if (!(cond))                                                                                                       \
     WrapTraceMsgError(msg)
 
+
+
 /// <summary>
 /// Concept for types that allow streaming (i.e. can be used with std::ostream)
 /// </summary>
@@ -241,5 +243,14 @@ class FileLogger : public Logger
 };
 
 extern StdoutLogger GlobalLogger;
+
+
+// Function prints how evaluation works when EvalMode is PrintMode
+template<EvalMode mode>
+void print(const std::string &str)
+{
+    if constexpr (mode==EvalMode::PrintMode)
+        GlobalLogger.LogStream<<str<<std::endl;
+}
 
 #endif // LOGGER_H

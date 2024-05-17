@@ -23,6 +23,8 @@
  *  - currently only full board evaluation is possible
  */
 
+
+
 // TODO:
 // - apply additional prize for exchanges in winning positions
 // - what if e.g rook is pinned by rook? (pinning bonuses)
@@ -66,14 +68,6 @@
  *  - exponential king's safety evaluation values
  *
  * */
-
-template<EvalMode mode>
-void print(const std::string &str)
-{
-    if constexpr (mode==EvalMode::PrintMode)
-        GlobalLogger.LogStream << str;
-}
-
 class BoardEvaluator
 {
     // ------------------------------
@@ -135,6 +129,11 @@ class BoardEvaluator
         const int32_t materialEval =
                 isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation<mode>(counts, phase);
         const int32_t positionEval = _evaluateFields<mode>(bd, phase);
+
+        print<mode>(std::format("Material: {}", materialEval));
+        print<mode>(std::format("Position: {}", positionEval));
+
+
         return materialEval + positionEval;
     }
 
@@ -256,7 +255,7 @@ class BoardEvaluator
             );
 
         out.midgameEval += whiteMidEval - blackMidEval;
-        out.endgameEval += blackEndEval - whiteEndEval;
+        out.endgameEval += whiteEndEval- blackEndEval;
         out.whiteControlledFields |= whiteControlledFields;
         out.blackControlledFields |= blackControlledFields;
         out.whiteKingSafety.attackCounts += wKInfo.attackCounts;
@@ -296,7 +295,7 @@ class BoardEvaluator
             const uint64_t safeFields = ~enemyControlledFieldsByPawns;
 
             // generating king ring
-            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
+            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, SwapColor(col));
 
             while (pinnedKnights)
             {
@@ -366,7 +365,7 @@ class BoardEvaluator
             const uint64_t fullMap    = allyMap | enemyMap;
 
             // generating king ring
-            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
+            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, SwapColor(col));
 
             while (pinnedBishops)
             {
@@ -441,7 +440,7 @@ class BoardEvaluator
             const uint64_t fullMap    = allyMap | enemyMap;
 
             // generating king ring
-            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
+            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, SwapColor(col));
 
             while (pinnedRooks)
             {
@@ -521,7 +520,7 @@ class BoardEvaluator
             const uint64_t fullMap    = allyMap | enemyMap;
 
             // generating king ring
-            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
+            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, SwapColor(col));
 
             while (pinnedQueens)
             {
@@ -927,7 +926,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board &bd, const uin
     uint64_t unpinnedPawns = bd.BitBoards[MapT::GetBoardIndex(0)] ^ pinnedPawns;
 
     // generating king ring
-    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, MapT::GetColor());
+    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, SwapColor(MapT::GetColor()));
 
     while (pinnedPawns)
     {
