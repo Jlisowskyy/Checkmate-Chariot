@@ -56,12 +56,15 @@ void SearchThreadManager::_threadSearchJob(
 )
 {
     PackedMove output{};
+    PackedMove ponder{};
 
     *guard = true;
     BestMoveSearch searcher{*bd, *s, age};
-    searcher.IterativeDeepening(&output, depth);
+    searcher.IterativeDeepening(&output, &ponder, depth);
 
-    GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation()) << std::endl;
+    GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
+        << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation())) << std::endl;
+
     *guard = false;
 }
 void SearchThreadManager::Consolidate()

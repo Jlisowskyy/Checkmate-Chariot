@@ -54,9 +54,8 @@ SearchPerfTester::_performTestCase(const std::string &testCase, const int depth,
     BestMoveSearch searcher(bd, stack, 1);
 
     const auto tStart = std::chrono::steady_clock::now();
-    [[maybe_unused]] PackedMove mv{};
     if (depth > 0)
-        searcher.IterativeDeepening(&mv, depth);
+        searcher.IterativeDeepening(nullptr, nullptr, depth);
     else
     {
         const int eval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
