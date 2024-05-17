@@ -56,6 +56,7 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         {       "cls",         &UCITranslator::_clearConsole},
         {      "ctpm", &UCITranslator::_calculateTimePerMove}, // Calculate time per move
         {        "zv",        &UCITranslator::_searchZobrist},
+        { "ponderhit",    &UCITranslator::_ponderhitResponse},
     };
 
     std::string workStr;
@@ -369,6 +370,7 @@ UCITranslator::UCICommand UCITranslator::_goSearchRegular(const std::string &str
         {   "btime",    &_goBTimeResponse},
         {   "wtime",    &_goWTimeResponse},
         {   "depth",    &_goDepthResponse},
+        {  "ponder",    &goPonderResponse},
     };
 
     GoInfo info{};
@@ -531,4 +533,10 @@ UCITranslator::UCICommand UCITranslator::_searchZobrist(const std::string &str)
     [[maybe_unused]] auto _ = ZobristHasher::SearchForSeed(ZobristHasher::BaseSeed, bitDiffs, Debug);
 
     return UCITranslator::UCICommand::isreadyCommand;
+}
+
+size_t UCITranslator::goPonderResponse(const std::string &, size_t pos, GoInfo &info)
+{
+    info.isPonderSearch = true;
+    return pos;
 }

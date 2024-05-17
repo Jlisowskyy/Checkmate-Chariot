@@ -26,7 +26,9 @@ static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 #define TestTTAdd()
 #endif
 
-void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDepth, const bool writeInfo)
+void BestMoveSearch::IterativeDeepening(
+    PackedMove *bestMove, PackedMove *ponderMove, const int32_t maxDepth, const bool writeInfo
+)
 {
     // When the passed depth is 0, we need to evaluate the board statically
     if (maxDepth == 0)
@@ -129,7 +131,12 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
         [[maybe_unused]] auto timeStop = GameTimeManager::GetCurrentTime();
 
         // Saving first move from the PV as the best move
-        *output = _pv[0];
+
+        if (bestMove != nullptr)
+            *bestMove = _pv[0];
+
+        if (ponderMove != nullptr && depth > 1)
+            *ponderMove = _pv[1];
 
         // Log info if necessary
         if (writeInfo)
@@ -141,7 +148,7 @@ void BestMoveSearch::IterativeDeepening(PackedMove *output, const int32_t maxDep
             GlobalLogger.LogStream << std::format(
                 "info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
                 depth, spentMs, _visitedNodes, nps, eval * BoardEvaluator::ScoreGrain,
-                output->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
+                bestMove->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
             _pv.Print();

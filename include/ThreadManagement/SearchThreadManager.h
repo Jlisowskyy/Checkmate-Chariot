@@ -47,6 +47,10 @@ struct SearchThreadManager
 
     [[nodiscard]] bool IsSearchOn() const { return _isSearchOn; }
 
+    [[nodiscard]] bool IsPonderOn() const { return _isPonderOn; }
+
+    void DisablePonder() { _isPonderOn = false; }
+
     // ------------------------------
     // Private class methods
     // ------------------------------
@@ -60,6 +64,7 @@ struct SearchThreadManager
     // ------------------------------
 
     bool _isSearchOn{false};
+    bool _isPonderOn{false};
 
     // TODO: Implement logical thread detection
 
