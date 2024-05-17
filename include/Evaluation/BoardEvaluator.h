@@ -127,8 +127,8 @@ class BoardEvaluator
             isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation<mode>(counts, phase);
         const int32_t positionEval = _evaluateFields<mode>(bd, phase);
 
-        print<mode>(std::format("Material: {}", materialEval));
-        print<mode>(std::format("Position: {}", positionEval));
+        print<mode>(std::format("Material: {}\n", materialEval));
+        print<mode>(std::format("Position: {}\n", positionEval));
 
         return materialEval + positionEval;
     }
@@ -256,6 +256,11 @@ class BoardEvaluator
         out.whiteKingSafety.attackPoints += wKInfo.attackPoints;
         out.blackKingSafety.attackCounts += bKInfo.attackCounts;
         out.blackKingSafety.attackPoints += bKInfo.attackPoints;
+
+        print<mode>(std::format(" [mid: {}, {} end: {},{}] Control [{}, {}] KingAttackPoints[{}, {}]\n"
+                                ,whiteMidEval, -blackMidEval, whiteEndEval, -blackEndEval
+                                , CountOnesInBoard(whiteControlledFields), CountOnesInBoard((blackControlledFields)),
+                                wKInfo.attackCounts, bKInfo.attackCounts));
     }
 
     // ------------------------------------------
@@ -333,6 +338,7 @@ class BoardEvaluator
             midEval += interEval;
             endEval += interEval;
 
+            print<mode>(col?"Knight ":"");
             return {midEval, endEval, controlledFields, kInfo};
         }
     };
@@ -410,6 +416,8 @@ class BoardEvaluator
 
             midEval += interEval;
             endEval += interEval;
+
+            print<mode>(col?"Bishop ":"");
 
             return {midEval, endEval, controlledFields, kInfo};
         }
@@ -492,6 +500,8 @@ class BoardEvaluator
             midEval += interEval;
             endEval += interEval;
 
+            print<mode>(col?"Rook ":"");
+
             return {midEval, endEval, controlledFields, kInfo};
         }
     };
@@ -565,6 +575,8 @@ class BoardEvaluator
 
                 RemovePiece(unpinnedQueens, figMap);
             }
+
+            print<mode>(col?"Queen ":"");
 
             return {midEval, endEval, controlledFields, kInfo};
         }
@@ -871,10 +883,15 @@ class BoardEvaluator
 
 template <EvalMode mode> void BoardEvaluator::_evaluateKings(Board &bd, BoardEvaluator::_fieldEvalInfo_t &io)
 {
-    io.midgameEval += BasicBlackKingPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])] -
-                      BasicBlackKingPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.BitBoards[bKingIndex]))];
-    io.endgameEval += BasicBlackKingEndPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])] -
-                      BasicBlackKingEndPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.BitBoards[bKingIndex]))];
+    const int32_t whiteKingMid=BasicBlackKingPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])];
+    const int32_t blackKingMid=BasicBlackKingPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.BitBoards[bKingIndex]))];
+    const int32_t whiteKingEnd=BasicBlackKingEndPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])];
+    const int32_t blackKingEnd=BasicBlackKingEndPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.BitBoards[bKingIndex]))];
+
+    io.midgameEval +=  whiteKingMid-blackKingMid;
+    io.endgameEval +=  whiteKingEnd-blackKingEnd;
+
+    print<mode>(std::format("King [mid: {}, {} end: {}, {}]\n", whiteKingMid, blackKingMid, whiteKingEnd, blackKingEnd));
 
     int32_t kingRingSafety = KingSafetyEval::ScoreKingRingControl<mode>(io.whiteKingSafety, io.blackKingSafety);
 
@@ -904,6 +921,8 @@ BoardEvaluator::_evaluatePawns(Board &bd, uint64_t blackPinnedFigs, uint64_t whi
     rv.blackControlledFields = blackControlledFields;
     rv.whiteKingSafety       = whiteKingInfo;
     rv.blackKingSafety       = blackKingInfo;
+
+    print<mode>(std::format("Pawns: [mid: {}, {} end: {} {}]\n", whiteMidEval, -blackMidEval, whiteEndEval, -blackEndEval));
 
     return rv;
 }
@@ -1042,11 +1061,19 @@ template <EvalMode mode> int32_t BoardEvaluator::_evaluateFields(Board &bd, int3
 
     _evaluateKings<mode>(bd, result);
 
-    const int32_t controlEval =
-        (CountOnesInBoard(result.whiteControlledFields) - CountOnesInBoard(result.blackControlledFields)) *
-        CenterControlBonusPerTile;
+    // ------------------------------
+    // Activity
+    // ------------------------------
+
+    const int32_t whiteControledFieldsCount=CountOnesInBoard(result.whiteControlledFields);
+    const int32_t blackControledFieldsCount=CountOnesInBoard(result.blackControlledFields);
+    const int32_t controlEval =(whiteControledFieldsCount - blackControledFieldsCount) *CenterControlBonusPerTile;
     result.midgameEval += controlEval;
     result.endgameEval += controlEval;
+
+    print<mode>(std::format("ControlFields [{} {}]\n",
+                            whiteControledFieldsCount*CenterControlBonusPerTile,
+                            -blackControledFieldsCount*CenterControlBonusPerTile));
 
     return _getTapperedValue(phase, result.midgameEval, result.endgameEval);
 }

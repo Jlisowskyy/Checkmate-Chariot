@@ -244,7 +244,7 @@ extern StdoutLogger GlobalLogger;
 template <EvalMode mode> void print(const std::string &str)
 {
     if constexpr (mode == EvalMode::PrintMode)
-        GlobalLogger.LogStream << str << std::endl;
+        GlobalLogger.LogStream << str;
 }
 
 #endif // LOGGER_H

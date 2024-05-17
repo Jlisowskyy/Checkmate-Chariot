@@ -70,36 +70,40 @@ struct KingSafetyEval
     // Returns summed shelter penalty points for both kings.
     template <EvalMode mode = EvalMode::BaseMode> [[nodiscard]] static INLINE int32_t EvalKingShelter(const Board &bd)
     {
-        int32_t eval{};
+        int32_t whiteShelter{}, blackShelter{};
         if ((bd.BitBoards[wKingIndex] & KingMap::ShelterLocationMask[WHITE]) != 0 &&
             CountOnesInBoard(
                 bd.BitBoards[wPawnsIndex] & GetFrontLineMask<mode>(WHITE, ExtractMsbPos(bd.BitBoards[wKingIndex]))
             ) < 3)
-            eval += KingNoShelterPenalty;
+            whiteShelter = KingNoShelterPenalty;
 
         if ((bd.BitBoards[bKingIndex] & KingMap::ShelterLocationMask[BLACK]) != 0 &&
             CountOnesInBoard(
                 bd.BitBoards[bPawnsIndex] & GetFrontLineMask<mode>(BLACK, ExtractMsbPos(bd.BitBoards[bKingIndex]))
             ) < 3)
-            eval += -KingNoShelterPenalty;
+            blackShelter = -KingNoShelterPenalty;
 
-        return eval;
+        print<mode>(std::format("KingShelter [{} {}]\n", whiteShelter, blackShelter));
+
+        return whiteShelter+blackShelter;
     }
 
     // Returns summed open files penalty points for both kings.
     template <EvalMode mode = EvalMode::BaseMode> [[nodiscard]] static INLINE int32_t EvalKingOpenFiles(const Board &bd)
     {
-        int32_t eval{};
+        int32_t whitePoints{}, blackPoints{};
 
         const auto wSep = FileMap::GetSepFiles(ExtractMsbPos(bd.BitBoards[wKingIndex]));
         for (size_t i = 0; i < FileMap::FileSepSize; ++i)
-            eval += ((bd.BitBoards[wPawnsIndex] & wSep[i]) == 0) * KingOpenFilePenalty;
+            whitePoints += ((bd.BitBoards[wPawnsIndex] & wSep[i]) == 0) * KingOpenFilePenalty;
 
         const auto bSep = FileMap::GetSepFiles(ExtractMsbPos(bd.BitBoards[bKingIndex]));
         for (size_t i = 0; i < FileMap::FileSepSize; ++i)
-            eval -= ((bd.BitBoards[bPawnsIndex] & bSep[i]) == 0) * KingOpenFilePenalty;
+            blackPoints -= ((bd.BitBoards[bPawnsIndex] & bSep[i]) == 0) * KingOpenFilePenalty;
 
-        return eval;
+        print<mode>(std::format("KingOpenFiles [{} {}]\n", whitePoints, blackPoints));
+
+        return whitePoints+blackPoints;
     }
 
     // Returns score for the king ring control.
@@ -114,7 +118,7 @@ struct KingSafetyEval
         bonus += (blackInfo.attackCounts > 0) * (-_kingSafetyValues[blackInfo.attackPoints]);
 
         print<mode>(std::format(
-            "KingRing: [{} {}]", (whiteInfo.attackCounts > 0) * (_kingSafetyValues[whiteInfo.attackPoints]),
+            "KingRing: [{} {}]\n", (whiteInfo.attackCounts > 0) * (_kingSafetyValues[whiteInfo.attackPoints]),
             (blackInfo.attackCounts > 0) * (-_kingSafetyValues[blackInfo.attackPoints])
         ));
 
