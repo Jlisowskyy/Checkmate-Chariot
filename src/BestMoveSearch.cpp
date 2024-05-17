@@ -26,7 +26,9 @@ static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 #define TestTTAdd()
 #endif
 
-void BestMoveSearch::IterativeDeepening(PackedMove *bestMove, PackedMove* ponderMove, const int32_t maxDepth, const bool writeInfo)
+void BestMoveSearch::IterativeDeepening(
+    PackedMove *bestMove, PackedMove *ponderMove, const int32_t maxDepth, const bool writeInfo
+)
 {
     // When the passed depth is 0, we need to evaluate the board statically
     if (maxDepth == 0)

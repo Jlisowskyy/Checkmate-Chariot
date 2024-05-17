@@ -20,7 +20,8 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
     // Setting up time guarding parameters
     if (!info.isPonderSearch)
         GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd, age);
-    else {
+    else
+    {
         GameTimeManager::StartPonder(info.timeInfo);
     }
 
@@ -69,7 +70,8 @@ void SearchThreadManager::_threadSearchJob(
     searcher.IterativeDeepening(&output, &ponder, depth);
 
     GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
-        << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation())) << std::endl;
+                           << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
+                           << std::endl;
 
     *guard = false;
 }

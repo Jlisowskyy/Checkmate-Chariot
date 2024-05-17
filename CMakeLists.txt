@@ -117,6 +117,7 @@ set(CHECKMATE_CHARIOT_SOURCES
         src/GameTimeManager.cpp
         include/ThreadManagement/GameTimeManagerUtils.h
         src/GameTimeManagerUtils.cpp
+        include/TestsAndDebugging/TestSetup.h
 )
 
 # Create a library with the core functionality

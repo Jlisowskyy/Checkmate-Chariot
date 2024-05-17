@@ -193,10 +193,12 @@ void Engine::_clearHash(Engine &) { TTable.ClearTable(); }
 void Engine::_changeDebugEnginePath(Engine &, std::string &path) { _debugEnginePath = path; }
 void Engine::_changeBookPath(Engine &engine, std::string &path) { engine._bookPath = path; }
 
-void Engine::PonderHit() {
+void Engine::PonderHit()
+{
     TraceIfFalse(TManager.IsPonderOn(), "Received ponderhit command when no pondering was enabled");
 
-    if (TManager.IsSearchOn() && TManager.IsPonderOn()) {
+    if (TManager.IsSearchOn() && TManager.IsPonderOn())
+    {
         TManager.DisablePonder();
         GameTimeManager::PonderHit(static_cast<Color>(_board.MovingColor), _board, _age);
     }
