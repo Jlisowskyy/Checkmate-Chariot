@@ -6,6 +6,7 @@
 #define UCITRANSLATOR_H
 
 #include "../Engine.h"
+#include "../Evaluation/BoardEvaluator.h"
 #include "../ThreadManagement/GameTimeManager.h"
 
 /*
@@ -58,6 +59,7 @@ class UCITranslator
         setoptionCommand,
         ucinewgameCommand,
         positionCommand,
+        evalCommand,
         goCommand,
         stopCommand,
         quitCommand,
@@ -112,6 +114,12 @@ class UCITranslator
      * "position" implementation
      * */
     [[nodiscard]] UCICommand _positionResponse(const std::string &str);
+
+    /* method evaluate statically position and show how it is evaluating position
+     *
+     * "eval" implementation
+     * */
+    [[nodiscard]] UCICommand _evalPositionStatic(const std::string &str);
 
     /*
      *  Method resets engine state and clears all applied moves.

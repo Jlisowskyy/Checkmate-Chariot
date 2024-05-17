@@ -16,15 +16,13 @@ void FancyMagicBishopMap::ParameterSearch()
     };
 
     _underlyingMapT::FindCollidingIndices<
-        decltype(nGen), decltype(mInit),
-        [](const uint64_t n, const std::array<uint64_t, 4> &m)
+        decltype(nGen), decltype(mInit), [](const uint64_t n, const std::array<uint64_t, 4> &m)
         {
             return BishopMapGenerator::StripBlockingNeighbors(n, m);
         }>(funcs, nGen, mInit);
 
     _underlyingMapT::FindHashParameters<
-        decltype(nGen), decltype(mInit),
-        [](const uint64_t n, const std::array<uint64_t, 4> &m)
+        decltype(nGen), decltype(mInit), [](const uint64_t n, const std::array<uint64_t, 4> &m)
         {
             return BishopMapGenerator::StripBlockingNeighbors(n, m);
         }>(funcs, nGen, mInit);

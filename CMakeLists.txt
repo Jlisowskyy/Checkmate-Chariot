@@ -79,7 +79,6 @@ set(CHECKMATE_CHARIOT_SOURCES
         include/TestsAndDebugging/BookTester.h
         src/BookTester.cpp
         include/Evaluation/BoardEvaluator.h
-        src/BoardEvaluator.cpp
         include/Search/BestMoveSearch.h
         src/BestMoveSearch.cpp
         include/TestsAndDebugging/CsvOperator.h
@@ -118,6 +117,7 @@ set(CHECKMATE_CHARIOT_SOURCES
         include/ThreadManagement/GameTimeManagerUtils.h
         src/GameTimeManagerUtils.cpp
         include/TestsAndDebugging/TestSetup.h
+        src/BoardEvaluator.cpp
 )
 
 # Create a library with the core functionality

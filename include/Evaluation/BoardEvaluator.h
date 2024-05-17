@@ -12,6 +12,11 @@
 
 #include "../MoveGeneration/FileMap.h"
 
+#include "../MoveGeneration/BlackPawnMap.h"
+#include "../MoveGeneration/KnightMap.h"
+#include "../MoveGeneration/QueenMap.h"
+#include "../MoveGeneration/WhitePawnMap.h"
+
 /*      Collection of evaluation functions
  *
  *  Additional notes:
@@ -61,7 +66,6 @@
  *  - exponential king's safety evaluation values
  *
  * */
-
 class BoardEvaluator
 {
     // ------------------------------
@@ -110,20 +114,31 @@ class BoardEvaluator
     // Wrapper used to run chosen evaluation function
     [[nodiscard]] static INLINE int32_t DefaultFullEvalFunction(Board &bd, const int color)
     {
-        const int whiteEval = Evaluation2(bd);
+        const int whiteEval = Evaluation2<EvalMode::BaseMode>(bd);
         return (color == WHITE ? whiteEval : -whiteEval) / ScoreGrain;
     }
 
-    // function uses only material to evaluate passed board
-    [[nodiscard]] static int32_t PlainMaterialEvaluation(const Board &bd);
+    template <EvalMode mode = EvalMode::BaseMode> [[nodiscard]] static INLINE int32_t Evaluation2(Board &bd)
+    {
+        const auto [isSuccess, counts] = _countFigures(bd);
+        const int32_t phase            = _calcPhase(counts);
 
-    [[nodiscard]] static int32_t NaiveEvaluation(const Board &bd);
+        const int32_t materialEval =
+            isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation<mode>(counts, phase);
+        const int32_t positionEval = _evaluateFields<mode>(bd, phase);
 
-    [[nodiscard]] static int32_t Evaluation1(const Board &bd);
+        print<mode>(std::format("Material: {}", materialEval));
+        print<mode>(std::format("Position: {}", positionEval));
 
-    [[nodiscard]] static int32_t Evaluation2(Board &bd);
+        return materialEval + positionEval;
+    }
 
-    [[nodiscard]] static int32_t InterpGameStage(const Board &bd, int32_t midVal, int32_t endVal);
+    [[nodiscard]] static INLINE int32_t InterpGameStage(const Board &bd, int32_t midVal, int32_t endVal)
+    {
+        const auto [isSuccess, counts] = _countFigures(bd);
+        const int32_t phase            = _calcPhase(counts);
+        return _getTapperedValue(phase, midVal, endVal);
+    }
 
     // ------------------------------
     // Private class methods
@@ -166,6 +181,7 @@ class BoardEvaluator
     }
 
     // Function calculates material value based on passed figure counts and actual game phase
+    template <EvalMode mode = EvalMode::BaseMode>
     static int32_t _slowMaterialCalculation(const FigureCountsArrayT &figArr, int32_t actPhase);
 
     // Function calculates game phase based on passed figure counts
@@ -187,21 +203,9 @@ class BoardEvaluator
         return (endEval * (MaxTaperedCoef - phase) + midEval * phase) / MaxTaperedCoef;
     }
 
-    // Input:
-    //  - evaluator - function that takes msbInd as an input and returns value of specific figure on specific field
-    //  - figs - bitboard with figures to evaluate
-    // Output:
-    //  - sum of evaluated position of given figure type defined by evaluator
-    template <class EvalF> static int32_t _getSimpleFieldEval(EvalF evaluator, uint64_t figs);
-
-    // simply iterates through all figures and positions and evaluates them based on middle game evaluation
-    static int32_t _getNotTaperedEval(const Board &bd);
-
-    // simply iterates through all figures and positions and evaluates using tapered eval
-    static int32_t _getTaperedEval(const Board &bd, int32_t phase);
-
     // Function evaluates pawns on the board, based on position and structures, returns values for both colors
     // In short is simple wrapper that runs _processPawnEval for both colors and aggregate results
+    template <EvalMode mode = EvalMode::BaseMode>
     static _fieldEvalInfo_t
     _evaluatePawns(Board &bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs, uint64_t fullMap);
 
@@ -213,26 +217,46 @@ class BoardEvaluator
     //  - doubled pawns
     //  - isolated pawns
     //  - passed pawns
-    template <class MapT, int (*fieldValueAccess)(int msbPos)>
+    template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)>
     static evalResult _processPawnEval(Board &bd, uint64_t pinnedFigs, uint64_t fullMap);
 
     // Function performs king position evaluation
-    static void _evaluateKings(Board &bd, _fieldEvalInfo_t &io);
+    template <EvalMode mode = EvalMode::BaseMode> static void _evaluateKings(Board &bd, _fieldEvalInfo_t &io);
 
     // Function performs positional evaluation of the whole board, simply iterates through all figure types and append
     // the results to the output. Output is tapered based on given phase.
-    static int32_t _evaluateFields(Board &bd, int32_t phase);
+    template <EvalMode mode = EvalMode::BaseMode> static int32_t _evaluateFields(Board &bd, int32_t phase);
 
     // Function takes as a template argument Map of given figure and one of belows function that is used to evaluate
     // specific figure on both colors and append the result to given out object.
     // PawnControlledFields - means fields that pawns are attacking
     // ColorBitMap - map of figures with given color
-    template <class MapT, template <class, int (*fieldValueAccess)(int msbPos)> class EvalProducerT>
+    template <
+        EvalMode mode, class MapT, template <EvalMode, class, int (*fieldValueAccess)(int msbPos)> class EvalProducerT>
     static void _processFigEval(
-        _fieldEvalInfo_t &out, Board &bd, uint64_t blackPinnedFigsBitMap, uint64_t whitePinnedFigsBitMap,
-        uint64_t whitePawnControlledFieldsBitMap, uint64_t blackPawnControlledFieldsBitMap, uint64_t whiteBitMap,
-        uint64_t blackBitMap
-    );
+        _fieldEvalInfo_t &out, Board &bd, const uint64_t blackPinnedFigsBitMap, const uint64_t whitePinnedFigsBitMap,
+        const uint64_t whitePawnControlledFieldsBitMap, const uint64_t blackPawnControlledFieldsBitMap,
+        const uint64_t whiteBitMap, const uint64_t blackBitMap
+    )
+    {
+        const auto [whiteMidEval, whiteEndEval, whiteControlledFields, wKInfo] = EvalProducerT<mode, MapT, NoOp>()(
+            bd, whitePinnedFigsBitMap, WHITE, blackPawnControlledFieldsBitMap, whiteBitMap, blackBitMap
+        );
+
+        const auto [blackMidEval, blackEndEval, blackControlledFields, bKInfo] =
+            EvalProducerT<mode, MapT, ConvertToReversedPos>()(
+                bd, blackPinnedFigsBitMap, BLACK, whitePawnControlledFieldsBitMap, blackBitMap, whiteBitMap
+            );
+
+        out.midgameEval += whiteMidEval - blackMidEval;
+        out.endgameEval += whiteEndEval - blackEndEval;
+        out.whiteControlledFields |= whiteControlledFields;
+        out.blackControlledFields |= blackControlledFields;
+        out.whiteKingSafety.attackCounts += wKInfo.attackCounts;
+        out.whiteKingSafety.attackPoints += wKInfo.attackPoints;
+        out.blackKingSafety.attackCounts += bKInfo.attackCounts;
+        out.blackKingSafety.attackPoints += bKInfo.attackPoints;
+    }
 
     // ------------------------------------------
     // Similar figure types positional eval
@@ -244,34 +268,306 @@ class BoardEvaluator
      *  to introduce ease of adding new structures and patterns processing.
      */
 
-    template <class MapT, int (*fieldValueAccess)(int msbPos)> struct _processKnightEval
-    {
-        evalResult
-        operator()(Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns, uint64_t, uint64_t);
-    };
-
-    template <class MapT, int (*fieldValueAccess)(int msbPos)> struct _processBishopEval
+    template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)> struct _processKnightEval
     {
         evalResult operator()(
-            Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns, uint64_t allyMap,
-            uint64_t enemyMap
-        );
+            Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
+            const uint64_t, const uint64_t
+        )
+        {
+            int32_t midEval{};
+            int32_t interEval{};
+            int32_t endEval{};
+            uint64_t controlledFields{};
+            _kingSafetyInfo_t kInfo{};
+
+            uint64_t pinnedKnights   = bd.BitBoards[MapT::GetBoardIndex(col)] & pinnedFigs;
+            uint64_t unpinnedKnights = bd.BitBoards[MapT::GetBoardIndex(col)] ^ pinnedKnights;
+
+            const uint64_t safeFields = ~enemyControlledFieldsByPawns;
+
+            // generating king ring
+            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, SwapColor(col));
+
+            while (pinnedKnights)
+            {
+                const int msbPos      = ExtractMsbPos(pinnedKnights);
+                const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+
+                // adding penalty for being pinned
+                interEval += TrappedPiecePenalty;
+
+                // adding field values
+                interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
+
+                RemovePiece(pinnedKnights, figMap);
+            }
+
+            while (unpinnedKnights)
+            {
+                const int msbPos      = ExtractMsbPos(unpinnedKnights);
+                const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+
+                const uint64_t moves     = MapT::GetMoves(msbPos);
+                const uint64_t safeMoves = FilterMoves(moves, safeFields);
+
+                // adding fields to controlled ones
+                controlledFields |= moves;
+
+                // adding mobility bonus
+                const int mobCount = CountOnesInBoard(safeMoves);
+                midEval += mobCount * KnightMobilityBonusMid;
+                endEval += mobCount * KnightMobilityBonusEnd;
+
+                // adding king attack info
+                KingSafetyEval::UpdateKingAttacks<mode>(
+                    kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints
+                );
+
+                // adding field values
+                interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
+
+                RemovePiece(unpinnedKnights, figMap);
+            }
+
+            midEval += interEval;
+            endEval += interEval;
+
+            return {midEval, endEval, controlledFields, kInfo};
+        }
     };
 
-    template <class MapT, int (*fieldValueAccess)(int msbPos)> struct _processRookEval
+    template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)> struct _processBishopEval
     {
+
         evalResult operator()(
-            Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns, uint64_t allyMap,
-            uint64_t enemyMap
-        );
+            Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
+            const uint64_t allyMap, const uint64_t enemyMap
+        )
+        {
+            int32_t midEval{};
+            int32_t interEval{};
+            int32_t endEval{};
+            uint64_t controlledFields{};
+            _kingSafetyInfo_t kInfo{};
+
+            uint64_t pinnedBishops   = bd.BitBoards[MapT::GetBoardIndex(col)] & pinnedFigs;
+            uint64_t unpinnedBishops = bd.BitBoards[MapT::GetBoardIndex(col)] ^ pinnedBishops;
+
+            const uint64_t safeFields = ~enemyControlledFieldsByPawns;
+            const uint64_t fullMap    = allyMap | enemyMap;
+
+            // generating king ring
+            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, SwapColor(col));
+
+            while (pinnedBishops)
+            {
+                const int msbPos      = ExtractMsbPos(pinnedBishops);
+                const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+
+                ChessMechanics mech{bd};
+                const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
+
+                const uint64_t LegalMoves = FilterMoves(MapT::GetMoves(msbPos, fullMap), allowedTiles);
+
+                // trapped penalty
+                interEval += TrappedPiecePenalty * (LegalMoves == 0);
+
+                // adding controlled fields
+                controlledFields |= LegalMoves;
+
+                // adding mobility bonus
+                const int movesCount = CountOnesInBoard(LegalMoves & safeFields);
+                midEval += movesCount * BishopMobilityBonusMid;
+                endEval += movesCount * BishopMobilityBonusEnd;
+
+                RemovePiece(pinnedBishops, figMap);
+            }
+
+            while (unpinnedBishops)
+            {
+                const int msbPos      = ExtractMsbPos(unpinnedBishops);
+                const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+
+                const uint64_t moves     = MapT::GetMoves(msbPos, fullMap);
+                const uint64_t safeMoves = FilterMoves(moves, safeFields);
+
+                // adding fields to controlled ones
+                controlledFields |= moves;
+
+                // adding mobility bonus
+                const int movesCount = CountOnesInBoard(safeMoves);
+                midEval += movesCount * BishopMobilityBonusMid;
+                endEval += movesCount * BishopMobilityBonusEnd;
+
+                // adding king attack info
+                KingSafetyEval::UpdateKingAttacks<mode>(
+                    kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints
+                );
+
+                RemovePiece(unpinnedBishops, figMap);
+            }
+
+            midEval += interEval;
+            endEval += interEval;
+
+            return {midEval, endEval, controlledFields, kInfo};
+        }
     };
 
-    template <class MapT, int (*fieldValueAccess)(int msbPos)> struct _processQueenEval
+    template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)> struct _processRookEval
     {
         evalResult operator()(
-            Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns, uint64_t allyMap,
-            uint64_t enemyMap
-        );
+            Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
+            const uint64_t allyMap, const uint64_t enemyMap
+        )
+        {
+            int32_t midEval{};
+            int32_t interEval{};
+            int32_t endEval{};
+            uint64_t controlledFields{};
+            _kingSafetyInfo_t kInfo{};
+
+            uint64_t pinnedRooks   = bd.BitBoards[MapT::GetBoardIndex(col)] & pinnedFigs;
+            uint64_t unpinnedRooks = bd.BitBoards[MapT::GetBoardIndex(col)] ^ pinnedRooks;
+
+            const uint64_t safeFields = ~enemyControlledFieldsByPawns;
+            const uint64_t fullMap    = allyMap | enemyMap;
+
+            // generating king ring
+            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, SwapColor(col));
+
+            while (pinnedRooks)
+            {
+                const int msbPos      = ExtractMsbPos(pinnedRooks);
+                const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+
+                ChessMechanics mech{bd};
+                const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
+
+                const uint64_t LegalMoves = FilterMoves(MapT::GetMoves(msbPos, fullMap), allowedTiles);
+
+                // trapped penalty
+                interEval += TrappedPiecePenalty * (LegalMoves == 0);
+
+                // open file bonus
+                interEval += StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
+
+                // adding controlled fields
+                controlledFields |= LegalMoves;
+
+                // adding mobility bonus
+                const int movesCount = CountOnesInBoard(LegalMoves & safeFields);
+                midEval += movesCount * RookMobilityBonusMid;
+                endEval += movesCount * RookMobilityBonusEnd;
+
+                RemovePiece(pinnedRooks, figMap);
+            }
+
+            while (unpinnedRooks)
+            {
+                const int msbPos      = ExtractMsbPos(unpinnedRooks);
+                const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+
+                const uint64_t moves     = MapT::GetMoves(msbPos, fullMap);
+                const uint64_t safeMoves = FilterMoves(moves, safeFields);
+
+                // adding fields to controlled ones
+                controlledFields |= moves;
+
+                // adding mobility bonus
+                const int32_t movesCount = CountOnesInBoard(safeMoves);
+                midEval += movesCount * RookMobilityBonusMid;
+                endEval += movesCount * RookMobilityBonusEnd;
+
+                // open file bonus
+                interEval += StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
+
+                // adding king attack info
+                KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingRookAttackPoints);
+
+                RemovePiece(unpinnedRooks, figMap);
+            }
+
+            midEval += interEval;
+            endEval += interEval;
+
+            return {midEval, endEval, controlledFields, kInfo};
+        }
+    };
+
+    template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)> struct _processQueenEval
+    {
+        evalResult operator()(
+            Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
+            const uint64_t allyMap, const uint64_t enemyMap
+        )
+        {
+            int32_t midEval{};
+            int32_t endEval{};
+            uint64_t controlledFields{};
+            _kingSafetyInfo_t kInfo{};
+
+            uint64_t pinnedQueens   = bd.BitBoards[MapT::GetBoardIndex(col)] & pinnedFigs;
+            uint64_t unpinnedQueens = bd.BitBoards[MapT::GetBoardIndex(col)] ^ pinnedQueens;
+
+            const uint64_t safeFields = ~enemyControlledFieldsByPawns;
+            const uint64_t fullMap    = allyMap | enemyMap;
+
+            // generating king ring
+            const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, SwapColor(col));
+
+            while (pinnedQueens)
+            {
+                const int msbPos      = ExtractMsbPos(pinnedQueens);
+                const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+
+                ChessMechanics mech{bd};
+                const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
+
+                const uint64_t LegalMoves = FilterMoves(MapT::GetMoves(msbPos, fullMap), allowedTiles);
+
+                // adding controlled fields
+                controlledFields |= LegalMoves;
+
+                // adding mobility bonus
+                const int movesCount = CountOnesInBoard(FilterMoves(LegalMoves, safeFields));
+                midEval += movesCount * QueenMobilityBonusMid;
+                endEval += movesCount * QueenMobilityBonusEnd;
+
+                // adding positional field values
+                midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
+
+                RemovePiece(pinnedQueens, figMap);
+            }
+
+            while (unpinnedQueens)
+            {
+                const int msbPos      = ExtractMsbPos(unpinnedQueens);
+                const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+
+                const uint64_t moves     = MapT::GetMoves(msbPos, fullMap);
+                const uint64_t safeMoves = FilterMoves(moves, safeFields);
+
+                // adding fields to controlled ones
+                controlledFields |= moves;
+
+                // adding mobility bonus
+                const int32_t movesCount = CountOnesInBoard(safeMoves);
+                midEval += movesCount * QueenMobilityBonusMid;
+                endEval += movesCount * QueenMobilityBonusEnd;
+
+                // adding positional field values
+                midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
+
+                // adding king attack info
+                KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingQueenAttackPoints);
+
+                RemovePiece(unpinnedQueens, figMap);
+            }
+
+            return {midEval, endEval, controlledFields, kInfo};
+        }
     };
 
     // ------------------------------
@@ -569,26 +865,50 @@ class BoardEvaluator
     };
 
     static constexpr size_t BlackFigStartIndex = 5;
+
     static MaterialArrayT _materialTable;
 };
 
-template <class EvalF> int32_t BoardEvaluator::_getSimpleFieldEval(EvalF evaluator, uint64_t figs)
+template <EvalMode mode> void BoardEvaluator::_evaluateKings(Board &bd, BoardEvaluator::_fieldEvalInfo_t &io)
 {
-    int32_t eval{};
+    io.midgameEval += BasicBlackKingPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])] -
+                      BasicBlackKingPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.BitBoards[bKingIndex]))];
+    io.endgameEval += BasicBlackKingEndPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])] -
+                      BasicBlackKingEndPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.BitBoards[bKingIndex]))];
 
-    while (figs)
-    {
-        const int figPos = ExtractMsbPos(figs);
+    int32_t kingRingSafety = KingSafetyEval::ScoreKingRingControl<mode>(io.whiteKingSafety, io.blackKingSafety);
 
-        eval += evaluator(figPos);
+    int32_t structEval{};
+    structEval += KingSafetyEval::EvalKingShelter<mode>(bd);
+    structEval += KingSafetyEval::EvalKingOpenFiles<mode>(bd);
 
-        RemovePiece(figs, figPos);
-    }
-
-    return eval;
+    io.midgameEval += kingRingSafety + structEval;
+    io.endgameEval += kingRingSafety;
 }
 
-template <class MapT, int (*fieldValueAccess)(int msbPos)>
+template <EvalMode mode>
+BoardEvaluator::_fieldEvalInfo_t
+BoardEvaluator::_evaluatePawns(Board &bd, uint64_t blackPinnedFigs, uint64_t whitePinnedFigs, uint64_t fullMap)
+{
+    _fieldEvalInfo_t rv{};
+
+    const auto [whiteMidEval, whiteEndEval, whiteControlledFields, whiteKingInfo] =
+        _processPawnEval<mode, WhitePawnMap, NoOp>(bd, whitePinnedFigs, fullMap);
+
+    const auto [blackMidEval, blackEndEval, blackControlledFields, blackKingInfo] =
+        _processPawnEval<mode, BlackPawnMap, ConvertToReversedPos>(bd, blackPinnedFigs, fullMap);
+
+    rv.midgameEval           = whiteMidEval - blackMidEval;
+    rv.endgameEval           = whiteEndEval - blackEndEval;
+    rv.whiteControlledFields = whiteControlledFields;
+    rv.blackControlledFields = blackControlledFields;
+    rv.whiteKingSafety       = whiteKingInfo;
+    rv.blackKingSafety       = blackKingInfo;
+
+    return rv;
+}
+
+template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)>
 BoardEvaluator::evalResult
 BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uint64_t fullMap)
 {
@@ -602,7 +922,7 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
     uint64_t unpinnedPawns = bd.BitBoards[MapT::GetBoardIndex(0)] ^ pinnedPawns;
 
     // generating king ring
-    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, MapT::GetColor());
+    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, SwapColor(MapT::GetColor()));
 
     while (pinnedPawns)
     {
@@ -613,7 +933,7 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
         const uint64_t plainMoves   = FilterMoves(MapT::GetPlainMoves(figMap, fullMap), allowedTiles);
 
-        // adding penatly for pinned pawn
+        // adding penalty for pinned pawn
         interEval += (plainMoves == 0) * PinnedPawnPenalty;
 
         // adding pawn control zone to global
@@ -621,13 +941,13 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
 
         // adding doubled pawn penalty
         interEval +=
-            StructureEvaluator::EvalDoubledPawn(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
+            StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
 
         // adding isolated pawn penalty
-        interEval += StructureEvaluator::EvalIsolatedPawn(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
+        interEval += StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
 
         // adding passed pawn penalty
-        interEval += StructureEvaluator::SimplePassedPawn(
+        interEval += StructureEvaluator::SimplePassedPawn<mode>(
             bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
 
@@ -645,7 +965,9 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
 
         const uint64_t attackFields = MapT::GetAttackFields(figMap);
 
-        KingSafetyEval::UpdateKingAttacks(kInfo, attackFields, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
+        KingSafetyEval::UpdateKingAttacks<mode>(
+            kInfo, attackFields, kingRing, KingSafetyEval::KingMinorPieceAttackPoints
+        );
 
         // adding field values
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
@@ -653,13 +975,13 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
 
         // adding doubled pawn penalty
         interEval +=
-            StructureEvaluator::EvalDoubledPawn(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
+            StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
 
         // adding isolated pawn penalty
-        interEval += StructureEvaluator::EvalIsolatedPawn(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
+        interEval += StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
 
         // adding passed pawn penalty
-        interEval += StructureEvaluator::SimplePassedPawn(
+        interEval += StructureEvaluator::SimplePassedPawn<mode>(
             bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
 
@@ -669,7 +991,7 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
     // adding controlled fields
     pawnControlledFields |= MapT::GetAttackFields(unpinnedPawns);
 
-    interEval += StructureEvaluator::EvalPawnChain(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields);
+    interEval += StructureEvaluator::EvalPawnChain<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields);
 
     midEval += interEval;
     endEval += interEval;
@@ -677,319 +999,101 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
     return {midEval, endEval, pawnControlledFields, kInfo};
 }
 
-template <class MapT, int (*fieldValueAccess)(int msbPos)>
-BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<MapT, fieldValueAccess>::operator()(
-    Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns, const uint64_t,
-    const uint64_t
-)
+template <EvalMode mode> int32_t BoardEvaluator::_evaluateFields(Board &bd, int32_t phase)
 {
-    int32_t midEval{};
-    int32_t interEval{};
-    int32_t endEval{};
-    uint64_t controlledFields{};
-    _kingSafetyInfo_t kInfo{};
+    static constexpr void (*EvalFunctions[])(
+        _fieldEvalInfo_t &, Board &, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t
+    ){_processFigEval<mode, KnightMap, _processKnightEval>, _processFigEval<mode, BishopMap, _processBishopEval>,
+      _processFigEval<mode, RookMap, _processRookEval>, _processFigEval<mode, QueenMap, _processQueenEval>};
 
-    uint64_t pinnedKnights   = bd.BitBoards[MapT::GetBoardIndex(col)] & pinnedFigs;
-    uint64_t unpinnedKnights = bd.BitBoards[MapT::GetBoardIndex(col)] ^ pinnedKnights;
+    _fieldEvalInfo_t result{};
+    ChessMechanics mech{bd};
 
-    const uint64_t safeFields = ~enemyControlledFieldsByPawns;
+    const uint64_t whiteMap = mech.GetColBitMap(WHITE);
+    const uint64_t blackMap = mech.GetColBitMap(BLACK);
+    const uint64_t fullMap  = blackMap | whiteMap;
 
-    // generating king ring
-    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
+    const auto [whitePinnedFigs, un1] =
+        mech.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(WHITE, fullMap);
+    const auto [blackPinnedFigs, un2] =
+        mech.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(BLACK, fullMap);
 
-    while (pinnedKnights)
-    {
-        const int msbPos      = ExtractMsbPos(pinnedKnights);
-        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+    // ------------------------------
+    // Evaluating pawn figures
+    // ------------------------------
 
-        // adding penalty for being pinned
-        interEval += TrappedPiecePenalty;
+    const auto pEval                = _evaluatePawns<mode>(bd, blackPinnedFigs, whitePinnedFigs, fullMap);
+    const uint64_t whitePawnControl = pEval.whiteControlledFields;
+    const uint64_t blackPawnControl = pEval.blackControlledFields;
 
-        // adding field values
-        interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
+    result.midgameEval += pEval.midgameEval;
+    result.endgameEval += pEval.endgameEval;
 
-        RemovePiece(pinnedKnights, figMap);
-    }
+    // ------------------------------
+    // Evaluating other pieces
+    // ------------------------------
 
-    while (unpinnedKnights)
-    {
-        const int msbPos      = ExtractMsbPos(unpinnedKnights);
-        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+    for (const auto func : EvalFunctions)
+        func(result, bd, blackPinnedFigs, whitePinnedFigs, whitePawnControl, blackPawnControl, whiteMap, blackMap);
 
-        const uint64_t moves     = MapT::GetMoves(msbPos);
-        const uint64_t safeMoves = FilterMoves(moves, safeFields);
+    // ------------------------------
+    // Evaluating king
+    // ------------------------------
 
-        // adding fields to controlled ones
-        controlledFields |= moves;
+    _evaluateKings<mode>(bd, result);
 
-        // adding mobility bonus
-        const int mobCount = CountOnesInBoard(safeMoves);
-        midEval += mobCount * KnightMobilityBonusMid;
-        endEval += mobCount * KnightMobilityBonusEnd;
+    const int32_t controlEval =
+        (CountOnesInBoard(result.whiteControlledFields) - CountOnesInBoard(result.blackControlledFields)) *
+        CenterControlBonusPerTile;
+    result.midgameEval += controlEval;
+    result.endgameEval += controlEval;
 
-        // adding king attack info
-        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
-
-        // adding field values
-        interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
-
-        RemovePiece(unpinnedKnights, figMap);
-    }
-
-    midEval += interEval;
-    endEval += interEval;
-
-    return {midEval, endEval, controlledFields, kInfo};
+    return _getTapperedValue(phase, result.midgameEval, result.endgameEval);
 }
 
-template <class MapT, int (*fieldValueAccess)(int msbPos)>
-BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<MapT, fieldValueAccess>::operator()(
-    Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
-    const uint64_t allyMap, const uint64_t enemyMap
-)
+template <EvalMode mode>
+inline int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT &figArr, int32_t actPhase)
 {
-    int32_t midEval{};
-    int32_t interEval{};
-    int32_t endEval{};
-    uint64_t controlledFields{};
-    _kingSafetyInfo_t kInfo{};
+    int32_t materialValue{};
 
-    uint64_t pinnedBishops   = bd.BitBoards[MapT::GetBoardIndex(col)] & pinnedFigs;
-    uint64_t unpinnedBishops = bd.BitBoards[MapT::GetBoardIndex(col)] ^ pinnedBishops;
-
-    const uint64_t safeFields = ~enemyControlledFieldsByPawns;
-    const uint64_t fullMap    = allyMap | enemyMap;
-
-    // generating king ring
-    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
-
-    while (pinnedBishops)
+    // summing up total material values
+    for (size_t j = 0; j < kingIndex; ++j)
     {
-        const int msbPos      = ExtractMsbPos(pinnedBishops);
-        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+        const int32_t phasedFigVal = _getTapperedValue(actPhase, BasicFigureValues[j], EndGameFigureValues[j]);
 
-        ChessMechanics mech{bd};
-        const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
-
-        const uint64_t LegalMoves = FilterMoves(MapT::GetMoves(msbPos, fullMap), allowedTiles);
-
-        // trapped penalty
-        interEval += TrappedPiecePenalty * (LegalMoves == 0);
-
-        // adding controlled fields
-        controlledFields |= LegalMoves;
-
-        // adding mobility bonus
-        const int movesCount = CountOnesInBoard(LegalMoves & safeFields);
-        midEval += movesCount * BishopMobilityBonusMid;
-        endEval += movesCount * BishopMobilityBonusEnd;
-
-        RemovePiece(pinnedBishops, figMap);
+        materialValue += static_cast<int32_t>(figArr[j]) * phasedFigVal;
+        materialValue -= static_cast<int32_t>(figArr[j + BlackFigStartIndex]) * phasedFigVal;
     }
 
-    while (unpinnedBishops)
-    {
-        const int msbPos      = ExtractMsbPos(unpinnedBishops);
-        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
+    // Applying no pawn penalty
+    if (figArr[pawnsIndex] == 0)
+        materialValue += NoPawnsPenalty;
+    if (figArr[BlackFigStartIndex + pawnsIndex] == 0)
+        materialValue -= NoPawnsPenalty;
 
-        const uint64_t moves     = MapT::GetMoves(msbPos, fullMap);
-        const uint64_t safeMoves = FilterMoves(moves, safeFields);
+    // Applying Bishop pair bonus
+    const size_t totalPawnCount = figArr[pawnsIndex] + figArr[BlackFigStartIndex + pawnsIndex];
+    if (figArr[bishopsIndex] == 2)
+        materialValue += BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
 
-        // adding fields to controlled ones
-        controlledFields |= moves;
+    if (figArr[BlackFigStartIndex + bishopsIndex] == 2)
+        materialValue -= BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
 
-        // adding mobility bonus
-        const int movesCount = CountOnesInBoard(safeMoves);
-        midEval += movesCount * BishopMobilityBonusMid;
-        endEval += movesCount * BishopMobilityBonusEnd;
+    // Applying Knight pair penalty -> Knights are losing value when fewer pawns are on board
+    if (figArr[knightsIndex] == 2)
+        materialValue += KnightPairPenalty + (static_cast<int32_t>(totalPawnCount) * 2);
 
-        // adding king attack info
-        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
+    if (figArr[BlackFigStartIndex + knightsIndex] == 2)
+        materialValue -= KnightPairPenalty + (static_cast<int32_t>(totalPawnCount) * 2);
 
-        RemovePiece(unpinnedBishops, figMap);
-    }
+    // Applying Rook pair penalty
+    if (figArr[rooksIndex] == 2)
+        materialValue += RookPairPenalty;
 
-    midEval += interEval;
-    endEval += interEval;
+    if (figArr[BlackFigStartIndex + rooksIndex] == 2)
+        materialValue -= RookPairPenalty;
 
-    return {midEval, endEval, controlledFields, kInfo};
-}
-
-template <class MapT, int (*fieldValueAccess)(int msbPos)>
-BoardEvaluator::evalResult BoardEvaluator::_processRookEval<MapT, fieldValueAccess>::operator()(
-    Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
-    const uint64_t allyMap, const uint64_t enemyMap
-)
-{
-    int32_t midEval{};
-    int32_t interEval{};
-    int32_t endEval{};
-    uint64_t controlledFields{};
-    _kingSafetyInfo_t kInfo{};
-
-    uint64_t pinnedRooks   = bd.BitBoards[MapT::GetBoardIndex(col)] & pinnedFigs;
-    uint64_t unpinnedRooks = bd.BitBoards[MapT::GetBoardIndex(col)] ^ pinnedRooks;
-
-    const uint64_t safeFields = ~enemyControlledFieldsByPawns;
-    const uint64_t fullMap    = allyMap | enemyMap;
-
-    // generating king ring
-    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
-
-    while (pinnedRooks)
-    {
-        const int msbPos      = ExtractMsbPos(pinnedRooks);
-        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
-
-        ChessMechanics mech{bd};
-        const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
-
-        const uint64_t LegalMoves = FilterMoves(MapT::GetMoves(msbPos, fullMap), allowedTiles);
-
-        // trapped penalty
-        interEval += TrappedPiecePenalty * (LegalMoves == 0);
-
-        // open file bonus
-        interEval += StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
-
-        // adding controlle fields
-        controlledFields |= LegalMoves;
-
-        // adding mobility bonus
-        const int movesCount = CountOnesInBoard(LegalMoves & safeFields);
-        midEval += movesCount * RookMobilityBonusMid;
-        endEval += movesCount * RookMobilityBonusEnd;
-
-        RemovePiece(pinnedRooks, figMap);
-    }
-
-    while (unpinnedRooks)
-    {
-        const int msbPos      = ExtractMsbPos(unpinnedRooks);
-        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
-
-        const uint64_t moves     = MapT::GetMoves(msbPos, fullMap);
-        const uint64_t safeMoves = FilterMoves(moves, safeFields);
-
-        // adding fields to controlled ones
-        controlledFields |= moves;
-
-        // adding mobility bonus
-        const int32_t movesCount = CountOnesInBoard(safeMoves);
-        midEval += movesCount * RookMobilityBonusMid;
-        endEval += movesCount * RookMobilityBonusEnd;
-
-        // open file bonus
-        interEval += StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
-
-        // adding king attack info
-        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingRookAttackPoints);
-
-        RemovePiece(unpinnedRooks, figMap);
-    }
-
-    midEval += interEval;
-    endEval += interEval;
-
-    return {midEval, endEval, controlledFields, kInfo};
-}
-
-template <class MapT, int (*fieldValueAccess)(int msbPos)>
-BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<MapT, fieldValueAccess>::operator()(
-    Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
-    const uint64_t allyMap, const uint64_t enemyMap
-)
-{
-    int32_t midEval{};
-    int32_t endEval{};
-    uint64_t controlledFields{};
-    _kingSafetyInfo_t kInfo{};
-
-    uint64_t pinnedQueens   = bd.BitBoards[MapT::GetBoardIndex(col)] & pinnedFigs;
-    uint64_t unpinnedQueens = bd.BitBoards[MapT::GetBoardIndex(col)] ^ pinnedQueens;
-
-    const uint64_t safeFields = ~enemyControlledFieldsByPawns;
-    const uint64_t fullMap    = allyMap | enemyMap;
-
-    // generating king ring
-    const uint64_t kingRing = KingSafetyEval::GetSafetyFields(bd, col);
-
-    while (pinnedQueens)
-    {
-        const int msbPos      = ExtractMsbPos(pinnedQueens);
-        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
-
-        ChessMechanics mech{bd};
-        const uint64_t allowedTiles = mech.GenerateAllowedTilesForPrecisedPinnedFig(figMap, fullMap);
-
-        const uint64_t LegalMoves = FilterMoves(MapT::GetMoves(msbPos, fullMap), allowedTiles);
-
-        // adding controlled fields
-        controlledFields |= LegalMoves;
-
-        // adding mobility bonus
-        const int movesCount = CountOnesInBoard(FilterMoves(LegalMoves, safeFields));
-        midEval += movesCount * QueenMobilityBonusMid;
-        endEval += movesCount * QueenMobilityBonusEnd;
-
-        // adding positional field values
-        midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
-
-        RemovePiece(pinnedQueens, figMap);
-    }
-
-    while (unpinnedQueens)
-    {
-        const int msbPos      = ExtractMsbPos(unpinnedQueens);
-        const uint64_t figMap = ConvertMsbPosToBitMap(msbPos);
-
-        const uint64_t moves     = MapT::GetMoves(msbPos, fullMap);
-        const uint64_t safeMoves = FilterMoves(moves, safeFields);
-
-        // adding fields to controlled ones
-        controlledFields |= moves;
-
-        // adding mobility bonus
-        const int32_t movesCount = CountOnesInBoard(safeMoves);
-        midEval += movesCount * QueenMobilityBonusMid;
-        endEval += movesCount * QueenMobilityBonusEnd;
-
-        // adding positional field values
-        midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
-
-        // adding king attack info
-        KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingQueenAttackPoints);
-
-        RemovePiece(unpinnedQueens, figMap);
-    }
-
-    return {midEval, endEval, controlledFields, kInfo};
-}
-
-template <class MapT, template <class, int (*fieldValueAccess)(int msbPos)> class EvalProducerT>
-void BoardEvaluator::_processFigEval(
-    _fieldEvalInfo_t &out, Board &bd, const uint64_t blackPinnedFigsBitMap, const uint64_t whitePinnedFigsBitMap,
-    const uint64_t whitePawnControlledFieldsBitMap, const uint64_t blackPawnControlledFieldsBitMap,
-    const uint64_t whiteBitMap, const uint64_t blackBitMap
-)
-{
-    const auto [whiteMidEval, whiteEndEval, whiteControlledFields, wKInfo] = EvalProducerT<MapT, NoOp>()(
-        bd, whitePinnedFigsBitMap, WHITE, blackPawnControlledFieldsBitMap, whiteBitMap, blackBitMap
-    );
-
-    const auto [blackMidEval, blackEndEval, blackControlledFields, bKInfo] =
-        EvalProducerT<MapT, ConvertToReversedPos>()(
-            bd, blackPinnedFigsBitMap, BLACK, whitePawnControlledFieldsBitMap, blackBitMap, whiteBitMap
-        );
-
-    out.midgameEval += whiteMidEval - blackMidEval;
-    out.endgameEval += blackEndEval - whiteEndEval;
-    out.whiteControlledFields |= whiteControlledFields;
-    out.blackControlledFields |= blackControlledFields;
-    out.whiteKingSafety.attackCounts += wKInfo.attackCounts;
-    out.whiteKingSafety.attackPoints += wKInfo.attackPoints;
-    out.blackKingSafety.attackCounts += bKInfo.attackCounts;
-    out.blackKingSafety.attackPoints += bKInfo.attackPoints;
+    return materialValue;
 }
 
 #endif // BOARDEVALUATOR_H

@@ -7,4 +7,4 @@
 
 #define NUM_LOGICAL_CORES @LOGICAL_CORES @
 
-#endif  // CMAKEDEFINES_H_IN_H
+#endif // CMAKEDEFINES_H_IN_H

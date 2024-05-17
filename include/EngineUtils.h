@@ -120,4 +120,19 @@ enum nodeType : uint8_t
     upperBound
 };
 
+/*
+ * Enum describes all possible type of actions that evaluation function is capable of performing.
+ * In details, we have:
+ *  - BaseMode - typical simple evaluation no info provided.
+ *  - PrintMode - function prints all info that is possible to provide to the user
+ *  - NOT IMPLEMENTED: DebugMode - displays partial simplified info
+ *
+ * */
+
+enum class EvalMode
+{
+    BaseMode,
+    PrintMode
+};
+
 #endif // ENGINETYPEDEFS_H
