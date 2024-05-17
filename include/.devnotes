@@ -1,3 +1,3 @@
-All header files should be store in here. Additionally all should be in format .h
-Multi purpose files should be stored in main directory in other case when header performs specific, categorizable task
-should be stored in specially created directory.
+All header files should be store in here.Additionally all should be in format.h Multi purpose files should be stored in
+    main directory in other case when header performs specific,
+    categorizable task should be stored in specially created directory.

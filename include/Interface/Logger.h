@@ -27,9 +27,7 @@
 /// </summary>
 template <typename T>
 concept Streamable = requires(T a, std::ostream &os) {
-    {
-        os << a
-    } -> std::same_as<std::ostream &>;
+    { os << a } -> std::same_as<std::ostream &>;
 };
 
 /// <summary>
@@ -241,5 +239,12 @@ class FileLogger : public Logger
 };
 
 extern StdoutLogger GlobalLogger;
+
+// Function prints how evaluation works when EvalMode is PrintMode
+template <EvalMode mode> void print(const std::string &str)
+{
+    if constexpr (mode == EvalMode::PrintMode)
+        GlobalLogger.LogStream << str << std::endl;
+}
 
 #endif // LOGGER_H
