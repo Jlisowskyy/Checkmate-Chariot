@@ -129,7 +129,9 @@ class BoardEvaluator
 
         print<mode>(std::format("Material: {}\n", materialEval));
         print<mode>(std::format("Position: {}\n", positionEval));
+        print<mode>(std::format("Phase: {}\n", phase));
 
+        print<mode>(std::format("Evaluation: {}\n", materialEval+positionEval));
         return materialEval + positionEval;
     }
 
