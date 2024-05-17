@@ -329,7 +329,7 @@ class BoardEvaluator
                 endEval += mobCount * KnightMobilityBonusEnd;
 
                 // adding king attack info
-                KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
+                KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
 
                 // adding field values
                 interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
@@ -409,7 +409,7 @@ class BoardEvaluator
                 endEval += movesCount * BishopMobilityBonusEnd;
 
                 // adding king attack info
-                KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
+                KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
 
                 RemovePiece(unpinnedBishops, figMap);
             }
@@ -490,7 +490,7 @@ class BoardEvaluator
                 interEval += StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
 
                 // adding king attack info
-                KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingRookAttackPoints);
+                KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingRookAttackPoints);
 
                 RemovePiece(unpinnedRooks, figMap);
             }
@@ -567,7 +567,7 @@ class BoardEvaluator
                 midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
 
                 // adding king attack info
-                KingSafetyEval::UpdateKingAttacks(kInfo, moves, kingRing, KingSafetyEval::KingQueenAttackPoints);
+                KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingQueenAttackPoints);
 
                 RemovePiece(unpinnedQueens, figMap);
             }
@@ -883,11 +883,11 @@ void BoardEvaluator::_evaluateKings(Board &bd, BoardEvaluator::_fieldEvalInfo_t 
     io.endgameEval += BasicBlackKingEndPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])] -
                       BasicBlackKingEndPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.BitBoards[bKingIndex]))];
 
-    int32_t kingRingSafety = KingSafetyEval::ScoreKingRingControl(io.whiteKingSafety, io.blackKingSafety);
+    int32_t kingRingSafety = KingSafetyEval::ScoreKingRingControl<mode>(io.whiteKingSafety, io.blackKingSafety);
 
     int32_t structEval{};
-    structEval += KingSafetyEval::EvalKingShelter(bd);
-    structEval += KingSafetyEval::EvalKingOpenFiles(bd);
+    structEval += KingSafetyEval::EvalKingShelter<mode>(bd);
+    structEval += KingSafetyEval::EvalKingOpenFiles<mode>(bd);
 
     io.midgameEval += kingRingSafety + structEval;
     io.endgameEval += kingRingSafety;
@@ -946,13 +946,13 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board &bd, const uin
 
         // adding doubled pawn penalty
         interEval +=
-            StructureEvaluator::EvalDoubledPawn(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
+            StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
 
         // adding isolated pawn penalty
-        interEval += StructureEvaluator::EvalIsolatedPawn(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
+        interEval += StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
 
         // adding passed pawn penalty
-        interEval += StructureEvaluator::SimplePassedPawn(
+        interEval += StructureEvaluator::SimplePassedPawn<mode>(
             bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
 
@@ -970,7 +970,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board &bd, const uin
 
         const uint64_t attackFields = MapT::GetAttackFields(figMap);
 
-        KingSafetyEval::UpdateKingAttacks(kInfo, attackFields, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
+        KingSafetyEval::UpdateKingAttacks<mode>(kInfo, attackFields, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
 
         // adding field values
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
@@ -978,13 +978,13 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board &bd, const uin
 
         // adding doubled pawn penalty
         interEval +=
-            StructureEvaluator::EvalDoubledPawn(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
+            StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
 
         // adding isolated pawn penalty
-        interEval += StructureEvaluator::EvalIsolatedPawn(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
+        interEval += StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
 
         // adding passed pawn penalty
-        interEval += StructureEvaluator::SimplePassedPawn(
+        interEval += StructureEvaluator::SimplePassedPawn<mode>(
             bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
 
@@ -994,7 +994,7 @@ BoardEvaluator::evalResult BoardEvaluator::_processPawnEval(Board &bd, const uin
     // adding controlled fields
     pawnControlledFields |= MapT::GetAttackFields(unpinnedPawns);
 
-    interEval += StructureEvaluator::EvalPawnChain(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields);
+    interEval += StructureEvaluator::EvalPawnChain<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields);
 
     midEval += interEval;
     endEval += interEval;

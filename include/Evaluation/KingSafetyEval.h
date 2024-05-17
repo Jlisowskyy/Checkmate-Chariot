@@ -74,13 +74,13 @@ struct KingSafetyEval
         int32_t eval{};
         if ((bd.BitBoards[wKingIndex] & KingMap::ShelterLocationMask[WHITE]) != 0 &&
             CountOnesInBoard(
-                bd.BitBoards[wPawnsIndex] & GetFrontLineMask(WHITE, ExtractMsbPos(bd.BitBoards[wKingIndex]))
+                bd.BitBoards[wPawnsIndex] & GetFrontLineMask<mode>(WHITE, ExtractMsbPos(bd.BitBoards[wKingIndex]))
             ) < 3)
             eval += KingNoShelterPenalty;
 
         if ((bd.BitBoards[bKingIndex] & KingMap::ShelterLocationMask[BLACK]) != 0 &&
             CountOnesInBoard(
-                bd.BitBoards[bPawnsIndex] & GetFrontLineMask(BLACK, ExtractMsbPos(bd.BitBoards[bKingIndex]))
+                bd.BitBoards[bPawnsIndex] & GetFrontLineMask<mode>(BLACK, ExtractMsbPos(bd.BitBoards[bKingIndex]))
             ) < 3)
             eval += -KingNoShelterPenalty;
 
