@@ -12,12 +12,12 @@
 
 bool ChessMechanics::IsCheck() const
 {
-    const int enemyCol = SwapColor(_board.MovingColor);
-    const int kingsMsb = _board.GetKingMsbPos(_board.MovingColor);
+    const int enemyCol       = SwapColor(_board.MovingColor);
+    const int kingsMsb       = _board.GetKingMsbPos(_board.MovingColor);
     const uint64_t fullBoard = GetFullBitMap();
 
     // Checking rook's perspective
-    const uint64_t enemyRooks = _board.GetFigBoard(enemyCol, rooksIndex);
+    const uint64_t enemyRooks  = _board.GetFigBoard(enemyCol, rooksIndex);
     const uint64_t enemyQueens = _board.GetFigBoard(enemyCol, queensIndex);
 
     const uint64_t kingsRookPerspective = RookMap::GetMoves(kingsMsb, fullBoard);
@@ -43,9 +43,8 @@ bool ChessMechanics::IsCheck() const
 
     // pawns checks
     const uint64_t enemyPawns = _board.GetFigBoard(enemyCol, pawnsIndex);
-    const uint64_t pawnAttacks = enemyCol == WHITE ?
-            WhitePawnMap::GetAttackFields(enemyPawns) :
-            BlackPawnMap::GetAttackFields(enemyPawns) ;
+    const uint64_t pawnAttacks =
+        enemyCol == WHITE ? WhitePawnMap::GetAttackFields(enemyPawns) : BlackPawnMap::GetAttackFields(enemyPawns);
 
     if ((pawnAttacks & (MaxMsbPossible >> kingsMsb)) != 0)
         return true;
