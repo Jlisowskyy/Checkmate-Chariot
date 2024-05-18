@@ -154,6 +154,9 @@ void BestMoveSearch::IterativeDeepening(
             GlobalLogger.LogStream << std::endl;
         }
     }
+
+    if constexpr (TestTT)
+        TTable.DisplayStatisticsAndReset();
 }
 
 int BestMoveSearch::_pwsSearch(
@@ -191,6 +194,9 @@ int BestMoveSearch::_pwsSearch(
 
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
+    if constexpr (TestTT)
+        TTable.UpdateStatistics(wasTTHit);
+
     if (followPv && depthLeft != 1)
         _pullMoveToFront(moves, _pv(depthLeft, _currRootDepth));
     else if (wasTTHit && prevSearchRes.GetNodeType() != upperBound)
@@ -359,6 +365,9 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
 
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
+    if constexpr (TestTT)
+        TTable.UpdateStatistics(wasTTHit);
+
     if (wasTTHit && prevSearchRes.GetDepth() >= depthLeft)
     {
         const nodeType expectedType = prevSearchRes.GetEval() >= beta ? lowerBound : upperBound;

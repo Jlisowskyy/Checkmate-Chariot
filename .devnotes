@@ -1,13 +1,9 @@
+Additional compilation defines:
+- TEST_TT - appends code that gathers statistics about TT performance
+
+
 Important todos:
-    - added guards and correct messaging for uint128
-
-    - fully implement cmake thread amount detection
-    - implement interuptible go depth and go movetime
-    - checks wtf is going on castling inside MoveGenerator especially what tf + 1 offset means
-
-    - CheckNum for bugs in search why returns null move
     - Improve checking wheter positions is in check simply by evaluating all moves by king
-
     - Investigate using previous entries from TT as hint for asipration windows
 
     MAIN DEVELOP PATH:
