@@ -23,8 +23,8 @@ UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream &i
         lastCommand = _dispatchCommands(recordBuffer);
 
         if (lastCommand == UCICommand::InvalidCommand)
-            GlobalLogger.LogStream << "[ ERROR ] Error uccured during translation or execution.\n Refer to UCI "
-                                      "protocl manual to get more detailed information.\n";
+            GlobalLogger.LogStream << "[ ERROR ] Error occurred during translation or execution.\n Refer to UCI "
+                                      "protocol manual to get more detailed information.\n";
     }
 
     WrapTraceMsgInfo("UCI command translation finished.");
@@ -236,7 +236,7 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
     static auto CustomCommands =
         "In addition to standard UCI commands, these are implemented:\n"
         "- go perft \"depth\" - Simple PERFT test.\n"
-        "- go debug \"depth\" - debugging tool reporting first occured error in comparison to any engine\n"
+        "- go debug \"depth\" - debugging tool reporting first occurred error in comparison to any engine\n"
         "                which implements \"go perft command\" - default target engine is stockfish\n"
         "- go deepDebug \"depth\" - debugging tool, which is used to possibly identify invalid move chains which "
         "produces\n"
@@ -247,8 +247,8 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
         "                 about results of simple comparison tests, which uses external engine times to get results\n"
         "- go file \"input file\" - performs series of deepDebug on each positions saved inside input file. For "
         "simplicity\n"
-        "                \"input file\" must be containg csv records in given manner: \"fen position\", \"depth\"\n"
-        "- go searchPerf \"input file \" \"output file \" - runs straight alpha beta prunning performance tests "
+        "                \"input file\" must contain csv records in given manner: \"fen position\", \"depth\"\n"
+        "- go searchPerf \"input file \" \"output file \" - runs straight alpha beta pruning performance tests "
         "               on the framework.\n"
         "- zv \"bitDiffs\" - searches for seed with given bit differences guaranteed.\n\n\n"
         "Where \"depth\" is integer value indicating layers of traversed move tree.\n\n\n"

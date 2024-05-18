@@ -27,7 +27,9 @@
 /// </summary>
 template <typename T>
 concept Streamable = requires(T a, std::ostream &os) {
-    { os << a } -> std::same_as<std::ostream &>;
+    {
+        os << a
+    } -> std::same_as<std::ostream &>;
 };
 
 /// <summary>
