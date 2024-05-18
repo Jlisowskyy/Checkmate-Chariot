@@ -177,6 +177,14 @@ struct TranspositionTable
 
     void ClearTable();
 
+    INLINE void UpdateStatistics(bool wasTTHit)
+    {
+        _hitsCount += wasTTHit;
+        _missCount += !wasTTHit;
+    }
+
+    void DisplayStatisticsAndReset();
+
     // IMPORTANT: function should only be used before any search was concluded, because is fully cleared when resizing
     signed_size_t ResizeTable(size_t sizeMB);
 
@@ -208,6 +216,10 @@ struct TranspositionTable
     size_t _tableSize{};
     size_t _hashMask{};
     HashRecord *_map{};
+
+    // used to gather statistics about the run
+    uint64_t _hitsCount{};
+    uint64_t _missCount{};
 };
 
 extern TranspositionTable TTable;

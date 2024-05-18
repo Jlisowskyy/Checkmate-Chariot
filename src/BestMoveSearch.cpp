@@ -107,9 +107,8 @@ void BestMoveSearch::IterativeDeepening(
 
                 if (eval <= alpha)
                 {
-                    // TODO: WTF?
-                    beta  = (alpha + beta) / 2;
                     alpha = std::max(alpha - delta, NegativeInfinity);
+                    beta  = (alpha + beta) / 2;
                 }
                 else if (eval >= beta)
                     // We failed high so move the upper boundary
@@ -148,13 +147,16 @@ void BestMoveSearch::IterativeDeepening(
             GlobalLogger.LogStream << std::format(
                 "info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
                 depth, spentMs, _visitedNodes, nps, eval * BoardEvaluator::ScoreGrain,
-                bestMove->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
+                _pv[0].GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
             _pv.Print();
             GlobalLogger.LogStream << std::endl;
         }
     }
+
+    if constexpr (TestTT)
+        TTable.DisplayStatisticsAndReset();
 }
 
 int BestMoveSearch::_pwsSearch(
@@ -192,6 +194,9 @@ int BestMoveSearch::_pwsSearch(
 
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
+    if constexpr (TestTT)
+        TTable.UpdateStatistics(wasTTHit);
+
     if (followPv && depthLeft != 1)
         _pullMoveToFront(moves, _pv(depthLeft, _currRootDepth));
     else if (wasTTHit && prevSearchRes.GetNodeType() != upperBound)
@@ -360,6 +365,9 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
 
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
+    if constexpr (TestTT)
+        TTable.UpdateStatistics(wasTTHit);
+
     if (wasTTHit && prevSearchRes.GetDepth() >= depthLeft)
     {
         const nodeType expectedType = prevSearchRes.GetEval() >= beta ? lowerBound : upperBound;
