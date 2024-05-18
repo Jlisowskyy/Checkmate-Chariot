@@ -69,6 +69,22 @@ static constexpr bool Debug = true;
 
 //---------------------------
 
+// ------------------------------
+// Gather statistics about Transposition Table flow -
+// enables code that gathers and displays information about every search run
+
+#ifdef TEST_TT
+
+static constexpr bool TestTT = false;
+
+#else
+
+static constexpr bool TestTT = true;
+
+#endif // TEST_TT
+
+//---------------------------
+
 // ssize_t is defined by POSIX. Such define allows to use it on posix+windows
 using signed_size_t = std::make_signed<size_t>::type;
 
