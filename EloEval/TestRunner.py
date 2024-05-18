@@ -80,7 +80,7 @@ def run_tests(engines: dict[str, int], each_options, game_options, resign_option
     # run tests
     engine_options = ''
     # add main engine
-    engine_options += f' -engine cmd=./Checkmate-Chariot name=Checkmate-Chariot'
+    engine_options += f' -engine cmd=./Checkmate-Chariot name=Checkmate-Chariot_development'
 
     # add external engines
     for engine in engines:
