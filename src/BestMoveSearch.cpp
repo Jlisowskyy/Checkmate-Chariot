@@ -107,9 +107,8 @@ void BestMoveSearch::IterativeDeepening(
 
                 if (eval <= alpha)
                 {
-                    // TODO: WTF?
-                    beta  = (alpha + beta) / 2;
                     alpha = std::max(alpha - delta, NegativeInfinity);
+                    beta  = (alpha + beta) / 2;
                 }
                 else if (eval >= beta)
                     // We failed high so move the upper boundary
@@ -148,7 +147,7 @@ void BestMoveSearch::IterativeDeepening(
             GlobalLogger.LogStream << std::format(
                 "info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
                 depth, spentMs, _visitedNodes, nps, eval * BoardEvaluator::ScoreGrain,
-                bestMove->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
+                _pv[0].GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
             _pv.Print();
