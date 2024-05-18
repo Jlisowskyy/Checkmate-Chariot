@@ -13,4 +13,5 @@ ext_engines = {
     'dumb': 2726,
     'maxwell': 2006,
     'snowy': 1924,
+    'Checkmate-Chariot': 1000
 }

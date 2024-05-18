@@ -22,3 +22,7 @@ EloEval/ReferenceEngines/Exes/*
 *__pycache__/
 
 *include/cmakeDefines.h
+
+Checkmate-Chariot*
+lib*
+lib/
