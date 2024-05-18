@@ -71,12 +71,17 @@ void TranspositionTable::_checkForCorrectAlloc(const size_t size) const
         );
 }
 
-void TranspositionTable::DisplayStatisticsAndReset() {
+void TranspositionTable::DisplayStatisticsAndReset()
+{
     const uint64_t totalProbes = _missCount + _hitsCount;
-    double hitRate = static_cast<double>(_hitsCount) / static_cast<double>(totalProbes);
+    double hitRate             = static_cast<double>(_hitsCount) / static_cast<double>(totalProbes);
 
-    GlobalLogger.LogStream << std::format("[ TT statistics ] Number of hits: {}, number of misses: {}, total probes: {}, hit-rate: {}",
-                                          _hitsCount, _missCount, totalProbes, hitRate) << std::endl;
+    GlobalLogger.LogStream
+        << std::format(
+               "[ TT statistics ] Number of hits: {}, number of misses: {}, total probes: {}, hit-rate: {}", _hitsCount,
+               _missCount, totalProbes, hitRate
+           )
+        << std::endl;
 
     _missCount = 0;
     _hitsCount = 0;
