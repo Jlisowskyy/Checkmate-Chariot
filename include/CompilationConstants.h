@@ -75,11 +75,11 @@ static constexpr bool Debug = true;
 
 #ifdef TEST_TT
 
-static constexpr bool TestTT = false;
+static constexpr bool TestTT = true;
 
 #else
 
-static constexpr bool TestTT = true;
+static constexpr bool TestTT = false;
 
 #endif // TEST_TT
 

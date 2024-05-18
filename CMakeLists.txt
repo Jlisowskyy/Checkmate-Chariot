@@ -197,6 +197,9 @@ else()
     message(FATAL_ERROR "Unknown compiler")
 endif()
 
+# Uncomment to add gathering TT statistics
+# add_compile_definitions(TEST_TT=1)
+
 ################################################################################
 #                                  Post build                                  #
 ################################################################################

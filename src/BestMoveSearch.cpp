@@ -148,7 +148,7 @@ void BestMoveSearch::IterativeDeepening(
             GlobalLogger.LogStream << std::format(
                 "info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
                 depth, spentMs, _visitedNodes, nps, eval * BoardEvaluator::ScoreGrain,
-                bestMove->GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
+                _pv[0].GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
             _pv.Print();
