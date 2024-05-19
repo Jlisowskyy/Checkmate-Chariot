@@ -199,7 +199,7 @@ else()
 endif()
 
 # Uncomment to add gathering TT statistics
-# add_compile_definitions(TEST_TT=1)
+ add_compile_definitions(TEST_TT=1)
 
 ################################################################################
 #                                  Post build                                  #

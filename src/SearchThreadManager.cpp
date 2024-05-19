@@ -5,6 +5,7 @@
 #include "../include/ThreadManagement/SearchThreadManager.h"
 #include "../include/Search/BestMoveSearch.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
+#include "../include/Search/TranspositionTable.h"
 
 #include <format>
 
@@ -72,6 +73,9 @@ void SearchThreadManager::_threadSearchJob(
     GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
                            << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
                            << std::endl;
+
+    if constexpr (TestTT)
+        TTable.DisplayStatisticsAndReset();
 
     *guard = false;
 }

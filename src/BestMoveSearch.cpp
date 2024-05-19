@@ -154,9 +154,6 @@ void BestMoveSearch::IterativeDeepening(
             GlobalLogger.LogStream << std::endl;
         }
     }
-
-    if constexpr (TestTT)
-        TTable.DisplayStatisticsAndReset();
 }
 
 int BestMoveSearch::_pwsSearch(
