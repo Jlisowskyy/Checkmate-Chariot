@@ -4,8 +4,8 @@
 
 #include "../include/ThreadManagement/SearchThreadManager.h"
 #include "../include/Search/BestMoveSearch.h"
-#include "../include/ThreadManagement/GameTimeManager.h"
 #include "../include/Search/TranspositionTable.h"
+#include "../include/ThreadManagement/GameTimeManager.h"
 
 #include <format>
 
@@ -91,7 +91,8 @@ void SearchThreadManager::Consolidate()
     WrapTraceMsgInfo("Thread manager consolidated successfully");
 }
 
-void SearchThreadManager::GoWoutThread(const Board &bd, uint16_t age, const GoInfo &info) {
+void SearchThreadManager::GoWoutThread(const Board &bd, uint16_t age, const GoInfo &info)
+{
     static StackType s{};
 
     GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd, age);

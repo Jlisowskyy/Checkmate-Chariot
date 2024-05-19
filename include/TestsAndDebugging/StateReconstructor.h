@@ -5,11 +5,11 @@
 #ifndef CHECKMATE_CHARIOT_STATERECONSTRUCTOR_H
 #define CHECKMATE_CHARIOT_STATERECONSTRUCTOR_H
 
-#include <string>
 #include <fstream>
+#include <string>
 
-#include "TestSetup.h"
 #include "../ParseTools.h"
+#include "TestSetup.h"
 
 /*
  *  IMPORTANT NOTE:
@@ -23,19 +23,18 @@
 
 struct StateReconstructor
 {
-// ------------------------------
-// Class creation
-// ------------------------------
+    // ------------------------------
+    // Class creation
+    // ------------------------------
 
-    StateReconstructor() = delete;
+    StateReconstructor()  = delete;
     ~StateReconstructor() = delete;
 
-// ------------------------------
-// Class interaction
-// ------------------------------
+    // ------------------------------
+    // Class interaction
+    // ------------------------------
 
-    template<class debugTool>
-    static bool Reconstruct(debugTool tool, const std::string& inputPath)
+    template <class debugTool> static bool Reconstruct(debugTool tool, const std::string &inputPath)
     {
         std::ifstream stream{inputPath};
 
@@ -47,9 +46,10 @@ struct StateReconstructor
 
         lli prevTime = -1;
         // process log line by line
-        for (std::string line{}; std::getline(stream, line); )
+        for (std::string line{}; std::getline(stream, line);)
         {
-            if (line == "breakpoint") {
+            if (line == "breakpoint")
+            {
                 tool(setup);
 
                 // run given function and wait for input
@@ -58,14 +58,19 @@ struct StateReconstructor
             }
 
             // Parse timings from the file
-            const auto split = ParseTools::Split<[](const int c) -> int {return c == '|';}>(line);
+            const auto split = ParseTools::Split<
+                [](const int c) -> int
+                {
+                    return c == '|';
+                }>(line);
             const auto timeStr = ParseTools::GetTrimmed(split[0]);
 
             // Read timings from the log
             const lli milliseconds = std::stoll(timeStr);
 
             // give the engine some time to process the command
-            if (prevTime != -1){
+            if (prevTime != -1)
+            {
                 const lli diff = milliseconds - prevTime;
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(diff));
@@ -82,15 +87,13 @@ struct StateReconstructor
         return true;
     }
 
-// ------------------------------
-// Private class methods
-// ------------------------------
+    // ------------------------------
+    // Private class methods
+    // ------------------------------
 
-// ------------------------------
-// Class fields
-// ------------------------------
-
-
+    // ------------------------------
+    // Class fields
+    // ------------------------------
 };
 
-#endif //CHECKMATE_CHARIOT_STATERECONSTRUCTOR_H
+#endif // CHECKMATE_CHARIOT_STATERECONSTRUCTOR_H

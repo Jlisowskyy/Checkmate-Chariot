@@ -5,9 +5,9 @@
 #ifndef CHECKMATE_CHARIOT_TESTSETUP_H
 #define CHECKMATE_CHARIOT_TESTSETUP_H
 
+#include <semaphore>
 #include <sstream>
 #include <thread>
-#include <semaphore>
 
 #include "../Engine.h"
 #include "../Interface/UCITranslator.h"
@@ -31,12 +31,10 @@ struct TestSetup
     // Class interaction
     // ------------------------------
 
-    void Initialize()
-    {
-        _translatorThread = new std::thread(_job, &_stream, &_eng, &_sem);
-    }
+    void Initialize() { _translatorThread = new std::thread(_job, &_stream, &_eng, &_sem); }
 
-    void ProcessCommand(const std::string &str) {
+    void ProcessCommand(const std::string &str)
+    {
         _stream.clear();
         _stream << str << std::endl;
         _sem.release();
@@ -53,16 +51,14 @@ struct TestSetup
         }
     }
 
-    Engine& GetEngine(){
-        return _eng;
-    }
+    Engine &GetEngine() { return _eng; }
 
     // ------------------------------
     // Private class methods
     // ------------------------------
 
     private:
-    static void _job(std::stringstream *stream, Engine *engine, std::binary_semaphore* sem)
+    static void _job(std::stringstream *stream, Engine *engine, std::binary_semaphore *sem)
     {
         GameTimeManager::StartTimerAsync();
         engine->Initialize();
@@ -72,7 +68,7 @@ struct TestSetup
         do
         {
             sem->acquire();
-        }while (translator.BeginCommandTranslation(*stream) != UCITranslator::UCICommand::quitCommand);
+        } while (translator.BeginCommandTranslation(*stream) != UCITranslator::UCICommand::quitCommand);
     }
 
     // ------------------------------
