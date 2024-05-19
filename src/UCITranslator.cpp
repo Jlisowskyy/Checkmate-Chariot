@@ -459,7 +459,8 @@ size_t UCITranslator::_msTimeParser(const std::string &str, size_t pos, lli &out
     };
     pos = ParseTools::ExtractNextNumeric<lli, convert>(str, pos, out);
 
-    return out < 1 ? ParseTools::InvalidNextWorldRead : pos;
+    /* UCI says nothing about passing time as 0, so we allow such behavior */
+    return out < 0 ? ParseTools::InvalidNextWorldRead : pos;
 }
 
 UCITranslator::UCICommand UCITranslator::_calculateTimePerMove(const std::string &str)
