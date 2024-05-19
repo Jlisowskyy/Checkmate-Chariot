@@ -118,6 +118,7 @@ set(CHECKMATE_CHARIOT_SOURCES
         src/GameTimeManagerUtils.cpp
         include/TestsAndDebugging/TestSetup.h
         src/BoardEvaluator.cpp
+        include/TestsAndDebugging/StateReconstructor.h
 )
 
 # Create a library with the core functionality

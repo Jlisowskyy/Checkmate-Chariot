@@ -15,10 +15,6 @@
 
 /*
  * Class used to simulate real environment, simplifies testing.
- *
- *      WARNING
- * Currently not working:
- * TODO: sstringstream should be replaced with some pipe like mechanisms, because it is non blocking
  * */
 
 struct TestSetup
