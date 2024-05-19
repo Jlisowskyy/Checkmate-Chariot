@@ -19,35 +19,48 @@ class BoardEvaluatorPrinter
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
-            GlobalLogger.LogStream << std::string(89, '-') << std::endl;
+            const int fieldWidth=9;
+            GlobalLogger.LogStream << std::string(81, '-') << std::endl;
             for (int i = 0; i < 8*2; ++i)
             {
                 if(i%2==0)
                 {
-                    for (int j = 0; j < 8; ++j)
+                    for (int j = 7; j >=0; --j)
                     {
                         if(figureType[i/2*8+j]!=0)
-                            GlobalLogger.LogStream << "|" << std::string(5, ' ')<< figureType[i/2*8+j] << std::string(4, ' ');
+                            GlobalLogger.LogStream << "|" << std::string((fieldWidth-1)-(fieldWidth-1)/2, ' ')<< figureType[i/2*8+j] << std::string((fieldWidth-1)/2, ' ');
                         else
-                            GlobalLogger.LogStream << "|" << std::string(10, ' ');
+                            GlobalLogger.LogStream << "|" << std::string(fieldWidth, ' ');
                     }
-                    GlobalLogger.LogStream << "|" << std::endl;
+                    GlobalLogger.LogStream << "| " <<8-i/2<< std::endl;
                 }
                 else
                 {
-                    for (int j = 0; j < 8; ++j)
+                    for (int j = 7; j >=0; --j)
                     {
-                        std::string points = std::to_string(eval[i/2 * 8 + j]);
-                        int spaces=9 - points.size();
-                        int spacesLeft=spaces/2;
-                        GlobalLogger.LogStream << "| " << std::string(spacesLeft, ' ')<< points << std::string(spaces-spacesLeft, ' ');
+                        if(figureType[(i-1)/2*8+j]!=0)
+                        {
+                            std::string points = std::to_string(eval[i/2 * 8 + j]);
+                            int spaces=fieldWidth - points.length();
+                            int spacesLeft=spaces/2;
+                            GlobalLogger.LogStream << "|" << std::string(spacesLeft, ' ')<< points << std::string(spaces-spacesLeft, ' ');
+                        }
+                        else
+                        {
+                            GlobalLogger.LogStream << "|" << std::string(fieldWidth, ' ');
+                        }
+
                     }
                     GlobalLogger.LogStream << "|" << std::endl;
-                    GlobalLogger.LogStream << std::string(89, '-') << std::endl;
+                    GlobalLogger.LogStream << std::string(81, '-') << std::endl;
                 }
 
             }
-            GlobalLogger.LogStream << std::string(89, '-') << std::endl;
+            for (size_t x = 0; x < 8; ++x)
+            {
+                GlobalLogger.LogStream << "|" << std::string((fieldWidth-1)-(fieldWidth-1)/2, ' ') << static_cast<char>('A' + x)  << std::string((fieldWidth-1)/2, ' ');
+            }
+            GlobalLogger.LogStream << "|"<<std::endl;
         }
     }
 
