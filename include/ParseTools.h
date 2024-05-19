@@ -77,7 +77,7 @@ struct ParseTools
 template <int (*crit)(int)>
 size_t ParseTools::ExtractNextWord(const std::string &str, std::string &wordOut, size_t startPos)
 {
-    while (startPos < str.length() && isblank(str[startPos]))
+    while (startPos < str.length() && crit(str[startPos]))
     {
         ++startPos;
     }

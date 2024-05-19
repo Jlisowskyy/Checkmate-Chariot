@@ -118,6 +118,7 @@ set(CHECKMATE_CHARIOT_SOURCES
         src/GameTimeManagerUtils.cpp
         include/TestsAndDebugging/TestSetup.h
         src/BoardEvaluator.cpp
+        include/TestsAndDebugging/StateReconstructor.h
 )
 
 # Create a library with the core functionality
@@ -198,7 +199,7 @@ else()
 endif()
 
 # Uncomment to add gathering TT statistics
-# add_compile_definitions(TEST_TT=1)
+ add_compile_definitions(TEST_TT=1)
 
 ################################################################################
 #                                  Post build                                  #

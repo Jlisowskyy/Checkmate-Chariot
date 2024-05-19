@@ -5,6 +5,7 @@
 #ifndef CHECKMATE_CHARIOT_TESTSETUP_H
 #define CHECKMATE_CHARIOT_TESTSETUP_H
 
+#include <semaphore>
 #include <sstream>
 #include <thread>
 
@@ -14,10 +15,6 @@
 
 /*
  * Class used to simulate real environment, simplifies testing.
- *
- *      WARNING
- * Currently not working:
- * TODO: sstringstream should be replaced with some pipe like mechanisms, because it is non blocking
  * */
 
 struct TestSetup
@@ -34,13 +31,14 @@ struct TestSetup
     // Class interaction
     // ------------------------------
 
-    void Initialize()
-    {
-        //        _stream << std::no
-        _translatorThread = new std::thread(_job, &_stream, &_eng);
-    }
+    void Initialize() { _translatorThread = new std::thread(_job, &_stream, &_eng, &_sem); }
 
-    void ProcessCommand(const std::string &str) { _stream << str << std::endl; }
+    void ProcessCommand(const std::string &str)
+    {
+        _stream.clear();
+        _stream << str << std::endl;
+        _sem.release();
+    }
 
     void Close()
     {
@@ -49,27 +47,35 @@ struct TestSetup
             ProcessCommand("exit");
             _translatorThread->join();
             delete _translatorThread;
+            _translatorThread = nullptr;
         }
     }
+
+    Engine &GetEngine() { return _eng; }
 
     // ------------------------------
     // Private class methods
     // ------------------------------
 
     private:
-    static void _job(std::stringstream *stream, Engine *engine)
+    static void _job(std::stringstream *stream, Engine *engine, std::binary_semaphore *sem)
     {
         GameTimeManager::StartTimerAsync();
-        UCITranslator translator{*engine};
         engine->Initialize();
 
-        translator.BeginCommandTranslation(*stream);
+        UCITranslator translator{*engine};
+
+        do
+        {
+            sem->acquire();
+        } while (translator.BeginCommandTranslation(*stream) != UCITranslator::UCICommand::quitCommand);
     }
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
+    std::binary_semaphore _sem{0};
     std::stringstream _stream{};
     std::thread *_translatorThread{};
     Engine _eng{};

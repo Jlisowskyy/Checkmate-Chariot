@@ -9,7 +9,6 @@
 
 #include "../include/Evaluation/BoardEvaluator.h"
 #include "../include/Interface/FenTranslator.h"
-#include "../include/Interface/Logger.h"
 #include "../include/Search/BestMoveSearch.h"
 #include "../include/Search/TranspositionTable.h"
 #include "../include/TestsAndDebugging/CsvOperator.h"

@@ -4,10 +4,8 @@
 
 #include "../include/MoveGeneration/ChessMechanics.h"
 
-#include "../include/MoveGeneration/BishopMap.h"
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/KingMap.h"
-#include "../include/MoveGeneration/RookMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
 
 bool ChessMechanics::IsCheck() const

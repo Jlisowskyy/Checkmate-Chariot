@@ -14,7 +14,7 @@ def format_file(file):
 def clang_format_files():
     # Find all files matching the regex: .*\.\(cpp\|cc\|h\|c\)
     files = []
-    for root, _, filenames in os.walk('.'):
+    for root, _, filenames in os.walk('..'):
         for filename in filenames:
             if filename.endswith(('.cpp', '.cc', '.h', '.c')):
                 files.append(os.path.join(root, filename))
