@@ -9,7 +9,6 @@
 #include <fstream>
 #include <random>
 
-#include "../include/Interface/Logger.h"
 #include "../include/ParseTools.h"
 
 void BookTester::PerformRandomAccessTest(

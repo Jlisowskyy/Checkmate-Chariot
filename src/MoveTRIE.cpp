@@ -3,7 +3,6 @@
 //
 
 #include "../include/OpeningBook/MoveTRIE.h"
-#include "../include/CompilationConstants.h"
 
 void MoveTRIE::AddMoveSequence(const std::vector<std::string> &moves)
 {

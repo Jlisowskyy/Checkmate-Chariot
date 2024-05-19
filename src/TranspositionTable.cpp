@@ -5,7 +5,6 @@
 #include "../include/Search/TranspositionTable.h"
 
 #include <bit>
-#include <cstdlib>
 #include <cstring>
 #include <format>
 #include <stdexcept>

@@ -551,6 +551,8 @@ UCITranslator::UCICommand UCITranslator::_reconstruct(const std::string &str) {
     /*
      *  The lambda will be executed when reconstruction engine will found "breakpoint" command
      *  inside the given log
+     *
+     *  For debug usage you should change its content!
      * */
 
     const auto testLambda = [] (TestSetup& setup){

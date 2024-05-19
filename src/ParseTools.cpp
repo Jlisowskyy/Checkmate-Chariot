@@ -4,7 +4,6 @@
 
 #include "../include/ParseTools.h"
 
-#include <climits>
 #include <numeric>
 
 size_t
