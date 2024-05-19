@@ -117,6 +117,8 @@ set(CHECKMATE_CHARIOT_SOURCES
         include/ThreadManagement/GameTimeManagerUtils.h
         src/GameTimeManagerUtils.cpp
         src/BoardEvaluator.cpp
+        include/Evaluation/BoardEvaluatorPrinter.h
+        src/BoardEvaluatorPrinter.cpp
 )
 
 # Create a library with the core functionality

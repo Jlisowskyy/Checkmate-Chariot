@@ -9,6 +9,7 @@
 #include "../MoveGeneration/ChessMechanics.h"
 #include "KingSafetyEval.h"
 #include "StructureEvaluator.h"
+#include "BoardEvaluatorPrinter.h"
 
 #include "../MoveGeneration/FileMap.h"
 
@@ -127,11 +128,11 @@ class BoardEvaluator
             isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation<mode>(counts, phase);
         const int32_t positionEval = _evaluateFields<mode>(bd, phase);
 
-        print<mode>(std::format("Material: {}\n", materialEval));
-        print<mode>(std::format("Position: {}\n", positionEval));
-        print<mode>(std::format("Phase: {}\n", phase));
+        BoardEvaluatorPrinter::print<mode>(std::format("Material: {}\n", materialEval));
+        BoardEvaluatorPrinter::print<mode>(std::format("Position: {}\n", positionEval));
+        BoardEvaluatorPrinter::print<mode>(std::format("Phase: {}\n", phase));
 
-        print<mode>(std::format("Evaluation: {}\n", materialEval+positionEval));
+        BoardEvaluatorPrinter::print<mode>(std::format("Evaluation: {}\n", materialEval+positionEval));
         return materialEval + positionEval;
     }
 
@@ -259,7 +260,7 @@ class BoardEvaluator
         out.blackKingSafety.attackCounts += bKInfo.attackCounts;
         out.blackKingSafety.attackPoints += bKInfo.attackPoints;
 
-        print<mode>(std::format(" [mid: {}, {} end: {},{}] Control [{}, {}] KingAttackPoints[{}, {}]\n"
+        BoardEvaluatorPrinter::print<mode>(std::format(" [mid: {}, {} end: {},{}] Control [{}, {}] KingAttackPoints[{}, {}]\n"
                                 ,whiteMidEval, -blackMidEval, whiteEndEval, -blackEndEval
                                 , CountOnesInBoard(whiteControlledFields), CountOnesInBoard((blackControlledFields)),
                                 wKInfo.attackCounts, bKInfo.attackCounts));
@@ -340,7 +341,7 @@ class BoardEvaluator
             midEval += interEval;
             endEval += interEval;
 
-            print<mode>(col?"Knight ":"");
+            BoardEvaluatorPrinter::print<mode>(col?"Knight ":"");
             return {midEval, endEval, controlledFields, kInfo};
         }
     };
@@ -419,7 +420,7 @@ class BoardEvaluator
             midEval += interEval;
             endEval += interEval;
 
-            print<mode>(col?"Bishop ":"");
+            BoardEvaluatorPrinter::print<mode>(col?"Bishop ":"");
 
             return {midEval, endEval, controlledFields, kInfo};
         }
@@ -502,7 +503,7 @@ class BoardEvaluator
             midEval += interEval;
             endEval += interEval;
 
-            print<mode>(col?"Rook ":"");
+            BoardEvaluatorPrinter::print<mode>(col?"Rook ":"");
 
             return {midEval, endEval, controlledFields, kInfo};
         }
@@ -578,7 +579,7 @@ class BoardEvaluator
                 RemovePiece(unpinnedQueens, figMap);
             }
 
-            print<mode>(col?"Queen ":"");
+            BoardEvaluatorPrinter::print<mode>(col?"Queen ":"");
 
             return {midEval, endEval, controlledFields, kInfo};
         }
@@ -893,7 +894,7 @@ template <EvalMode mode> void BoardEvaluator::_evaluateKings(Board &bd, BoardEva
     io.midgameEval +=  whiteKingMid-blackKingMid;
     io.endgameEval +=  whiteKingEnd-blackKingEnd;
 
-    print<mode>(std::format("King [mid: {}, {} end: {}, {}]\n", whiteKingMid, blackKingMid, whiteKingEnd, blackKingEnd));
+    BoardEvaluatorPrinter::print<mode>(std::format("King [mid: {}, {} end: {}, {}]\n", whiteKingMid, blackKingMid, whiteKingEnd, blackKingEnd));
 
     int32_t kingRingSafety = KingSafetyEval::ScoreKingRingControl<mode>(io.whiteKingSafety, io.blackKingSafety);
 
@@ -924,7 +925,7 @@ BoardEvaluator::_evaluatePawns(Board &bd, uint64_t blackPinnedFigs, uint64_t whi
     rv.whiteKingSafety       = whiteKingInfo;
     rv.blackKingSafety       = blackKingInfo;
 
-    print<mode>(std::format("Pawns: [mid: {}, {} end: {} {}]\n", whiteMidEval, -blackMidEval, whiteEndEval, -blackEndEval));
+    BoardEvaluatorPrinter::print<mode>(std::format("Pawns: [mid: {}, {} end: {} {}]\n", whiteMidEval, -blackMidEval, whiteEndEval, -blackEndEval));
 
     return rv;
 }
@@ -993,6 +994,8 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         // adding field values
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
+
+        BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(msbPos, BasicBlackPawnPositionValues[fieldValueAccess(msbPos)], 'P',MapT::GetColor());
 
         // adding doubled pawn penalty
         interEval +=
@@ -1073,7 +1076,7 @@ template <EvalMode mode> int32_t BoardEvaluator::_evaluateFields(Board &bd, int3
     result.midgameEval += controlEval;
     result.endgameEval += controlEval;
 
-    print<mode>(std::format("ControlFields [{} {}]\n",
+    BoardEvaluatorPrinter::print<mode>(std::format("ControlFields [{} {}]\n",
                             whiteControledFieldsCount*CenterControlBonusPerTile,
                             -blackControledFieldsCount*CenterControlBonusPerTile));
 

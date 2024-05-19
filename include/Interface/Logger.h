@@ -240,11 +240,5 @@ class FileLogger : public Logger
 
 extern StdoutLogger GlobalLogger;
 
-// Function prints how evaluation works when EvalMode is PrintMode
-template <EvalMode mode> void print(const std::string &str)
-{
-    if constexpr (mode == EvalMode::PrintMode)
-        GlobalLogger.LogStream << str;
-}
 
 #endif // LOGGER_H
