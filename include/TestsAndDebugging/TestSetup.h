@@ -53,6 +53,10 @@ struct TestSetup
         }
     }
 
+    Engine& GetEngine(){
+        return _eng;
+    }
+
     // ------------------------------
     // Private class methods
     // ------------------------------

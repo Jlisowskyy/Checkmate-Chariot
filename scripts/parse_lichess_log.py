@@ -1,14 +1,34 @@
 #!/bin/python
 
 import io
+import re
+from datetime import datetime
 
 from parserTools import *
+
+
+def convert_to_posix(date: str):
+    FORMAT = "%Y-%m-%d %H:%M:%S,%f"
+
+    date_object = datetime.strptime(date, FORMAT)
+    return date_object.timestamp()
+
+
+def parse_time(line: str) -> int | None:
+    PATTERN = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},(\d{3})"
+
+    match = re.search(PATTERN, line)
+
+    if match:
+        total = int(convert_to_posix(match.group(0))) * 1000 + int(match.group(1))
+        return total
+    return None
 
 
 def parse_lichess_line(line: str, out_file: io.TextIOWrapper, in_file: io.TextIOWrapper):
     if line.find("<<") != -1:
         input_command = line.split("<<")[1]
-        in_file.write(input_command)
+        in_file.write(f"{parse_time(line)} | {input_command}")
     elif line.find(">>") != -1:
         output_command = line.split(">>")[1]
         out_file.write(output_command)
