@@ -7,6 +7,7 @@
 
 #include <sstream>
 #include <thread>
+#include <semaphore>
 
 #include "../Engine.h"
 #include "../Interface/UCITranslator.h"
@@ -36,11 +37,14 @@ struct TestSetup
 
     void Initialize()
     {
-        //        _stream << std::no
-        _translatorThread = new std::thread(_job, &_stream, &_eng);
+        _translatorThread = new std::thread(_job, &_stream, &_eng, &_sem);
     }
 
-    void ProcessCommand(const std::string &str) { _stream << str << std::endl; }
+    void ProcessCommand(const std::string &str) {
+        _stream.clear();
+        _stream << str << std::endl;
+        _sem.release();
+    }
 
     void Close()
     {
@@ -49,6 +53,7 @@ struct TestSetup
             ProcessCommand("exit");
             _translatorThread->join();
             delete _translatorThread;
+            _translatorThread = nullptr;
         }
     }
 
@@ -57,19 +62,24 @@ struct TestSetup
     // ------------------------------
 
     private:
-    static void _job(std::stringstream *stream, Engine *engine)
+    static void _job(std::stringstream *stream, Engine *engine, std::binary_semaphore* sem)
     {
         GameTimeManager::StartTimerAsync();
-        UCITranslator translator{*engine};
         engine->Initialize();
 
-        translator.BeginCommandTranslation(*stream);
+        UCITranslator translator{*engine};
+
+        do
+        {
+            sem->acquire();
+        }while (translator.BeginCommandTranslation(*stream) != UCITranslator::UCICommand::quitCommand);
     }
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
+    std::binary_semaphore _sem{0};
     std::stringstream _stream{};
     std::thread *_translatorThread{};
     Engine _eng{};

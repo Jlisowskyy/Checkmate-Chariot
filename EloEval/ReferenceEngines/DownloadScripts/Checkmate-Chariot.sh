@@ -18,7 +18,7 @@ git clone https://github.com/Jlisowskyy/Checkmate-Chariot || exit 1
 cd Checkmate-Chariot || exit 1
 git checkout "$version" || clean_up
 cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Release || clean_up
-make || clean_up
+make -j `nproc` || clean_up
 mv Checkmate-Chariot "$start_path/Exes/" || clean_up
 cd "$start_path" || clean_up
 rm -rf Checkmate-Chariot

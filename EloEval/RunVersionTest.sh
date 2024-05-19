@@ -29,7 +29,7 @@ fi
 ./ReferenceEngines/DownloadScripts/Checkmate-Chariot.sh "$version" || clean_up
 cd .. || clean_up
 cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Release || clean_up
-make
+make -j `nproc`
 
 cd "$start_path" || clean_up
 ./FastSearchTest.py Checkmate-Chariot || clean_up
