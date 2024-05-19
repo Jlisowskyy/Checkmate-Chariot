@@ -40,7 +40,7 @@ class BoardEvaluatorPrinter
                     {
                         if(figureType[(i-1)/2*8+j]!=0)
                         {
-                            std::string points = std::to_string(eval[i/2 * 8 + j]);
+                            std::string points =((eval[i/2*8+j]>0)?"+":"")+ std::to_string(eval[i/2 * 8 + j]);
                             int spaces=fieldWidth - points.length();
                             int spacesLeft=spaces/2;
                             GlobalLogger.LogStream << "|" << std::string(spacesLeft, ' ')<< points << std::string(spaces-spacesLeft, ' ');
@@ -60,7 +60,7 @@ class BoardEvaluatorPrinter
             {
                 GlobalLogger.LogStream << "|" << std::string((fieldWidth-1)-(fieldWidth-1)/2, ' ') << static_cast<char>('A' + x)  << std::string((fieldWidth-1)/2, ' ');
             }
-            GlobalLogger.LogStream << "|"<<std::endl;
+            GlobalLogger.LogStream << "|"<<std::endl<<std::endl;
         }
     }
 
