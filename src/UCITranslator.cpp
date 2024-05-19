@@ -12,6 +12,7 @@
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/TestsAndDebugging/SearchPerfTester.h"
 #include "../include/ThreadManagement/GameTimeManagerUtils.h"
+#include "../include/TestsAndDebugging/StateReconstructor.h"
 
 UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream &input)
 {
@@ -57,6 +58,7 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         {      "ctpm", &UCITranslator::_calculateTimePerMove}, // Calculate time per move
         {        "zv",        &UCITranslator::_searchZobrist},
         { "ponderhit",    &UCITranslator::_ponderhitResponse},
+        {"reconstruct", &UCITranslator::_reconstruct},
     };
 
     std::string workStr;
@@ -250,6 +252,9 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
         "                \"input file\" must contain csv records in given manner: \"fen position\", \"depth\"\n"
         "- go searchPerf \"input file \" \"output file \" - runs straight alpha beta pruning performance tests "
         "               on the framework.\n"
+        "- reconstruct \"path\" - tries to reconstruct the state of the engine based on given log file on path,"
+        "                         the log file needs to be saved in given format per line: {posix time in ms} | {command}"
+        "                       for example: reconstruct /home/Jlisowskyy/Storage/Checkmate-Chariot-serv/lichess-bot/log.txt_in"
         "- zv \"bitDiffs\" - searches for seed with given bit differences guaranteed.\n\n\n"
         "Where \"depth\" is integer value indicating layers of traversed move tree.\n\n\n"
         "Additional notes:\n"
@@ -540,4 +545,20 @@ size_t UCITranslator::goPonderResponse(const std::string &, size_t pos, GoInfo &
 {
     info.isPonderSearch = true;
     return pos;
+}
+
+UCITranslator::UCICommand UCITranslator::_reconstruct(const std::string &str) {
+    /*
+     *  The lambda will be executed when reconstruction engine will found "breakpoint" command
+     *  inside the given log
+     * */
+
+    const auto testLambda = [] (TestSetup& setup){
+        GlobalLogger.TraceStream << "BREAKPOINT FOUND!" << std::endl;
+    };
+
+    std::string path{};
+    ParseTools::ExtractNextWord(str, path, 0);
+
+    return StateReconstructor::Reconstruct(testLambda, path) ? UCICommand::debugCommand : UCICommand::InvalidCommand;
 }
