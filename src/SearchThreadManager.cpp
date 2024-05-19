@@ -86,3 +86,19 @@ void SearchThreadManager::Consolidate()
 
     WrapTraceMsgInfo("Thread manager consolidated successfully");
 }
+
+void SearchThreadManager::GoWoutThread(const Board &bd, uint16_t age, const GoInfo &info) {
+    static StackType s{};
+
+    GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd, age);
+
+    PackedMove output{};
+    PackedMove ponder{};
+
+    BestMoveSearch searcher{bd, s, age};
+    searcher.IterativeDeepening(&output, &ponder, info.depth);
+
+    GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
+                           << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
+                           << std::endl;
+}

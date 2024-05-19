@@ -38,6 +38,9 @@ struct SearchThreadManager
 
     bool Go(const Board &bd, uint16_t age, const GoInfo &info);
 
+    /* Function is not thread safe! Is when there is no time to start up threads! */
+    static void GoWoutThread(const Board &bd, uint16_t age, const GoInfo &info);
+
     bool GoInfinite(const Board &bd, uint16_t age);
 
     void Stop();

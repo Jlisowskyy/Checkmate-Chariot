@@ -189,7 +189,10 @@ void Engine::Go(GoInfo &info, const std::vector<std::string> &moves)
     if (lli& colTime = _board.MovingColor == WHITE ? info.timeInfo.wTime : info.timeInfo.bTime; colTime == 0 )
     {
         colTime = 1;
-        info.depth = std::min(info.depth, 3);
+        info.depth = std::min(info.depth, 1);
+
+        SearchThreadManager::GoWoutThread(_board, _age, info);
+        return;
     }
 
     TManager.Go(_board, _age, info);
