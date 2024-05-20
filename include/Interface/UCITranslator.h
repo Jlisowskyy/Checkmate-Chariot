@@ -148,7 +148,7 @@ class UCITranslator
     UCICommand _isReadyResponse([[maybe_unused]] const std::string &);
 
     /* Debug command used to reconstruct engine state from log files */
-    static UCICommand _reconstruct(const std::string &str);
+    UCICommand _reconstruct(const std::string &str);
 
     /* "ponderhit" implementation */
     UCICommand _ponderhitResponse([[maybe_unused]] const std::string &)

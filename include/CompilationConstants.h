@@ -85,6 +85,22 @@ static constexpr bool TestTT = false;
 
 //---------------------------
 
+
+// ------------------------------
+// Display statistics about aspiration window flow
+
+#ifdef TEST_ASP_WIN
+
+static constexpr bool TestAsp = true;
+
+#else
+
+static constexpr bool TestAsp = false;
+
+#endif // TEST_ASP_WIN
+
+//---------------------------
+
 // ssize_t is defined by POSIX. Such define allows to use it on posix+windows
 using signed_size_t = std::make_signed<size_t>::type;
 
