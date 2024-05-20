@@ -74,9 +74,6 @@ void SearchThreadManager::_threadSearchJob(
                            << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
                            << std::endl;
 
-    if constexpr (TestTT)
-        TTable.DisplayStatisticsAndReset();
-
     *guard = false;
 }
 void SearchThreadManager::Consolidate()

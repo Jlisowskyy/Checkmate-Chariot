@@ -558,7 +558,7 @@ UCITranslator::UCICommand UCITranslator::_reconstruct(const std::string &str)
      *  For debug usage you should change its content!
      * */
 
-    const auto testLambda = [](TestSetup &setup)
+    const auto testLambda = [](TestSetup &)
     {
         GlobalLogger.TraceStream << "BREAKPOINT FOUND!" << std::endl;
     };

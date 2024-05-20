@@ -73,7 +73,7 @@ void BestMoveSearch::IterativeDeepening(
 
             // if there was call to abort then abort
             if (std::abs(eval) == TimeStopValue)
-                return;
+                break;
 
             // saving the move evaluation to the avg value
             // TODO: maybe check previous pv for the predicting value?
@@ -103,7 +103,7 @@ void BestMoveSearch::IterativeDeepening(
 
                 // if there was call to abort then abort
                 if (std::abs(eval) == TimeStopValue)
-                    return;
+                    break;
 
                 if (eval <= alpha)
                 {
@@ -117,6 +117,10 @@ void BestMoveSearch::IterativeDeepening(
                     break;
             }
 
+            // if there was call to abort then abort
+            if (std::abs(eval) == TimeStopValue)
+                break;
+
             // Move the pv from the buffer to the main pv
             _pv.Clone(pvBuff);
 
@@ -125,6 +129,10 @@ void BestMoveSearch::IterativeDeepening(
             // Update avg cumulating variable
             avg += depth * eval;
         }
+
+        // if there was call to abort then abort
+        if (std::abs(eval) == TimeStopValue)
+            break;
 
         // Search stop time point
         [[maybe_unused]] auto timeStop = GameTimeManager::GetCurrentTime();
@@ -154,6 +162,9 @@ void BestMoveSearch::IterativeDeepening(
             GlobalLogger.LogStream << std::endl;
         }
     }
+
+    if constexpr (TestTT)
+        TTable.DisplayStatisticsAndReset();
 }
 
 int BestMoveSearch::_pwsSearch(

@@ -812,40 +812,6 @@ class BoardEvaluator
     };
     // clang-format on
 
-    static constexpr const int16_t *BasicBlackPositionValues[]{
-        BasicBlackPawnPositionValues, BasicBlackKnightPositionValues, BasicBlackBishopPositionValues,
-        BasicBlackRookPositionValues, BasicBlackQueenPositionValues,  BasicBlackKingPositionValues,
-    };
-
-    static constexpr const int16_t *BasicBlackPositionEndValues[]{
-        BasicBlackPawnPositionEndValues, BasicBlackKnightPositionValues,   BasicBlackBishopPositionValues,
-        BasicBlackRookPositionValues,    BasicBlackQueenEndPositionValues, BasicBlackKingEndPositionValues,
-    };
-
-    // This table below is generated to simplify usage of above's tables. It is only used in naive evaluation.
-    static constexpr CostArrayT CostsWithPositionsIncluded = []() constexpr
-    {
-        CostArrayT arr{};
-
-        constexpr size_t BlackIndex = BLACK * Board::BitBoardsPerCol;
-        for (size_t i = 0; i <= kingIndex; ++i)
-        {
-            for (int j = 0; j < static_cast<int>(Board::BitBoardFields); ++j)
-                arr[BlackIndex + i][j] =
-                    static_cast<int16_t>(-(BasicFigureValues[i] + BasicBlackPositionValues[i][ConvertToReversedPos(j)])
-                    );
-        }
-
-        constexpr size_t WhiteIndex = WHITE * Board::BitBoardsPerCol;
-        for (size_t i = 0; i <= kingIndex; ++i)
-        {
-            for (size_t j = 0; j < Board::BitBoardFields; ++j)
-                arr[WhiteIndex + i][j] = static_cast<int16_t>(BasicFigureValues[i] + BasicBlackPositionValues[i][j]);
-        }
-
-        return arr;
-    }();
-
     // ------------------------------
     // Material table
     // ------------------------------
