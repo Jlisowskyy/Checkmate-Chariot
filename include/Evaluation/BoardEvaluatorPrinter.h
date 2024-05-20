@@ -57,7 +57,7 @@ class BoardEvaluatorPrinter
                     if (figureType[i * numCols + j] != ' ')
                     {
                         std::string points =
-                            ((eval[i * numCols + j] > 0) ? "+" : "") + std::to_string(eval[i * numCols + j]);
+                            ((eval[i * numCols + j] > 0) ? "+" : "") + std::format("{0:.1f}",eval[i * numCols + j]);
                         size_t spaces     = fieldWidth - points.length();
                         size_t spacesLeft = spaces / 2;
                         GlobalLogger.LogStream << "|" << std::string(spacesLeft, ' ') << points
@@ -174,18 +174,6 @@ class BoardEvaluatorPrinter
 
     template <EvalMode mode>
     static void
-    setValueOfPiecePosition(const int pieceIndex, const int value)
-    {
-        if constexpr (mode == EvalMode::PrintMode)
-        {
-            if (figureType[pieceIndex]<97) // WHITE
-                positionValue[pieceIndex] = value;
-            else
-                positionValue[pieceIndex] = value * -1;
-        }
-    }
-    template <EvalMode mode>
-    static void
     setAdditionalPoints(const std::string& points)
     {
         if constexpr (mode == EvalMode::PrintMode)
@@ -193,6 +181,7 @@ class BoardEvaluatorPrinter
            additionalPoints.push_back(points);
         }
     }
+
     template <EvalMode mode>
     static void
     setPhase(const int value)
@@ -202,6 +191,19 @@ class BoardEvaluatorPrinter
            phase=value;
         }
     }
+
+    template <EvalMode mode>
+    static void
+    setPenaltyAndBonuses(const int pieceIndex, const int value){
+        if constexpr (mode == EvalMode::PrintMode)
+        {
+            if (figureType[pieceIndex]<'a') // WHITE
+                penaltyAndBonuses[pieceIndex] += value;
+            else
+                penaltyAndBonuses[pieceIndex] += value * -1;
+        }
+    }
+
     template <EvalMode mode>
     static void
     setMaterial(const int value)
@@ -211,6 +213,7 @@ class BoardEvaluatorPrinter
            material=value;
         }
     }
+
     template <EvalMode mode>
     static void
     setPositional(const int value)
@@ -223,25 +226,15 @@ class BoardEvaluatorPrinter
 
     template <EvalMode mode>
     static void
-    setMobilityBonus(const int pieceIndex, const int value)
+    setValueOfPiecePositionTappered(const int pieceIndex, const int midValue, const int endValue)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
-            if (figureType[pieceIndex]<97) // WHITE
-                mobilityBonus[pieceIndex] = value;
-            else
-                mobilityBonus[pieceIndex] = value * -1;
-        }
-    }
-    template <EvalMode mode>
-    static void
-        setPenaltyAndBonuses(const int pieceIndex, const int value){
-        if constexpr (mode == EvalMode::PrintMode)
-        {
+            const double value = GetTapperedValuePrecise(phase, midValue, endValue);
             if (figureType[pieceIndex]<'a') // WHITE
-                penaltyAndBonuses[pieceIndex] += value;
+                positionValue[pieceIndex] = value;
             else
-                penaltyAndBonuses[pieceIndex] += value * -1;
+                positionValue[pieceIndex] = value * -1;
         }
     }
 
@@ -265,7 +258,7 @@ class BoardEvaluatorPrinter
         if constexpr (mode == EvalMode::PrintMode)
         {
             const double value = GetTapperedValuePrecise(phase, midValue, endValue);
-            if (figureType[pieceIndex]<97) // WHITE
+            if (figureType[pieceIndex]<'a') // WHITE
                 mobilityBonus[pieceIndex] = value;
             else
                 mobilityBonus[pieceIndex] = value * -1;
