@@ -116,8 +116,10 @@ set(CHECKMATE_CHARIOT_SOURCES
         src/GameTimeManager.cpp
         include/ThreadManagement/GameTimeManagerUtils.h
         src/GameTimeManagerUtils.cpp
-        include/TestsAndDebugging/TestSetup.h
         src/BoardEvaluator.cpp
+        include/Evaluation/BoardEvaluatorPrinter.h
+        src/BoardEvaluatorPrinter.cpp
+        include/TestsAndDebugging/TestSetup.h
         include/TestsAndDebugging/StateReconstructor.h
         include/TestsAndDebugging/DebugTools.h
 )
