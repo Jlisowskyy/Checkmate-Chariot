@@ -136,7 +136,7 @@ class BoardEvaluatorPrinter
             int sum=0;
             for(int i=0; i<64; i++)
                 sum+=positionValue[i];
-            GlobalLogger.LogStream<<"Position Values sum: "<<sum<<std::endl<<std::endl;
+            GlobalLogger.LogStream<<std::endl<<"Position Values sum: "<<sum<<std::endl;
             printBoardWithEval<mode>(positionValue);
             all+=sum;
 

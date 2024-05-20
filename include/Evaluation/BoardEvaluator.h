@@ -304,6 +304,7 @@ class BoardEvaluator
 
                 // adding penalty for being pinned
                 interEval += TrappedPiecePenalty;
+                BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, TrappedPiecePenalty);
 
                 // adding field values
                 interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
@@ -850,29 +851,7 @@ class BoardEvaluator
         BasicBlackRookPositionValues,    BasicBlackQueenEndPositionValues, BasicBlackKingEndPositionValues,
     };
 
-    // This table below is generated to simplify usage of above's tables. It is only used in naive evaluation.
-    static constexpr CostArrayT CostsWithPositionsIncluded = []() constexpr
-    {
-        CostArrayT arr{};
 
-        constexpr size_t BlackIndex = BLACK * Board::BitBoardsPerCol;
-        for (size_t i = 0; i <= kingIndex; ++i)
-        {
-            for (int j = 0; j < static_cast<int>(Board::BitBoardFields); ++j)
-                arr[BlackIndex + i][j] =
-                    static_cast<int16_t>(-(BasicFigureValues[i] + BasicBlackPositionValues[i][ConvertToReversedPos(j)])
-                    );
-        }
-
-        constexpr size_t WhiteIndex = WHITE * Board::BitBoardsPerCol;
-        for (size_t i = 0; i <= kingIndex; ++i)
-        {
-            for (size_t j = 0; j < Board::BitBoardFields; ++j)
-                arr[WhiteIndex + i][j] = static_cast<int16_t>(BasicFigureValues[i] + BasicBlackPositionValues[i][j]);
-        }
-
-        return arr;
-    }();
 
     // ------------------------------
     // Material table
