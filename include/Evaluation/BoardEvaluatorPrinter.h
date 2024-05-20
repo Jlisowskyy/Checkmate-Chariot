@@ -20,16 +20,14 @@ class BoardEvaluatorPrinter
     // index 0 is a1 index 1 is b1
     static std::array<double, Board::BitBoardFields> positionValue;
     static std::array<char, Board::BitBoardFields> figureType;
-    static std::array<double , Board::BitBoardFields> mobilityBonus;
-    static std::array<double , Board::BitBoardFields> penaltyAndBonuses;
+    static std::array<double, Board::BitBoardFields> mobilityBonus;
+    static std::array<double, Board::BitBoardFields> penaltyAndBonuses;
     static int phase;
     static int material;
     static int positional;
     static std::vector<std::string> additionalPoints;
 
-
-public:
-
+    public:
     static INLINE double GetTapperedValue(double midEval, double endEval)
     {
         return GetTapperedValuePrecise(phase, midEval, endEval);
@@ -45,25 +43,25 @@ public:
             const int tableLength = fieldWidth * numRows + numRows + 1;
 
             GlobalLogger.LogStream << std::string(tableLength, '-') << std::endl;
-            for (int i = numRows-1; i >= 0; --i)
+            for (int i = numRows - 1; i >= 0; --i)
             {
                 // printing higher row
-                for (int j = 0; j <numCols; ++j)
+                for (int j = 0; j < numCols; ++j)
                 {
                     size_t spaces     = fieldWidth - 1;
                     size_t spacesLeft = spaces / 2;
-                    GlobalLogger.LogStream << "|" << std::string(spacesLeft, ' ') << figureType[i*numCols+j]
+                    GlobalLogger.LogStream << "|" << std::string(spacesLeft, ' ') << figureType[i * numCols + j]
                                            << std::string(spaces - spacesLeft, ' ');
                 }
                 GlobalLogger.LogStream << "| " << i << std::endl;
 
                 // printing lower row
-                for (int j = 0; j <numCols; ++j)
+                for (int j = 0; j < numCols; ++j)
                 {
                     if (figureType[i * numCols + j] != ' ')
                     {
                         std::string points =
-                            ((eval[i * numCols + j] > 0) ? "+" : "") + std::format("{0:.1f}",eval[i * numCols + j]);
+                            ((eval[i * numCols + j] > 0) ? "+" : "") + std::format("{0:.1f}", eval[i * numCols + j]);
                         size_t spaces     = fieldWidth - points.length();
                         size_t spacesLeft = spaces / 2;
                         GlobalLogger.LogStream << "|" << std::string(spacesLeft, ' ') << points
@@ -99,9 +97,9 @@ public:
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
-            figureType={};
-            static constexpr size_t FigsPerRow   = 8;
-            static constexpr size_t FigsPerCol   = 8;
+            figureType                         = {};
+            static constexpr size_t FigsPerRow = 8;
+            static constexpr size_t FigsPerCol = 8;
             for (size_t y = 0; y < FigsPerCol; ++y)
             {
                 for (size_t x = 0; x < FigsPerRow; ++x)
@@ -113,16 +111,15 @@ public:
                     {
                         if ((board.BitBoards[desc] & field) != 0)
                         {
-                            figureType[y*FigsPerCol+x]=IndexToFigCharMap[desc];
-                            found = true;
+                            figureType[y * FigsPerCol + x] = IndexToFigCharMap[desc];
+                            found                          = true;
                             break;
                         }
                     }
                     if (!found)
-                        figureType[y*FigsPerCol+x]=' ';
+                        figureType[y * FigsPerCol + x] = ' ';
                 }
             }
-
         }
     }
 
@@ -131,10 +128,10 @@ public:
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
-            positionValue = {};
-            figureType    = {};
-            mobilityBonus    = {};
-            penaltyAndBonuses    = {};
+            positionValue     = {};
+            figureType        = {};
+            mobilityBonus     = {};
+            penaltyAndBonuses = {};
             additionalPoints.clear();
         }
     }
@@ -144,100 +141,86 @@ public:
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
-            double all=0;
-            double sum=0;
-            for(int i=0; i<64; i++)
-                sum+=positionValue[i];
-            GlobalLogger.LogStream<<std::endl<<"Position Values sum: "<<sum<<std::endl;
+            double all = 0;
+            double sum = 0;
+            for (int i = 0; i < 64; i++) sum += positionValue[i];
+            GlobalLogger.LogStream << std::endl << "Position Values sum: " << sum << std::endl;
             printBoardWithEval<mode>(positionValue);
-            all+=sum;
+            all += sum;
 
-            sum=0;
-            for(int i=0; i<64; i++)
-                sum+=mobilityBonus[i];
-            GlobalLogger.LogStream<<"Bonus Mobility: "<<sum<<std::endl;
+            sum = 0;
+            for (int i = 0; i < 64; i++) sum += mobilityBonus[i];
+            GlobalLogger.LogStream << "Bonus Mobility: " << sum << std::endl;
             printBoardWithEval<mode>(mobilityBonus);
-            all+=sum;
+            all += sum;
 
-            sum=0;
-            for(int i=0; i<64; i++)
-                sum+=penaltyAndBonuses[i];
-            GlobalLogger.LogStream<<"Penalty and Bonuses: "<<sum<<std::endl;
+            sum = 0;
+            for (int i = 0; i < 64; i++) sum += penaltyAndBonuses[i];
+            GlobalLogger.LogStream << "Penalty and Bonuses: " << sum << std::endl;
             printBoardWithEval<mode>(penaltyAndBonuses);
-            all+=sum;
+            all += sum;
 
-            for(const auto & additionalPoint : additionalPoints)
-                GlobalLogger.LogStream<<additionalPoint;
+            for (const auto &additionalPoint : additionalPoints) GlobalLogger.LogStream << additionalPoint;
 
-            GlobalLogger.LogStream<<std::endl;
+            GlobalLogger.LogStream << std::endl;
 
-            GlobalLogger.LogStream<<"Phase: "<<phase<<std::endl;
-            GlobalLogger.LogStream<<"Material: "<<material<<std::endl;
-            GlobalLogger.LogStream<<"Positional: "<<positional<<std::endl;
-            GlobalLogger.LogStream<<"All without additional: "<<all<<std::endl;
+            GlobalLogger.LogStream << "Phase: " << phase << std::endl;
+            GlobalLogger.LogStream << "Material: " << material << std::endl;
+            GlobalLogger.LogStream << "Positional: " << positional << std::endl;
+            GlobalLogger.LogStream << "All without additional: " << all << std::endl;
         }
     }
 
-    template <EvalMode mode>
-    static void
-    setAdditionalPoints(const std::string& points)
+    template <EvalMode mode> static void setAdditionalPoints(const std::string &points)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
-           additionalPoints.push_back(points);
+            additionalPoints.push_back(points);
         }
     }
 
-    template <EvalMode mode>
-    static void
-    setPhase(const int value)
+    template <EvalMode mode> static void setPhase(const int value)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
-           phase=value;
+            phase = value;
         }
     }
 
-    template <EvalMode mode>
-    static void
-    setPenaltyAndBonuses(const int pieceIndex, const int value){
+    template <EvalMode mode> static void setPenaltyAndBonuses(const int pieceIndex, const int value)
+    {
         if constexpr (mode == EvalMode::PrintMode)
         {
-            if (figureType[pieceIndex]<'a') // WHITE
+            if (figureType[pieceIndex] < 'a') // WHITE
                 penaltyAndBonuses[pieceIndex] += value;
             else
                 penaltyAndBonuses[pieceIndex] += value * -1;
         }
     }
 
-    template <EvalMode mode>
-    static void
-    setMaterial(const int value)
+    template <EvalMode mode> static void setMaterial(const int value)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
-           material=value;
+            material = value;
+        }
+    }
+
+    template <EvalMode mode> static void setPositional(const int value)
+    {
+        if constexpr (mode == EvalMode::PrintMode)
+        {
+            positional = value;
         }
     }
 
     template <EvalMode mode>
-    static void
-    setPositional(const int value)
-    {
-        if constexpr (mode == EvalMode::PrintMode)
-        {
-           positional=value;
-        }
-    }
-
-    template <EvalMode mode>
-    static void
-    setValueOfPiecePositionTappered(const int pieceIndex, const int midValue, const int endValue)
+    static void setValueOfPiecePositionTappered(const int pieceIndex, const int midValue, const int endValue)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
             const double value = GetTapperedValuePrecise(phase, midValue, endValue);
-            if (figureType[pieceIndex]<'a') // WHITE
+            if (figureType[pieceIndex] < 'a') // WHITE
                 positionValue[pieceIndex] = value;
             else
                 positionValue[pieceIndex] = value * -1;
@@ -245,12 +228,12 @@ public:
     }
 
     template <EvalMode mode>
-    static void
-    setPenaltyAndBonusesTapered(const int pieceIndex, const int midValue, const int endValue){
+    static void setPenaltyAndBonusesTapered(const int pieceIndex, const int midValue, const int endValue)
+    {
         if constexpr (mode == EvalMode::PrintMode)
         {
             const double value = GetTapperedValuePrecise(phase, midValue, endValue);
-            if (figureType[pieceIndex]<'a') // WHITE
+            if (figureType[pieceIndex] < 'a') // WHITE
                 penaltyAndBonuses[pieceIndex] += value;
             else
                 penaltyAndBonuses[pieceIndex] += value * -1;
@@ -258,19 +241,17 @@ public:
     }
 
     template <EvalMode mode>
-    static void
-    setMobilityBonusTappered(const int pieceIndex, const int midValue, const int endValue)
+    static void setMobilityBonusTappered(const int pieceIndex, const int midValue, const int endValue)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
             const double value = GetTapperedValuePrecise(phase, midValue, endValue);
-            if (figureType[pieceIndex]<'a') // WHITE
+            if (figureType[pieceIndex] < 'a') // WHITE
                 mobilityBonus[pieceIndex] = value;
             else
                 mobilityBonus[pieceIndex] = value * -1;
         }
     }
-
 };
 
 #endif // CHECKMATE_CHARIOT_BOARDEVALUATORPRINTER_H

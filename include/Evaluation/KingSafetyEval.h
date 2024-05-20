@@ -85,13 +85,12 @@ struct KingSafetyEval
             blackShelter = -KingNoShelterPenalty;
 
         if constexpr (mode == EvalMode::PrintMode)
-            BoardEvaluatorPrinter::setAdditionalPoints<mode>(
-                std::format("KingShelter [{} {}]\n",
-                            BoardEvaluatorPrinter::GetTapperedValue(whiteShelter, 0),
-                            BoardEvaluatorPrinter::GetTapperedValue(blackShelter, 0)
-                ));
+            BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format(
+                "KingShelter [{} {}]\n", BoardEvaluatorPrinter::GetTapperedValue(whiteShelter, 0),
+                BoardEvaluatorPrinter::GetTapperedValue(blackShelter, 0)
+            ));
 
-        return whiteShelter+blackShelter;
+        return whiteShelter + blackShelter;
     }
 
     // Returns summed open files penalty points for both kings.
@@ -109,9 +108,10 @@ struct KingSafetyEval
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setAdditionalPoints<mode>(
-                std::format("KingOpenFiles [{} {}]\n", whitePoints, blackPoints));
+                std::format("KingOpenFiles [{} {}]\n", whitePoints, blackPoints)
+            );
 
-        return whitePoints+blackPoints;
+        return whitePoints + blackPoints;
     }
 
     // Returns score for the king ring control.
@@ -123,13 +123,14 @@ struct KingSafetyEval
 
         // TODO: TEST ENTRY POINT FOR ATTACKS
         const int whiteKingRingPoints = (whiteInfo.attackCounts > 1) * (_kingSafetyValues[whiteInfo.attackPoints]);
-        const int blackKingRingPoints = (blackInfo.attackCounts > 1) * (-_kingSafetyValues[blackInfo.attackPoints]);;
+        const int blackKingRingPoints = (blackInfo.attackCounts > 1) * (-_kingSafetyValues[blackInfo.attackPoints]);
+        ;
         bonus += whiteKingRingPoints + blackKingRingPoints;
 
         if constexpr (mode == EvalMode::PrintMode)
-            BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format(
-                "KingRing: [{} {}]\n", whiteKingRingPoints, blackKingRingPoints
-        ));
+            BoardEvaluatorPrinter::setAdditionalPoints<mode>(
+                std::format("KingRing: [{} {}]\n", whiteKingRingPoints, blackKingRingPoints)
+            );
 
         return bonus;
     }
