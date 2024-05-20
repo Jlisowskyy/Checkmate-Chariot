@@ -9,7 +9,7 @@
 #include "../Interface/Logger.h"
 #include <vector>
 
-INLINE double GetTapperedValuePrecise(int32_t phase, double midEval, double endEval)
+inline INLINE double GetTapperedValuePrecise(int32_t phase, double midEval, double endEval)
 {
     static constexpr double MaxTaperedCoef = 256; // HARD COPIED FROM BOARDEVALUATOR !!!
     return (endEval * (MaxTaperedCoef - phase) + midEval * phase) / MaxTaperedCoef;
