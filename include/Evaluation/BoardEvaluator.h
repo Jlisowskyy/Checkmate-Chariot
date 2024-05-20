@@ -682,7 +682,7 @@ class BoardEvaluator
     // Values below is used to apply bonus per each tile that is controlled on the board center by given color
     // Reasoning:
     //      Center of the board is the most important part of the map so maximizing the control of it may be a good idea
-    static constexpr int16_t CenterControlBonusPerTile = 2;
+    static constexpr int16_t CenterControlBonusPerTile = 5;
 
     // 4x4 mask on the center board used to evaluate center control
     static constexpr uint64_t CenterFieldsMap = []() constexpr
@@ -962,7 +962,7 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
 
     const int chainPoints = StructureEvaluator::EvalPawnChain<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields);
     interEval += chainPoints;
-    BoardEvaluatorPrinter::setAdditionlPoints<mode>(std::format("Pawn chain structure: {}\n", chainPoints));
+    BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Pawn chain structure: {}\n", chainPoints));
 
     while (unpinnedPawns)
     {

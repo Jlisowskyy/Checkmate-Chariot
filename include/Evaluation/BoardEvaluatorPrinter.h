@@ -9,13 +9,19 @@
 #include "../Interface/Logger.h"
 #include <vector>
 
+INLINE double GetTapperedValuePrecise(int32_t phase, double midEval, double endEval)
+{
+    static constexpr double MaxTaperedCoef = 256; // HARD COPIED FROM BOARDEVALUATOR !!!
+    return (endEval * (MaxTaperedCoef - phase) + midEval * phase) / MaxTaperedCoef;
+}
+
 class BoardEvaluatorPrinter
 {
     // index 0 is a1 index 1 is b1
-    static std::array<int16_t, Board::BitBoardFields> positionValue;
+    static std::array<double, Board::BitBoardFields> positionValue;
     static std::array<char, Board::BitBoardFields> figureType;
-    static std::array<int16_t , Board::BitBoardFields> mobilityBonus;
-    static std::array<int16_t , Board::BitBoardFields> penaltyAndBonuses;
+    static std::array<double , Board::BitBoardFields> mobilityBonus;
+    static std::array<double , Board::BitBoardFields> penaltyAndBonuses;
     static int phase;
     static int material;
     static int positional;
@@ -23,7 +29,7 @@ class BoardEvaluatorPrinter
 
     private:
 
-    template <EvalMode mode> static void printBoardWithEval(const std::array<int16_t, 64> &eval)
+    template <EvalMode mode> static void printBoardWithEval(const std::array<double, Board::BitBoardFields> &eval)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
@@ -38,8 +44,8 @@ class BoardEvaluatorPrinter
                 // printing higher row
                 for (int j = 0; j <numCols; ++j)
                 {
-                    int spaces     = fieldWidth - 1;
-                    int spacesLeft = spaces / 2;
+                    size_t spaces     = fieldWidth - 1;
+                    size_t spacesLeft = spaces / 2;
                     GlobalLogger.LogStream << "|" << std::string(spacesLeft, ' ') << figureType[i*numCols+j]
                                            << std::string(spaces - spacesLeft, ' ');
                 }
@@ -52,8 +58,8 @@ class BoardEvaluatorPrinter
                     {
                         std::string points =
                             ((eval[i * numCols + j] > 0) ? "+" : "") + std::to_string(eval[i * numCols + j]);
-                        int spaces     = fieldWidth - points.length();
-                        int spacesLeft = spaces / 2;
+                        size_t spaces     = fieldWidth - points.length();
+                        size_t spacesLeft = spaces / 2;
                         GlobalLogger.LogStream << "|" << std::string(spacesLeft, ' ') << points
                                                << std::string(spaces - spacesLeft, ' ');
                     }
@@ -65,8 +71,8 @@ class BoardEvaluatorPrinter
             }
             for (int x = 0; x < numCols; ++x)
             {
-                int spaces     = fieldWidth;
-                int spacesLeft = spaces / 2;
+                size_t spaces     = fieldWidth;
+                size_t spacesLeft = spaces / 2;
                 GlobalLogger.LogStream << std::string(spacesLeft, ' ') << static_cast<char>('A' + x)
                                        << std::string(spaces - spacesLeft, ' ');
             }
@@ -132,8 +138,8 @@ class BoardEvaluatorPrinter
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
-            int all=0;
-            int sum=0;
+            double all=0;
+            double sum=0;
             for(int i=0; i<64; i++)
                 sum+=positionValue[i];
             GlobalLogger.LogStream<<std::endl<<"Position Values sum: "<<sum<<std::endl;
@@ -154,8 +160,8 @@ class BoardEvaluatorPrinter
             printBoardWithEval<mode>(penaltyAndBonuses);
             all+=sum;
 
-            for(int i=0; i<additionalPoints.size(); i++)
-                GlobalLogger.LogStream<<additionalPoints[i];
+            for(const auto & additionalPoint : additionalPoints)
+                GlobalLogger.LogStream<<additionalPoint;
 
             GlobalLogger.LogStream<<std::endl;
 
@@ -168,7 +174,7 @@ class BoardEvaluatorPrinter
 
     template <EvalMode mode>
     static void
-    setValueOfPiecePosition(const int pieceIndex, const int16_t value)
+    setValueOfPiecePosition(const int pieceIndex, const int value)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
@@ -180,7 +186,7 @@ class BoardEvaluatorPrinter
     }
     template <EvalMode mode>
     static void
-    setAdditionlPoints(const  std::string points)
+    setAdditionalPoints(const std::string& points)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
@@ -189,7 +195,7 @@ class BoardEvaluatorPrinter
     }
     template <EvalMode mode>
     static void
-    setPhase(const int16_t value)
+    setPhase(const int value)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
@@ -198,7 +204,7 @@ class BoardEvaluatorPrinter
     }
     template <EvalMode mode>
     static void
-    setMaterial(const int16_t value)
+    setMaterial(const int value)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
@@ -207,7 +213,7 @@ class BoardEvaluatorPrinter
     }
     template <EvalMode mode>
     static void
-    setPositional(const int16_t value)
+    setPositional(const int value)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
@@ -217,7 +223,7 @@ class BoardEvaluatorPrinter
 
     template <EvalMode mode>
     static void
-    setMobilityBonus(const int pieceIndex, const int16_t value)
+    setMobilityBonus(const int pieceIndex, const int value)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
@@ -229,7 +235,7 @@ class BoardEvaluatorPrinter
     }
     template <EvalMode mode>
     static void
-        setPenaltyAndBonuses(const int pieceIndex, const int16_t value){
+        setPenaltyAndBonuses(const int pieceIndex, const int value){
         if constexpr (mode == EvalMode::PrintMode)
         {
             if (figureType[pieceIndex]<'a') // WHITE
@@ -238,6 +244,34 @@ class BoardEvaluatorPrinter
                 penaltyAndBonuses[pieceIndex] += value * -1;
         }
     }
+
+    template <EvalMode mode>
+    static void
+    setPenaltyAndBonusesTapered(const int pieceIndex, const int midValue, const int endValue){
+        if constexpr (mode == EvalMode::PrintMode)
+        {
+            const double value = GetTapperedValuePrecise(phase, midValue, endValue);
+            if (figureType[pieceIndex]<'a') // WHITE
+                penaltyAndBonuses[pieceIndex] += value;
+            else
+                penaltyAndBonuses[pieceIndex] += value * -1;
+        }
+    }
+
+    template <EvalMode mode>
+    static void
+    setMobilityBonusTappered(const int pieceIndex, const int midValue, const int endValue)
+    {
+        if constexpr (mode == EvalMode::PrintMode)
+        {
+            const double value = GetTapperedValuePrecise(phase, midValue, endValue);
+            if (figureType[pieceIndex]<97) // WHITE
+                mobilityBonus[pieceIndex] = value;
+            else
+                mobilityBonus[pieceIndex] = value * -1;
+        }
+    }
+
 };
 
 #endif // CHECKMATE_CHARIOT_BOARDEVALUATORPRINTER_H
