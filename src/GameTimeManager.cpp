@@ -19,7 +19,6 @@ std::chrono::time_point<std::chrono::system_clock> GameTimeManager::TimeStart;
 std::chrono::time_point<std::chrono::system_clock> GameTimeManager::CurrentTime;
 std::mutex GameTimeManager::mtx;
 std::condition_variable GameTimeManager::cv;
-FileLogger GameTimeManager::fileLogger = FileLogger("GameTimeManager.log");
 
 void GameTimeManager::StartTimerAsync()
 {

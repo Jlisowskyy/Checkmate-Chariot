@@ -48,7 +48,6 @@ class [[maybe_unused]] GameTimeManager
     /// </summary>
     static void
     StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color color, const Board &bd, const uint16_t moveAge);
-    static void StartSearchManagementAsync(const GoTimeInfo &tInfo, Color color, const Board &bd, uint16_t moveAge);
 
     /* Function sets up stop flag to false and saves time infos for later usage */
     static void StartPonder(const GoTimeInfo &tInfo);
