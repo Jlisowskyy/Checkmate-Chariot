@@ -123,7 +123,8 @@ class BoardEvaluator
         const auto [isSuccess, counts] = _countFigures(bd);
         const int32_t phase            = _calcPhase(counts);
 
-        BoardEvaluatorPrinter::setPhase<mode>(phase);
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setPhase<mode>(phase);
 
         const int32_t materialEval =
             isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation<mode>(counts, phase);
@@ -133,9 +134,10 @@ class BoardEvaluator
         if constexpr (mode == EvalMode::PrintMode)
             _slowMaterialCalculation<mode>(counts, phase);
 
-        BoardEvaluatorPrinter::setMaterial<mode>(materialEval);
-        BoardEvaluatorPrinter::setPositional<mode>(positionEval);
-
+        if constexpr (mode == EvalMode::PrintMode){
+            BoardEvaluatorPrinter::setMaterial<mode>(materialEval);
+            BoardEvaluatorPrinter::setPositional<mode>(positionEval);
+        }
 
         return materialEval + positionEval;
     }
@@ -303,7 +305,8 @@ class BoardEvaluator
 
                 // adding penalty for being pinned
                 interEval += TrappedPiecePenalty;
-                BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), TrappedPiecePenalty);
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), TrappedPiecePenalty);
 
                 RemovePiece(pinnedKnights, figMap);
             }
@@ -325,7 +328,9 @@ class BoardEvaluator
                 const int mobilityBonusEnd=mobCount * KnightMobilityBonusEnd;
                 midEval += mobilityBonusMid;
                 endEval += mobilityBonusEnd;
-                BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos),  mobilityBonusMid, mobilityBonusEnd);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos),  mobilityBonusMid, mobilityBonusEnd);
 
                 // adding king attack info
                 KingSafetyEval::UpdateKingAttacks<mode>(
@@ -378,7 +383,9 @@ class BoardEvaluator
                 // trapped penalty
                 const int trappedPoints = TrappedPiecePenalty * (LegalMoves == 0);
                 interEval += trappedPoints;
-                BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), trappedPoints);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), trappedPoints);
 
                 // adding controlled fields
                 controlledFields |= LegalMoves;
@@ -389,7 +396,9 @@ class BoardEvaluator
                 const int movesMobilityBonusEnd=movesCount * BishopMobilityBonusEnd;
                 midEval += movesMobilityBonusMid;
                 endEval += movesMobilityBonusEnd;
-                BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), movesMobilityBonusMid, movesMobilityBonusEnd);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), movesMobilityBonusMid, movesMobilityBonusEnd);
 
                 RemovePiece(pinnedBishops, figMap);
             }
@@ -411,7 +420,9 @@ class BoardEvaluator
                 const int mobilityBonusEnd=movesCount * BishopMobilityBonusEnd;
                 midEval += mobilityBonusMid;
                 endEval += mobilityBonusEnd;
-                BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd);
 
                 // adding king attack info
                 KingSafetyEval::UpdateKingAttacks<mode>(
@@ -463,12 +474,16 @@ class BoardEvaluator
                 // trapped penalty
                 const int trappedPoints = TrappedPiecePenalty * (LegalMoves == 0);
                 interEval += trappedPoints;
-                BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), trappedPoints);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), trappedPoints);
 
                 // open file bonus
                 const int openFilePoints = StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
                 interEval += openFilePoints;
-                BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), openFilePoints);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), openFilePoints);
 
                 // adding controlled fields
                 controlledFields |= LegalMoves;
@@ -479,7 +494,9 @@ class BoardEvaluator
                 const int mobilityBonusEnd=movesCount * RookMobilityBonusMid;
                 midEval += mobilityBonusMid;
                 endEval += mobilityBonusEnd;
-                BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd);
 
                 RemovePiece(pinnedRooks, figMap);
             }
@@ -501,12 +518,16 @@ class BoardEvaluator
                 const int mobilityBonusEnd=movesCount * RookMobilityBonusEnd;
                 midEval += mobilityBonusMid;
                 endEval += mobilityBonusEnd;
-                BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd);
 
                 // open file bonus
                 const int filePoints = StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
                 interEval += filePoints;
-                BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), filePoints);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), filePoints);
 
                 // adding king attack info
                 KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingRookAttackPoints);
@@ -561,14 +582,18 @@ class BoardEvaluator
                 const int mobilityBonusEnd= movesCount * QueenMobilityBonusEnd;
                 midEval += mobilityBonusMid;
                 endEval +=mobilityBonusEnd;
-                BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd);
 
                 // adding positional field values
                 const int positionalValuesMid=BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
                 const int positionalValuesEnd=BasicBlackQueenEndPositionValues[fieldValueAccess(msbPos)];
                 midEval += positionalValuesMid;
                 endEval += positionalValuesEnd;
-                BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesEnd);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesEnd);
 
                 RemovePiece(pinnedQueens, figMap);
             }
@@ -590,14 +615,18 @@ class BoardEvaluator
                 const int mobilityBonusEnd=movesCount * QueenMobilityBonusEnd;
                 midEval += mobilityBonusMid;
                 endEval += mobilityBonusEnd;
-                BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd);
 
                 // adding positional field values
                 const int positionalValuesMid=BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
                 const int positionalValuesEnd=BasicBlackQueenEndPositionValues[fieldValueAccess(msbPos)];
                 midEval += positionalValuesMid;
                 endEval += positionalValuesEnd;
-                BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesEnd);
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesEnd);
 
                 // adding king attack info
                 KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingQueenAttackPoints);
@@ -873,8 +902,12 @@ template <EvalMode mode> void BoardEvaluator::_evaluateKings(Board &bd, BoardEva
     io.midgameEval +=  whiteKingMid - blackKingMid;
     io.endgameEval +=  whiteKingEnd - blackKingEnd;
 
-    BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ExtractMsbPos(bd.BitBoards[wKingIndex]), whiteKingMid, whiteKingEnd);
-    BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ExtractMsbPos(bd.BitBoards[bKingIndex]), -blackKingMid, -blackKingEnd);
+    if constexpr (mode == EvalMode::PrintMode) {
+        BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ExtractMsbPos(bd.BitBoards[wKingIndex]),
+                                                                     whiteKingMid, whiteKingEnd);
+        BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ExtractMsbPos(bd.BitBoards[bKingIndex]),
+                                                                     -blackKingMid, -blackKingEnd);
+    }
 
     int32_t kingRingSafety = KingSafetyEval::ScoreKingRingControl<mode>(io.whiteKingSafety, io.blackKingSafety);
 
@@ -938,7 +971,9 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         // adding penalty for pinned pawn
         const int pinnedPawnPenaltyPoints = (plainMoves == 0) * PinnedPawnPenalty;
         interEval += pinnedPawnPenaltyPoints;
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), pinnedPawnPenaltyPoints);
+
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), pinnedPawnPenaltyPoints);
 
         // adding legal pawn control zone to global
         pawnControlledFields |= FilterMoves(MapT::GetAttackFields(figMap), allowedTiles);
@@ -946,26 +981,34 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         // adding doubled pawn penalty
         const int doublePawnPoints = StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
         interEval += doublePawnPoints;
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), doublePawnPoints);
+
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), doublePawnPoints);
 
         // adding isolated pawn penalty
         const int isolatedPawnPoints = StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
         interEval += isolatedPawnPoints;
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), isolatedPawnPoints);
+
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), isolatedPawnPoints);
 
         // adding passed pawn penalty
         const int passedPawnPoints = StructureEvaluator::SimplePassedPawn<mode>(
                 bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
         interEval += passedPawnPoints;
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), passedPawnPoints);
+
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), passedPawnPoints);
 
         // adding field values
         const int positionalValueMid = BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
         const int positionalValueEnd = BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
         midEval += positionalValueMid;
         endEval += positionalValueEnd;
-        BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ConvertToReversedPos(msbPos), positionalValueMid, positionalValueEnd);
+
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ConvertToReversedPos(msbPos), positionalValueMid, positionalValueEnd);
 
         RemovePiece(pinnedPawns, figMap);
     }
@@ -975,7 +1018,9 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
 
     const int chainPoints = StructureEvaluator::EvalPawnChain<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields);
     interEval += chainPoints;
-    BoardEvaluatorPrinter::setAdditionalPoints<mode>(
+
+    if constexpr (mode == EvalMode::PrintMode)
+        BoardEvaluatorPrinter::setAdditionalPoints<mode>(
             std::format("{} Pawn chain structure: {}\n",
                         (MapT::GetColor() == WHITE ? "White" : "Black"),
                         (MapT::GetColor() == WHITE ? chainPoints : -chainPoints)
@@ -997,24 +1042,32 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         const int positionalValueEnd=BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
         midEval += positionalValueMid;
         endEval += positionalValueEnd;
-        BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ConvertToReversedPos(msbPos), positionalValueMid, positionalValueEnd);
+
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ConvertToReversedPos(msbPos), positionalValueMid, positionalValueEnd);
 
         // adding doubled pawn penalty
         const int doublePawnPoints = StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
         interEval += doublePawnPoints;
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), doublePawnPoints);
+
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), doublePawnPoints);
 
         // adding isolated pawn penalty
         const int isolatedPawnPoints = StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
         interEval += isolatedPawnPoints;
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), isolatedPawnPoints);
+
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), isolatedPawnPoints);
 
         // adding passed pawn penalty
         const int passedPawnPoints = StructureEvaluator::SimplePassedPawn<mode>(
                 bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
         interEval += passedPawnPoints;
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos),  passedPawnPoints);
+
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos),  passedPawnPoints);
 
         RemovePiece(unpinnedPawns, figMap);
     }
@@ -1075,7 +1128,9 @@ template <EvalMode mode> int32_t BoardEvaluator::_evaluateFields(Board &bd, int3
     const int32_t whiteControlledFieldsPoints = CountOnesInBoard(result.whiteControlledFields & CenterFieldsMap) * CenterControlBonusPerTile;
     const int32_t blackControlledFieldsPoints = CountOnesInBoard(result.blackControlledFields & CenterFieldsMap) * CenterControlBonusPerTile;
     const int32_t controlEval = (whiteControlledFieldsPoints - blackControlledFieldsPoints);
-    BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Control fields [{} {}]\n", whiteControlledFieldsPoints, -blackControlledFieldsPoints));
+
+    if constexpr (mode == EvalMode::PrintMode)
+        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Control fields [{} {}]\n", whiteControlledFieldsPoints, -blackControlledFieldsPoints));
 
     return _getTapperedValue(phase, result.midgameEval, result.endgameEval) + controlEval;
 }
@@ -1093,18 +1148,22 @@ inline int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT
         materialValue += static_cast<int32_t>(figArr[j]) * phasedFigVal;
         materialValue -= static_cast<int32_t>(figArr[j + BlackFigStartIndex]) * phasedFigVal;
     }
-    BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Pure material points: {}\n", materialValue));
+
+    if constexpr (mode == EvalMode::PrintMode)
+        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Pure material points: {}\n", materialValue));
 
     // Applying no pawn penalty
     if (figArr[pawnsIndex] == 0) {
         materialValue += NoPawnsPenalty;
 
-        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White no pawn penalty: {}\n", NoPawnsPenalty));
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White no pawn penalty: {}\n", NoPawnsPenalty));
     }
     if (figArr[BlackFigStartIndex + pawnsIndex] == 0) {
         materialValue -= NoPawnsPenalty;
 
-        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black no pawn penalty: {}\n", -NoPawnsPenalty));
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black no pawn penalty: {}\n", -NoPawnsPenalty));
     }
 
     // Applying Bishop pair bonus
@@ -1113,14 +1172,16 @@ inline int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT
         const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
         materialValue += bishopPairPoints;
 
-        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White bishop pair: {}\n", bishopPairPoints));
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White bishop pair: {}\n", bishopPairPoints));
     }
 
     if (figArr[BlackFigStartIndex + bishopsIndex] == 2) {
         const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
         materialValue -= bishopPairPoints;
 
-        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black bishop pair: {}\n", -bishopPairPoints));
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black bishop pair: {}\n", -bishopPairPoints));
     }
 
     // Applying Knight pair penalty -> Knights are losing value when fewer pawns are on board
@@ -1128,27 +1189,31 @@ inline int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT
         const int knightPairPenalty = KnightPairPenalty + (static_cast<int32_t>(totalPawnCount) * 2);
         materialValue += knightPairPenalty;
 
-        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White knight pair: {}\n", knightPairPenalty));
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White knight pair: {}\n", knightPairPenalty));
     }
 
     if (figArr[BlackFigStartIndex + knightsIndex] == 2) {
         const int knightPairPenalty = KnightPairPenalty + (static_cast<int32_t>(totalPawnCount) * 2);
         materialValue -= knightPairPenalty;
 
-        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black knight pair: {}\n", -knightPairPenalty));
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black knight pair: {}\n", -knightPairPenalty));
     }
 
     // Applying Rook pair penalty
     if (figArr[rooksIndex] == 2) {
         materialValue += RookPairPenalty;
 
-        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White rook pair: {}\n", RookPairPenalty));
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White rook pair: {}\n", RookPairPenalty));
     }
 
     if (figArr[BlackFigStartIndex + rooksIndex] == 2) {
         materialValue -= RookPairPenalty;
 
-        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black rook pair: {}\n", -RookPairPenalty));
+        if constexpr (mode == EvalMode::PrintMode)
+            BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black rook pair: {}\n", -RookPairPenalty));
     }
 
     return materialValue;
