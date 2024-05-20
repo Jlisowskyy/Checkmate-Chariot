@@ -111,16 +111,16 @@ struct KingSafetyEval
     template <EvalMode mode = EvalMode::BaseMode>
     [[nodiscard]] static INLINE int32_t
     ScoreKingRingControl(const _kingSafetyInfo_t &whiteInfo, const _kingSafetyInfo_t &blackInfo)
-
     {
         int32_t bonus{};
 
-        bonus += (whiteInfo.attackCounts > 0) * (_kingSafetyValues[whiteInfo.attackPoints]);
-        bonus += (blackInfo.attackCounts > 0) * (-_kingSafetyValues[blackInfo.attackPoints]);
+        // TODO: TEST ENTRY POINT FOR ATTACKS
+        const int whiteKingRingPoints = (whiteInfo.attackCounts > 1) * (_kingSafetyValues[whiteInfo.attackPoints]);
+        const int blackKingRingPoints = (blackInfo.attackCounts > 1) * (-_kingSafetyValues[blackInfo.attackPoints]);;
+        bonus += whiteKingRingPoints + blackKingRingPoints;
 
         BoardEvaluatorPrinter::setAdditionlPoints<mode>(std::format(
-            "KingRing: [{} {}]\n", (whiteInfo.attackCounts > 0) * (_kingSafetyValues[whiteInfo.attackPoints]),
-            (blackInfo.attackCounts > 0) * (-_kingSafetyValues[blackInfo.attackPoints])
+            "KingRing: [{} {}]\n", whiteKingRingPoints, blackKingRingPoints
         ));
 
         return bonus;
