@@ -203,18 +203,18 @@ lli GameTimeManager::CalculateTimeMsPerMove(
      * ------------------------------------------------------------------------------
      */
 
-    //constexpr int32_t minGameStage = 0;
-    //constexpr int32_t maxGameStage = (int32_t)ConstexprMath::sqrt(std::numeric_limits<int32_t>::max()) / 2;
+    // constexpr int32_t minGameStage = 0;
+    // constexpr int32_t maxGameStage = (int32_t)ConstexprMath::sqrt(std::numeric_limits<int32_t>::max()) / 2;
 
-    //const int32_t a    = BoardEvaluator::InterpGameStage(bd, minGameStage, maxGameStage);
-    //constexpr double b = maxGameStage;
+    // const int32_t a    = BoardEvaluator::InterpGameStage(bd, minGameStage, maxGameStage);
+    // constexpr double b = maxGameStage;
 
-    const int32_t maxMoveAge = 40 + moveAge / 2;
-    const double a = (moveAge / 2) * 1'000;
-    const double b = maxMoveAge * 1'000;
+    const int32_t maxMoveAge = 70 + moveAge / 2;
+    const double a           = (moveAge / 2) * 1'000;
+    const double b           = maxMoveAge * 1'000;
 
     const int32_t em   = (int32_t)(maxMoveAge - moveAge / 2);
-    const int32_t xmin = (int32_t) (((double)timeLimitClockMs / ((double) em)) / 4);
+    const int32_t xmin = (int32_t)(((double)timeLimitClockMs / ((double)em)) / 4);
 
     GlobalLogger.TraceStream << std::format("[ INFO ] Calculating time for this move \n");
     GlobalLogger.TraceStream << std::format("[ INFO ] Game stage: {}/{} \n", a, b);
@@ -239,24 +239,24 @@ lli GameTimeManager::CalculateTimeMsPerMove(
         // Evaluate the quadratic function by hand
 
         // Calculate the scale
-        const double scale = (3 * b * b * (double)(-timeLimitClockMs + em * xmin)) / (2 * em * (a-b) * (2 * a + b) );
+        const double scale = (3 * b * b * (double)(-timeLimitClockMs + em * xmin)) / (2 * em * (a - b) * (2 * a + b));
 
         assert(scale >= 0 && "Scale must be positive");
         GlobalLogger.TraceStream << std::format("[ INFO ] Scale: {} \n", scale);
 
         // Evaluate the quadratic function
         const double q = (double)(b * b) / 4;
-        timeForMoveMs = (-(a * (a - b)) * scale / q) + xmin + (double)incrementMs;
+        timeForMoveMs  = (-(a * (a - b)) * scale / q) + xmin + (double)incrementMs;
 #else
         // Release mode
         // Evaluate the quadratic function using the simplified and optimized formula
-        timeForMoveMs = xmin + (double)incrementMs +
-                ( (6 * a * (double)(timeLimitClockMs - em * xmin)) / (em * (2 * a + b) ) );
+        timeForMoveMs =
+            xmin + (double)incrementMs + ((6 * a * (double)(timeLimitClockMs - em * xmin)) / (em * (2 * a + b)));
 #endif
     }
 
     timeForMoveMs = std::min(timeForMoveMs, (double)timeLimitPerMoveMs);
-    const lli ans = (lli) timeForMoveMs;
+    const lli ans = (lli)timeForMoveMs;
 
     GlobalLogger.TraceStream << std::format("[ INFO ] Time calculated for this move: {}", ans) << std::endl;
 
