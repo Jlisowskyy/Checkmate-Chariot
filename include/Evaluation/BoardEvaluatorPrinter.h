@@ -1,5 +1,5 @@
 //
-// Created by pietr on 19.05.2024.
+// Created by pietraldo on 19.05.2024.
 //
 
 #ifndef CHECKMATE_CHARIOT_BOARDEVALUATORPRINTER_H
@@ -12,10 +12,10 @@
 class BoardEvaluatorPrinter
 {
     // index 0 is a1 index 1 is b1
-    static std::array<int16_t, 64> positionValue;
-    static std::array<char, 64> figureType;
-    static std::array<int16_t , 64> mobilityBonus;
-    static std::array<int16_t , 64> penaltyAndBonuses;
+    static std::array<int16_t, Board::BitBoardFields> positionValue;
+    static std::array<char, Board::BitBoardFields> figureType;
+    static std::array<int16_t , Board::BitBoardFields> mobilityBonus;
+    static std::array<int16_t , Board::BitBoardFields> penaltyAndBonuses;
     static int phase;
     static int material;
     static int positional;
@@ -232,7 +232,7 @@ class BoardEvaluatorPrinter
         setPenaltyAndBonuses(const int pieceIndex, const int16_t value){
         if constexpr (mode == EvalMode::PrintMode)
         {
-            if (figureType[pieceIndex]<97) // WHITE
+            if (figureType[pieceIndex]<'a') // WHITE
                 penaltyAndBonuses[pieceIndex] += value;
             else
                 penaltyAndBonuses[pieceIndex] += value * -1;

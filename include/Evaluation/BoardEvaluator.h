@@ -920,8 +920,6 @@ BoardEvaluator::_evaluatePawns(Board &bd, uint64_t blackPinnedFigs, uint64_t whi
     rv.whiteKingSafety       = whiteKingInfo;
     rv.blackKingSafety       = blackKingInfo;
 
-    BoardEvaluatorPrinter::print<mode>(std::format("Pawns: [mid: {}, {} end: {} {}]\n", whiteMidEval, -blackMidEval, whiteEndEval, -blackEndEval));
-
     return rv;
 }
 
@@ -951,34 +949,45 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         const uint64_t plainMoves   = FilterMoves(MapT::GetPlainMoves(figMap, fullMap), allowedTiles);
 
         // adding penalty for pinned pawn
-        interEval += (plainMoves == 0) * PinnedPawnPenalty;
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, (plainMoves == 0) * PinnedPawnPenalty);
+        const int pinnedPawnPenaltyPoints = (plainMoves == 0) * PinnedPawnPenalty;
+        interEval += pinnedPawnPenaltyPoints;
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), pinnedPawnPenaltyPoints);
 
-        // adding pawn control zone to global
+        // adding legal pawn control zone to global
         pawnControlledFields |= FilterMoves(MapT::GetAttackFields(figMap), allowedTiles);
 
         // adding doubled pawn penalty
-        interEval +=
-            StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor()));
+        const int doublePawnPoints = StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
+        interEval += doublePawnPoints;
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), doublePawnPoints);
 
         // adding isolated pawn penalty
-        interEval += StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos));
+        const int isolatedPawnPoints = StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
+        interEval += isolatedPawnPoints;
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), isolatedPawnPoints);
 
         // adding passed pawn penalty
-        interEval += StructureEvaluator::SimplePassedPawn<mode>(
-            bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
+        const int passedPawnPoints = StructureEvaluator::SimplePassedPawn<mode>(
+                bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, StructureEvaluator::SimplePassedPawn<mode>(bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()));
+        interEval += passedPawnPoints;
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), passedPawnPoints);
 
         // adding field values
+        // TODO: mid,end
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
-        BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(63-msbPos, BasicBlackPawnPositionValues[fieldValueAccess(msbPos)]);
+        BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(ConvertToReversedPos(msbPos), BasicBlackPawnPositionValues[fieldValueAccess(msbPos)]);
 
         RemovePiece(pinnedPawns, figMap);
     }
+
+    // adding controlled fields
+    pawnControlledFields |= MapT::GetAttackFields(unpinnedPawns);
+
+    const int chainPoints = StructureEvaluator::EvalPawnChain<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields);
+    interEval += chainPoints;
+    BoardEvaluatorPrinter::setAdditionlPoints<mode>(std::format("Pawn chain structure: {}\n", chainPoints));
 
     while (unpinnedPawns)
     {
@@ -992,33 +1001,30 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         );
 
         // adding field values
+        // TODO: mid,end
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
-        BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(63-msbPos, BasicBlackPawnPositionValues[fieldValueAccess(msbPos)]);
+        BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(ConvertToReversedPos(msbPos), BasicBlackPawnPositionValues[fieldValueAccess(msbPos)]);
 
         // adding doubled pawn penalty
-        interEval +=
-            StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor()));
+        const int doublePawnPoints = StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
+        interEval += doublePawnPoints;
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), doublePawnPoints);
 
         // adding isolated pawn penalty
-        interEval += StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos));
+        const int isolatedPawnPoints = StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
+        interEval += isolatedPawnPoints;
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), isolatedPawnPoints);
 
         // adding passed pawn penalty
-        interEval += StructureEvaluator::SimplePassedPawn<mode>(
-            bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
+        const int passedPawnPoints = StructureEvaluator::SimplePassedPawn<mode>(
+                bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
-        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos,  StructureEvaluator::SimplePassedPawn<mode>(bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()));
+        interEval += passedPawnPoints;
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos),  passedPawnPoints);
 
         RemovePiece(unpinnedPawns, figMap);
     }
-
-    // adding controlled fields
-    pawnControlledFields |= MapT::GetAttackFields(unpinnedPawns);
-
-    interEval += StructureEvaluator::EvalPawnChain<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields);
-    BoardEvaluatorPrinter::setAdditionlPoints<mode>(std::format("Pawn structure: {}\n",StructureEvaluator::EvalPawnChain<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields)) );
 
     midEval += interEval;
     endEval += interEval;
