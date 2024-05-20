@@ -7,6 +7,7 @@
 
 #include "../EngineUtils.h"
 #include "../Interface/Logger.h"
+#include <vector>
 
 class BoardEvaluatorPrinter
 {
@@ -14,9 +15,11 @@ class BoardEvaluatorPrinter
     static std::array<int16_t, 64> positionValue;
     static std::array<char, 64> figureType;
     static std::array<int16_t , 64> mobilityBonus;
+    static std::array<int16_t , 64> penaltyAndBonuses;
     static int phase;
     static int material;
     static int positional;
+    static std::vector<std::string> additionalPoints;
 
     private:
 
@@ -119,6 +122,8 @@ class BoardEvaluatorPrinter
             positionValue = {};
             figureType    = {};
             mobilityBonus    = {};
+            penaltyAndBonuses    = {};
+            additionalPoints.clear();
         }
     }
 
@@ -127,23 +132,37 @@ class BoardEvaluatorPrinter
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
+            int all=0;
             int sum=0;
             for(int i=0; i<64; i++)
                 sum+=positionValue[i];
             GlobalLogger.LogStream<<"Position Values sum: "<<sum<<std::endl<<std::endl;
             printBoardWithEval<mode>(positionValue);
-
+            all+=sum;
 
             sum=0;
             for(int i=0; i<64; i++)
                 sum+=mobilityBonus[i];
             GlobalLogger.LogStream<<"Bonus Mobility: "<<sum<<std::endl;
             printBoardWithEval<mode>(mobilityBonus);
+            all+=sum;
 
+            sum=0;
+            for(int i=0; i<64; i++)
+                sum+=penaltyAndBonuses[i];
+            GlobalLogger.LogStream<<"Penalty and Bonuses: "<<sum<<std::endl;
+            printBoardWithEval<mode>(penaltyAndBonuses);
+            all+=sum;
+
+            for(int i=0; i<additionalPoints.size(); i++)
+                GlobalLogger.LogStream<<additionalPoints[i];
+
+            GlobalLogger.LogStream<<std::endl;
 
             GlobalLogger.LogStream<<"Phase: "<<phase<<std::endl;
             GlobalLogger.LogStream<<"Material: "<<material<<std::endl;
             GlobalLogger.LogStream<<"Positional: "<<positional<<std::endl;
+            GlobalLogger.LogStream<<"All without additional: "<<all<<std::endl;
         }
     }
 
@@ -157,6 +176,15 @@ class BoardEvaluatorPrinter
                 positionValue[pieceIndex] = value;
             else
                 positionValue[pieceIndex] = value * -1;
+        }
+    }
+    template <EvalMode mode>
+    static void
+    setAdditionlPoints(const  std::string points)
+    {
+        if constexpr (mode == EvalMode::PrintMode)
+        {
+           additionalPoints.push_back(points);
         }
     }
     template <EvalMode mode>
@@ -197,6 +225,17 @@ class BoardEvaluatorPrinter
                 mobilityBonus[pieceIndex] = value;
             else
                 mobilityBonus[pieceIndex] = value * -1;
+        }
+    }
+    template <EvalMode mode>
+    static void
+        setPenaltyAndBonuses(const int pieceIndex, const int16_t value){
+        if constexpr (mode == EvalMode::PrintMode)
+        {
+            if (figureType[pieceIndex]<97) // WHITE
+                penaltyAndBonuses[pieceIndex] += value;
+            else
+                penaltyAndBonuses[pieceIndex] += value * -1;
         }
     }
 };

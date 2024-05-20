@@ -128,12 +128,6 @@ class BoardEvaluator
             isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation<mode>(counts, phase);
         const int32_t positionEval = _evaluateFields<mode>(bd, phase);
 
-        BoardEvaluatorPrinter::print<mode>(std::format("Material: {}\n", materialEval));
-        BoardEvaluatorPrinter::print<mode>(std::format("Position: {}\n", positionEval));
-        BoardEvaluatorPrinter::print<mode>(std::format("Phase: {}\n", phase));
-
-        BoardEvaluatorPrinter::print<mode>(std::format("Evaluation: {}\n", materialEval+positionEval));
-
         BoardEvaluatorPrinter::setMaterial<mode>(materialEval);
         BoardEvaluatorPrinter::setPositional<mode>(positionEval);
         BoardEvaluatorPrinter::setPhase<mode>(phase);
@@ -390,6 +384,7 @@ class BoardEvaluator
 
                 // trapped penalty
                 interEval += TrappedPiecePenalty * (LegalMoves == 0);
+                BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, TrappedPiecePenalty * (LegalMoves == 0));
 
                 // adding controlled fields
                 controlledFields |= LegalMoves;
@@ -912,6 +907,9 @@ template <EvalMode mode> void BoardEvaluator::_evaluateKings(Board &bd, BoardEva
     io.midgameEval +=  whiteKingMid-blackKingMid;
     io.endgameEval +=  whiteKingEnd-blackKingEnd;
 
+    BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(ExtractMsbPos(bd.BitBoards[wKingIndex]), BasicBlackKingPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])]);
+    BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(ExtractMsbPos(bd.BitBoards[bKingIndex]),  BasicBlackKingPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.BitBoards[bKingIndex]))]);
+
     BoardEvaluatorPrinter::print<mode>(std::format("King [mid: {}, {} end: {}, {}]\n", whiteKingMid, blackKingMid, whiteKingEnd, blackKingEnd));
 
     int32_t kingRingSafety = KingSafetyEval::ScoreKingRingControl<mode>(io.whiteKingSafety, io.blackKingSafety);
@@ -975,6 +973,7 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
 
         // adding penalty for pinned pawn
         interEval += (plainMoves == 0) * PinnedPawnPenalty;
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, (plainMoves == 0) * PinnedPawnPenalty);
 
         // adding pawn control zone to global
         pawnControlledFields |= FilterMoves(MapT::GetAttackFields(figMap), allowedTiles);
@@ -982,18 +981,22 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         // adding doubled pawn penalty
         interEval +=
             StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor()));
 
         // adding isolated pawn penalty
         interEval += StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos));
 
         // adding passed pawn penalty
         interEval += StructureEvaluator::SimplePassedPawn<mode>(
             bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, StructureEvaluator::SimplePassedPawn<mode>(bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()));
 
         // adding field values
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
+        BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(63-msbPos, BasicBlackPawnPositionValues[fieldValueAccess(msbPos)]);
 
         RemovePiece(pinnedPawns, figMap);
     }
@@ -1012,20 +1015,22 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         // adding field values
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
-
         BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(63-msbPos, BasicBlackPawnPositionValues[fieldValueAccess(msbPos)]);
 
         // adding doubled pawn penalty
         interEval +=
             StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor());
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, StructureEvaluator::EvalDoubledPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos, MapT::GetColor()));
 
         // adding isolated pawn penalty
         interEval += StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos);
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos, StructureEvaluator::EvalIsolatedPawn<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], msbPos));
 
         // adding passed pawn penalty
         interEval += StructureEvaluator::SimplePassedPawn<mode>(
             bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
+        BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(63-msbPos,  StructureEvaluator::SimplePassedPawn<mode>(bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()));
 
         RemovePiece(unpinnedPawns, figMap);
     }
@@ -1034,6 +1039,7 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
     pawnControlledFields |= MapT::GetAttackFields(unpinnedPawns);
 
     interEval += StructureEvaluator::EvalPawnChain<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields);
+    BoardEvaluatorPrinter::setAdditionlPoints<mode>(std::format("Pawn structure: {}\n",StructureEvaluator::EvalPawnChain<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields)) );
 
     midEval += interEval;
     endEval += interEval;

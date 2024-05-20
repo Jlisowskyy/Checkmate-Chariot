@@ -84,7 +84,7 @@ struct KingSafetyEval
             ) < 3)
             blackShelter = -KingNoShelterPenalty;
 
-        BoardEvaluatorPrinter::print<mode>(std::format("KingShelter [{} {}]\n", whiteShelter, blackShelter));
+        BoardEvaluatorPrinter::setAdditionlPoints<mode>(std::format("KingShelter [{} {}]\n", whiteShelter, blackShelter));
 
         return whiteShelter+blackShelter;
     }
@@ -102,7 +102,7 @@ struct KingSafetyEval
         for (size_t i = 0; i < FileMap::FileSepSize; ++i)
             blackPoints -= ((bd.BitBoards[bPawnsIndex] & bSep[i]) == 0) * KingOpenFilePenalty;
 
-        BoardEvaluatorPrinter::print<mode>(std::format("KingOpenFiles [{} {}]\n", whitePoints, blackPoints));
+        BoardEvaluatorPrinter::setAdditionlPoints<mode>(std::format("KingOpenFiles [{} {}]\n", whitePoints, blackPoints));
 
         return whitePoints+blackPoints;
     }
@@ -118,7 +118,7 @@ struct KingSafetyEval
         bonus += (whiteInfo.attackCounts > 0) * (_kingSafetyValues[whiteInfo.attackPoints]);
         bonus += (blackInfo.attackCounts > 0) * (-_kingSafetyValues[blackInfo.attackPoints]);
 
-        BoardEvaluatorPrinter::print<mode>(std::format(
+        BoardEvaluatorPrinter::setAdditionlPoints<mode>(std::format(
             "KingRing: [{} {}]\n", (whiteInfo.attackCounts > 0) * (_kingSafetyValues[whiteInfo.attackPoints]),
             (blackInfo.attackCounts > 0) * (-_kingSafetyValues[blackInfo.attackPoints])
         ));
