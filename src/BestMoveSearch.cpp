@@ -200,24 +200,36 @@ int BestMoveSearch::_pwsSearch(
 
     // generate moves
     MoveGenerator mechanics(
-        bd, _stack, _histTable, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField()
+        bd,
+        _stack,
+        _histTable,
+        _kTable,
+        _cmTable.GetCounterMove(prevMove), depthLeft,
+        prevMove.GetTargetField()
     );
     auto moves = mechanics.GetMovesFast();
 
+    // If no move is possible: check whether we hit mate or stalemate
     if (moves.size == 0)
         return mechanics.IsCheck() ? _getMateValue(depthLeft) : 0;
 
     // reading Transposition table for the best move
     const auto prevSearchRes = TTable.GetRecord(zHash);
 
-    // We got a hit
+    // check whether hashes are same
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
     if constexpr (TestTT)
         TTable.UpdateStatistics(wasTTHit);
 
+
     if (followPv && depthLeft != 1)
+        // first follow pv from previous ID (Iterative deepening) iteration,
+        // we follow only single PV we previously saved
         _pullMoveToFront(moves, _pv(depthLeft, _currRootDepth));
-    else if (wasTTHit && prevSearchRes.GetNodeType() != upperBound)
+    else if (wasTTHit && !prevSearchRes.GetMove().IsEmpty())
+        // if we have any move saved from last time we visited that node and the move is valid try to use it
+        // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always be empty
+        //       In other words we don't use best move from fail low nodes
         _pullMoveToFront(moves, prevSearchRes.GetMove());
     else
         _fetchBestMove(moves, 0);
