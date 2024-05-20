@@ -85,7 +85,10 @@ struct KingSafetyEval
             blackShelter = -KingNoShelterPenalty;
 
         BoardEvaluatorPrinter::setAdditionalPoints<mode>(
-                std::format("KingShelter [{} {}]\n", whiteShelter, blackShelter));
+                std::format("KingShelter [{} {}]\n",
+                            BoardEvaluatorPrinter::GetTapperedValue(whiteShelter, 0),
+                            BoardEvaluatorPrinter::GetTapperedValue(blackShelter, 0)
+                ));
 
         return whiteShelter+blackShelter;
     }

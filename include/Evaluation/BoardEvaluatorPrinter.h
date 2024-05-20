@@ -27,7 +27,13 @@ class BoardEvaluatorPrinter
     static int positional;
     static std::vector<std::string> additionalPoints;
 
-    private:
+
+public:
+
+    static INLINE double GetTapperedValue(double midEval, double endEval)
+    {
+        return GetTapperedValuePrecise(phase, midEval, endEval);
+    }
 
     template <EvalMode mode> static void printBoardWithEval(const std::array<double, Board::BitBoardFields> &eval)
     {

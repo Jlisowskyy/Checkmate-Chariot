@@ -870,11 +870,11 @@ template <EvalMode mode> void BoardEvaluator::_evaluateKings(Board &bd, BoardEva
     const int32_t whiteKingEnd=BasicBlackKingEndPositionValues[ExtractMsbPos(bd.BitBoards[wKingIndex])];
     const int32_t blackKingEnd=BasicBlackKingEndPositionValues[ConvertToReversedPos(ExtractMsbPos(bd.BitBoards[bKingIndex]))];
 
-    io.midgameEval +=  whiteKingMid-blackKingMid;
-    io.endgameEval +=  whiteKingEnd-blackKingEnd;
+    io.midgameEval +=  whiteKingMid - blackKingMid;
+    io.endgameEval +=  whiteKingEnd - blackKingEnd;
 
     BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ExtractMsbPos(bd.BitBoards[wKingIndex]), whiteKingMid, whiteKingEnd);
-    BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ExtractMsbPos(bd.BitBoards[bKingIndex]), blackKingMid, blackKingEnd);
+    BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ExtractMsbPos(bd.BitBoards[bKingIndex]), -blackKingMid, -blackKingEnd);
 
     int32_t kingRingSafety = KingSafetyEval::ScoreKingRingControl<mode>(io.whiteKingSafety, io.blackKingSafety);
 
@@ -961,9 +961,9 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), passedPawnPoints);
 
         // adding field values
-        const int positionalValueMid= BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
-        const int positionalValueEnd=BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
-        midEval +=positionalValueMid;
+        const int positionalValueMid = BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
+        const int positionalValueEnd = BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
+        midEval += positionalValueMid;
         endEval += positionalValueEnd;
         BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(ConvertToReversedPos(msbPos), positionalValueMid, positionalValueEnd);
 
@@ -975,7 +975,11 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
 
     const int chainPoints = StructureEvaluator::EvalPawnChain<mode>(bd.BitBoards[MapT::GetBoardIndex(0)], pawnControlledFields);
     interEval += chainPoints;
-    BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Pawn chain structure: {}\n", chainPoints));
+    BoardEvaluatorPrinter::setAdditionalPoints<mode>(
+            std::format("{} Pawn chain structure: {}\n",
+                        (MapT::GetColor() == WHITE ? "White" : "Black"),
+                        (MapT::GetColor() == WHITE ? chainPoints : -chainPoints)
+                    ));
 
     while (unpinnedPawns)
     {
@@ -1071,7 +1075,7 @@ template <EvalMode mode> int32_t BoardEvaluator::_evaluateFields(Board &bd, int3
     const int32_t whiteControlledFieldsPoints = CountOnesInBoard(result.whiteControlledFields & CenterFieldsMap) * CenterControlBonusPerTile;
     const int32_t blackControlledFieldsPoints = CountOnesInBoard(result.blackControlledFields & CenterFieldsMap) * CenterControlBonusPerTile;
     const int32_t controlEval = (whiteControlledFieldsPoints - blackControlledFieldsPoints);
-    BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Control fields [{} {}]\n", whiteControlledFieldsPoints, blackControlledFieldsPoints));
+    BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Control fields [{} {}]\n", whiteControlledFieldsPoints, -blackControlledFieldsPoints));
 
     return _getTapperedValue(phase, result.midgameEval, result.endgameEval) + controlEval;
 }
