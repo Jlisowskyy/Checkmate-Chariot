@@ -127,6 +127,12 @@ class BestMoveSearch
     // Class creation
     // ------------------------------
 
+    /*
+     * Construction needs a board as starting state of the search algorithm,
+     * Stack as a container to store moves and age to use inside the TT replacement scheme.
+     *
+     * */
+
     BestMoveSearch() = delete;
     BestMoveSearch(const Board &board, Stack<Move, DefaultStackSize> &s, const uint16_t age)
         : _stack(s), _board(board), _age(age)
@@ -138,6 +144,22 @@ class BestMoveSearch
     // Class interaction
     // ------------------------------
 
+    /*
+     * Main search functions. Perform searches going through every depth one by one
+     * to collect information about shallower nodes. It is profitable, because average chess position tree expansion
+     * rate is +/- 40. Let 'd' be the current depth and r = '40' to be tree growth rate. So cost to go through every
+     * previous depth is: cost(d) = 1/(40^(d-1)) + 1/(40^(d-2)) + ... +  1/(40^(d)) ~= 1/r that is in most cases
+     * such operation costs us only 1/40 ~= 2% of whole time processing. In short, it is quite profitable overall.
+     *
+     * Input:
+     *  - maxDepth - limits the depth of the search,
+     *  - writeInfo - defines whether info should be displayed
+     *  Return:
+     *  - bestMove - best move found ready to play,
+     *  - ponderMove - move that is considered to be likely play as a response to our move
+     *
+     * */
+    
     void IterativeDeepening(PackedMove *bestMove, PackedMove *ponderMove, int maxDepth, bool writeInfo = true);
 
     // ------------------------------
