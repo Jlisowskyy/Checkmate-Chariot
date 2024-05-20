@@ -6,6 +6,7 @@
 #define UCITRANSLATOR_H
 
 #include "../Engine.h"
+#include "../Evaluation/BoardEvaluator.h"
 #include "../ThreadManagement/GameTimeManager.h"
 
 /*
@@ -58,12 +59,14 @@ class UCITranslator
         setoptionCommand,
         ucinewgameCommand,
         positionCommand,
+        evalCommand,
         goCommand,
         stopCommand,
         quitCommand,
         displayCommand,
         helpCommand,
         debugCommand,
+        ponderhitCommand,
     };
 
     // ------------------------------
@@ -112,6 +115,12 @@ class UCITranslator
      * */
     [[nodiscard]] UCICommand _positionResponse(const std::string &str);
 
+    /* method evaluate statically position and show how it is evaluating position
+     *
+     * "eval" implementation
+     * */
+    [[nodiscard]] UCICommand _evalPositionStatic(const std::string &str);
+
     /*
      *  Method resets engine state and clears all applied moves.
      *
@@ -138,6 +147,16 @@ class UCITranslator
     /* "isready" implementation */
     UCICommand _isReadyResponse([[maybe_unused]] const std::string &);
 
+    /* Debug command used to reconstruct engine state from log files */
+    UCICommand _reconstruct(const std::string &str);
+
+    /* "ponderhit" implementation */
+    UCICommand _ponderhitResponse([[maybe_unused]] const std::string &)
+    {
+        _engine.PonderHit();
+        return UCICommand::ponderhitCommand;
+    }
+
     /* Own added command to display the board */
     UCICommand _displayResponse([[maybe_unused]] const std::string &);
 
@@ -155,6 +174,9 @@ class UCITranslator
 
     /* Simply start perft move */
     UCICommand _goPerftResponse(const std::string &str, size_t pos);
+
+    /* "go ponder" implementation */
+    UCICommand _goPonder(const std::string &str, size_t pos);
 
     /* Simply starts debug test - refer to MoveGenerationTester.PerformSingleShallowTest */
     UCICommand _goDebugResponse(const std::string &str, size_t pos);
@@ -188,6 +210,8 @@ class UCITranslator
     static size_t _goWTimeResponse(const std::string &str, size_t pos, GoInfo &info);
 
     static size_t _goDepthResponse(const std::string &str, size_t pos, GoInfo &info);
+
+    static size_t goPonderResponse(const std::string &str, size_t pos, GoInfo &info);
 
     // ------------------------------
 

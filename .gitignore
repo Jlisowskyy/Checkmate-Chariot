@@ -1,9 +1,9 @@
 build/
 .idea/
+cmake*
 python\ scripts/
 *.exec
 *.out
-scripts/
 CMakeFiles/
 cmake_install.cmake
 Makefile
@@ -21,3 +21,9 @@ EloEval/ReferenceEngines/Exes/*
 *__pycache__/
 
 *include/cmakeDefines.h
+
+Checkmate-Chariot*
+lib*
+lib/
+
+c-chess*

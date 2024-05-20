@@ -6,7 +6,6 @@
 #include "../include/Interface/Logger.h"
 
 #include <format>
-#include <iostream>
 
 bool Board::Comp(const Board &a, const Board &b)
 {

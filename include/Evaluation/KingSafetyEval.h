@@ -41,6 +41,7 @@ struct KingSafetyEval
 
     // This method is used to return fields that controlling by enemy imposes danger to the king.
     // TODO: Currently its simple ring around the king, reconsider and improve.
+    template <EvalMode mode = EvalMode::BaseMode>
     [[nodiscard]] static INLINE uint64_t GetSafetyFields(const Board &bd, const int col)
     {
         const uint64_t kingMap  = bd.BitBoards[KingMap::GetBoardIndex(col)];
@@ -48,6 +49,7 @@ struct KingSafetyEval
         return kingRing;
     }
 
+    template <EvalMode mode = EvalMode::BaseMode>
     static INLINE void UpdateKingAttacks(
         _kingSafetyInfo_t &info, const uint64_t attacks, const uint64_t kingRing, const int32_t pointsPerAttack
     )
@@ -59,25 +61,25 @@ struct KingSafetyEval
     }
 
     // Returns mask that defines the shelter in front of the king;
-
+    template <EvalMode mode = EvalMode::BaseMode>
     [[nodiscard]] static INLINE uint64_t GetFrontLineMask(const int col, const int msbPos)
     {
         return _kingPawnDefenseFields[col][msbPos];
     }
 
     // Returns summed shelter penalty points for both kings.
-    [[nodiscard]] static int32_t EvalKingShelter(const Board &bd)
+    template <EvalMode mode = EvalMode::BaseMode> [[nodiscard]] static INLINE int32_t EvalKingShelter(const Board &bd)
     {
         int32_t eval{};
         if ((bd.BitBoards[wKingIndex] & KingMap::ShelterLocationMask[WHITE]) != 0 &&
             CountOnesInBoard(
-                bd.BitBoards[wPawnsIndex] & GetFrontLineMask(WHITE, ExtractMsbPos(bd.BitBoards[wKingIndex]))
+                bd.BitBoards[wPawnsIndex] & GetFrontLineMask<mode>(WHITE, ExtractMsbPos(bd.BitBoards[wKingIndex]))
             ) < 3)
             eval += KingNoShelterPenalty;
 
         if ((bd.BitBoards[bKingIndex] & KingMap::ShelterLocationMask[BLACK]) != 0 &&
             CountOnesInBoard(
-                bd.BitBoards[bPawnsIndex] & GetFrontLineMask(BLACK, ExtractMsbPos(bd.BitBoards[bKingIndex]))
+                bd.BitBoards[bPawnsIndex] & GetFrontLineMask<mode>(BLACK, ExtractMsbPos(bd.BitBoards[bKingIndex]))
             ) < 3)
             eval += -KingNoShelterPenalty;
 
@@ -85,7 +87,7 @@ struct KingSafetyEval
     }
 
     // Returns summed open files penalty points for both kings.
-    [[nodiscard]] static int32_t EvalKingOpenFiles(const Board &bd)
+    template <EvalMode mode = EvalMode::BaseMode> [[nodiscard]] static INLINE int32_t EvalKingOpenFiles(const Board &bd)
     {
         int32_t eval{};
 
@@ -101,14 +103,20 @@ struct KingSafetyEval
     }
 
     // Returns score for the king ring control.
+    template <EvalMode mode = EvalMode::BaseMode>
     [[nodiscard]] static INLINE int32_t
     ScoreKingRingControl(const _kingSafetyInfo_t &whiteInfo, const _kingSafetyInfo_t &blackInfo)
 
     {
         int32_t bonus{};
 
-        bonus += (whiteInfo.attackCounts > 2) * (-_kingSafetyValues[whiteInfo.attackPoints]);
-        bonus += (blackInfo.attackCounts > 2) * (_kingSafetyValues[blackInfo.attackPoints]);
+        bonus += (whiteInfo.attackCounts > 0) * (_kingSafetyValues[whiteInfo.attackPoints]);
+        bonus += (blackInfo.attackCounts > 0) * (-_kingSafetyValues[blackInfo.attackPoints]);
+
+        print<mode>(std::format(
+            "KingRing: [{} {}]", (whiteInfo.attackCounts > 0) * (_kingSafetyValues[whiteInfo.attackPoints]),
+            (blackInfo.attackCounts > 0) * (-_kingSafetyValues[blackInfo.attackPoints])
+        ));
 
         return bonus;
     }

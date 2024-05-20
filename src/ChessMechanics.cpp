@@ -4,20 +4,53 @@
 
 #include "../include/MoveGeneration/ChessMechanics.h"
 
-#include "../include/MoveGeneration/BishopMap.h"
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/KingMap.h"
-#include "../include/MoveGeneration/RookMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
 
 bool ChessMechanics::IsCheck() const
 {
-    [[maybe_unused]] const auto [unused1, checksCount, unused2] = GetBlockedFieldBitMap(GetFullBitMap());
+    const int enemyCol       = SwapColor(_board.MovingColor);
+    const int kingsMsb       = _board.GetKingMsbPos(_board.MovingColor);
+    const uint64_t fullBoard = GetFullBitMap();
 
-    return checksCount > 0;
+    // Checking rook's perspective
+    const uint64_t enemyRooks  = _board.GetFigBoard(enemyCol, rooksIndex);
+    const uint64_t enemyQueens = _board.GetFigBoard(enemyCol, queensIndex);
+
+    const uint64_t kingsRookPerspective = RookMap::GetMoves(kingsMsb, fullBoard);
+
+    if ((kingsRookPerspective & (enemyRooks | enemyQueens)) != 0)
+        return true;
+
+    // Checking bishop's perspective
+    const uint64_t enemyBishops = _board.GetFigBoard(enemyCol, bishopsIndex);
+
+    const uint64_t kingsBishopPerspective = BishopMap::GetMoves(kingsMsb, fullBoard);
+
+    if ((kingsBishopPerspective & (enemyBishops | enemyQueens)) != 0)
+        return true;
+
+    // checking knights attacks
+    const uint64_t enemyKnights = _board.GetFigBoard(enemyCol, knightsIndex);
+
+    const uint64_t knightsPerspective = KnightMap::GetMoves(kingsMsb);
+
+    if ((knightsPerspective & (enemyKnights)) != 0)
+        return true;
+
+    // pawns checks
+    const uint64_t enemyPawns = _board.GetFigBoard(enemyCol, pawnsIndex);
+    const uint64_t pawnAttacks =
+        enemyCol == WHITE ? WhitePawnMap::GetAttackFields(enemyPawns) : BlackPawnMap::GetAttackFields(enemyPawns);
+
+    if ((pawnAttacks & (MaxMsbPossible >> kingsMsb)) != 0)
+        return true;
+
+    return false;
 }
 
-// Gets occupancy maps, which simply indicates wheter some field is occupied or not. Does not distinguish colors.
+// Gets occupancy maps, which simply indicates whether some field is occupied or not. Does not distinguish colors.
 uint64_t ChessMechanics::GetFullBitMap() const
 {
     uint64_t map = 0;
@@ -25,7 +58,7 @@ uint64_t ChessMechanics::GetFullBitMap() const
     return map;
 }
 
-// Gets occupancy maps, which simply indicates wheter some field is occupied or not, by desired color figures.
+// Gets occupancy maps, which simply indicates whether some field is occupied or not, by desired color figures.
 uint64_t ChessMechanics::GetColBitMap(const int col) const
 {
     TraceIfFalse(col == 1 || col == 0, "Invalid color!");

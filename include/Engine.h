@@ -87,7 +87,9 @@ class Engine
     void GoInfinite();
 
     /* Simply issues go command to the ThreadManager */
-    void Go(const GoInfo &info, const std::vector<std::string> &moves);
+    void Go(GoInfo &info, const std::vector<std::string> &moves);
+
+    void PonderHit();
 
     static const std::string &GetDebugEnginePath() { return _debugEnginePath; }
 

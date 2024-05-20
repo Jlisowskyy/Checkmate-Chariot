@@ -48,6 +48,13 @@ class [[maybe_unused]] GameTimeManager
     /// </summary>
     static void
     StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color color, const Board &bd, const uint16_t moveAge);
+    static void StartSearchManagementAsync(const GoTimeInfo &tInfo, Color color, const Board &bd, uint16_t moveAge);
+
+    /* Function sets up stop flag to false and saves time infos for later usage */
+    static void StartPonder(const GoTimeInfo &tInfo);
+
+    /* Function starts time management accordingly to previously saved times */
+    static void PonderHit(Color color, const Board &bd, uint16_t moveAge);
 
     /// <summary> Stop the search management thread </summary>
     static void StopSearchManagement();
@@ -58,8 +65,7 @@ class [[maybe_unused]] GameTimeManager
 
     /// <summary> Calculate the time in milliseconds for a move </summary>
     [[maybe_unused]] static lli CalculateTimeMsPerMove(
-        const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs, const lli incrementMs,
-        const uint16_t moveAge
+        const Board &bd, lli timeLimitClockMs, lli timeLimitPerMoveMs, lli incrementMs, uint16_t moveAge
     );
 
     private:
@@ -67,9 +73,8 @@ class [[maybe_unused]] GameTimeManager
     [[noreturn]] static void _timer_thread();
 
     /// @See StartSearchManagementAsync
-    static void _search_management_thread(
-        const std::chrono::time_point<std::chrono::system_clock> moveStartTimeMs, const lli timeForMoveMs
-    );
+    static void
+    _search_management_thread(std::chrono::time_point<std::chrono::system_clock> moveStartTimeMs, lli timeForMoveMs);
 
     // ------------------------------
     // Class fields
@@ -95,6 +100,8 @@ class [[maybe_unused]] GameTimeManager
     // Wake on update mechanism
     static std::condition_variable cv;
     static std::mutex mtx;
+
+    static GoTimeInfo _ponderTimes;
 };
 
 #endif // CHECKMATE_CHARIOT_GAMETIMER_H
