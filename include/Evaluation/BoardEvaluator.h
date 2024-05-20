@@ -133,6 +133,11 @@ class BoardEvaluator
         BoardEvaluatorPrinter::print<mode>(std::format("Phase: {}\n", phase));
 
         BoardEvaluatorPrinter::print<mode>(std::format("Evaluation: {}\n", materialEval+positionEval));
+
+        BoardEvaluatorPrinter::setMaterial<mode>(materialEval);
+        BoardEvaluatorPrinter::setPositional<mode>(positionEval);
+        BoardEvaluatorPrinter::setPhase<mode>(phase);
+
         return materialEval + positionEval;
     }
 
@@ -260,6 +265,7 @@ class BoardEvaluator
         out.blackKingSafety.attackCounts += bKInfo.attackCounts;
         out.blackKingSafety.attackPoints += bKInfo.attackPoints;
 
+
         BoardEvaluatorPrinter::print<mode>(std::format(" [mid: {}, {} end: {},{}] Control [{}, {}] KingAttackPoints[{}, {}]\n"
                                 ,whiteMidEval, -blackMidEval, whiteEndEval, -blackEndEval
                                 , CountOnesInBoard(whiteControlledFields), CountOnesInBoard((blackControlledFields)),
@@ -307,6 +313,7 @@ class BoardEvaluator
 
                 // adding field values
                 interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
+                BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(63-msbPos, BasicBlackKnightPositionValues[fieldValueAccess(msbPos)]);
 
                 RemovePiece(pinnedKnights, figMap);
             }
@@ -326,6 +333,7 @@ class BoardEvaluator
                 const int mobCount = CountOnesInBoard(safeMoves);
                 midEval += mobCount * KnightMobilityBonusMid;
                 endEval += mobCount * KnightMobilityBonusEnd;
+                BoardEvaluatorPrinter::setMobilityBonus<mode>(63-msbPos,  mobCount * KnightMobilityBonusEnd);
 
                 // adding king attack info
                 KingSafetyEval::UpdateKingAttacks<mode>(
@@ -334,6 +342,7 @@ class BoardEvaluator
 
                 // adding field values
                 interEval += BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
+                BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(63-msbPos, BasicBlackKnightPositionValues[fieldValueAccess(msbPos)]);
 
                 RemovePiece(unpinnedKnights, figMap);
             }
@@ -389,6 +398,7 @@ class BoardEvaluator
                 const int movesCount = CountOnesInBoard(LegalMoves & safeFields);
                 midEval += movesCount * BishopMobilityBonusMid;
                 endEval += movesCount * BishopMobilityBonusEnd;
+                BoardEvaluatorPrinter::setMobilityBonus<mode>(63-msbPos, movesCount * BishopMobilityBonusEnd);
 
                 RemovePiece(pinnedBishops, figMap);
             }
@@ -408,6 +418,7 @@ class BoardEvaluator
                 const int movesCount = CountOnesInBoard(safeMoves);
                 midEval += movesCount * BishopMobilityBonusMid;
                 endEval += movesCount * BishopMobilityBonusEnd;
+                BoardEvaluatorPrinter::setMobilityBonus<mode>(63-msbPos, movesCount * BishopMobilityBonusEnd);
 
                 // adding king attack info
                 KingSafetyEval::UpdateKingAttacks<mode>(
@@ -471,6 +482,7 @@ class BoardEvaluator
                 const int movesCount = CountOnesInBoard(LegalMoves & safeFields);
                 midEval += movesCount * RookMobilityBonusMid;
                 endEval += movesCount * RookMobilityBonusEnd;
+                BoardEvaluatorPrinter::setMobilityBonus<mode>(63-msbPos, movesCount * RookMobilityBonusMid);
 
                 RemovePiece(pinnedRooks, figMap);
             }
@@ -490,6 +502,7 @@ class BoardEvaluator
                 const int32_t movesCount = CountOnesInBoard(safeMoves);
                 midEval += movesCount * RookMobilityBonusMid;
                 endEval += movesCount * RookMobilityBonusEnd;
+                BoardEvaluatorPrinter::setMobilityBonus<mode>(63-msbPos, movesCount * RookMobilityBonusMid);
 
                 // open file bonus
                 interEval += StructureEvaluator::EvalRookOnOpenFile(bd, msbPos, col);
@@ -547,9 +560,11 @@ class BoardEvaluator
                 const int movesCount = CountOnesInBoard(FilterMoves(LegalMoves, safeFields));
                 midEval += movesCount * QueenMobilityBonusMid;
                 endEval += movesCount * QueenMobilityBonusEnd;
+                BoardEvaluatorPrinter::setMobilityBonus<mode>(63-msbPos, movesCount * QueenMobilityBonusMid);
 
                 // adding positional field values
                 midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
+                BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(63-msbPos, BasicBlackQueenPositionValues[fieldValueAccess(msbPos)]);
 
                 RemovePiece(pinnedQueens, figMap);
             }
@@ -569,12 +584,15 @@ class BoardEvaluator
                 const int32_t movesCount = CountOnesInBoard(safeMoves);
                 midEval += movesCount * QueenMobilityBonusMid;
                 endEval += movesCount * QueenMobilityBonusEnd;
+                BoardEvaluatorPrinter::setMobilityBonus<mode>(63-msbPos, movesCount * QueenMobilityBonusMid);
 
                 // adding positional field values
                 midEval += BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
+                BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(63-msbPos, BasicBlackQueenPositionValues[fieldValueAccess(msbPos)]);
 
                 // adding king attack info
                 KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingQueenAttackPoints);
+
 
                 RemovePiece(unpinnedQueens, figMap);
             }

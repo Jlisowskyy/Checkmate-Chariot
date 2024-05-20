@@ -13,6 +13,10 @@ class BoardEvaluatorPrinter
     // index 0 is a1 index 1 is b1
     static std::array<int16_t, 64> positionValue;
     static std::array<char, 64> figureType;
+    static std::array<int16_t , 64> mobilityBonus;
+    static int phase;
+    static int material;
+    static int positional;
 
     private:
 
@@ -114,6 +118,7 @@ class BoardEvaluatorPrinter
         {
             positionValue = {};
             figureType    = {};
+            mobilityBonus    = {};
         }
     }
 
@@ -122,7 +127,23 @@ class BoardEvaluatorPrinter
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
+            int sum=0;
+            for(int i=0; i<64; i++)
+                sum+=positionValue[i];
+            GlobalLogger.LogStream<<"Position Values sum: "<<sum<<std::endl<<std::endl;
             printBoardWithEval<mode>(positionValue);
+
+
+            sum=0;
+            for(int i=0; i<64; i++)
+                sum+=mobilityBonus[i];
+            GlobalLogger.LogStream<<"Bonus Mobility: "<<sum<<std::endl;
+            printBoardWithEval<mode>(mobilityBonus);
+
+
+            GlobalLogger.LogStream<<"Phase: "<<phase<<std::endl;
+            GlobalLogger.LogStream<<"Material: "<<material<<std::endl;
+            GlobalLogger.LogStream<<"Positional: "<<positional<<std::endl;
         }
     }
 
@@ -132,15 +153,50 @@ class BoardEvaluatorPrinter
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
-            positionValue[pieceIndex] = value;
             if (figureType[pieceIndex]<97) // WHITE
-            {
                 positionValue[pieceIndex] = value;
-            }
             else
-            {
                 positionValue[pieceIndex] = value * -1;
-            }
+        }
+    }
+    template <EvalMode mode>
+    static void
+    setPhase(const int16_t value)
+    {
+        if constexpr (mode == EvalMode::PrintMode)
+        {
+           phase=value;
+        }
+    }
+    template <EvalMode mode>
+    static void
+    setMaterial(const int16_t value)
+    {
+        if constexpr (mode == EvalMode::PrintMode)
+        {
+           material=value;
+        }
+    }
+    template <EvalMode mode>
+    static void
+    setPositional(const int16_t value)
+    {
+        if constexpr (mode == EvalMode::PrintMode)
+        {
+           positional=value;
+        }
+    }
+
+    template <EvalMode mode>
+    static void
+    setMobilityBonus(const int pieceIndex, const int16_t value)
+    {
+        if constexpr (mode == EvalMode::PrintMode)
+        {
+            if (figureType[pieceIndex]<97) // WHITE
+                mobilityBonus[pieceIndex] = value;
+            else
+                mobilityBonus[pieceIndex] = value * -1;
         }
     }
 };

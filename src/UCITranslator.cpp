@@ -160,6 +160,8 @@ UCITranslator::UCICommand UCITranslator::_evalPositionStatic(const std::string &
     BoardEvaluatorPrinter::setBoard<EvalMode::PrintMode>(b);
     int32_t eval = BoardEvaluator::Evaluation2<EvalMode::PrintMode>(b);
     BoardEvaluatorPrinter::printAll<EvalMode::PrintMode>();
+    GlobalLogger.LogStream<<"Evaluation from Evaluation2: "<<eval<<std::endl;
+
     return UCICommand::evalCommand;
 }
 
