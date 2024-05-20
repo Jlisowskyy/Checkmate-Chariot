@@ -10,43 +10,41 @@
 
 class BoardEvaluatorPrinter
 {
+    // index 0 is a1 index 1 is b1
     static std::array<int16_t, 64> positionValue;
     static std::array<char, 64> figureType;
 
     private:
+
     template <EvalMode mode> static void printBoardWithEval(const std::array<int16_t, 64> &eval)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
             const int fieldWidth  = 9;
             const int numRows     = 8;
+            const int numCols     = 8;
             const int tableLength = fieldWidth * numRows + numRows + 1;
 
             GlobalLogger.LogStream << std::string(tableLength, '-') << std::endl;
-            for (int i = 0; i < numRows; ++i)
+            for (int i = numRows-1; i >= 0; --i)
             {
                 // printing higher row
-                for (int j = numRows - 1; j >= 0; --j)
+                for (int j = 0; j <numCols; ++j)
                 {
-                    if (figureType[i * numRows + j] != 0)
-                    {
-                        int spaces     = fieldWidth - 1;
-                        int spacesLeft = spaces / 2;
-                        GlobalLogger.LogStream << "|" << std::string(spacesLeft, ' ') << figureType[i * numRows + j]
-                                               << std::string(spaces - spacesLeft, ' ');
-                    }
-                    else
-                        GlobalLogger.LogStream << "|" << std::string(fieldWidth, ' ');
+                    int spaces     = fieldWidth - 1;
+                    int spacesLeft = spaces / 2;
+                    GlobalLogger.LogStream << "|" << std::string(spacesLeft, ' ') << figureType[i*numCols+j]
+                                           << std::string(spaces - spacesLeft, ' ');
                 }
-                GlobalLogger.LogStream << "| " << numRows - i << std::endl;
+                GlobalLogger.LogStream << "| " << i << std::endl;
 
                 // printing lower row
-                for (int j = numRows - 1; j >= 0; --j)
+                for (int j = 0; j <numCols; ++j)
                 {
-                    if (figureType[i * numRows + j] != 0)
+                    if (figureType[i * numCols + j] != ' ')
                     {
                         std::string points =
-                            ((eval[i * numRows + j] > 0) ? "+" : "") + std::to_string(eval[i * numRows + j]);
+                            ((eval[i * numCols + j] > 0) ? "+" : "") + std::to_string(eval[i * numCols + j]);
                         int spaces     = fieldWidth - points.length();
                         int spacesLeft = spaces / 2;
                         GlobalLogger.LogStream << "|" << std::string(spacesLeft, ' ') << points
@@ -58,7 +56,7 @@ class BoardEvaluatorPrinter
                 GlobalLogger.LogStream << "|" << std::endl;
                 GlobalLogger.LogStream << std::string(tableLength, '-') << std::endl;
             }
-            for (int x = 0; x < numRows; ++x)
+            for (int x = 0; x < numCols; ++x)
             {
                 int spaces     = fieldWidth;
                 int spacesLeft = spaces / 2;
@@ -75,6 +73,38 @@ class BoardEvaluatorPrinter
     {
         if constexpr (mode == EvalMode::PrintMode)
             GlobalLogger.LogStream << str;
+    }
+
+    // Function prints how evaluation works when EvalMode is PrintMode
+    template <EvalMode mode> static void setBoard(const Board &board)
+    {
+        if constexpr (mode == EvalMode::PrintMode)
+        {
+            figureType={};
+            static constexpr size_t FigsPerRow   = 8;
+            static constexpr size_t FigsPerCol   = 8;
+            for (size_t y = 0; y < FigsPerCol; ++y)
+            {
+                for (size_t x = 0; x < FigsPerRow; ++x)
+                {
+                    const uint64_t field = ExtractPosFromStr(static_cast<char>(x + 'a'), static_cast<char>('1' + y));
+
+                    bool found = false;
+                    for (size_t desc = 0; desc < Board::BitBoardsCount; ++desc)
+                    {
+                        if ((board.BitBoards[desc] & field) != 0)
+                        {
+                            figureType[y*FigsPerCol+x]=IndexToFigCharMap[desc];
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                        figureType[y*FigsPerCol+x]=' ';
+                }
+            }
+
+        }
     }
 
     // Function prints how evaluation works when EvalMode is PrintMode
@@ -98,19 +128,18 @@ class BoardEvaluatorPrinter
 
     template <EvalMode mode>
     static void
-    setValueOfPiecePosition(const int pieceIndex, const int16_t value, const char pieceType, const int16_t color)
+    setValueOfPiecePosition(const int pieceIndex, const int16_t value)
     {
         if constexpr (mode == EvalMode::PrintMode)
         {
-            if (color == WHITE)
+            positionValue[pieceIndex] = value;
+            if (figureType[pieceIndex]<97) // WHITE
             {
                 positionValue[pieceIndex] = value;
-                figureType[pieceIndex]    = pieceType;
             }
             else
             {
                 positionValue[pieceIndex] = value * -1;
-                figureType[pieceIndex]    = pieceType + 32; // change to lowercase
             }
         }
     }

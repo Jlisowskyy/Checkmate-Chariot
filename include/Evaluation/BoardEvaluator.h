@@ -995,7 +995,7 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         midEval += BasicBlackPawnPositionValues[fieldValueAccess(msbPos)];
         endEval += BasicBlackPawnPositionEndValues[fieldValueAccess(msbPos)];
 
-        BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(msbPos, BasicBlackPawnPositionValues[fieldValueAccess(msbPos)], 'P',MapT::GetColor());
+        BoardEvaluatorPrinter::setValueOfPiecePosition<mode>(63-msbPos, BasicBlackPawnPositionValues[fieldValueAccess(msbPos)]);
 
         // adding doubled pawn penalty
         interEval +=
