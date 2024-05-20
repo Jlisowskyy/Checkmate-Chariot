@@ -129,6 +129,10 @@ class BoardEvaluator
             isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation<mode>(counts, phase);
         const int32_t positionEval = _evaluateFields<mode>(bd, phase);
 
+        // only to print bonuses
+        if constexpr (mode == EvalMode::PrintMode)
+            _slowMaterialCalculation<mode>(counts, phase);
+
         BoardEvaluatorPrinter::setMaterial<mode>(materialEval);
         BoardEvaluatorPrinter::setPositional<mode>(positionEval);
 
@@ -1076,34 +1080,63 @@ inline int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT
         materialValue += static_cast<int32_t>(figArr[j]) * phasedFigVal;
         materialValue -= static_cast<int32_t>(figArr[j + BlackFigStartIndex]) * phasedFigVal;
     }
+    BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Pure material points: {}", materialValue));
 
     // Applying no pawn penalty
-    if (figArr[pawnsIndex] == 0)
+    if (figArr[pawnsIndex] == 0) {
         materialValue += NoPawnsPenalty;
-    if (figArr[BlackFigStartIndex + pawnsIndex] == 0)
+
+        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White no pawn penalty: {}", NoPawnsPenalty));
+    }
+    if (figArr[BlackFigStartIndex + pawnsIndex] == 0) {
         materialValue -= NoPawnsPenalty;
+
+        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black no pawn penalty: {}", -NoPawnsPenalty));
+    }
 
     // Applying Bishop pair bonus
     const size_t totalPawnCount = figArr[pawnsIndex] + figArr[BlackFigStartIndex + pawnsIndex];
-    if (figArr[bishopsIndex] == 2)
-        materialValue += BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
+    if (figArr[bishopsIndex] == 2) {
+        const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
+        materialValue += bishopPairPoints;
 
-    if (figArr[BlackFigStartIndex + bishopsIndex] == 2)
-        materialValue -= BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
+        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White bishop pair: {}", bishopPairPoints));
+    }
+
+    if (figArr[BlackFigStartIndex + bishopsIndex] == 2) {
+        const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
+        materialValue -= bishopPairPoints;
+
+        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black bishop pair: {}", -bishopPairPoints));
+    }
 
     // Applying Knight pair penalty -> Knights are losing value when fewer pawns are on board
-    if (figArr[knightsIndex] == 2)
-        materialValue += KnightPairPenalty + (static_cast<int32_t>(totalPawnCount) * 2);
+    if (figArr[knightsIndex] == 2) {
+        const int knightPairPenalty = KnightPairPenalty + (static_cast<int32_t>(totalPawnCount) * 2);
+        materialValue += knightPairPenalty;
 
-    if (figArr[BlackFigStartIndex + knightsIndex] == 2)
-        materialValue -= KnightPairPenalty + (static_cast<int32_t>(totalPawnCount) * 2);
+        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White knight pair: {}", knightPairPenalty));
+    }
+
+    if (figArr[BlackFigStartIndex + knightsIndex] == 2) {
+        const int knightPairPenalty = KnightPairPenalty + (static_cast<int32_t>(totalPawnCount) * 2);
+        materialValue -= knightPairPenalty;
+
+        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black knight pair: {}", -knightPairPenalty));
+    }
 
     // Applying Rook pair penalty
-    if (figArr[rooksIndex] == 2)
+    if (figArr[rooksIndex] == 2) {
         materialValue += RookPairPenalty;
 
-    if (figArr[BlackFigStartIndex + rooksIndex] == 2)
+        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("White rook pair: {}", RookPairPenalty));
+    }
+
+    if (figArr[BlackFigStartIndex + rooksIndex] == 2) {
         materialValue -= RookPairPenalty;
+
+        BoardEvaluatorPrinter::setAdditionalPoints<mode>(std::format("Black rook pair: {}", -RookPairPenalty));
+    }
 
     return materialValue;
 }
