@@ -11,6 +11,7 @@
 #include "../include/Search/ZobristHash.h"
 #include "../include/TestsAndDebugging/MoveGenerationTests.h"
 #include "../include/TestsAndDebugging/SearchPerfTester.h"
+#include "../include/TestsAndDebugging/StateReconstructor.h"
 #include "../include/ThreadManagement/GameTimeManagerUtils.h"
 
 UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream &input)
@@ -23,8 +24,8 @@ UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream &i
         lastCommand = _dispatchCommands(recordBuffer);
 
         if (lastCommand == UCICommand::InvalidCommand)
-            GlobalLogger.LogStream << "[ ERROR ] Error uccured during translation or execution.\n Refer to UCI "
-                                      "protocl manual to get more detailed information.\n";
+            GlobalLogger.LogStream << "[ ERROR ] Error occurred during translation or execution.\n Refer to UCI "
+                                      "protocol manual to get more detailed information.\n";
     }
 
     WrapTraceMsgInfo("UCI command translation finished.");
@@ -36,26 +37,28 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
 {
     using funcT = UCICommand (UCITranslator::*)(const std::string &);
     static std::unordered_map<std::string, funcT> CommandBuff{
-        {       "uci",          &UCITranslator::_uciResponse},
-        {   "isready",      &UCITranslator::_isReadyResponse},
-        { "setoption",    &UCITranslator::_setoptionResponse},
-        {"ucinewgame",   &UCITranslator::_ucinewgameResponse},
-        {  "position",     &UCITranslator::_positionResponse},
-        {        "go",           &UCITranslator::_goResponse},
-        {      "stop",         &UCITranslator::_stopResponse},
-        {      "quit",         &UCITranslator::_quitResponse},
-        {      "exit",         &UCITranslator::_quitResponse},
-        {      "eval",   &UCITranslator::_evalPositionStatic},
-        {         "d",      &UCITranslator::_displayResponse},
-        {   "display",      &UCITranslator::_displayResponse},
-        {      "disp",      &UCITranslator::_displayResponse},
-        {       "fen",   &UCITranslator::_displayFenResponse},
-        {      "help",  &UCITranslator::_displayHelpResponse},
-        {     "clear",         &UCITranslator::_clearConsole},
-        {     "clean",         &UCITranslator::_clearConsole},
-        {       "cls",         &UCITranslator::_clearConsole},
-        {      "ctpm", &UCITranslator::_calculateTimePerMove}, // Calculate time per move
-        {        "zv",        &UCITranslator::_searchZobrist},
+        {        "uci",          &UCITranslator::_uciResponse},
+        {    "isready",      &UCITranslator::_isReadyResponse},
+        {  "setoption",    &UCITranslator::_setoptionResponse},
+        { "ucinewgame",   &UCITranslator::_ucinewgameResponse},
+        {   "position",     &UCITranslator::_positionResponse},
+        {         "go",           &UCITranslator::_goResponse},
+        {       "stop",         &UCITranslator::_stopResponse},
+        {       "quit",         &UCITranslator::_quitResponse},
+        {       "exit",         &UCITranslator::_quitResponse},
+        {       "eval",   &UCITranslator::_evalPositionStatic},
+        {          "d",      &UCITranslator::_displayResponse},
+        {    "display",      &UCITranslator::_displayResponse},
+        {       "disp",      &UCITranslator::_displayResponse},
+        {        "fen",   &UCITranslator::_displayFenResponse},
+        {       "help",  &UCITranslator::_displayHelpResponse},
+        {      "clear",         &UCITranslator::_clearConsole},
+        {      "clean",         &UCITranslator::_clearConsole},
+        {        "cls",         &UCITranslator::_clearConsole},
+        {       "ctpm", &UCITranslator::_calculateTimePerMove}, // Calculate time per move
+        {         "zv",        &UCITranslator::_searchZobrist},
+        {  "ponderhit",    &UCITranslator::_ponderhitResponse},
+        {"reconstruct",          &UCITranslator::_reconstruct},
     };
 
     std::string workStr;
@@ -239,7 +242,7 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
     static auto CustomCommands =
         "In addition to standard UCI commands, these are implemented:\n"
         "- go perft \"depth\" - Simple PERFT test.\n"
-        "- go debug \"depth\" - debugging tool reporting first occured error in comparison to any engine\n"
+        "- go debug \"depth\" - debugging tool reporting first occurred error in comparison to any engine\n"
         "                which implements \"go perft command\" - default target engine is stockfish\n"
         "- go deepDebug \"depth\" - debugging tool, which is used to possibly identify invalid move chains which "
         "produces\n"
@@ -250,9 +253,14 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
         "                 about results of simple comparison tests, which uses external engine times to get results\n"
         "- go file \"input file\" - performs series of deepDebug on each positions saved inside input file. For "
         "simplicity\n"
-        "                \"input file\" must be containg csv records in given manner: \"fen position\", \"depth\"\n"
-        "- go searchPerf \"input file \" \"output file \" - runs straight alpha beta prunning performance tests "
+        "                \"input file\" must contain csv records in given manner: \"fen position\", \"depth\"\n"
+        "- go searchPerf \"input file \" \"output file \" - runs straight alpha beta pruning performance tests "
         "               on the framework.\n"
+        "- reconstruct \"path\" - tries to reconstruct the state of the engine based on given log file on path,"
+        "                         the log file needs to be saved in given format per line: {posix time in ms} | "
+        "{command}"
+        "                       for example: reconstruct "
+        "/home/Jlisowskyy/Storage/Checkmate-Chariot-serv/lichess-bot/log.txt_in"
         "- zv \"bitDiffs\" - searches for seed with given bit differences guaranteed.\n\n\n"
         "Where \"depth\" is integer value indicating layers of traversed move tree.\n\n\n"
         "Additional notes:\n"
@@ -373,6 +381,7 @@ UCITranslator::UCICommand UCITranslator::_goSearchRegular(const std::string &str
         {   "btime",    &_goBTimeResponse},
         {   "wtime",    &_goWTimeResponse},
         {   "depth",    &_goDepthResponse},
+        {  "ponder",    &goPonderResponse},
     };
 
     GoInfo info{};
@@ -461,7 +470,8 @@ size_t UCITranslator::_msTimeParser(const std::string &str, size_t pos, lli &out
     };
     pos = ParseTools::ExtractNextNumeric<lli, convert>(str, pos, out);
 
-    return out < 1 ? ParseTools::InvalidNextWorldRead : pos;
+    /* UCI says nothing about passing time as 0, so we allow such behavior */
+    return out < 0 ? ParseTools::InvalidNextWorldRead : pos;
 }
 
 UCITranslator::UCICommand UCITranslator::_calculateTimePerMove(const std::string &str)
@@ -535,4 +545,30 @@ UCITranslator::UCICommand UCITranslator::_searchZobrist(const std::string &str)
     [[maybe_unused]] auto _ = ZobristHasher::SearchForSeed(ZobristHasher::BaseSeed, bitDiffs, Debug);
 
     return UCITranslator::UCICommand::isreadyCommand;
+}
+
+size_t UCITranslator::goPonderResponse(const std::string &, size_t pos, GoInfo &info)
+{
+    info.isPonderSearch = true;
+    return pos;
+}
+
+UCITranslator::UCICommand UCITranslator::_reconstruct(const std::string &str)
+{
+    /*
+     *  The lambda will be executed when reconstruction engine will found "breakpoint" command
+     *  inside the given log
+     *
+     *  For debug usage you should change its content!
+     * */
+
+    const auto testLambda = [](TestSetup &setup)
+    {
+        GlobalLogger.TraceStream << "BREAKPOINT FOUND!" << std::endl;
+    };
+
+    std::string path{};
+    ParseTools::ExtractNextWord(str, path, 0);
+
+    return StateReconstructor::Reconstruct(testLambda, path) ? UCICommand::debugCommand : UCICommand::InvalidCommand;
 }

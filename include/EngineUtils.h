@@ -104,6 +104,7 @@ struct GoInfo
 
     GoTimeInfo timeInfo{};
     int depth{NotSet};
+    bool isPonderSearch{false};
 };
 
 /*

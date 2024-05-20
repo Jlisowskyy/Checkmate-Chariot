@@ -138,7 +138,7 @@ class BestMoveSearch
     // Class interaction
     // ------------------------------
 
-    void IterativeDeepening(PackedMove *output, int maxDepth, bool writeInfo = true);
+    void IterativeDeepening(PackedMove *bestMove, PackedMove *ponderMove, int maxDepth, bool writeInfo = true);
 
     // ------------------------------
     // Private class methods

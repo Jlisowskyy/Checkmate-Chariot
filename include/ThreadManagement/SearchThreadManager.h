@@ -38,6 +38,9 @@ struct SearchThreadManager
 
     bool Go(const Board &bd, uint16_t age, const GoInfo &info);
 
+    /* Function is not thread safe! Is when there is no time to start up threads! */
+    static void GoWoutThread(const Board &bd, uint16_t age, const GoInfo &info);
+
     bool GoInfinite(const Board &bd, uint16_t age);
 
     void Stop();
@@ -46,6 +49,10 @@ struct SearchThreadManager
     void Consolidate();
 
     [[nodiscard]] bool IsSearchOn() const { return _isSearchOn; }
+
+    [[nodiscard]] bool IsPonderOn() const { return _isPonderOn; }
+
+    void DisablePonder() { _isPonderOn = false; }
 
     // ------------------------------
     // Private class methods
@@ -60,6 +67,7 @@ struct SearchThreadManager
     // ------------------------------
 
     bool _isSearchOn{false};
+    bool _isPonderOn{false};
 
     // TODO: Implement logical thread detection
 

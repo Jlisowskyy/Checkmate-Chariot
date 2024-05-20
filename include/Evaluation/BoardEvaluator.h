@@ -138,7 +138,7 @@ class BoardEvaluator
             BoardEvaluatorPrinter::setMaterial<mode>(materialEval);
             BoardEvaluatorPrinter::setPositional<mode>(positionEval);
         }
-
+      
         return materialEval + positionEval;
     }
 
@@ -305,6 +305,7 @@ class BoardEvaluator
 
                 // adding penalty for being pinned
                 interEval += TrappedPiecePenalty;
+              
                 if constexpr (mode == EvalMode::PrintMode)
                     BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(
                         ConvertToReversedPos(msbPos), TrappedPiecePenalty
@@ -335,6 +336,7 @@ class BoardEvaluator
                     BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
                         ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
                     );
+
 
                 // adding king attack info
                 KingSafetyEval::UpdateKingAttacks<mode>(
@@ -391,6 +393,7 @@ class BoardEvaluator
                 if constexpr (mode == EvalMode::PrintMode)
                     BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), trappedPoints);
 
+
                 // adding controlled fields
                 controlledFields |= LegalMoves;
 
@@ -431,6 +434,7 @@ class BoardEvaluator
                     BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
                         ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
                     );
+
 
                 // adding king attack info
                 KingSafetyEval::UpdateKingAttacks<mode>(
@@ -493,6 +497,7 @@ class BoardEvaluator
                 if constexpr (mode == EvalMode::PrintMode)
                     BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), openFilePoints);
 
+
                 // adding controlled fields
                 controlledFields |= LegalMoves;
 
@@ -507,6 +512,7 @@ class BoardEvaluator
                     BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
                         ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
                     );
+
 
                 RemovePiece(pinnedRooks, figMap);
             }
@@ -540,6 +546,7 @@ class BoardEvaluator
 
                 if constexpr (mode == EvalMode::PrintMode)
                     BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), filePoints);
+
 
                 // adding king attack info
                 KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingRookAttackPoints);
@@ -611,6 +618,7 @@ class BoardEvaluator
                         ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesEnd
                     );
 
+
                 RemovePiece(pinnedQueens, figMap);
             }
 
@@ -647,6 +655,7 @@ class BoardEvaluator
                     BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
                         ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesEnd
                     );
+
 
                 // adding king attack info
                 KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingQueenAttackPoints);
@@ -1000,6 +1009,7 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), pinnedPawnPenaltyPoints);
 
+
         // adding legal pawn control zone to global
         pawnControlledFields |= FilterMoves(MapT::GetAttackFields(figMap), allowedTiles);
 
@@ -1021,6 +1031,7 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
 
         // adding passed pawn penalty
         const int passedPawnPoints = StructureEvaluator::SimplePassedPawn<mode>(
+
             bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
         interEval += passedPawnPoints;
@@ -1095,6 +1106,7 @@ BoardEvaluator::_processPawnEval(Board &bd, const uint64_t pinnedFigs, const uin
 
         // adding passed pawn penalty
         const int passedPawnPoints = StructureEvaluator::SimplePassedPawn<mode>(
+
             bd.BitBoards[MapT::GetEnemyPawnBoardIndex()], msbPos, MapT::GetColor()
         );
         interEval += passedPawnPoints;
@@ -1147,7 +1159,7 @@ template <EvalMode mode> int32_t BoardEvaluator::_evaluateFields(Board &bd, int3
 
     for (const auto func : EvalFunctions)
         func(result, bd, blackPinnedFigs, whitePinnedFigs, whitePawnControl, blackPawnControl, whiteMap, blackMap);
-
+  
     // ------------------------------
     // Evaluating king
     // ------------------------------

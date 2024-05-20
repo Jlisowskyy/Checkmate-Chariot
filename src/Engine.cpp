@@ -6,6 +6,7 @@
 #include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/Search/TranspositionTable.h"
+#include "../include/ThreadManagement/GameTimeManager.h"
 
 std::string Engine::_debugEnginePath = Engine::_defaultBookPath;
 
@@ -171,7 +172,7 @@ void Engine::_changeBookUsage(Engine &eng, const bool newValue)
         eng.UseOwnBook = false;
 }
 
-void Engine::Go(const GoInfo &info, const std::vector<std::string> &moves)
+void Engine::Go(GoInfo &info, const std::vector<std::string> &moves)
 {
     if (UseOwnBook && _isStartPosPlayed)
         if (const auto &bookMove = _book.GetRandomNextMove(moves); !bookMove.empty())
@@ -179,6 +180,20 @@ void Engine::Go(const GoInfo &info, const std::vector<std::string> &moves)
             GlobalLogger.LogStream << std::format("bestmove {}\n", bookMove);
             return;
         }
+
+    /*
+     * UCI specification says nothing about passing time as 0 value,
+     * that is to try rescue ourselves and not violate UCI rules we limit the depth to 3 and sets time to 1
+     * */
+
+    if (lli &colTime = _board.MovingColor == WHITE ? info.timeInfo.wTime : info.timeInfo.bTime; colTime == 0)
+    {
+        colTime    = 1;
+        info.depth = std::min(info.depth, 1);
+
+        SearchThreadManager::GoWoutThread(_board, _age, info);
+        return;
+    }
 
     TManager.Go(_board, _age, info);
 }
@@ -191,3 +206,14 @@ void Engine::_clearHash(Engine &) { TTable.ClearTable(); }
 
 void Engine::_changeDebugEnginePath(Engine &, std::string &path) { _debugEnginePath = path; }
 void Engine::_changeBookPath(Engine &engine, std::string &path) { engine._bookPath = path; }
+
+void Engine::PonderHit()
+{
+    TraceIfFalse(TManager.IsPonderOn(), "Received ponderhit command when no pondering was enabled");
+
+    if (TManager.IsSearchOn() && TManager.IsPonderOn())
+    {
+        TManager.DisablePonder();
+        GameTimeManager::PonderHit(static_cast<Color>(_board.MovingColor), _board, _age);
+    }
+}

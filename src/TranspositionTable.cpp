@@ -5,7 +5,6 @@
 #include "../include/Search/TranspositionTable.h"
 
 #include <bit>
-#include <cstdlib>
 #include <cstring>
 #include <format>
 #include <stdexcept>
@@ -69,4 +68,20 @@ void TranspositionTable::_checkForCorrectAlloc(const size_t size) const
         throw std::runtime_error(
             std::format("[ ERROR ] Not able to allocate enough memory: {}MB", size * sizeof(HashRecord) / MB)
         );
+}
+
+void TranspositionTable::DisplayStatisticsAndReset()
+{
+    const uint64_t totalProbes = _missCount + _hitsCount;
+    double hitRate             = static_cast<double>(_hitsCount) / static_cast<double>(totalProbes);
+
+    GlobalLogger.LogStream
+        << std::format(
+               "[ TT statistics ] Number of hits: {}, number of misses: {}, total probes: {}, hit-rate: {}", _hitsCount,
+               _missCount, totalProbes, hitRate
+           )
+        << std::endl;
+
+    _missCount = 0;
+    _hitsCount = 0;
 }

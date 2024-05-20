@@ -4,6 +4,7 @@
 
 #include "../include/ThreadManagement/SearchThreadManager.h"
 #include "../include/Search/BestMoveSearch.h"
+#include "../include/Search/TranspositionTable.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
 
 #include <format>
@@ -15,8 +16,15 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
     if (_isSearchOn)
         return false;
 
+    _isPonderOn = info.isPonderSearch;
+
     // Setting up time guarding parameters
-    GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd, age);
+    if (!info.isPonderSearch)
+        GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd, age);
+    else
+    {
+        GameTimeManager::StartPonder(info.timeInfo);
+    }
 
     // Running up the searching worker
     _threads[MainSearchThreadInd] = new std::thread(
@@ -56,12 +64,19 @@ void SearchThreadManager::_threadSearchJob(
 )
 {
     PackedMove output{};
+    PackedMove ponder{};
 
     *guard = true;
     BestMoveSearch searcher{*bd, *s, age};
-    searcher.IterativeDeepening(&output, depth);
+    searcher.IterativeDeepening(&output, &ponder, depth);
 
-    GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation()) << std::endl;
+    GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
+                           << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
+                           << std::endl;
+
+    if constexpr (TestTT)
+        TTable.DisplayStatisticsAndReset();
+
     *guard = false;
 }
 void SearchThreadManager::Consolidate()
@@ -74,4 +89,21 @@ void SearchThreadManager::Consolidate()
     }
 
     WrapTraceMsgInfo("Thread manager consolidated successfully");
+}
+
+void SearchThreadManager::GoWoutThread(const Board &bd, uint16_t age, const GoInfo &info)
+{
+    static StackType s{};
+
+    GameTimeManager::StartSearchManagementAsync(info.timeInfo, static_cast<Color>(bd.MovingColor), bd, age);
+
+    PackedMove output{};
+    PackedMove ponder{};
+
+    BestMoveSearch searcher{bd, s, age};
+    searcher.IterativeDeepening(&output, &ponder, info.depth);
+
+    GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
+                           << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
+                           << std::endl;
 }

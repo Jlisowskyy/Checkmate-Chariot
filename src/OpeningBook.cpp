@@ -8,7 +8,6 @@
 #include <fstream>
 #include <random>
 
-#include "../include/Interface/Logger.h"
 #include "../include/ParseTools.h"
 
 OpeningBook::OpeningBook(const std::string &bookPath, const bookFileType type) { LoadBook(bookPath, type); }

@@ -119,6 +119,8 @@ set(CHECKMATE_CHARIOT_SOURCES
         src/BoardEvaluator.cpp
         include/Evaluation/BoardEvaluatorPrinter.h
         src/BoardEvaluatorPrinter.cpp
+        include/TestsAndDebugging/TestSetup.h
+        include/TestsAndDebugging/StateReconstructor.h
 )
 
 # Create a library with the core functionality
@@ -197,6 +199,9 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 else()
     message(FATAL_ERROR "Unknown compiler")
 endif()
+
+# Uncomment to add gathering TT statistics
+ add_compile_definitions(TEST_TT=1)
 
 ################################################################################
 #                                  Post build                                  #
