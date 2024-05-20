@@ -46,7 +46,8 @@ class [[maybe_unused]] GameTimeManager
     /// engine still has time to search for the best move. If the time is up, the variable ShouldStop will be set to
     /// true.
     /// </summary>
-    static void StartSearchManagementAsync(const GoTimeInfo &tInfo, Color color, const Board &bd, uint16_t moveAge);
+    static void
+    StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color color, const Board &bd, const uint16_t moveAge);
 
     /* Function sets up stop flag to false and saves time infos for later usage */
     static void StartPonder(const GoTimeInfo &tInfo);
@@ -98,8 +99,6 @@ class [[maybe_unused]] GameTimeManager
     // Wake on update mechanism
     static std::condition_variable cv;
     static std::mutex mtx;
-
-    static FileLogger fileLogger;
 
     static GoTimeInfo _ponderTimes;
 };
