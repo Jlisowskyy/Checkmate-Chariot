@@ -15,7 +15,7 @@
 
 struct SearchThreadManager
 {
-    using StackType = Stack<Move, DefaultStackSize>;
+    using StackType = Stack<Move, DEFAULT_STACK_SIZE>;
     using RepMap = std::map<uint64_t, int>;
     // ------------------------------
     // Class creation
@@ -62,7 +62,7 @@ struct SearchThreadManager
 
     private:
     static void
-    _threadSearchJob(const Board *bd, const RepMap* rMap, Stack<Move, DefaultStackSize> *s, bool *guard, uint16_t age, int depth);
+    _threadSearchJob(const Board *bd, const RepMap* rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, uint16_t age, int depth);
 
     // ------------------------------
     // Class fields

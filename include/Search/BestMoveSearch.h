@@ -123,7 +123,7 @@ class BestMoveSearch
         PackedMove operator[](const int ply) const { return _path[ply]; }
 
         private:
-        PackedMove _path[MaxSearchDepth + 1]{};
+        PackedMove _path[MAX_SEARCH_DEPTH + 1]{};
         int _depth{1};
     };
 
@@ -139,7 +139,7 @@ class BestMoveSearch
      * */
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board, const RepMap& rMap, Stack<Move, DefaultStackSize> &s, const uint16_t age)
+    BestMoveSearch(const Board &board, const RepMap& rMap, Stack<Move, DEFAULT_STACK_SIZE> &s, const uint16_t age)
         : _stack(s), _board(board), _repMap(rMap), _age(age)
     {
     }
@@ -180,11 +180,14 @@ class BestMoveSearch
     [[nodiscard]] int _quiescenceSearch(Board &bd, int alpha, int beta, uint64_t zHash);
     [[nodiscard]] int _zwQuiescenceSearch(Board &bd, int alpha, uint64_t zHash);
 
-    static void _embeddedMoveSort(Stack<Move, DefaultStackSize>::StackPayload moves, size_t range);
-    static void _pullMoveToFront(Stack<Move, DefaultStackSize>::StackPayload moves, PackedMove mv);
-    static void _fetchBestMove(Stack<Move, DefaultStackSize>::StackPayload moves, size_t targetPos);
+    static void _embeddedMoveSort(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t range);
+    static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
+    static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);
 
     [[nodiscard]] int _getMateValue(int depthLeft) const;
+    [[nodiscard]] INLINE bool _isDrawByReps(const uint64_t hash){
+        return _repMap[hash] >= 3 || _board.HalfMoves >= 50;
+    }
 
     void INLINE _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth)
     {
@@ -197,21 +200,7 @@ class BestMoveSearch
     // Class fields
     // ------------------------------
 
-    static constexpr int ReservedValues                = 64;
-    static constexpr int InfinityMargin                = MaxSearchDepth + ReservedValues;
-    static constexpr int TimeStopValue                 = std::numeric_limits<int16_t>::max() - 10;
-    static constexpr int NegativeInfinity              = std::numeric_limits<int16_t>::min() + InfinityMargin;
-    static constexpr int PositiveInfinity              = std::numeric_limits<int16_t>::max() - InfinityMargin;
-    static constexpr uint16_t QuisenceAgeDiffToReplace = 16;
-    static constexpr uint16_t SearchAgeDiffToReplace   = 10;
-
-    // Initial Aspiration Window Delta its cp value is equal to InitialAspWindowDelta * BoardEvaluator::ScoreGrain
-    // (probably 8) ~= 48
-    static constexpr int16_t InitialAspWindowDelta = 6;
-
-    static constexpr int MaxAspWindowTries = 4;
-
-    Stack<Move, DefaultStackSize> &_stack;
+    Stack<Move, DEFAULT_STACK_SIZE> &_stack;
     Board _board;
     RepMap _repMap;
     PV _pv{};

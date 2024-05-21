@@ -28,7 +28,7 @@ bool SearchThreadManager::Go(const Board &bd, const RepMap& rMap, uint16_t age, 
 
     // Running up the searching worker
     _threads[MainSearchThreadInd] = new std::thread(
-        _threadSearchJob, &bd, &rMap, &_stacks[MainSearchThreadInd], &_isSearchOn, age, std::min(info.depth, MaxSearchDepth)
+        _threadSearchJob, &bd, &rMap, &_stacks[MainSearchThreadInd], &_isSearchOn, age, std::min(info.depth, MAX_SEARCH_DEPTH)
     );
     WrapTraceMsgInfo("Search thread started");
 
@@ -40,7 +40,7 @@ bool SearchThreadManager::GoInfinite(const Board &bd, const RepMap& rMap, uint16
 {
     GoInfo info;
     info.timeInfo = GoTimeInfo::GetInfiniteTime();
-    info.depth    = MaxSearchDepth;
+    info.depth    = MAX_SEARCH_DEPTH;
     return Go(bd, rMap, age, info);
 }
 
@@ -60,7 +60,7 @@ void SearchThreadManager::Stop()
 }
 
 void SearchThreadManager::_threadSearchJob(
-    const Board *bd, const RepMap* rMap, Stack<Move, DefaultStackSize> *s, bool *guard, uint16_t age, int depth
+        const Board *bd, const RepMap* rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, uint16_t age, int depth
 )
 {
     PackedMove output{};

@@ -11,12 +11,28 @@ using lli                  = long long int;
 static constexpr size_t MB = 1024 * 1024;
 
 // global defined Stack capacity used to store generated moves per thread
-static constexpr size_t DefaultStackSize = 32 * MB / sizeof(uint64_t);
+static constexpr size_t DEFAULT_STACK_SIZE = 32 * MB / sizeof(uint64_t);
 
 /* Defines maximal depth of search allowed across the procjet */
-static constexpr int MaxSearchDepth = 128;
+static constexpr int MAX_SEARCH_DEPTH = 128;
 
-static constexpr uint64_t MsesInNsec = 1000 * 1000;
+static constexpr uint64_t MSEC_TO_NSEC = 1000 * 1000;
+
+static constexpr int16_t DRAW_SCORE = 0;
+static constexpr int16_t SPECIAL_DRAW_SCORE = 0;
+
+static constexpr int RESERVED_SCORE_VALUES                = 64;
+static constexpr int INFINITY_MARGIN                = MAX_SEARCH_DEPTH + RESERVED_SCORE_VALUES;
+static constexpr int TIME_STOP_RESERVED_VALUE                 = std::numeric_limits<int16_t>::max() - 10;
+static constexpr int NEGATIVE_INFINITY              = std::numeric_limits<int16_t>::min() + INFINITY_MARGIN;
+static constexpr int POSITIVE_INFINITY              = std::numeric_limits<int16_t>::max() - INFINITY_MARGIN;
+static constexpr uint16_t QUIESENCE_AGE_DIFF_REPLACE = 16;
+static constexpr uint16_t DEFAULT_AGE_DIFF_REPLACE   = 10;
+
+// Initial Aspiration Window Delta its cp value is equal to INITIAL_ASP_WINDOW_DELTA * BoardEvaluator::ScoreGrain
+// (probably 8) ~= 48
+static constexpr int16_t INITIAL_ASP_WINDOW_DELTA = 6;
+static constexpr int MAX_ASP_WINDOW_RETRIES = 4;
 
 // ------------------------------
 // Platform specific defines for force inline attribute

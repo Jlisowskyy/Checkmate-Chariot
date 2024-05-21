@@ -16,7 +16,7 @@
 #include "../include/ThreadManagement/GameTimeManager.h"
 
 static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
-
+using RepMap = std::map<uint64_t, int>;
 
 #ifndef NDEBUG
 
@@ -30,30 +30,36 @@ static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 #define TestTTAdd()
 #endif // NDEBUG
 
-[[nodiscard]] constexpr INLINE uint64_t ProcessAttackMove(Board& bd, const Move mv, const uint64_t hash, const VolatileBoardData& data)
+[[nodiscard]] constexpr INLINE uint64_t ProcessAttackMove(Board& bd, const Move mv, const uint64_t hash, const VolatileBoardData& data, RepMap& rMap)
 {
 
     const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
     TTable.Prefetch(nextHash);
     Move::MakeMove(mv, bd);
+    rMap[nextHash]++;
 
     return nextHash;
 }
 
-[[nodiscard]] constexpr INLINE uint64_t ProcessMove(Board& bd, const Move mv, const int depth, const uint64_t hash, KillerTable& table, const VolatileBoardData& data)
+[[nodiscard]] constexpr INLINE uint64_t ProcessMove(Board& bd, const Move mv, const int depth, const uint64_t hash, KillerTable& table, const VolatileBoardData& data, RepMap& rMap)
 {
 
     const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
     TTable.Prefetch(nextHash);
     Move::MakeMove(mv, bd);
     table.ClearPlyFloor(depth);
+    rMap[nextHash]++;
 
     return nextHash;
 }
 
-[[nodiscard]] constexpr INLINE uint64_t RevertMove(Board& bd, const Move mv, const uint64_t hash, const VolatileBoardData& data)
+[[nodiscard]] INLINE uint64_t RevertMove(Board& bd, const Move mv, const uint64_t hash, const VolatileBoardData& data, RepMap& rMap)
 {
     Move::UnmakeMove(mv, bd, data);
+
+    if (const int occurs = --rMap[hash]; occurs == 0)
+        rMap.erase(hash);
+
     return ZHasher.UpdateHash(hash, mv, data);
 }
 
@@ -99,11 +105,11 @@ void BestMoveSearch::IterativeDeepening(
             _histTable.ScaleTableDown();
 
             // performs the search without aspiration window to gather some initial statistics about the move
-            eval = _pwsSearch(_board, NegativeInfinity, PositiveInfinity, depth, zHash, {}, _pv, true);
+            eval = _pwsSearch(_board, NEGATIVE_INFINITY, POSITIVE_INFINITY, depth, zHash, {}, _pv, true);
             TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // if there was call to abort then abort
-            if (std::abs(eval) == TimeStopValue)
+            if (std::abs(eval) == TIME_STOP_RESERVED_VALUE)
                 break;
 
             // saving the move evaluation to the avg value
@@ -115,7 +121,7 @@ void BestMoveSearch::IterativeDeepening(
             // Preparing variables for the aspiration window framework
             const int64_t coefSum   = (depth + 1) * depth / 2;
             const auto averageScore = static_cast<int32_t>(avg / coefSum);
-            int32_t delta           = InitialAspWindowDelta;
+            int32_t delta           = INITIAL_ASP_WINDOW_DELTA;
             int32_t alpha           = averageScore - delta;
             int32_t beta            = averageScore + delta;
             pvBuff.SetDepth(depth);
@@ -134,7 +140,7 @@ void BestMoveSearch::IterativeDeepening(
                 eval = _pwsSearch(_board, alpha, beta, depth, zHash, {}, pvBuff, true);
 
                 // if there was call to abort then abort
-                if (std::abs(eval) == TimeStopValue)
+                if (std::abs(eval) == TIME_STOP_RESERVED_VALUE)
                     break;
 
                 if (eval <= alpha)
@@ -142,7 +148,7 @@ void BestMoveSearch::IterativeDeepening(
                     if constexpr (TestAsp)
                         stat.RetryFailLow(alpha, beta, eval);
 
-                    alpha = std::max(alpha - delta, NegativeInfinity);
+                    alpha = std::max(alpha - delta, NEGATIVE_INFINITY);
                     beta  = (alpha + beta) / 2;
                 }
                 else if (eval >= beta)
@@ -151,7 +157,7 @@ void BestMoveSearch::IterativeDeepening(
                         stat.RetryFailHigh(alpha, beta, eval);
 
                     // We failed high so move the upper boundary
-                    beta = std::min(beta + delta, PositiveInfinity);
+                    beta = std::min(beta + delta, POSITIVE_INFINITY);
                 }
                 else
                     break;
@@ -162,7 +168,7 @@ void BestMoveSearch::IterativeDeepening(
                 stat.DisplayAndClean();
 
             // if there was call to abort then abort
-            if (std::abs(eval) == TimeStopValue)
+            if (std::abs(eval) == TIME_STOP_RESERVED_VALUE)
                 break;
 
             // Move the pv from the buffer to the main pv
@@ -175,7 +181,7 @@ void BestMoveSearch::IterativeDeepening(
         }
 
         // if there was call to abort then abort
-        if (std::abs(eval) == TimeStopValue)
+        if (std::abs(eval) == TIME_STOP_RESERVED_VALUE)
             break;
 
         // Search stop time point
@@ -192,7 +198,7 @@ void BestMoveSearch::IterativeDeepening(
         // Log info if necessary
         if (writeInfo)
         {
-            const uint64_t spentMs  = std::max(static_cast<uint64_t>(1), (timeStop - timeStart).count() / MsesInNsec);
+            const uint64_t spentMs  = std::max(static_cast<uint64_t>(1), (timeStop - timeStart).count() / MSEC_TO_NSEC);
             const uint64_t nps      = 1000LLU * _visitedNodes / spentMs;
             const double cutOffPerc = static_cast<double>(_cutoffNodes) / static_cast<double>(_visitedNodes);
 
@@ -223,7 +229,7 @@ int BestMoveSearch::_pwsSearch(
 
     // if we need to stop the search signal it
     if (GameTimeManager::GetShouldStop())
-        return TimeStopValue;
+        return TIME_STOP_RESERVED_VALUE;
 
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
@@ -267,13 +273,13 @@ int BestMoveSearch::_pwsSearch(
 
     PV inPV{depthLeft};
 
-    zHash = ProcessMove(bd, moves[0], depthLeft-1, zHash, _kTable, oldData);
+    zHash = ProcessMove(bd, moves[0], depthLeft-1, zHash, _kTable, oldData, _repMap);
     int bestEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[0], inPV, followPv);
-    zHash = RevertMove(bd, moves[0], zHash, oldData);
+    zHash = RevertMove(bd, moves[0], zHash, oldData, _repMap);
 
     // if there was call to abort then abort
-    if (std::abs(bestEval) == TimeStopValue)
-        return TimeStopValue;
+    if (std::abs(bestEval) == TIME_STOP_RESERVED_VALUE)
+        return TIME_STOP_RESERVED_VALUE;
 
     if (bestEval >= alpha)
     {
@@ -287,7 +293,7 @@ int BestMoveSearch::_pwsSearch(
 
             // updating if profitable
             if (depthLeft >= prevSearchRes.GetDepth() ||
-                (!wasTTHit && _age - prevSearchRes.GetAge() >= SearchAgeDiffToReplace))
+                (!wasTTHit && _age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
             {
                 const TranspositionTable::HashRecord record{zHash,     moves[0].GetPackedMove(),
                                                             bestEval,  wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL,
@@ -312,12 +318,12 @@ int BestMoveSearch::_pwsSearch(
     {
         _fetchBestMove(moves, i);
 
-        zHash = ProcessMove(bd, moves[i], depthLeft-1, zHash, _kTable, oldData);
+        zHash = ProcessMove(bd, moves[i], depthLeft-1, zHash, _kTable, oldData, _repMap);
         int moveEval = -_zwSearch(bd, -alpha - 1, depthLeft - 1, zHash, moves[i]);
 
         // if there was call to abort then abort
-        if (std::abs(moveEval) == TimeStopValue)
-            return TimeStopValue;
+        if (std::abs(moveEval) == TIME_STOP_RESERVED_VALUE)
+            return TIME_STOP_RESERVED_VALUE;
 
         // if not, research move
         if (alpha < moveEval && moveEval < beta)
@@ -327,8 +333,8 @@ int BestMoveSearch::_pwsSearch(
             moveEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV, false);
 
             // if there was call to abort then abort
-            if (std::abs(moveEval) == TimeStopValue)
-                return TimeStopValue;
+            if (std::abs(moveEval) == TIME_STOP_RESERVED_VALUE)
+                return TIME_STOP_RESERVED_VALUE;
 
             if (moveEval > bestEval)
             {
@@ -346,7 +352,7 @@ int BestMoveSearch::_pwsSearch(
                         nType = lowerBound;
 
                         ++_cutoffNodes;
-                        zHash = RevertMove(bd, moves[i], zHash, oldData);
+                        zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
                         break;
                     }
 
@@ -357,14 +363,14 @@ int BestMoveSearch::_pwsSearch(
         }
 
         // move reverted after possible research
-        zHash = RevertMove(bd, moves[i], zHash, oldData);
+        zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
     }
 
     // clean up
     _stack.PopAggregate(moves);
 
     // updating if profitable
-    if (depthLeft >= prevSearchRes.GetDepth() || (!wasTTHit && _age - prevSearchRes.GetAge() >= SearchAgeDiffToReplace))
+    if (depthLeft >= prevSearchRes.GetDepth() || (!wasTTHit && _age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
     {
         const TranspositionTable::HashRecord record{
             zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age
@@ -384,13 +390,13 @@ int BestMoveSearch::_pwsSearch(
 BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint64_t zHash, const Move prevMove)
 {
     const int beta = alpha + 1;
-    int bestEval   = NegativeInfinity;
+    int bestEval   = NEGATIVE_INFINITY;
     nodeType nType = upperBound;
     PackedMove bestMove{};
 
     // if we need to stop the search signal it
     if (GameTimeManager::GetShouldStop())
-        return TimeStopValue;
+        return TIME_STOP_RESERVED_VALUE;
 
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
@@ -439,13 +445,13 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
         else
             _fetchBestMove(moves, i);
 
-        zHash = ProcessMove(bd, moves[i], depthLeft-1, zHash, _kTable, oldData);
+        zHash = ProcessMove(bd, moves[i], depthLeft-1, zHash, _kTable, oldData, _repMap);
         const int moveEval = -_zwSearch(bd, -beta, depthLeft - 1, zHash, moves[i]);
-        zHash = RevertMove(bd, moves[i], zHash, oldData);
+        zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
 
         // if there was call to abort then abort
-        if (std::abs(moveEval) == TimeStopValue)
-            return TimeStopValue;
+        if (std::abs(moveEval) == TIME_STOP_RESERVED_VALUE)
+            return TIME_STOP_RESERVED_VALUE;
 
         if (moveEval > bestEval)
         {
@@ -465,7 +471,7 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
         }
     }
 
-    if (depthLeft >= prevSearchRes.GetDepth() || (!wasTTHit && _age - prevSearchRes.GetAge() >= SearchAgeDiffToReplace))
+    if (depthLeft >= prevSearchRes.GetDepth() || (!wasTTHit && _age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
     {
         const TranspositionTable::HashRecord record{
             zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age
@@ -484,7 +490,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
 
     // if we need to stop the search signal it
     if (GameTimeManager::GetShouldStop())
-        return TimeStopValue;
+        return TIME_STOP_RESERVED_VALUE;
 
     int statEval;
     PackedMove bestMove{};
@@ -536,13 +542,13 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         if (i != 0)
             _fetchBestMove(moves, i);
 
-        zHash = ProcessAttackMove(bd, moves[i], zHash, oldData);
+        zHash = ProcessAttackMove(bd, moves[i], zHash, oldData, _repMap);
         const int moveValue = -_quiescenceSearch(bd, -beta, -alpha, zHash);
-        zHash = RevertMove(bd, moves[i], zHash, oldData);
+        zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
 
         // if there was call to abort then abort
-        if (std::abs(moveValue) == TimeStopValue)
-            return TimeStopValue;
+        if (std::abs(moveValue) == TIME_STOP_RESERVED_VALUE)
+            return TIME_STOP_RESERVED_VALUE;
 
         if (moveValue > bestEval)
         {
@@ -567,7 +573,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     // clean up
     _stack.PopAggregate(moves);
 
-    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QuisenceAgeDiffToReplace))
+    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
     {
         const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
         TTable.Add(record, zHash);
@@ -579,7 +585,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
 {
     // if we need to stop the search signal it
     if (GameTimeManager::GetShouldStop())
-        return TimeStopValue;
+        return TIME_STOP_RESERVED_VALUE;
 
 
     const int beta = alpha + 1;
@@ -641,13 +647,13 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         if (i != 0)
             _fetchBestMove(moves, i);
 
-        zHash = ProcessAttackMove(bd, moves[i], zHash, oldData);
+        zHash = ProcessAttackMove(bd, moves[i], zHash, oldData, _repMap);
         const int moveValue = -_zwQuiescenceSearch(bd, -beta, zHash);
-        zHash = RevertMove(bd, moves[i], zHash, oldData);
+        zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
 
         // if there was call to abort then abort
-        if (std::abs(moveValue) == TimeStopValue)
-            return TimeStopValue;
+        if (std::abs(moveValue) == TIME_STOP_RESERVED_VALUE)
+            return TIME_STOP_RESERVED_VALUE;
 
         if (moveValue > bestEval)
         {
@@ -663,7 +669,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         }
     }
 
-    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QuisenceAgeDiffToReplace))
+    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
     {
         const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
         TTable.Add(record, zHash);
@@ -716,7 +722,7 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Packed
 
 void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t targetPos)
 {
-    int maxValue  = NegativeInfinity;
+    int maxValue  = NEGATIVE_INFINITY;
     size_t maxInd = targetPos;
 
     for (size_t i = targetPos; i < moves.size; ++i)
@@ -738,5 +744,5 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
 int BestMoveSearch::_getMateValue(const int depthLeft) const
 {
     const int distToRoot = _currRootDepth - depthLeft;
-    return NegativeInfinity + distToRoot;
+    return NEGATIVE_INFINITY + distToRoot;
 }
