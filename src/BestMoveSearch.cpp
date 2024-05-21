@@ -30,7 +30,7 @@ using RepMap = std::map<uint64_t, int>;
 #define TestTTAdd()
 #endif // NDEBUG
 
-[[nodiscard]] constexpr INLINE uint64_t ProcessAttackMove(Board& bd, const Move mv, const uint64_t hash, const VolatileBoardData& data, RepMap& rMap)
+[[nodiscard]] inline INLINE uint64_t ProcessAttackMove(Board& bd, const Move mv, const uint64_t hash, const VolatileBoardData& data, RepMap& rMap)
 {
 
     const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
@@ -41,7 +41,7 @@ using RepMap = std::map<uint64_t, int>;
     return nextHash;
 }
 
-[[nodiscard]] constexpr INLINE uint64_t ProcessMove(Board& bd, const Move mv, const int depth, const uint64_t hash, KillerTable& table, const VolatileBoardData& data, RepMap& rMap)
+[[nodiscard]] inline INLINE uint64_t ProcessMove(Board& bd, const Move mv, const int depth, const uint64_t hash, KillerTable& table, const VolatileBoardData& data, RepMap& rMap)
 {
 
     const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
@@ -53,7 +53,7 @@ using RepMap = std::map<uint64_t, int>;
     return nextHash;
 }
 
-[[nodiscard]] INLINE uint64_t RevertMove(Board& bd, const Move mv, const uint64_t hash, const VolatileBoardData& data, RepMap& rMap)
+[[nodiscard]] inline INLINE uint64_t RevertMove(Board& bd, const Move mv, const uint64_t hash, const VolatileBoardData& data, RepMap& rMap)
 {
     Move::UnmakeMove(mv, bd, data);
 
@@ -235,6 +235,10 @@ int BestMoveSearch::_pwsSearch(
     if (depthLeft == 0)
         return _quiescenceSearch(bd, alpha, beta, zHash);
 
+    // Check whether we reached end of the legal path
+    if (_isDrawByReps(zHash))
+        return DRAW_SCORE;
+
     // incrementing nodes counter;
     ++_visitedNodes;
 
@@ -402,6 +406,10 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     if (depthLeft == 0)
         return _zwQuiescenceSearch(bd, alpha, zHash);
 
+    // Check whether we reached end of the legal path
+    if (_isDrawByReps(zHash))
+        return DRAW_SCORE;
+
     // incrementing nodes counter;
     ++_visitedNodes;
 
@@ -491,6 +499,10 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     // if we need to stop the search signal it
     if (GameTimeManager::GetShouldStop())
         return TIME_STOP_RESERVED_VALUE;
+
+    // Check whether we reached end of the legal path
+    if (_isDrawByReps(zHash))
+        return DRAW_SCORE;
 
     int statEval;
     PackedMove bestMove{};
@@ -587,6 +599,9 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     if (GameTimeManager::GetShouldStop())
         return TIME_STOP_RESERVED_VALUE;
 
+    // Check whether we reached end of the legal path
+    if (_isDrawByReps(zHash))
+        return DRAW_SCORE;
 
     const int beta = alpha + 1;
     int statEval;

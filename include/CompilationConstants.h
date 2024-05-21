@@ -6,6 +6,7 @@
 #define COMPILATION_CONSTANTS_H
 
 #include <cinttypes>
+#include <numeric>
 
 using lli                  = long long int;
 static constexpr size_t MB = 1024 * 1024;
