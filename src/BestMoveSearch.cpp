@@ -59,7 +59,7 @@ void BestMoveSearch::IterativeDeepening(
         _visitedNodes  = 0;
         _cutoffNodes   = 0;
 
-        if (depth < 5)
+        if (true)
         {
             // set according depth inside the pv buffer
             _pv.SetDepth(depth);

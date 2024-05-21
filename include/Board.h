@@ -158,6 +158,7 @@ struct Board
     std::bitset<CastlingCount + 1> Castlings{0}; // additional sentinel field
     uint64_t ElPassantField                = MaxMsbPossible >> InvalidElPassantField;
     int MovingColor                        = WHITE;
+    int HalfMoves                          = {};
     uint64_t BitBoards[BitBoardsCount + 1] = {}; // additional sentinel board
 };
 

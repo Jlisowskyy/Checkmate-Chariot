@@ -40,6 +40,8 @@ struct FenTranslator
     // private methods
     // ------------------------------
 
+    static void _processMovesCounts(Board &bd, size_t pos, const std::string &fenPos);
+
     static std::string _extractCastling(const Board &bd);
 
     static void _extractFiguresEncoding(const Board &bd, std::string &fenPos)
