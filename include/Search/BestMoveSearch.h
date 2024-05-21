@@ -186,6 +186,13 @@ class BestMoveSearch
 
     [[nodiscard]] int _getMateValue(int depthLeft) const;
 
+    void INLINE _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth)
+    {
+        _kTable.SaveKillerMove(mv, depth);
+        _cmTable.SaveCounterMove(mv.GetPackedMove(), prevMove);
+        _histTable.SetBonusMove(mv, depth);
+    }
+
     // ------------------------------
     // Class fields
     // ------------------------------

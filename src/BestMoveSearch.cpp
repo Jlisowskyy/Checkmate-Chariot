@@ -30,6 +30,33 @@ static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 #define TestTTAdd()
 #endif // NDEBUG
 
+[[nodiscard]] constexpr INLINE uint64_t ProcessAttackMove(Board& bd, const Move mv, const uint64_t hash, const VolatileBoardData& data)
+{
+
+    const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
+    TTable.Prefetch(nextHash);
+    Move::MakeMove(mv, bd);
+
+    return nextHash;
+}
+
+[[nodiscard]] constexpr INLINE uint64_t ProcessMove(Board& bd, const Move mv, const int depth, const uint64_t hash, KillerTable& table, const VolatileBoardData& data)
+{
+
+    const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
+    TTable.Prefetch(nextHash);
+    Move::MakeMove(mv, bd);
+    table.ClearPlyFloor(depth);
+
+    return nextHash;
+}
+
+[[nodiscard]] constexpr INLINE uint64_t RevertMove(Board& bd, const Move mv, const uint64_t hash, const VolatileBoardData& data)
+{
+    Move::UnmakeMove(mv, bd, data);
+    return ZHasher.UpdateHash(hash, mv, data);
+}
+
 void BestMoveSearch::IterativeDeepening(
     PackedMove *bestMove, PackedMove *ponderMove, const int32_t maxDepth, const bool writeInfo
 )
@@ -240,18 +267,13 @@ int BestMoveSearch::_pwsSearch(
 
     PV inPV{depthLeft};
 
-    zHash = ZHasher.UpdateHash(zHash, moves[0], oldData);
-    TTable.Prefetch(zHash);
-    Move::MakeMove(moves[0], bd);
-    _kTable.ClearPlyFloor(depthLeft - 1);
+    zHash = ProcessMove(bd, moves[0], depthLeft-1, zHash, _kTable, oldData);
     int bestEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[0], inPV, followPv);
+    zHash = RevertMove(bd, moves[0], zHash, oldData);
 
     // if there was call to abort then abort
     if (std::abs(bestEval) == TimeStopValue)
         return TimeStopValue;
-
-    zHash = ZHasher.UpdateHash(zHash, moves[0], oldData);
-    Move::UnmakeMove(moves[0], bd, oldData);
 
     if (bestEval >= alpha)
     {
@@ -261,11 +283,7 @@ int BestMoveSearch::_pwsSearch(
             ++_cutoffNodes;
 
             if (moves[0].IsQuietMove())
-            {
-                _kTable.SaveKillerMove(moves[0], depthLeft);
-                _cmTable.SaveCounterMove(moves[0].GetPackedMove(), prevMove);
-                _histTable.SetBonusMove(moves[0], depthLeft);
-            }
+                _saveQuietMoveInfo(moves[0], prevMove, depthLeft);
 
             // updating if profitable
             if (depthLeft >= prevSearchRes.GetDepth() ||
@@ -294,12 +312,7 @@ int BestMoveSearch::_pwsSearch(
     {
         _fetchBestMove(moves, i);
 
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
-        TTable.Prefetch(zHash);
-        Move::MakeMove(moves[i], bd);
-
-        // performing checks whether assumed thesis holds
-        _kTable.ClearPlyFloor(depthLeft - 1);
+        zHash = ProcessMove(bd, moves[i], depthLeft-1, zHash, _kTable, oldData);
         int moveEval = -_zwSearch(bd, -alpha - 1, depthLeft - 1, zHash, moves[i]);
 
         // if there was call to abort then abort
@@ -329,16 +342,11 @@ int BestMoveSearch::_pwsSearch(
                     if (moveEval >= beta)
                     {
                         if (moves[i].IsQuietMove())
-                        {
-                            _kTable.SaveKillerMove(moves[i], depthLeft);
-                            _cmTable.SaveCounterMove(moves[i].GetPackedMove(), prevMove);
-                            _histTable.SetBonusMove(moves[i], depthLeft);
-                        }
+                            _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
                         nType = lowerBound;
 
                         ++_cutoffNodes;
-                        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
-                        Move::UnmakeMove(moves[i], bd, oldData);
+                        zHash = RevertMove(bd, moves[i], zHash, oldData);
                         break;
                     }
 
@@ -347,8 +355,9 @@ int BestMoveSearch::_pwsSearch(
                 }
             }
         }
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
-        Move::UnmakeMove(moves[i], bd, oldData);
+
+        // move reverted after possible research
+        zHash = RevertMove(bd, moves[i], zHash, oldData);
     }
 
     // clean up
@@ -430,18 +439,13 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
         else
             _fetchBestMove(moves, i);
 
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
-        TTable.Prefetch(zHash);
-        Move::MakeMove(moves[i], bd);
-        _kTable.ClearPlyFloor(depthLeft - 1);
+        zHash = ProcessMove(bd, moves[i], depthLeft-1, zHash, _kTable, oldData);
         const int moveEval = -_zwSearch(bd, -beta, depthLeft - 1, zHash, moves[i]);
+        zHash = RevertMove(bd, moves[i], zHash, oldData);
 
         // if there was call to abort then abort
         if (std::abs(moveEval) == TimeStopValue)
             return TimeStopValue;
-
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
-        Move::UnmakeMove(moves[i], bd, oldData);
 
         if (moveEval > bestEval)
         {
@@ -451,11 +455,7 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
             if (moveEval >= beta)
             {
                 if (moves[i].IsQuietMove())
-                {
-                    _kTable.SaveKillerMove(moves[i], depthLeft);
-                    _cmTable.SaveCounterMove(moves[i].GetPackedMove(), prevMove);
-                    _histTable.SetBonusMove(moves[i], depthLeft);
-                }
+                    _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
 
                 nType    = lowerBound;
                 bestMove = moves[i].GetPackedMove();
@@ -538,17 +538,13 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         if (i != 0)
             _fetchBestMove(moves, i);
 
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
-        TTable.Prefetch(zHash);
-        Move::MakeMove(moves[i], bd);
+        zHash = ProcessAttackMove(bd, moves[i], zHash, oldData);
         const int moveValue = -_quiescenceSearch(bd, -beta, -alpha, zHash);
+        zHash = RevertMove(bd, moves[i], zHash, oldData);
 
         // if there was call to abort then abort
         if (std::abs(moveValue) == TimeStopValue)
             return TimeStopValue;
-
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
-        Move::UnmakeMove(moves[i], bd, oldData);
 
         if (moveValue > bestEval)
         {
@@ -650,17 +646,13 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         if (i != 0)
             _fetchBestMove(moves, i);
 
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
-        TTable.Prefetch(zHash);
-        Move::MakeMove(moves[i], bd);
+        zHash = ProcessAttackMove(bd, moves[i], zHash, oldData);
         const int moveValue = -_zwQuiescenceSearch(bd, -beta, zHash);
+        zHash = RevertMove(bd, moves[i], zHash, oldData);
 
         // if there was call to abort then abort
         if (std::abs(moveValue) == TimeStopValue)
             return TimeStopValue;
-
-        Move::UnmakeMove(moves[i], bd, oldData);
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
 
         if (moveValue > bestEval)
         {

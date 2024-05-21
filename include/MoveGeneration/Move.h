@@ -133,7 +133,7 @@ struct VolatileBoardData
 {
     VolatileBoardData() = delete;
 
-    VolatileBoardData(const Board &bd)
+    constexpr VolatileBoardData(const Board &bd)
         : HalfMoves(bd.HalfMoves), Castlings(bd.Castlings), OldElPassant(bd.ElPassantField)
     {
     }
