@@ -204,7 +204,7 @@ class Move
         bd.ElPassantField = MaxMsbPossible >> mv.GetElPassantField();
 
         bd.HalfMoves = (bd.HalfMoves + 1) *
-                       (!(mv.GetTargetBoardIndex() == wPawnsIndex || mv.GetTargetBoardIndex() == bPawnsIndex));
+                       (!(mv.GetStartBoardIndex() == wPawnsIndex || mv.GetStartBoardIndex() == bPawnsIndex));
 
         // applying additional castling operation
         const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
