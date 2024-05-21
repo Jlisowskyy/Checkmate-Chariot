@@ -27,3 +27,5 @@ lib*
 lib/
 
 c-chess*
+
+uci*
