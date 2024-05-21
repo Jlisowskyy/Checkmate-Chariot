@@ -154,7 +154,7 @@ struct TranspositionTable
     }
 
     // Methods retrieves record from the table
-    [[nodiscard]] INLINE HashRecord GetRecord(const uint64_t zHash) const
+    [[nodiscard]] INLINE HashRecord& GetRecord(const uint64_t zHash) const
     {
         const size_t pos = zHash & _hashMask;
         return _map[pos];

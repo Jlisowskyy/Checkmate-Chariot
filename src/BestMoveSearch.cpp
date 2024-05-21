@@ -434,7 +434,7 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     for (size_t i = 0; i < moves.size; ++i)
     {
         // load the best move from TT if possible
-        if (i == 0 && prevSearchRes.IsSameHash(zHash) && prevSearchRes.GetNodeType() != upperBound)
+        if (i == 0 && wasTTHit && !prevSearchRes.GetMove().IsEmpty())
             _pullMoveToFront(moves, prevSearchRes.GetMove());
         else
             _fetchBestMove(moves, i);
@@ -492,7 +492,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     ++_visitedNodes;
 
     // reading Transposition table for the best move
-    auto prevSearchRes = TTable.GetRecord(zHash);
+    auto& prevSearchRes = TTable.GetRecord(zHash);
 
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
@@ -502,18 +502,15 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
 
     int bestEval = statEval;
-
     if (bestEval >= alpha)
     {
         if (bestEval >= beta)
         {
             ++_cutoffNodes;
 
-            if (wasTTHit && prevSearchRes.GetStatVal() == NO_EVAL)
-            {
+            if (wasTTHit)
                 prevSearchRes.SetStatVal(statEval);
-                TTable.Add(prevSearchRes, zHash);
-            }
+
             return bestEval;
         }
 
@@ -527,7 +524,8 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     // saving volatile fields
     VolatileBoardData oldData{bd};
 
-    if (wasTTHit && prevSearchRes.GetNodeType() != upperBound && prevSearchRes.GetMove().IsCapture())
+    // Empty move cannot be a capture move se we are sure that valid move is saved
+    if (wasTTHit && prevSearchRes.GetMove().IsCapture())
         _pullMoveToFront(moves, prevSearchRes.GetMove());
     else
         _fetchBestMove(moves, 0);
@@ -579,16 +577,15 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
 
 int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHash)
 {
-    const int beta = alpha + 1;
-
-    int statEval;
-    nodeType nType = upperBound;
-    PackedMove bestMove{};
-
     // if we need to stop the search signal it
     if (GameTimeManager::GetShouldStop())
         return TimeStopValue;
 
+
+    const int beta = alpha + 1;
+    int statEval;
+    nodeType nType = upperBound;
+    PackedMove bestMove{};
     ++_visitedNodes;
 
     // reading Transposition table for the best move
@@ -619,11 +616,8 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     {
         ++_cutoffNodes;
 
-        if (wasTTHit && prevSearchRes.GetStatVal() == NO_EVAL)
-        {
+        if (wasTTHit)
             prevSearchRes.SetStatVal(statEval);
-            TTable.Add(prevSearchRes, zHash);
-        }
 
         return bestEval;
     }
@@ -635,7 +629,8 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     // saving volatile fields
     VolatileBoardData oldData{bd};
 
-    if (wasTTHit && prevSearchRes.GetNodeType() != upperBound && prevSearchRes.GetMove().IsCapture())
+    // Empty move cannot be a capture move se we are sure that valid move is saved
+    if (wasTTHit && prevSearchRes.GetMove().IsCapture())
         _pullMoveToFront(moves, prevSearchRes.GetMove());
     else
         _fetchBestMove(moves, 0);
