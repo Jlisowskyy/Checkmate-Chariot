@@ -10,7 +10,7 @@
 #include <format>
 
 SearchThreadManager::~SearchThreadManager() { Consolidate(); }
-bool SearchThreadManager::Go(const Board &bd, const RepMap& rMap, uint16_t age, const GoInfo &info)
+bool SearchThreadManager::Go(const Board &bd, const RepMap &rMap, uint16_t age, const GoInfo &info)
 {
     // ensuring only one search is running at a time
     if (_isSearchOn)
@@ -28,7 +28,8 @@ bool SearchThreadManager::Go(const Board &bd, const RepMap& rMap, uint16_t age, 
 
     // Running up the searching worker
     _threads[MainSearchThreadInd] = new std::thread(
-        _threadSearchJob, &bd, &rMap, &_stacks[MainSearchThreadInd], &_isSearchOn, age, std::min(info.depth, MAX_SEARCH_DEPTH)
+        _threadSearchJob, &bd, &rMap, &_stacks[MainSearchThreadInd], &_isSearchOn, age,
+        std::min(info.depth, MAX_SEARCH_DEPTH)
     );
     WrapTraceMsgInfo("Search thread started");
 
@@ -36,7 +37,7 @@ bool SearchThreadManager::Go(const Board &bd, const RepMap& rMap, uint16_t age, 
     return true;
 }
 
-bool SearchThreadManager::GoInfinite(const Board &bd, const RepMap& rMap, uint16_t age)
+bool SearchThreadManager::GoInfinite(const Board &bd, const RepMap &rMap, uint16_t age)
 {
     GoInfo info;
     info.timeInfo = GoTimeInfo::GetInfiniteTime();
@@ -60,7 +61,7 @@ void SearchThreadManager::Stop()
 }
 
 void SearchThreadManager::_threadSearchJob(
-        const Board *bd, const RepMap* rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, uint16_t age, int depth
+    const Board *bd, const RepMap *rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, uint16_t age, int depth
 )
 {
     PackedMove output{};
@@ -88,7 +89,7 @@ void SearchThreadManager::Consolidate()
     WrapTraceMsgInfo("Thread manager consolidated successfully");
 }
 
-void SearchThreadManager::GoWoutThread(const Board &bd, const RepMap& rMap, uint16_t age, const GoInfo &info)
+void SearchThreadManager::GoWoutThread(const Board &bd, const RepMap &rMap, uint16_t age, const GoInfo &info)
 {
     static StackType s{};
 

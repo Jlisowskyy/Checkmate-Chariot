@@ -6,8 +6,8 @@
 #include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/Search/TranspositionTable.h"
-#include "../include/ThreadManagement/GameTimeManager.h"
 #include "../include/Search/ZobristHash.h"
+#include "../include/ThreadManagement/GameTimeManager.h"
 
 std::string Engine::_debugEnginePath = Engine::_defaultBookPath;
 
@@ -58,7 +58,8 @@ bool Engine::SetFenPosition(const std::string &fenStr)
     _startingBoard = _board;
 
     // clearing repetitions
-    if (isParsed) _repetitionMap.clear();
+    if (isParsed)
+        _repetitionMap.clear();
 
     return isParsed;
 }
@@ -79,11 +80,12 @@ const EngineInfo &Engine::GetEngineInfo() { return engineInfo; }
 bool Engine::ApplyMoves(const std::vector<std::string> &UCIMoves)
 {
     Board workBoard = _startingBoard;
-    uint64_t hash = ZHasher.GenerateHash(workBoard);
+    uint64_t hash   = ZHasher.GenerateHash(workBoard);
     _repetitionMap[hash]++;
 
     for (auto &move : UCIMoves)
-        if (!_applyMove(workBoard, move, hash)) {
+        if (!_applyMove(workBoard, move, hash))
+        {
             _repetitionMap.clear();
             return false;
         }
@@ -106,7 +108,7 @@ Board Engine::GetUnderlyingBoardCopy() const { return _board; }
 
 std::string Engine::GetFenTranslation() const { return FenTranslator::Translate(_board); }
 
-bool Engine::_applyMove(Board &board, const std::string &move, uint64_t& hash)
+bool Engine::_applyMove(Board &board, const std::string &move, uint64_t &hash)
 {
     MoveGenerator mech(board, TManager.GetDefaultStack());
 

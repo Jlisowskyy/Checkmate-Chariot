@@ -45,8 +45,8 @@ struct MoveGenerator
     MoveGenerator() = delete;
 
     explicit MoveGenerator(
-            Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
-            const PackedMove counterMove = {}, const int depthLeft = 0, const int mostRecentMovedSquare = 0
+        Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
+        const PackedMove counterMove = {}, const int depthLeft = 0, const int mostRecentMovedSquare = 0
     )
         : _mechanics(bd), _threadStack(s), _board(bd), _counterMove(counterMove), _kTable(kt), _hTable(ht),
           _depthLeft(depthLeft), _mostRecentSq(mostRecentMovedSquare)

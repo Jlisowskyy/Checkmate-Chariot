@@ -16,7 +16,6 @@
 #include "Interface/UCIOptions.h"
 #include "OpeningBook/OpeningBook.h"
 
-
 /*
  *  Class simply representing the Engine, with all the necessary methods to interact with it.
  *
@@ -98,7 +97,7 @@ class Engine
     private:
     /* Method simply generates moves and checks whether given moves is on the list if that's true applies the move to
      * the board */
-    bool _applyMove(Board &board, const std::string &move, uint64_t& hash);
+    bool _applyMove(Board &board, const std::string &move, uint64_t &hash);
 
     // ------------------------------------
     // UCI option accessing functions

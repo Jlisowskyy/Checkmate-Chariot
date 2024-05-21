@@ -63,7 +63,6 @@ class BestMoveSearch
      *
      * */
 
-
     struct PV
     {
         PV() = default;
@@ -139,7 +138,7 @@ class BestMoveSearch
      * */
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board, const RepMap& rMap, Stack<Move, DEFAULT_STACK_SIZE> &s, const uint16_t age)
+    BestMoveSearch(const Board &board, const RepMap &rMap, Stack<Move, DEFAULT_STACK_SIZE> &s, const uint16_t age)
         : _stack(s), _board(board), _repMap(rMap), _age(age)
     {
     }
@@ -180,12 +179,12 @@ class BestMoveSearch
     [[nodiscard]] int _quiescenceSearch(Board &bd, int alpha, int beta, uint64_t zHash);
     [[nodiscard]] int _zwQuiescenceSearch(Board &bd, int alpha, uint64_t zHash);
 
-    static void _embeddedMoveSort(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t range);
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
     static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);
 
     [[nodiscard]] int _getMateValue(int depthLeft) const;
-    [[nodiscard]] INLINE bool _isDrawByReps(const uint64_t hash){
+    [[nodiscard]] INLINE bool _isDrawByReps(const uint64_t hash)
+    {
         return _repMap[hash] >= 3 || _board.HalfMoves >= 50;
     }
 
