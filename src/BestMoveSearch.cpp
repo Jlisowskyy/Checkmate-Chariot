@@ -234,13 +234,12 @@ int BestMoveSearch::_pwsSearch(
     else
         _fetchBestMove(moves, 0);
 
-    // saving old params
-    const auto oldCastlings = bd.Castlings;
-    const auto oldElPassant = bd.ElPassantField;
+    // saving volatile board state
+    VolatileBoardData oldData{bd};
 
     PV inPV{depthLeft};
 
-    zHash = ZHasher.UpdateHash(zHash, moves[0], oldElPassant, oldCastlings);
+    zHash = ZHasher.UpdateHash(zHash, moves[0], oldData);
     TTable.Prefetch(zHash);
     Move::MakeMove(moves[0], bd);
     _kTable.ClearPlyFloor(depthLeft - 1);
@@ -250,8 +249,8 @@ int BestMoveSearch::_pwsSearch(
     if (std::abs(bestEval) == TimeStopValue)
         return TimeStopValue;
 
-    zHash = ZHasher.UpdateHash(zHash, moves[0], oldElPassant, oldCastlings);
-    Move::UnmakeMove(moves[0], bd, oldCastlings, oldElPassant);
+    zHash = ZHasher.UpdateHash(zHash, moves[0], oldData);
+    Move::UnmakeMove(moves[0], bd, oldData);
 
     if (bestEval >= alpha)
     {
@@ -294,7 +293,7 @@ int BestMoveSearch::_pwsSearch(
     {
         _fetchBestMove(moves, i);
 
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
         TTable.Prefetch(zHash);
         Move::MakeMove(moves[i], bd);
 
@@ -337,8 +336,8 @@ int BestMoveSearch::_pwsSearch(
                         nType = lowerBound;
 
                         ++_cutoffNodes;
-                        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
-                        Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
+                        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
+                        Move::UnmakeMove(moves[i], bd, oldData);
                         break;
                     }
 
@@ -347,8 +346,8 @@ int BestMoveSearch::_pwsSearch(
                 }
             }
         }
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
-        Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
+        Move::UnmakeMove(moves[i], bd, oldData);
     }
 
     // clean up
@@ -409,9 +408,8 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
         }
     }
 
-    // saving old params
-    const auto oldCastlings = bd.Castlings;
-    const auto oldElPassant = bd.ElPassantField;
+    // saving volatile fields
+    VolatileBoardData oldData{bd};
 
     // generate moves
     MoveGenerator mechanics(
@@ -431,7 +429,7 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
         else
             _fetchBestMove(moves, i);
 
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
         TTable.Prefetch(zHash);
         Move::MakeMove(moves[i], bd);
         _kTable.ClearPlyFloor(depthLeft - 1);
@@ -441,8 +439,8 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
         if (std::abs(moveEval) == TimeStopValue)
             return TimeStopValue;
 
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
-        Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
+        Move::UnmakeMove(moves[i], bd, oldData);
 
         if (moveEval > bestEval)
         {
@@ -525,9 +523,8 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     MoveGenerator mechanics(bd, _stack);
     auto moves = mechanics.GetMovesFast<true>();
 
-    // saving old params
-    const auto oldCastlings = bd.Castlings;
-    const auto oldElPassant = bd.ElPassantField;
+    // saving volatile fields
+    VolatileBoardData oldData{bd};
 
     if (wasTTHit && prevSearchRes.GetNodeType() != upperBound && prevSearchRes.GetMove().IsCapture())
         _pullMoveToFront(moves, prevSearchRes.GetMove());
@@ -540,7 +537,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         if (i != 0)
             _fetchBestMove(moves, i);
 
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
         TTable.Prefetch(zHash);
         Move::MakeMove(moves[i], bd);
         const int moveValue = -_quiescenceSearch(bd, -beta, -alpha, zHash);
@@ -549,8 +546,8 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         if (std::abs(moveValue) == TimeStopValue)
             return TimeStopValue;
 
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
-        Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
+        Move::UnmakeMove(moves[i], bd, oldData);
 
         if (moveValue > bestEval)
         {
@@ -638,9 +635,8 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     MoveGenerator mechanics(bd, _stack);
     auto moves = mechanics.GetMovesFast<true>();
 
-    // saving old params
-    const auto oldCastlings = bd.Castlings;
-    const auto oldElPassant = bd.ElPassantField;
+    // saving volatile fields
+    VolatileBoardData oldData{bd};
 
     if (wasTTHit && prevSearchRes.GetNodeType() != upperBound && prevSearchRes.GetMove().IsCapture())
         _pullMoveToFront(moves, prevSearchRes.GetMove());
@@ -653,7 +649,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         if (i != 0)
             _fetchBestMove(moves, i);
 
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
         TTable.Prefetch(zHash);
         Move::MakeMove(moves[i], bd);
         const int moveValue = -_zwQuiescenceSearch(bd, -beta, zHash);
@@ -662,8 +658,8 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         if (std::abs(moveValue) == TimeStopValue)
             return TimeStopValue;
 
-        Move::UnmakeMove(moves[i], bd, oldCastlings, oldElPassant);
-        zHash = ZHasher.UpdateHash(zHash, moves[i], oldElPassant, oldCastlings);
+        Move::UnmakeMove(moves[i], bd, oldData);
+        zHash = ZHasher.UpdateHash(zHash, moves[i], oldData);
 
         if (moveValue > bestEval)
         {

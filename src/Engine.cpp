@@ -26,13 +26,12 @@ std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
 
     const auto moves = game.GetMovesFast();
 
-    const auto oldCastling  = startingBoard.Castlings;
-    const auto oldElPassant = startingBoard.ElPassantField;
+    VolatileBoardData data{startingBoard};
     for (size_t i = 0; i < moves.size; ++i)
     {
         Move::MakeMove(moves[i], startingBoard);
         moveMap[moves[i].GetLongAlgebraicNotation()] = game.CountMoves(depth - 1);
-        Move::UnmakeMove(moves[i], startingBoard, oldCastling, oldElPassant);
+        Move::UnmakeMove(moves[i], startingBoard, data);
     }
 
     TManager.GetDefaultStack().PopAggregate(moves);

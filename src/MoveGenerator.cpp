@@ -10,15 +10,13 @@ std::map<std::string, uint64_t> MoveGenerator::GetCountedMoves(const int depth)
 
     std::map<std::string, uint64_t> rv{};
 
-    const auto oldCastling  = _board.Castlings;
-    const auto oldElPassant = _board.ElPassantField;
-
+    VolatileBoardData data{_board};
     auto moves = GetMovesFast<false, false>();
     for (size_t i = 0; i < moves.size; ++i)
     {
         Move::MakeMove(moves[i], _board);
         const uint64_t moveCount = CountMoves(depth - 1);
-        Move::UnmakeMove(moves[i], _board, oldCastling, oldElPassant);
+        Move::UnmakeMove(moves[i], _board, data);
 
         rv.emplace(moves[i].GetLongAlgebraicNotation(), moveCount);
     }
@@ -42,14 +40,12 @@ uint64_t MoveGenerator::CountMoves(const int depth)
 
     uint64_t sum{};
 
-    const auto oldCastling  = _board.Castlings;
-    const auto oldElPassant = _board.ElPassantField;
-
+    VolatileBoardData data{_board};
     for (size_t i = 0; i < moves.size; ++i)
     {
         Move::MakeMove(moves[i], _board);
         sum += CountMoves(depth - 1);
-        Move::UnmakeMove(moves[i], _board, oldCastling, oldElPassant);
+        Move::UnmakeMove(moves[i], _board, data);
     }
 
     _threadStack.PopAggregate(moves);
