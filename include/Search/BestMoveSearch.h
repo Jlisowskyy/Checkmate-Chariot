@@ -5,6 +5,8 @@
 #ifndef BESTMOVESEARCH_H
 #define BESTMOVESEARCH_H
 
+#include <map>
+
 #include "../EngineUtils.h"
 #include "../Evaluation/CounterMoveTable.h"
 #include "../Evaluation/HistoricTable.h"
@@ -44,6 +46,8 @@
 
 class BestMoveSearch
 {
+    using RepMap = std::map<uint64_t, int>;
+
     // ------------------------------
     // Class inner types
     // ------------------------------
@@ -58,6 +62,7 @@ class BestMoveSearch
      * All operations depend on the depth of the path stored internally.
      *
      * */
+
 
     struct PV
     {
@@ -134,8 +139,8 @@ class BestMoveSearch
      * */
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board, Stack<Move, DefaultStackSize> &s, const uint16_t age)
-        : _stack(s), _board(board), _age(age)
+    BestMoveSearch(const Board &board, const RepMap& rMap, Stack<Move, DefaultStackSize> &s, const uint16_t age)
+        : _stack(s), _board(board), _repMap(rMap), _age(age)
     {
     }
     ~BestMoveSearch() = default;
@@ -159,7 +164,7 @@ class BestMoveSearch
      *  - ponderMove - move that is considered to be likely play as a response to our move
      *
      * */
-    
+
     void IterativeDeepening(PackedMove *bestMove, PackedMove *ponderMove, int maxDepth, bool writeInfo = true);
 
     // ------------------------------
@@ -201,6 +206,7 @@ class BestMoveSearch
 
     Stack<Move, DefaultStackSize> &_stack;
     Board _board;
+    RepMap _repMap;
     PV _pv{};
     const uint16_t _age;
     uint64_t _visitedNodes = 0;

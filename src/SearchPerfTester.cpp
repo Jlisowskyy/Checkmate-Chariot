@@ -50,7 +50,7 @@ SearchPerfTester::_performTestCase(const std::string &testCase, const int depth,
 {
     Board bd;
     FenTranslator::Translate(testCase, bd);
-    BestMoveSearch searcher(bd, stack, 1);
+    BestMoveSearch searcher(bd, {}, stack, 1);
 
     const auto tStart = std::chrono::steady_clock::now();
     if (depth > 0)

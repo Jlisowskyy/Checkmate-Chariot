@@ -7,14 +7,9 @@
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/Search/TranspositionTable.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
+#include "../include/Search/ZobristHash.h"
 
 std::string Engine::_debugEnginePath = Engine::_defaultBookPath;
-
-void Engine::Initialize()
-{
-    _board         = FenTranslator::GetDefault();
-    _startingBoard = _board;
-}
 
 void Engine::WriteBoard() const { DisplayBoard(_board); }
 
@@ -46,9 +41,7 @@ bool Engine::SetFenPosition(const std::string &fenStr)
     // Validation whether given fenstr is same as startpos, because of some weird uci implementations not using startpos
     if (fenStr.length() >= _startposPrefix.length() && fenStr.substr(0, _startposPrefix.length()) == _startposPrefix)
     {
-        _isStartPosPlayed = true;
-        _board            = FenTranslator::GetDefault();
-        _startingBoard    = _board;
+        SetStartPos();
         return true;
     }
 
@@ -64,6 +57,9 @@ bool Engine::SetFenPosition(const std::string &fenStr)
     // Setup start board
     _startingBoard = _board;
 
+    // clearing repetitions
+    if (isParsed) _repetitionMap.clear();
+
     return isParsed;
 }
 
@@ -75,6 +71,7 @@ void Engine::SetStartPos()
     _isStartPosPlayed = true;
     _board            = FenTranslator::GetDefault();
     _startingBoard    = _board;
+    _repetitionMap.clear();
 }
 
 const EngineInfo &Engine::GetEngineInfo() { return engineInfo; }
@@ -82,11 +79,14 @@ const EngineInfo &Engine::GetEngineInfo() { return engineInfo; }
 bool Engine::ApplyMoves(const std::vector<std::string> &UCIMoves)
 {
     Board workBoard = _startingBoard;
+    uint64_t hash = ZHasher.GenerateHash(workBoard);
+    _repetitionMap[hash]++;
 
     for (auto &move : UCIMoves)
-        if (!_applyMove(workBoard, move))
+        if (!_applyMove(workBoard, move, hash)) {
+            _repetitionMap.clear();
             return false;
-
+        }
     _board = workBoard;
 
     // applying corresponding age
@@ -96,25 +96,17 @@ bool Engine::ApplyMoves(const std::vector<std::string> &UCIMoves)
 
 void Engine::RestartEngine()
 {
-    // enabling book plays
-    _isStartPosPlayed = true;
-
-    // loding default board
-    _board         = FenTranslator::GetDefault();
-    _startingBoard = _board;
+    SetStartPos();
 
     // cleaning tt
     TTable.ClearTable();
-
-    // resetting age
-    _age = 1;
 }
 
 Board Engine::GetUnderlyingBoardCopy() const { return _board; }
 
 std::string Engine::GetFenTranslation() const { return FenTranslator::Translate(_board); }
 
-bool Engine::_applyMove(Board &board, const std::string &move)
+bool Engine::_applyMove(Board &board, const std::string &move, uint64_t& hash)
 {
     MoveGenerator mech(board, TManager.GetDefaultStack());
 
@@ -124,6 +116,9 @@ bool Engine::_applyMove(Board &board, const std::string &move)
     for (size_t i = 0; i < moves.size; ++i)
         if (move == moves[i].GetLongAlgebraicNotation())
         {
+            VolatileBoardData data{board};
+            hash = ZHasher.UpdateHash(hash, moves[i], data);
+            _repetitionMap[hash]++;
 
             Move::MakeMove(moves[i], board);
             TManager.GetDefaultStack().PopAggregate(moves);
@@ -190,16 +185,16 @@ void Engine::Go(GoInfo &info, const std::vector<std::string> &moves)
         colTime    = 1;
         info.depth = std::min(info.depth, 1);
 
-        SearchThreadManager::GoWoutThread(_board, _age, info);
+        SearchThreadManager::GoWoutThread(_board, _repetitionMap, _age, info);
         return;
     }
 
-    TManager.Go(_board, _age, info);
+    TManager.Go(_board, _repetitionMap, _age, info);
 }
 
 void Engine::StopSearch() { TManager.Stop(); }
 
-void Engine::GoInfinite() { TManager.GoInfinite(_board, _age); }
+void Engine::GoInfinite() { TManager.GoInfinite(_board, _repetitionMap, _age); }
 
 void Engine::_clearHash(Engine &) { TTable.ClearTable(); }
 

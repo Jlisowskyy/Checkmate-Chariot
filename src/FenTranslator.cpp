@@ -325,7 +325,8 @@ size_t FenTranslator::_skipBlanks(size_t pos, const std::string &fenPos)
     return pos;
 }
 
-void FenTranslator::_processMovesCounts(Board &bd, size_t pos, const std::string &fenPos) {
+void FenTranslator::_processMovesCounts(Board &bd, size_t pos, const std::string &fenPos)
+{
     static constexpr auto convert = [](const std::string &str) -> int
     {
         return std::stoi(str);

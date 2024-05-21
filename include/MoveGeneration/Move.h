@@ -133,8 +133,10 @@ struct VolatileBoardData
 {
     VolatileBoardData() = delete;
 
-    VolatileBoardData(const Board& bd):
-        HalfMoves(bd.HalfMoves), Castlings(bd.Castlings), OldElPassant(bd.ElPassantField) {}
+    VolatileBoardData(const Board &bd)
+        : HalfMoves(bd.HalfMoves), Castlings(bd.Castlings), OldElPassant(bd.ElPassantField)
+    {
+    }
 
     const int HalfMoves;
     const std::bitset<Board::CastlingCount + 1> Castlings;
@@ -201,6 +203,8 @@ class Move
         // applying new el passant field
         bd.ElPassantField = MaxMsbPossible >> mv.GetElPassantField();
 
+        bd.HalfMoves = (bd.HalfMoves + 1) * (!(mv.GetTargetBoardIndex() == wPawnsIndex || mv.GetTargetBoardIndex() == bPawnsIndex));
+
         // applying additional castling operation
         const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
         bd.BitBoards[boardIndex] |= field;
@@ -212,9 +216,7 @@ class Move
 
     [[nodiscard]] bool IsEmpty() const { return _packedMove.IsEmpty(); }
 
-    static void UnmakeMove(
-        const Move mv, Board &bd, const VolatileBoardData& data
-    )
+    static void UnmakeMove(const Move mv, Board &bd, const VolatileBoardData &data)
     {
         TraceIfFalse(mv.IsOkeyMove(), "Given move is not valid!");
 

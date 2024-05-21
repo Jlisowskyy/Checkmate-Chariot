@@ -29,9 +29,7 @@ struct ZobristHasher
 
     [[nodiscard]] uint64_t GenerateHash(const Board &board) const;
 
-    [[nodiscard]] INLINE uint64_t UpdateHash(
-        uint64_t oldHash, const Move mv, const VolatileBoardData& data
-    ) const
+    [[nodiscard]] INLINE uint64_t UpdateHash(uint64_t oldHash, const Move mv, const VolatileBoardData &data) const
     {
         oldHash ^= _colorHash;                                                 // swapping color
         oldHash ^= _mainHashes[mv.GetStartBoardIndex()][mv.GetStartField()];   // placing a figure on target square
@@ -40,9 +38,9 @@ struct ZobristHasher
             _mainHashes[mv.GetKilledBoardIndex()][mv.GetKilledFigureField()]; // removing a killed figure from the board
 
         oldHash ^= _elPassantHashes[ExtractMsbPos(data.OldElPassant)]; // removing old ElPassantField
-        oldHash ^= _elPassantHashes[mv.GetElPassantField()];      // placing new elPassantFiled
+        oldHash ^= _elPassantHashes[mv.GetElPassantField()];           // placing new elPassantFiled
 
-        oldHash ^= _castlingHashes[data.Castlings.to_ullong()];           // removing old castlings
+        oldHash ^= _castlingHashes[data.Castlings.to_ullong()];         // removing old castlings
         oldHash ^= _castlingHashes[mv.GetCastlingRights().to_ullong()]; // placing new ones
 
         return oldHash;

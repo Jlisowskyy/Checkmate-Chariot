@@ -12,20 +12,23 @@
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/Search/TranspositionTable.h"
 #include "../include/Search/ZobristHash.h"
-#include "../include/ThreadManagement/GameTimeManager.h"
 #include "../include/TestsAndDebugging/DebugTools.h"
+#include "../include/ThreadManagement/GameTimeManager.h"
 
 static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 
+
 #ifndef NDEBUG
+
 #define TestNullMove() TraceIfFalse(!record._madeMove.IsEmpty(), "Received empty move inside the TT")
 #define TestTTAdd()                                                                                                    \
     TraceIfFalse(record._type != nodeType::upperBound, "Received upper board node inside the TT!");                    \
     TestNullMove()
+
 #else
 #define TestNullMove()
 #define TestTTAdd()
-#endif
+#endif // NDEBUG
 
 void BestMoveSearch::IterativeDeepening(
     PackedMove *bestMove, PackedMove *ponderMove, const int32_t maxDepth, const bool writeInfo
@@ -109,13 +112,16 @@ void BestMoveSearch::IterativeDeepening(
 
                 if (eval <= alpha)
                 {
-                    if constexpr (TestAsp) stat.RetryFailLow(alpha, beta, eval);
+                    if constexpr (TestAsp)
+                        stat.RetryFailLow(alpha, beta, eval);
 
                     alpha = std::max(alpha - delta, NegativeInfinity);
                     beta  = (alpha + beta) / 2;
                 }
-                else if (eval >= beta) {
-                    if constexpr (TestAsp) stat.RetryFailHigh(alpha, beta, eval);
+                else if (eval >= beta)
+                {
+                    if constexpr (TestAsp)
+                        stat.RetryFailHigh(alpha, beta, eval);
 
                     // We failed high so move the upper boundary
                     beta = std::min(beta + delta, PositiveInfinity);
@@ -125,7 +131,8 @@ void BestMoveSearch::IterativeDeepening(
             }
 
             // Display Asp Window statistics
-            if constexpr (TestAsp) stat.DisplayAndClean();
+            if constexpr (TestAsp)
+                stat.DisplayAndClean();
 
             // if there was call to abort then abort
             if (std::abs(eval) == TimeStopValue)
@@ -200,12 +207,7 @@ int BestMoveSearch::_pwsSearch(
 
     // generate moves
     MoveGenerator mechanics(
-        bd,
-        _stack,
-        _histTable,
-        _kTable,
-        _cmTable.GetCounterMove(prevMove), depthLeft,
-        prevMove.GetTargetField()
+        bd, _stack, _histTable, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField()
     );
     auto moves = mechanics.GetMovesFast();
 
@@ -220,7 +222,6 @@ int BestMoveSearch::_pwsSearch(
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
     if constexpr (TestTT)
         TTable.UpdateStatistics(wasTTHit);
-
 
     if (followPv && depthLeft != 1)
         // first follow pv from previous ID (Iterative deepening) iteration,

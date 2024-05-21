@@ -17,20 +17,22 @@
         "[ When: {} ][ File: {}, line: {} ]{}\n", GetCurrentTimeStr(), GetFileName(__FILE__), __LINE__, msg            \
     )
 
-#define WrapTraceMsgError(msg) { \
-                                    if constexpr (Debug) \
-                                        TraceWithInfo(std::format("[ TRACE ][ ERROR ] {}", msg)); \
-                                }
+#define WrapTraceMsgError(msg)                                                                                         \
+    {                                                                                                                  \
+        if constexpr (Debug)                                                                                           \
+            TraceWithInfo(std::format("[ TRACE ][ ERROR ] {}", msg));                                                  \
+    }
 
-#define WrapTraceMsgInfo(msg)  { \
-                                    if constexpr (Debug) \
-                                        TraceWithInfo(std::format("[ TRACE ][ INFO ] {}", msg)); \
-                                }
+#define WrapTraceMsgInfo(msg)                                                                                          \
+    {                                                                                                                  \
+        if constexpr (Debug)                                                                                           \
+            TraceWithInfo(std::format("[ TRACE ][ INFO ] {}", msg));                                                   \
+    }
 
 #define TraceIfFalse(cond, msg)                                                                                        \
     {                                                                                                                  \
-        if constexpr (Debug)                                                                                              \
-            if (!(cond))                                                                                                       \
+        if constexpr (Debug)                                                                                           \
+            if (!(cond))                                                                                               \
                 WrapTraceMsgError(msg);                                                                                \
     }
 

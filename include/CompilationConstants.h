@@ -85,7 +85,6 @@ static constexpr bool TestTT = false;
 
 //---------------------------
 
-
 // ------------------------------
 // Display statistics about aspiration window flow
 

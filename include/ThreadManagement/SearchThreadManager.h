@@ -7,6 +7,7 @@
 
 #include <string>
 #include <thread>
+#include <map>
 
 #include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
@@ -15,6 +16,7 @@
 struct SearchThreadManager
 {
     using StackType = Stack<Move, DefaultStackSize>;
+    using RepMap = std::map<uint64_t, int>;
     // ------------------------------
     // Class creation
     // ------------------------------
@@ -36,12 +38,12 @@ struct SearchThreadManager
 
     [[nodiscard]] StackType &GetDefaultStack() { return _stacks[0]; }
 
-    bool Go(const Board &bd, uint16_t age, const GoInfo &info);
+    bool Go(const Board &bd, const RepMap& rMap, uint16_t age, const GoInfo &info);
 
     /* Function is not thread safe! Is when there is no time to start up threads! */
-    static void GoWoutThread(const Board &bd, uint16_t age, const GoInfo &info);
+    static void GoWoutThread(const Board &bd, const RepMap& rMap, uint16_t age, const GoInfo &info);
 
-    bool GoInfinite(const Board &bd, uint16_t age);
+    bool GoInfinite(const Board &bd, const RepMap& rMap, uint16_t age);
 
     void Stop();
 
@@ -60,7 +62,7 @@ struct SearchThreadManager
 
     private:
     static void
-    _threadSearchJob(const Board *bd, Stack<Move, DefaultStackSize> *s, bool *guard, uint16_t age, int depth);
+    _threadSearchJob(const Board *bd, const RepMap* rMap, Stack<Move, DefaultStackSize> *s, bool *guard, uint16_t age, int depth);
 
     // ------------------------------
     // Class fields
