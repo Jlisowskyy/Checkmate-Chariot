@@ -46,7 +46,7 @@
 
 class BestMoveSearch
 {
-    using RepMap = std::map<uint64_t, int>;
+    using RepMap = std::unordered_map<uint64_t, int>;
 
     // ------------------------------
     // Class inner types

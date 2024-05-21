@@ -16,7 +16,7 @@
 struct SearchThreadManager
 {
     using StackType = Stack<Move, DEFAULT_STACK_SIZE>;
-    using RepMap = std::map<uint64_t, int>;
+    using RepMap = std::unordered_map<uint64_t, int>;
     // ------------------------------
     // Class creation
     // ------------------------------

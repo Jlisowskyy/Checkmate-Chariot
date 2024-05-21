@@ -128,7 +128,7 @@ class Engine
     Board _board{};
     Board _startingBoard{};
     OpeningBook _book{};
-    std::map<uint64_t, int> _repetitionMap{};
+    std::unordered_map<uint64_t, int> _repetitionMap{};
     std::string _bookPath = _defaultBookPath;
 
     bool _isStartPosPlayed                            = true;

@@ -7,6 +7,7 @@
 #include <chrono>
 #include <format>
 #include <vector>
+#include <unordered_map>
 
 #include "../include/Evaluation/BoardEvaluator.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
@@ -16,7 +17,7 @@
 #include "../include/ThreadManagement/GameTimeManager.h"
 
 static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
-using RepMap = std::map<uint64_t, int>;
+using RepMap = std::unordered_map<uint64_t, int>;
 
 #ifndef NDEBUG
 
