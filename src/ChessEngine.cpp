@@ -19,9 +19,6 @@ void ChessEngineMainEntry(const int argc, const char **argv)
     // Provide to the translator the underlying engine instance
     UCITranslator translator{engine};
 
-    // Start the engine
-    engine.Initialize();
-
     if (argc == 1)
         // Start the engine without any concerns if there is no command line arguments
         translator.BeginCommandTranslation(std::cin);

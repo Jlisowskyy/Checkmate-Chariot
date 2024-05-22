@@ -26,7 +26,7 @@ struct SearchPerfTester
     // ------------------------------
 
     static bool PerformSearchPerfTest(
-        const std::string &inputTestPath, const std::string &output, Stack<Move, DefaultStackSize> &stack
+        const std::string &inputTestPath, const std::string &output, Stack<Move, DEFAULT_STACK_SIZE> &stack
     );
 
     // ------------------------------
@@ -35,7 +35,7 @@ struct SearchPerfTester
 
     private:
     [[nodiscard]] static double
-    _performTestCase(const std::string &testCase, int depth, Stack<Move, DefaultStackSize> &stack);
+    _performTestCase(const std::string &testCase, int depth, Stack<Move, DEFAULT_STACK_SIZE> &stack);
     static void
     _saveResultsToCsv(const std::string &output, const std::vector<std::tuple<std::string, int, double>> &results);
 

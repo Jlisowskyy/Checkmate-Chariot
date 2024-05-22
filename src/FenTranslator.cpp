@@ -7,6 +7,7 @@
 #include "../include/Interface/Logger.h"
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
+#include "../include/ParseTools.h"
 
 const Board &FenTranslator::GetDefault() { return StartBoard; }
 
@@ -24,12 +25,14 @@ bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
         pos        = _skipBlanks(pos, fenPos);
         pos        = _processCastlings(workBoard, pos, fenPos);
         pos        = _skipBlanks(pos, fenPos);
-        _processElPassant(workBoard, pos, fenPos);
+        pos        = _processElPassant(workBoard, pos, fenPos);
+        pos        = _skipBlanks(pos, fenPos);
+        _processMovesCounts(workBoard, pos, fenPos);
     }
     catch (const std::exception &exc)
     {
         GlobalLogger.LogStream << (exc.what());
-        GlobalLogger.LogStream << ("[ INFO ] Loading default layout...");
+        GlobalLogger.LogStream << ("[ INFO ] Loading default layout...\n");
         bd = StartBoard;
         return false;
     }
@@ -56,8 +59,12 @@ std::string FenTranslator::Translate(const Board &board)
     fenPos +=
         board.ElPassantField == Board::InvalidElPassantBitBoard ? "-" : ConvertToStrPos(FenCompatibleElPassantPosition);
 
+    fenPos += ' ';
+    fenPos += std::to_string(board.HalfMoves);
+    fenPos += ' ';
+
     // skpping moves counters - not supported
-    fenPos += " 0 1";
+    fenPos += "1";
 
     return fenPos;
 }
@@ -316,4 +323,14 @@ size_t FenTranslator::_skipBlanks(size_t pos, const std::string &fenPos)
         ++pos;
     }
     return pos;
+}
+
+void FenTranslator::_processMovesCounts(Board &bd, size_t pos, const std::string &fenPos)
+{
+    static constexpr auto convert = [](const std::string &str) -> int
+    {
+        return std::stoi(str);
+    };
+
+    ParseTools::ExtractNextNumeric<int, convert>(fenPos, pos, bd.HalfMoves);
 }

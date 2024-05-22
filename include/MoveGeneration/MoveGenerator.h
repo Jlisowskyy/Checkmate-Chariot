@@ -25,7 +25,7 @@
 
 struct MoveGenerator
 {
-    using stck    = Stack<Move, DefaultStackSize>;
+    using stck    = Stack<Move, DEFAULT_STACK_SIZE>;
     using payload = stck::StackPayload;
 
     // ------------------------------
@@ -45,7 +45,7 @@ struct MoveGenerator
     MoveGenerator() = delete;
 
     explicit MoveGenerator(
-        Board &bd, Stack<Move, DefaultStackSize> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
+        Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
         const PackedMove counterMove = {}, const int depthLeft = 0, const int mostRecentMovedSquare = 0
     )
         : _mechanics(bd), _threadStack(s), _board(bd), _counterMove(counterMove), _kTable(kt), _hTable(ht),
@@ -140,7 +140,7 @@ struct MoveGenerator
 
     // Move generation components
     ChessMechanics _mechanics;
-    Stack<Move, DefaultStackSize> &_threadStack;
+    Stack<Move, DEFAULT_STACK_SIZE> &_threadStack;
     Board &_board;
 
     // Heuristic evaluation components

@@ -132,7 +132,6 @@ struct KingSafetyEval
                 std::format("KingRing: [{} {}]\n", whiteKingRingPoints, blackKingRingPoints)
             );
 
-
         return bonus;
     }
     // ------------------------------

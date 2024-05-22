@@ -201,7 +201,6 @@ double MoveGenerationTester::_performExternalEngineSpeedTest(const std::string &
 double MoveGenerationTester::_performEngineSpeedTest(const std::string &fenPosition, const int depth)
 {
     Engine eng{};
-    eng.Initialize();
     eng.SetFenPosition(fenPosition);
 
     return eng.GoPerft<false>(depth);

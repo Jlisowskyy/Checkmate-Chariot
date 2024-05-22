@@ -94,7 +94,7 @@ class KillerTable
     // Class fields
     // ------------------------------
 
-    _killerFloor_t _kTable[MaxSearchDepth]{};
+    _killerFloor_t _kTable[MAX_SEARCH_DEPTH]{};
 };
 
 #endif // KILLERTABLE_H

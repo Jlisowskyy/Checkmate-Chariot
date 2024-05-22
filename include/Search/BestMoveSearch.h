@@ -5,6 +5,8 @@
 #ifndef BESTMOVESEARCH_H
 #define BESTMOVESEARCH_H
 
+#include <map>
+
 #include "../EngineUtils.h"
 #include "../Evaluation/CounterMoveTable.h"
 #include "../Evaluation/HistoricTable.h"
@@ -44,6 +46,8 @@
 
 class BestMoveSearch
 {
+    using RepMap = std::unordered_map<uint64_t, int>;
+
     // ------------------------------
     // Class inner types
     // ------------------------------
@@ -118,7 +122,7 @@ class BestMoveSearch
         PackedMove operator[](const int ply) const { return _path[ply]; }
 
         private:
-        PackedMove _path[MaxSearchDepth + 1]{};
+        PackedMove _path[MAX_SEARCH_DEPTH + 1]{};
         int _depth{1};
     };
 
@@ -127,9 +131,15 @@ class BestMoveSearch
     // Class creation
     // ------------------------------
 
+    /*
+     * Construction needs a board as starting state of the search algorithm,
+     * Stack as a container to store moves and age to use inside the TT replacement scheme.
+     *
+     * */
+
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board, Stack<Move, DefaultStackSize> &s, const uint16_t age)
-        : _stack(s), _board(board), _age(age)
+    BestMoveSearch(const Board &board, const RepMap &rMap, Stack<Move, DEFAULT_STACK_SIZE> &s, const uint16_t age)
+        : _stack(s), _board(board), _repMap(rMap), _age(age)
     {
     }
     ~BestMoveSearch() = default;
@@ -137,6 +147,22 @@ class BestMoveSearch
     // ------------------------------
     // Class interaction
     // ------------------------------
+
+    /*
+     * Main search functions. Perform searches going through every depth one by one
+     * to collect information about shallower nodes. It is profitable, because average chess position tree expansion
+     * rate is +/- 40. Let 'd' be the current depth and r = '40' to be tree growth rate. So cost to go through every
+     * previous depth is: cost(d) = 1/(40^(d-1)) + 1/(40^(d-2)) + ... +  1/(40^(d)) ~= 1/r that is in most cases
+     * such operation costs us only 1/40 ~= 2% of whole time processing. In short, it is quite profitable overall.
+     *
+     * Input:
+     *  - maxDepth - limits the depth of the search,
+     *  - writeInfo - defines whether info should be displayed
+     *  Return:
+     *  - bestMove - best move found ready to play,
+     *  - ponderMove - move that is considered to be likely play as a response to our move
+     *
+     * */
 
     void IterativeDeepening(PackedMove *bestMove, PackedMove *ponderMove, int maxDepth, bool writeInfo = true);
 
@@ -153,32 +179,29 @@ class BestMoveSearch
     [[nodiscard]] int _quiescenceSearch(Board &bd, int alpha, int beta, uint64_t zHash);
     [[nodiscard]] int _zwQuiescenceSearch(Board &bd, int alpha, uint64_t zHash);
 
-    static void _embeddedMoveSort(Stack<Move, DefaultStackSize>::StackPayload moves, size_t range);
-    static void _pullMoveToFront(Stack<Move, DefaultStackSize>::StackPayload moves, PackedMove mv);
-    static void _fetchBestMove(Stack<Move, DefaultStackSize>::StackPayload moves, size_t targetPos);
+    static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
+    static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);
 
     [[nodiscard]] int _getMateValue(int depthLeft) const;
+    [[nodiscard]] INLINE bool _isDrawByReps(const uint64_t hash)
+    {
+        return _repMap[hash] >= 3 || _board.HalfMoves >= 50;
+    }
+
+    void INLINE _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth)
+    {
+        _kTable.SaveKillerMove(mv, depth);
+        _cmTable.SaveCounterMove(mv.GetPackedMove(), prevMove);
+        _histTable.SetBonusMove(mv, depth);
+    }
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
-    static constexpr int ReservedValues                = 64;
-    static constexpr int InfinityMargin                = MaxSearchDepth + ReservedValues;
-    static constexpr int TimeStopValue                 = std::numeric_limits<int16_t>::max() - 10;
-    static constexpr int NegativeInfinity              = std::numeric_limits<int16_t>::min() + InfinityMargin;
-    static constexpr int PositiveInfinity              = std::numeric_limits<int16_t>::max() - InfinityMargin;
-    static constexpr uint16_t QuisenceAgeDiffToReplace = 16;
-    static constexpr uint16_t SearchAgeDiffToReplace   = 10;
-
-    // Initial Aspiration Window Delta its cp value is equal to InitialAspWindowDelta * BoardEvaluator::ScoreGrain
-    // (probably 8) ~= 48
-    static constexpr int16_t InitialAspWindowDelta = 6;
-
-    static constexpr int MaxAspWindowTries = 4;
-
-    Stack<Move, DefaultStackSize> &_stack;
+    Stack<Move, DEFAULT_STACK_SIZE> &_stack;
     Board _board;
+    RepMap _repMap;
     PV _pv{};
     const uint16_t _age;
     uint64_t _visitedNodes = 0;
