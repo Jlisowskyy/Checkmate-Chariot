@@ -14,7 +14,7 @@ static constexpr size_t MB = 1024 * 1024;
 // global defined Stack capacity used to store generated moves per thread
 static constexpr size_t DEFAULT_STACK_SIZE = 32 * MB / sizeof(uint64_t);
 
-/* Defines maximal depth of search allowed across the procjet */
+/* Defines maximal depth of search allowed across the project */
 static constexpr int MAX_SEARCH_DEPTH = 128;
 
 static constexpr uint64_t MSEC_TO_NSEC = 1000 * 1000;
