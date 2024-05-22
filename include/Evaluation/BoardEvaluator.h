@@ -665,7 +665,7 @@ class BoardEvaluator
 
     public:
     // The value below ensures that resulted evaluation score will be rounded  value divisible by ScoreGrain
-    static constexpr int32_t ScoreGrain = 8;
+    static constexpr int32_t ScoreGrain = 1;
 
     // All belows values are used to calculate material table index, they symbolize coefficients for each figure type
     static constexpr size_t BlackPawnCoef   = MaterialTableSize / 9;
@@ -1214,7 +1214,7 @@ inline int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT
     const size_t totalPawnCount = figArr[pawnsIndex] + figArr[BlackFigStartIndex + pawnsIndex];
     if (figArr[bishopsIndex] == 2)
     {
-        const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
+        const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 3);
         materialValue += bishopPairPoints;
 
         if constexpr (mode == EvalMode::PrintMode)
@@ -1223,7 +1223,7 @@ inline int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT
 
     if (figArr[BlackFigStartIndex + bishopsIndex] == 2)
     {
-        const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
+        const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 3);
         materialValue -= bishopPairPoints;
 
         if constexpr (mode == EvalMode::PrintMode)

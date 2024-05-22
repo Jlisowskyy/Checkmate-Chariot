@@ -291,7 +291,7 @@ int BestMoveSearch::_pwsSearch(
     if (std::abs(bestEval) == TIME_STOP_RESERVED_VALUE)
         return TIME_STOP_RESERVED_VALUE;
 
-    if (bestEval >= alpha)
+    if (bestEval > alpha)
     {
         // cut-off found
         if (bestEval >= beta)
@@ -350,7 +350,7 @@ int BestMoveSearch::_pwsSearch(
             {
                 bestEval = moveEval;
 
-                if (moveEval >= alpha)
+                if (moveEval > alpha)
                 {
                     bestMove = moves[i].GetPackedMove();
 
@@ -528,7 +528,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
 
     int bestEval = statEval;
-    if (bestEval >= alpha)
+    if (bestEval > alpha)
     {
         if (bestEval >= beta)
         {
@@ -574,7 +574,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         {
             bestEval = moveValue;
 
-            if (moveValue >= alpha)
+            if (moveValue > alpha)
             {
                 bestMove = moves[i].GetPackedMove();
                 if (moveValue >= beta)
