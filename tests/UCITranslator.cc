@@ -10,7 +10,7 @@ TEST(GoCommandTest, stopCommandResponse)
     std::this_thread::sleep_for(std::chrono::seconds(1));
     SearchThreadManager threadManager{};
     Board board = FenTranslator::GetDefault();
-
+    std::unordered_map<uint64_t, int> reps{};
     const auto Case = [&]<typename CaseFuncT>(CaseFuncT func)
     {
         auto t1 = std::chrono::steady_clock::now();
@@ -35,7 +35,7 @@ TEST(GoCommandTest, stopCommandResponse)
 
     auto infiniteSearch = [&]()
     {
-        threadManager.GoInfinite(board, 0);
+        threadManager.GoInfinite(board, reps, 0);
     };
 
     auto depthSearch = [&]()
@@ -43,7 +43,7 @@ TEST(GoCommandTest, stopCommandResponse)
         GoInfo info{};
         info.depth = 100;
 
-        threadManager.Go(board, 0, info);
+        threadManager.Go(board, reps, 0, info);
     };
 
     auto moveTimeSearch = [&]()
@@ -51,7 +51,7 @@ TEST(GoCommandTest, stopCommandResponse)
         GoInfo info{};
         info.timeInfo.moveTime = 100000;
 
-        threadManager.Go(board, 0, info);
+        threadManager.Go(board, reps, 0, info);
     };
 
     auto colTimeSearch = [&]()
@@ -60,7 +60,7 @@ TEST(GoCommandTest, stopCommandResponse)
         info.timeInfo.wTime = 100000;
         info.timeInfo.bTime = 100000;
 
-        threadManager.Go(board, 0, info);
+        threadManager.Go(board, reps, 0, info);
     };
 
     Case(colTimeSearch);
@@ -82,7 +82,7 @@ TEST(GoCommandTest, timeSpentTest)
     GoInfo info{};
     info.timeInfo.moveTime = 1200;
 
-    threadManager.Go(board, 0, info);
+    threadManager.Go(board, {}, 0, info);
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
     threadManager.Stop();
