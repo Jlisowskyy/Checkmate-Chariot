@@ -124,7 +124,7 @@ class Engine
     // private fields
     // ------------------------------
 
-    Board _board = FenTranslator::GetDefault();
+    Board _board         = FenTranslator::GetDefault();
     Board _startingBoard = FenTranslator::GetDefault();
     OpeningBook _book{};
     std::unordered_map<uint64_t, int> _repetitionMap{};

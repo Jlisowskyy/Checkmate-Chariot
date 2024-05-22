@@ -9,7 +9,11 @@
 
 #include <format>
 
-SearchThreadManager::~SearchThreadManager() { Consolidate(); }
+SearchThreadManager::~SearchThreadManager()
+{
+    Stop();
+    Consolidate();
+}
 bool SearchThreadManager::Go(const Board &bd, const RepMap &rMap, uint16_t age, const GoInfo &info)
 {
     // ensuring only one search is running at a time
