@@ -158,7 +158,8 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
 
 UCITranslator::UCICommand UCITranslator::_evalPositionStatic([[maybe_unused]] const std::string &)
 {
-    GlobalLogger.LogStream << "Evaluation from Evaluation2: " << _engine.GetEvalPrinted() << std::endl;
+    const int eval = _engine.GetEvalPrinted();
+    GlobalLogger.LogStream << "Evaluation from Evaluation2: " << eval << std::endl;
     GlobalLogger.LogStream << "Evaluation with quiesce: " << _engine.GetQuiesceEval() << std::endl;
 
     return UCICommand::evalCommand;
