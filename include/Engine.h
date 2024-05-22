@@ -86,6 +86,10 @@ class Engine
     /* Simply issues go command to the ThreadManager */
     void Go(GoInfo &info, const std::vector<std::string> &moves);
 
+    [[nodiscard]] int GetEvalPrinted();
+
+    [[nodiscard]] int GetQuiesceEval();
+
     void PonderHit();
 
     static const std::string &GetDebugEnginePath() { return _debugEnginePath; }

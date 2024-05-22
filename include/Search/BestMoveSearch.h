@@ -165,6 +165,7 @@ class BestMoveSearch
      * */
 
     void IterativeDeepening(PackedMove *bestMove, PackedMove *ponderMove, int maxDepth, bool writeInfo = true);
+    int QuiesceEval();
 
     // ------------------------------
     // Private class methods

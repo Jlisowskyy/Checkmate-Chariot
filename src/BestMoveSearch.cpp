@@ -754,3 +754,9 @@ int BestMoveSearch::_getMateValue(const int depthLeft) const
     const int distToRoot = _currRootDepth - depthLeft;
     return NEGATIVE_INFINITY + distToRoot;
 }
+
+int BestMoveSearch::QuiesceEval() {
+    uint64_t hash = ZHasher.GenerateHash(_board);
+
+    return _quiescenceSearch(_board, NEGATIVE_INFINITY, POSITIVE_INFINITY, hash);
+}
