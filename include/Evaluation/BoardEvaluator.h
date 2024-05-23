@@ -306,6 +306,15 @@ class BoardEvaluator
                 // adding penalty for being pinned
                 interEval += TrappedPiecePenalty;
 
+                // adding positional field values
+                const int positionalValuesMid = BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
+                interEval += positionalValuesMid;
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
+                            ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
+                    );
+
                 if constexpr (mode == EvalMode::PrintMode)
                     BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(
                         ConvertToReversedPos(msbPos), TrappedPiecePenalty
@@ -331,6 +340,15 @@ class BoardEvaluator
                 const int mobilityBonusEnd = mobCount * KnightMobilityBonusEnd;
                 midEval += mobilityBonusMid;
                 endEval += mobilityBonusEnd;
+
+                // adding positional field values
+                const int positionalValuesMid = BasicBlackKnightPositionValues[fieldValueAccess(msbPos)];
+                interEval += positionalValuesMid;
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
+                            ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
+                    );
 
                 if constexpr (mode == EvalMode::PrintMode)
                     BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
@@ -392,6 +410,15 @@ class BoardEvaluator
                 if constexpr (mode == EvalMode::PrintMode)
                     BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), trappedPoints);
 
+                // adding positional field values
+                const int positionalValuesMid = BasicBlackBishopPositionValues[fieldValueAccess(msbPos)];
+                interEval += positionalValuesMid;
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
+                            ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
+                    );
+
                 // adding controlled fields
                 controlledFields |= LegalMoves;
 
@@ -431,6 +458,15 @@ class BoardEvaluator
                 if constexpr (mode == EvalMode::PrintMode)
                     BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
                         ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
+                    );
+
+                // adding positional field values
+                const int positionalValuesMid = BasicBlackBishopPositionValues[fieldValueAccess(msbPos)];
+                interEval += positionalValuesMid;
+
+                if constexpr (mode == EvalMode::PrintMode)
+                    BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
+                            ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
                     );
 
                 // adding king attack info
@@ -603,13 +639,11 @@ class BoardEvaluator
 
                 // adding positional field values
                 const int positionalValuesMid = BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
-                const int positionalValuesEnd = BasicBlackQueenEndPositionValues[fieldValueAccess(msbPos)];
                 midEval += positionalValuesMid;
-                endEval += positionalValuesEnd;
 
                 if constexpr (mode == EvalMode::PrintMode)
                     BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
-                        ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesEnd
+                        ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
                     );
 
                 RemovePiece(pinnedQueens, figMap);
@@ -640,13 +674,11 @@ class BoardEvaluator
 
                 // adding positional field values
                 const int positionalValuesMid = BasicBlackQueenPositionValues[fieldValueAccess(msbPos)];
-                const int positionalValuesEnd = BasicBlackQueenEndPositionValues[fieldValueAccess(msbPos)];
                 midEval += positionalValuesMid;
-                endEval += positionalValuesEnd;
 
                 if constexpr (mode == EvalMode::PrintMode)
                     BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
-                        ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesEnd
+                        ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
                     );
 
                 // adding king attack info
@@ -721,8 +753,8 @@ class BoardEvaluator
     // Reasoning:
     //      We want to maximize amount of possible moves our figure can make a try to squeeze the enemy as much as we
     //      can
-    static constexpr int16_t KnightMobilityBonusMid = 8;
-    static constexpr int16_t KnightMobilityBonusEnd = 4;
+    static constexpr int16_t KnightMobilityBonusMid = 4;
+    static constexpr int16_t KnightMobilityBonusEnd = 1;
 
     static constexpr int16_t BishopMobilityBonusMid = 6;
     static constexpr int16_t BishopMobilityBonusEnd = 2;
@@ -731,7 +763,7 @@ class BoardEvaluator
     static constexpr int16_t RookMobilityBonusEnd = 6;
 
     static constexpr int16_t QueenMobilityBonusMid = 1;
-    static constexpr int16_t QueenMobilityBonusEnd = 8;
+    static constexpr int16_t QueenMobilityBonusEnd = 4;
 
     // universal mobility bonus for all figures not mentioned above
     static constexpr int16_t MobilityBonus = 4;
@@ -745,7 +777,7 @@ class BoardEvaluator
     // Values below is used to apply bonus per each tile that is controlled on the board center by given color
     // Reasoning:
     //      Center of the board is the most important part of the map so maximizing the control of it may be a good idea
-    static constexpr int16_t CenterControlBonusPerTile = 5;
+    static constexpr int16_t CenterControlBonusPerTile = 3;
 
     // 4x4 mask on the center board used to evaluate center control
     static constexpr uint64_t CenterFieldsMap = []() constexpr
@@ -803,24 +835,35 @@ class BoardEvaluator
     // clang-format off
     static constexpr int16_t BasicBlackPawnPositionValues[]{
          0,  0,   0,   0,   0,   0,  0,  0,
-        50, 50,  50,  50,  50,  50, 50, 50,
-        10, 10,  20,  30,  30,  20, 10, 10,
-         5,  5,  10,  25,  25,  10,  5,  5,
-         0, -5,  -5,  20,  20,  -5, -5,  0,
-         5, -5, -10,   0,   0, -10, -5,  5,
-        10, 15,  15, -20, -20,  15, 15, 10,
+        40, 40,  40,  40,  40,  40, 40, 40,
+        30, 30,  30,  30,  30,  30, 30, 30,
+        20, 20,  20,  20,  20,  20, 20, 20,
+        10, 10,  10,  10,  10,  10, 10, 10,
+         5,  5,   5,   5,   5,   5,  5,  5,
+         0,  0,   0,   0,   0,   0,  0,  0,
          0,  0,   0,   0,   0,   0,  0,  0
     };
 
     static constexpr int16_t BasicBlackPawnPositionEndValues[]{
-          0,   0,   0,   0,   0,   0,   0,   0,
-         80,  80,  80,  80,  80,  80,  80,  80,
-         40,  40,  50,  60,  60,  50,  40,  40,
-          30, 30,  40,  45,  45,  40,  30,  30,
-         15,  17,  20,  30,  30,  20,  17,  15,
-         -5,  -5,  -5,   0,   0,  -5,  -5,  -5,
-        -20, -20, -30, -30, -30, -20, -20, -20,
-          0,   0,   0,   0,   0,   0,   0,   0
+         0,  0,   0,   0,   0,   0,  0,  0,
+        80, 80,  80,  80,  80,  80, 80, 80,
+        60, 60,  60,  60,  60,  60, 60, 60,
+        40, 40,  40,  40,  40,  40, 40, 40,
+        20, 20,  20,  20,  20,  20, 20, 20,
+        10, 10,  10,  10,  10,  10, 10, 10,
+         0,  0,   0,   0,   0,   0,  0,  0,
+         0,  0,   0,   0,   0,   0,  0,  0
+    };
+
+    static constexpr int16_t BasicBlackKnightPositionValues[]{
+        -50,-40,-30,-30,-30,-30,-40,-50,
+        -40,-20,  0,  0,  0,  0,-20,-40,
+        -30,  0, 10, 15, 15, 10,  0,-30,
+        -30,  5, 15, 20, 20, 15,  5,-30,
+        -30,  0, 15, 20, 20, 15,  0,-30,
+        -30,  5, 10, 15, 15, 10,  5,-30,
+        -40,-20,  0,  5,  5,  0,-20,-40,
+        -50,-40,-30,-30,-30,-30,-40,-50,
     };
 
     static constexpr int16_t BasicBlackBishopPositionValues[]{
@@ -834,37 +877,15 @@ class BoardEvaluator
         -20, -10, -10, -10, -10, -10, -10, -20,
     };
 
-    static constexpr int16_t BasicBlackRookPositionValues[]{
-         0,  0,  0,  0,  0,  0,  0,  0,
-         5, 10, 10, 10, 10, 10, 10,  5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-         0,  0,  5,  5,  5,  5,  0,  0
-    };
-
     static constexpr int16_t BasicBlackQueenPositionValues[]{
-        -110, -110, -110, -110, -110, -110, -110, -110,
-        -80,   -80,  -80,  -80,  -80,  -80,  -80,  -80,
-        -60,   -60,  -60,  -60,  -60,  -60,  -60,  -60,
-        -45,   -45,  -45,  -45,  -45, - 45,  -45,  -45,
-        -20,   -15,  -15,  -15,  -15,  -15,  -15,  -20,
-        -10,     5,    5,    5,    5,    5,    5,  -10,
-        -10,    15,   15,   15,   15,   15,   15,  -10,
-        -20,   -10,  -10,   30,   30,  -10,  -10,  -20
-    };
-
-    static constexpr int16_t BasicBlackQueenEndPositionValues[]{
-        -20, -10, -10, -5, -5, -10, -10, -20,
-        -10,   0,   0,  0,  0,   0,   0, -10,
-        -10,   0,   5,  5,  5,   5,   0, -10,
-         -5,   0,   5,  5,  5,   5,   0,  -5,
-          0,   0,   5,  5,  5,   5,   0,  -5,
-        -10,   5,   5,  5,  5,   5,   0, -10,
-        -10,   0,   5,  0,  0,   0,   0, -10,
-        -20, -10, -10, -5, -5, -10, -10, -20
+        -20,-10,-10, -5, -5,-10,-10,-20,
+        -10,  0,  0,  0,  0,  0,  0,-10,
+        -10,  0,  5,  5,  5,  5,  0,-10,
+         -5,  0,  5,  5,  5,  5,  0, -5,
+          0,  0,  5,  5,  5,  5,  0, -5,
+        -10,  5,  5,  5,  5,  5,  0,-10,
+        -10,  0,  5,  0,  0,  0,  0,-10,
+        -20,-10,-10, -5, -5,-10,-10,-20
     };
 
     static constexpr int16_t BasicBlackKingPositionValues[]{
@@ -1214,7 +1235,7 @@ inline int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT
     const size_t totalPawnCount = figArr[pawnsIndex] + figArr[BlackFigStartIndex + pawnsIndex];
     if (figArr[bishopsIndex] == 2)
     {
-        const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
+        const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 3);
         materialValue += bishopPairPoints;
 
         if constexpr (mode == EvalMode::PrintMode)
@@ -1223,7 +1244,7 @@ inline int32_t BoardEvaluator::_slowMaterialCalculation(const FigureCountsArrayT
 
     if (figArr[BlackFigStartIndex + bishopsIndex] == 2)
     {
-        const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 2 - BishopPairDelta);
+        const int bishopPairPoints = BishopPairBonus - (static_cast<int32_t>(totalPawnCount) * 3);
         materialValue -= bishopPairPoints;
 
         if constexpr (mode == EvalMode::PrintMode)
