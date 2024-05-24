@@ -447,11 +447,14 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     {
         const nodeType expectedType = prevSearchRes.GetEval() >= beta ? lowerBound : upperBound;
 
-        if (expectedType == prevSearchRes.GetNodeType() || prevSearchRes.GetNodeType() == pvNode)
-        {
-            ++_cutoffNodes;
-            return prevSearchRes.GetEval();
-        }
+        if (prevSearchRes.GetNodeType() == pvNode)
+            return ++_cutoffNodes, prevSearchRes.GetEval();
+
+        if (prevSearchRes.GetNodeType() == lowerBound && prevSearchRes.GetEval() >= beta)
+            return ++_cutoffNodes, prevSearchRes.GetEval();
+
+        if (prevSearchRes.GetNodeType() == upperBound && prevSearchRes.GetEval() < alpha)
+            return ++_cutoffNodes, prevSearchRes.GetEval();
     }
 
     // saving volatile fields
