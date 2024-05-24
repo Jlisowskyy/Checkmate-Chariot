@@ -143,6 +143,10 @@ struct TranspositionTable
     // Method adds new record to the table
     INLINE void Add(const HashRecord &record, const uint64_t zHash)
     {
+        TraceIfFalse((record.GetNodeType() == upperBound && record.GetMove().IsEmpty())
+                || (record.GetNodeType() != upperBound && !record.GetMove().IsEmpty()),
+                "Saved move is not valid!");
+
         // hash uses 48 bytes inside the record while masks uses at least log2(16 * 1024 * 1024 / 16) = 20
         const size_t pos = zHash & _hashMask;
 

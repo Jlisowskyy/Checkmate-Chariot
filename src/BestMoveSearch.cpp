@@ -291,7 +291,7 @@ int BestMoveSearch::_pwsSearch(
     if (std::abs(bestEval) == TIME_STOP_RESERVED_VALUE)
         return TIME_STOP_RESERVED_VALUE;
 
-    if (bestEval >= alpha)
+    if (bestEval > alpha)
     {
         // cut-off found
         if (bestEval >= beta)
@@ -329,7 +329,7 @@ int BestMoveSearch::_pwsSearch(
         _fetchBestMove(moves, i);
 
         zHash        = ProcessMove(bd, moves[i], depthLeft - 1, zHash, _kTable, oldData, _repMap);
-        int moveEval = -_zwSearch(bd, -alpha - 1, depthLeft - 1, zHash, moves[i]);
+        int moveEval = -_zwSearch(bd, - (alpha + 1), depthLeft - 1, zHash, moves[i]);
 
         // if there was call to abort then abort
         if (std::abs(moveEval) == TIME_STOP_RESERVED_VALUE)
@@ -346,11 +346,12 @@ int BestMoveSearch::_pwsSearch(
             if (std::abs(moveEval) == TIME_STOP_RESERVED_VALUE)
                 return TIME_STOP_RESERVED_VALUE;
 
+            // TODO: safety measures
             if (moveEval > bestEval)
             {
                 bestEval = moveEval;
 
-                if (moveEval >= alpha)
+                if (moveEval > alpha)
                 {
                     bestMove = moves[i].GetPackedMove();
 
@@ -367,9 +368,23 @@ int BestMoveSearch::_pwsSearch(
                     }
 
                     nType = pvNode;
+                    alpha = bestEval;
                     pv.InsertNext(bestMove, inPV);
                 }
             }
+        }
+        else if (moveEval >= beta)
+        {
+            bestEval = moveEval;
+            bestMove = moves[i].GetPackedMove();
+
+            if (moves[i].IsQuietMove())
+                _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
+            nType = lowerBound;
+
+            ++_cutoffNodes;
+            zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
+            break;
         }
 
         // move reverted after possible research
@@ -593,11 +608,11 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     // clean up
     _stack.PopAggregate(moves);
 
-    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
-    {
-        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
-        TTable.Add(record, zHash);
-    }
+//    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+//    {
+//        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
+//        TTable.Add(record, zHash);
+//    }
     return bestEval;
 }
 
@@ -624,13 +639,13 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
     if (wasTTHit)
     {
-        const nodeType expectedType = prevSearchRes.GetEval() >= beta ? lowerBound : upperBound;
-
-        if (expectedType == prevSearchRes.GetNodeType() || prevSearchRes.GetNodeType() == pvNode)
-        {
-            ++_cutoffNodes;
-            return prevSearchRes.GetEval();
-        }
+//        const nodeType expectedType = prevSearchRes.GetEval() >= beta ? lowerBound : upperBound;
+//
+//        if (expectedType == prevSearchRes.GetNodeType() || prevSearchRes.GetNodeType() == pvNode)
+//        {
+//            ++_cutoffNodes;
+//            return prevSearchRes.GetEval();
+//        }
 
         if (prevSearchRes.GetStatVal() != NO_EVAL)
             statEval = prevSearchRes.GetStatVal();
@@ -692,11 +707,11 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         }
     }
 
-    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
-    {
-        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
-        TTable.Add(record, zHash);
-    }
+//    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+//    {
+//        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
+//        TTable.Add(record, zHash);
+//    }
 
     // clean up
     _stack.PopAggregate(moves);
