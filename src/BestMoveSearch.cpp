@@ -164,8 +164,12 @@ void BestMoveSearch::IterativeDeepening(
                     // We failed high so move the upper boundary
                     beta = std::min(eval + delta, POSITIVE_INFINITY + 1);
                 }
-                else
+                else {
+                    if constexpr (TestAsp)
+                        stat.RecordFinalBoundaries(alpha, beta, eval);
+
                     break;
+                }
             }
 
             // Display Asp Window statistics
