@@ -149,6 +149,22 @@ class BoardEvaluator
         return _getTapperedValue(phase, midVal, endVal);
     }
 
+    /// \brief Function returns material value per player for a given board
+    /// \param Board &bd - board to evaluate
+    /// \return (whiteMaterial, blackMaterial) - tuple with material values for white and black player
+    // TODO: REPLACE FigurePhaes with FigureValuePoints?
+    [[nodiscard]] static INLINE std::tuple<int32_t, int32_t> GetMaterialPerPlayer(const Board &bd)
+    {
+        int32_t blackMaterial = 0;
+        int32_t whiteMaterial = 0;
+        for (size_t i = pawnsIndex; i < kingIndex; i++)
+        {
+            whiteMaterial += CountOnesInBoard(bd.BitBoards[i]) * FigurePhases[i];
+            blackMaterial += CountOnesInBoard(bd.BitBoards[i + bPawnsIndex]) * FigurePhases[i];
+        }
+        return {whiteMaterial, blackMaterial};
+    }
+
     // ------------------------------
     // Private class methods
     // ------------------------------
