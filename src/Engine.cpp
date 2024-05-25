@@ -100,6 +100,8 @@ void Engine::RestartEngine()
 {
     SetStartPos();
 
+    GameTimeManager::Restart();
+
     // cleaning tt
     TTable.ClearTable();
 }

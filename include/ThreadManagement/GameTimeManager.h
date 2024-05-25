@@ -49,6 +49,7 @@ class [[maybe_unused]] GameTimeManager
     static void
     StartSearchManagementAsync(const GoTimeInfo &tInfo, const Color color, const Board &bd, const uint16_t moveAge);
 
+    static void Restart();
     /* Function sets up stop flag to false and saves time infos for later usage */
     static void StartPonder(const GoTimeInfo &tInfo);
 
@@ -63,9 +64,9 @@ class [[maybe_unused]] GameTimeManager
     static bool GetShouldStop() { return ShouldStop; }
 
     /// <summary> Calculate the time in milliseconds for a move </summary>
-    [[maybe_unused]] static lli CalculateTimeMsPerMove(
-        const Board &bd, lli timeLimitClockMs, lli timeLimitPerMoveMs, lli incrementMs, uint16_t moveAge
-    );
+    [[maybe_unused]] static lli
+    CalculateTimeMsPerMove(const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs,
+                           const lli incrementMs, const uint16_t moveAge, const Color color);
 
     private:
     /// @See StartTimerAsync
@@ -89,12 +90,22 @@ class [[maybe_unused]] GameTimeManager
     /// @brief Flag indicating if the search should stop
     static bool ShouldStop;
 
+    static int32_t GeneralExpectedMoves;
+
     private:
     /// @brief Resolution of the timer in milliseconds
     static constexpr uint32_t resolutionMs = 1;
+    static double expectedMoves;
+    static double moveCorrection;
 
     /// @brief Flag indicating if the timer_thread is running
     static bool TimerRunning;
+
+    // Time management constants - used for tuning the time management function
+    static constexpr uint32_t averageMovesPerGame = 40;
+    static constexpr double adaptationThreshold = (double) 1/100;
+    static constexpr double adaptationFactor = (double) 1/40;
+    static constexpr double distribution = (double) 0;
 
     // Wake on update mechanism
     static std::condition_variable cv;
