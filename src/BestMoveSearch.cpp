@@ -16,13 +16,13 @@
 #include "../include/TestsAndDebugging/DebugTools.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
 
-using RepMap                 = std::unordered_map<uint64_t, int>;
+using RepMap = std::unordered_map<uint64_t, int>;
 
 #ifndef NDEBUG
 
 #define TestNullMove() TraceIfFalse(!record._madeMove.IsEmpty(), "Received empty move inside the TT")
 #define TestTTAdd()                                                                                                    \
-    TraceIfFalse(record._type != NodeType::UPPER_BOUND, "Received upper board node inside the TT!");                    \
+    TraceIfFalse(record._type != NodeType::UPPER_BOUND, "Received upper board node inside the TT!");                   \
     TestNullMove()
 
 #else
@@ -164,7 +164,8 @@ void BestMoveSearch::IterativeDeepening(
                     // We failed high so move the upper boundary
                     beta = std::min(eval + delta, POSITIVE_INFINITY + 1);
                 }
-                else {
+                else
+                {
                     if constexpr (TestAsp)
                         stat.RecordFinalBoundaries(alpha, beta, eval);
 
@@ -310,10 +311,10 @@ int BestMoveSearch::_pwsSearch(
             if (depthLeft >= prevSearchRes.GetDepth() ||
                 (!wasTTHit && bd.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
             {
-                const TranspositionTable::HashRecord record{zHash, moves[0].GetPackedMove(),
+                const TranspositionTable::HashRecord record{zHash,     moves[0].GetPackedMove(),
                                                             bestEval,  wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL,
                                                             depthLeft, LOWER_BOUND,
-                                                            bd.Age, _currRootDepth};
+                                                            bd.Age,    _currRootDepth};
                 TTable.Add(record, zHash);
                 TestTTAdd();
             }
@@ -333,7 +334,7 @@ int BestMoveSearch::_pwsSearch(
         _fetchBestMove(moves, i);
 
         zHash        = ProcessMove(bd, moves[i], depthLeft - 1, zHash, _kTable, oldData, _repMap);
-        int moveEval = -_zwSearch(bd, - (alpha + 1), depthLeft - 1, zHash, moves[i]);
+        int moveEval = -_zwSearch(bd, -(alpha + 1), depthLeft - 1, zHash, moves[i]);
 
         // if there was call to abort then abort
         if (std::abs(moveEval) == TIME_STOP_RESERVED_VALUE)
@@ -387,13 +388,12 @@ int BestMoveSearch::_pwsSearch(
     if (depthLeft >= prevSearchRes.GetDepth() ||
         (!wasTTHit && bd.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
     {
-        const NodeType nType = (bestEval >= beta   ? LOWER_BOUND :
-                                bestMove.IsEmpty() ? UPPER_BOUND :
-                                                     PV_NODE);
+        const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
-        const TranspositionTable::HashRecord record{
-            zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, bd.Age, _currRootDepth
-        };
+        const TranspositionTable::HashRecord record{zHash,     bestMove,
+                                                    bestEval,  wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL,
+                                                    depthLeft, nType,
+                                                    bd.Age,    _currRootDepth};
 
         TTable.Add(record, zHash);
     }
@@ -495,9 +495,10 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : UPPER_BOUND);
 
-        const TranspositionTable::HashRecord record{
-            zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, bd.Age, _currRootDepth
-        };
+        const TranspositionTable::HashRecord record{zHash,     bestMove,
+                                                    bestEval,  wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL,
+                                                    depthLeft, nType,
+                                                    bd.Age,    _currRootDepth};
         TTable.Add(record, zHash);
     }
 
@@ -538,7 +539,8 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     {
         if (wasTTHit && prevSearchRes.GetStatVal() != NO_EVAL)
             statEval = prevSearchRes.GetStatVal();
-        else {
+        else
+        {
             statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
 
             if (wasTTHit)
@@ -556,7 +558,8 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
 
         moves = mechanics.GetMovesFast<true>();
     }
-    else {
+    else
+    {
         moves = mechanics.GetMovesFast();
 
         if (moves.size == 0)
@@ -607,13 +610,13 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     // clean up
     _stack.PopAggregate(moves);
 
-    if (!isCheck && !wasTTHit && (prevSearchRes.GetDepth() == 0 || bd.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+    if (!isCheck && !wasTTHit &&
+        (prevSearchRes.GetDepth() == 0 || bd.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
     {
-        const NodeType nType = (bestEval >= beta   ? LOWER_BOUND :
-                                bestMove.IsEmpty() ? UPPER_BOUND :
-                                PV_NODE);
+        const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
-        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, bd.Age, _currRootDepth};
+        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval,
+                                                    0,     nType,    bd.Age,   _currRootDepth};
         TTable.Add(record, zHash);
     }
 
@@ -638,7 +641,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     ++_visitedNodes;
 
     // reading Transposition table for the best move
-    auto& prevSearchRes = TTable.GetRecord(zHash);
+    auto &prevSearchRes = TTable.GetRecord(zHash);
 
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
@@ -661,7 +664,8 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
 
             if (prevSearchRes.GetStatVal() != NO_EVAL)
                 statEval = prevSearchRes.GetStatVal();
-            else {
+            else
+            {
                 statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
                 prevSearchRes.SetStatVal(statEval);
             }
@@ -675,7 +679,8 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
 
         moves = mechanics.GetMovesFast<true>();
     }
-    else{
+    else
+    {
         moves = mechanics.GetMovesFast();
 
         if (moves.size == 0)
@@ -718,10 +723,12 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         }
     }
 
-    if (!isCheck && !wasTTHit && (prevSearchRes.GetDepth() == 0 || bd.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+    if (!isCheck && !wasTTHit &&
+        (prevSearchRes.GetDepth() == 0 || bd.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : UPPER_BOUND);
-        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, bd.Age, _currRootDepth};
+        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval,
+                                                    0,     nType,    bd.Age,   _currRootDepth};
         TTable.Add(record, zHash);
     }
 
@@ -776,7 +783,8 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
     );
 }
 
-int BestMoveSearch::QuiesceEval() {
+int BestMoveSearch::QuiesceEval()
+{
     uint64_t hash = ZHasher.GenerateHash(_board);
 
     return _quiescenceSearch(_board, NEGATIVE_INFINITY, POSITIVE_INFINITY, hash, 0);

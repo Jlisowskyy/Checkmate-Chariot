@@ -3,14 +3,14 @@
 //
 
 #include "../include/Engine.h"
+#include "../include/Evaluation/BoardEvaluator.h"
+#include "../include/Evaluation/BoardEvaluatorPrinter.h"
 #include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
+#include "../include/Search/BestMoveSearch.h"
 #include "../include/Search/TranspositionTable.h"
 #include "../include/Search/ZobristHash.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
-#include "../include/Search/BestMoveSearch.h"
-#include "../include/Evaluation/BoardEvaluatorPrinter.h"
-#include "../include/Evaluation/BoardEvaluator.h"
 
 std::string Engine::_debugEnginePath = Engine::_defaultBookPath;
 
@@ -190,7 +190,7 @@ void Engine::Go(GoInfo &info, const std::vector<std::string> &moves)
         return;
     }
 
-    TManager.Go(_board, _repetitionMap,  info);
+    TManager.Go(_board, _repetitionMap, info);
 }
 
 void Engine::StopSearch() { TManager.Stop(); }
@@ -213,12 +213,14 @@ void Engine::PonderHit()
     }
 }
 
-int Engine::GetQuiesceEval() {
+int Engine::GetQuiesceEval()
+{
     BestMoveSearch searcher{_board, _repetitionMap, TManager.GetDefaultStack()};
     return searcher.QuiesceEval();
 }
 
-int Engine::GetEvalPrinted() {
+int Engine::GetEvalPrinted()
+{
     BoardEvaluatorPrinter::resetEval<EvalMode::PrintMode>();
     BoardEvaluatorPrinter::setBoard<EvalMode::PrintMode>(_board);
     int32_t eval = BoardEvaluator::Evaluation2<EvalMode::PrintMode>(_board);

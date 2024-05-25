@@ -295,34 +295,32 @@ class BoardEvaluator
 
     template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)> struct _processKnightEval
     {
-        evalResult operator()(
-            Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns,
-            uint64_t, uint64_t
-        );
+        evalResult
+        operator()(Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns, uint64_t, uint64_t);
     };
 
     template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)> struct _processBishopEval
     {
 
         evalResult operator()(
-            Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns,
-            uint64_t allyMap, uint64_t enemyMap
+            Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns, uint64_t allyMap,
+            uint64_t enemyMap
         );
     };
 
     template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)> struct _processRookEval
     {
         evalResult operator()(
-            Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns,
-            uint64_t allyMap, uint64_t enemyMap
+            Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns, uint64_t allyMap,
+            uint64_t enemyMap
         );
     };
 
     template <EvalMode mode, class MapT, int (*fieldValueAccess)(int msbPos)> struct _processQueenEval
     {
         evalResult operator()(
-            Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns,
-            uint64_t allyMap, uint64_t enemyMap
+            Board &bd, uint64_t pinnedFigs, int col, uint64_t enemyControlledFieldsByPawns, uint64_t allyMap,
+            uint64_t enemyMap
         );
     };
 
@@ -569,12 +567,12 @@ class BoardEvaluator
     static MaterialArrayT _materialTable;
 };
 
-template<EvalMode mode, class MapT, int (*fieldValueAccess)(int)>
-BoardEvaluator::evalResult
-BoardEvaluator::_processKnightEval<mode, MapT, fieldValueAccess>::operator()(Board &bd, const uint64_t pinnedFigs,
-                                                                             const int col,
-                                                                             const uint64_t enemyControlledFieldsByPawns,
-                                                                             const uint64_t, const uint64_t) {
+template <EvalMode mode, class MapT, int (*fieldValueAccess)(int)>
+BoardEvaluator::evalResult BoardEvaluator::_processKnightEval<mode, MapT, fieldValueAccess>::operator()(
+    Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns, const uint64_t,
+    const uint64_t
+)
+{
     int32_t midEval{};
     int32_t interEval{};
     int32_t endEval{};
@@ -603,13 +601,11 @@ BoardEvaluator::_processKnightEval<mode, MapT, fieldValueAccess>::operator()(Boa
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
-                    ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
+                ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
             );
 
         if constexpr (mode == EvalMode::PrintMode)
-            BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(
-                    ConvertToReversedPos(msbPos), TrappedPiecePenalty
-            );
+            BoardEvaluatorPrinter::setPenaltyAndBonuses<mode>(ConvertToReversedPos(msbPos), TrappedPiecePenalty);
 
         RemovePiece(pinnedKnights, figMap);
     }
@@ -638,18 +634,16 @@ BoardEvaluator::_processKnightEval<mode, MapT, fieldValueAccess>::operator()(Boa
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
-                    ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
+                ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
             );
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
-                    ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
+                ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
             );
 
         // adding king attack info
-        KingSafetyEval::UpdateKingAttacks<mode>(
-                kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints
-        );
+        KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
 
         RemovePiece(unpinnedKnights, figMap);
     }
@@ -660,13 +654,12 @@ BoardEvaluator::_processKnightEval<mode, MapT, fieldValueAccess>::operator()(Boa
     return {midEval, endEval, controlledFields, kInfo};
 }
 
-template<EvalMode mode, class MapT, int (*fieldValueAccess)(int)>
-BoardEvaluator::evalResult
-BoardEvaluator::_processBishopEval<mode, MapT, fieldValueAccess>::operator()(Board &bd, const uint64_t pinnedFigs,
-                                                                             const int col,
-                                                                             const uint64_t enemyControlledFieldsByPawns,
-                                                                             const uint64_t allyMap,
-                                                                             const uint64_t enemyMap) {
+template <EvalMode mode, class MapT, int (*fieldValueAccess)(int)>
+BoardEvaluator::evalResult BoardEvaluator::_processBishopEval<mode, MapT, fieldValueAccess>::operator()(
+    Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
+    const uint64_t allyMap, const uint64_t enemyMap
+)
+{
     int32_t midEval{};
     int32_t interEval{};
     int32_t endEval{};
@@ -705,7 +698,7 @@ BoardEvaluator::_processBishopEval<mode, MapT, fieldValueAccess>::operator()(Boa
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
-                    ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
+                ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
             );
 
         // adding controlled fields
@@ -720,7 +713,7 @@ BoardEvaluator::_processBishopEval<mode, MapT, fieldValueAccess>::operator()(Boa
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
-                    ConvertToReversedPos(msbPos), movesMobilityBonusMid, movesMobilityBonusEnd
+                ConvertToReversedPos(msbPos), movesMobilityBonusMid, movesMobilityBonusEnd
             );
 
         RemovePiece(pinnedBishops, figMap);
@@ -746,7 +739,7 @@ BoardEvaluator::_processBishopEval<mode, MapT, fieldValueAccess>::operator()(Boa
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
-                    ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
+                ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
             );
 
         // adding positional field values
@@ -755,13 +748,11 @@ BoardEvaluator::_processBishopEval<mode, MapT, fieldValueAccess>::operator()(Boa
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
-                    ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
+                ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
             );
 
         // adding king attack info
-        KingSafetyEval::UpdateKingAttacks<mode>(
-                kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints
-        );
+        KingSafetyEval::UpdateKingAttacks<mode>(kInfo, moves, kingRing, KingSafetyEval::KingMinorPieceAttackPoints);
 
         RemovePiece(unpinnedBishops, figMap);
     }
@@ -772,13 +763,12 @@ BoardEvaluator::_processBishopEval<mode, MapT, fieldValueAccess>::operator()(Boa
     return {midEval, endEval, controlledFields, kInfo};
 }
 
-template<EvalMode mode, class MapT, int (*fieldValueAccess)(int)>
-BoardEvaluator::evalResult
-BoardEvaluator::_processRookEval<mode, MapT, fieldValueAccess>::operator()(Board &bd, const uint64_t pinnedFigs,
-                                                                           const int col,
-                                                                           const uint64_t enemyControlledFieldsByPawns,
-                                                                           const uint64_t allyMap,
-                                                                           const uint64_t enemyMap) {
+template <EvalMode mode, class MapT, int (*fieldValueAccess)(int)>
+BoardEvaluator::evalResult BoardEvaluator::_processRookEval<mode, MapT, fieldValueAccess>::operator()(
+    Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
+    const uint64_t allyMap, const uint64_t enemyMap
+)
+{
     int32_t midEval{};
     int32_t interEval{};
     int32_t endEval{};
@@ -830,7 +820,7 @@ BoardEvaluator::_processRookEval<mode, MapT, fieldValueAccess>::operator()(Board
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
-                    ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
+                ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
             );
 
         RemovePiece(pinnedRooks, figMap);
@@ -856,7 +846,7 @@ BoardEvaluator::_processRookEval<mode, MapT, fieldValueAccess>::operator()(Board
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
-                    ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
+                ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
             );
 
         // open file bonus
@@ -878,13 +868,12 @@ BoardEvaluator::_processRookEval<mode, MapT, fieldValueAccess>::operator()(Board
     return {midEval, endEval, controlledFields, kInfo};
 }
 
-template<EvalMode mode, class MapT, int (*fieldValueAccess)(int)>
-BoardEvaluator::evalResult
-BoardEvaluator::_processQueenEval<mode, MapT, fieldValueAccess>::operator()(Board &bd, const uint64_t pinnedFigs,
-                                                                            const int col,
-                                                                            const uint64_t enemyControlledFieldsByPawns,
-                                                                            const uint64_t allyMap,
-                                                                            const uint64_t enemyMap) {
+template <EvalMode mode, class MapT, int (*fieldValueAccess)(int)>
+BoardEvaluator::evalResult BoardEvaluator::_processQueenEval<mode, MapT, fieldValueAccess>::operator()(
+    Board &bd, const uint64_t pinnedFigs, const int col, const uint64_t enemyControlledFieldsByPawns,
+    const uint64_t allyMap, const uint64_t enemyMap
+)
+{
     int32_t midEval{};
     int32_t endEval{};
     uint64_t controlledFields{};
@@ -921,7 +910,7 @@ BoardEvaluator::_processQueenEval<mode, MapT, fieldValueAccess>::operator()(Boar
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
-                    ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
+                ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
             );
 
         // adding positional field values
@@ -930,7 +919,7 @@ BoardEvaluator::_processQueenEval<mode, MapT, fieldValueAccess>::operator()(Boar
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
-                    ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
+                ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
             );
 
         RemovePiece(pinnedQueens, figMap);
@@ -956,7 +945,7 @@ BoardEvaluator::_processQueenEval<mode, MapT, fieldValueAccess>::operator()(Boar
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setMobilityBonusTappered<mode>(
-                    ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
+                ConvertToReversedPos(msbPos), mobilityBonusMid, mobilityBonusEnd
             );
 
         // adding positional field values
@@ -965,7 +954,7 @@ BoardEvaluator::_processQueenEval<mode, MapT, fieldValueAccess>::operator()(Boar
 
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setValueOfPiecePositionTappered<mode>(
-                    ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
+                ConvertToReversedPos(msbPos), positionalValuesMid, positionalValuesMid
             );
 
         // adding king attack info

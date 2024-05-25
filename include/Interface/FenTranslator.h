@@ -40,7 +40,7 @@ struct FenTranslator
     // private methods
     // ------------------------------
 
-    static size_t _processMovesCounts(size_t pos, const std::string &fenPos, int& counter);
+    static size_t _processMovesCounts(size_t pos, const std::string &fenPos, int &counter);
 
     static std::string _extractCastling(const Board &bd);
 

@@ -29,7 +29,10 @@ class AspWinStat
     public:
     void RetryFailLow(int alpha, int beta, int eval) { _fails.emplace(FailType::FailLow, alpha, beta, eval); }
     void RetryFailHigh(int alpha, int beta, int eval) { _fails.emplace(FailType::FailHigh, alpha, beta, eval); }
-    void RecordFinalBoundaries(int alpha , int beta, int eval) { _fails.emplace(FailType::FinalBoundaries, alpha, beta, eval); }
+    void RecordFinalBoundaries(int alpha, int beta, int eval)
+    {
+        _fails.emplace(FailType::FinalBoundaries, alpha, beta, eval);
+    }
 
     void DisplayAndClean()
     {
@@ -43,9 +46,9 @@ class AspWinStat
 
             GlobalLogger.LogStream << std::format(
                 "{} a:{}, b:{}, e:{} ",
-                type == FailType::FailHigh ? 'H' :
-                type == FailType::FailLow ? 'L' :
-                                            'E',
+                type == FailType::FailHigh  ? 'H'
+                : type == FailType::FailLow ? 'L'
+                                            : 'E',
                 alpa, beta, eval
             );
         }

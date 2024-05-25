@@ -80,10 +80,7 @@ extern const std::unordered_map<char, size_t> FigCharToIndexMap;
  * Function checks whether given score is a mate,
  * it is needed due to usage of multiple mate score adjusted accordingly to the distance to root
  * */
-inline INLINE bool IsMateScore(const int score)
-{
-    return abs(score) >= BEST_MATE_VALUE_ABS;
-}
+inline INLINE bool IsMateScore(const int score) { return abs(score) >= BEST_MATE_VALUE_ABS; }
 
 /* Function adjusts mate score accordingly to the distance to root */
 [[nodiscard]] inline INLINE int GetMateValue(const int depthLeft, const int rootDepth)

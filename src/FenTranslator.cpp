@@ -33,7 +33,7 @@ bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
         _processMovesCounts(pos, fenPos, age);
 
         // We store half moves instead of full moves
-        bd.Age = std::max(static_cast<uint16_t>(age * 2 - 1), static_cast<uint16_t >(1));
+        bd.Age = std::max(static_cast<uint16_t>(age * 2 - 1), static_cast<uint16_t>(1));
     }
     catch (const std::exception &exc)
     {
@@ -329,7 +329,7 @@ size_t FenTranslator::_skipBlanks(size_t pos, const std::string &fenPos)
     return pos;
 }
 
-size_t FenTranslator::_processMovesCounts(size_t pos, const std::string &fenPos, int& counter)
+size_t FenTranslator::_processMovesCounts(size_t pos, const std::string &fenPos, int &counter)
 {
     static constexpr auto convert = [](const std::string &str) -> int
     {

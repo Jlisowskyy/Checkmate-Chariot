@@ -51,11 +51,12 @@ struct TranspositionTable
         // ------------------------------
 
         HashRecord(
-                const uint64_t hash, const PackedMove mv, const int eval, const int statVal, const int depth,
-                const NodeType nType, const uint16_t age, const int rootDepth
+            const uint64_t hash, const PackedMove mv, const int eval, const int statVal, const int depth,
+            const NodeType nType, const uint16_t age, const int rootDepth
         )
-            : _zobristHashAndAgePacked(_packHashAndAge(hash, age)), _madeMove(mv), _eval(AdjustMateScoreForTTIfNeeded(eval, depth, rootDepth)),
-              _value(static_cast<int16_t>(statVal)), _depth(static_cast<uint8_t>(depth)), _type(nType)
+            : _zobristHashAndAgePacked(_packHashAndAge(hash, age)), _madeMove(mv),
+              _eval(AdjustMateScoreForTTIfNeeded(eval, depth, rootDepth)), _value(static_cast<int16_t>(statVal)),
+              _depth(static_cast<uint8_t>(depth)), _type(nType)
         {
         }
 
@@ -111,7 +112,6 @@ struct TranspositionTable
         // ------------------------------
 
         public:
-
 #ifdef NDEBUG // otherwise used inside the asserts out of the container
 
         private:
@@ -156,9 +156,11 @@ struct TranspositionTable
     // Method adds new record to the table
     INLINE void Add(const HashRecord &record, const uint64_t zHash)
     {
-        TraceIfFalse((record.GetNodeType() == UPPER_BOUND && record.GetMove().IsEmpty())
-                || (record.GetNodeType() != UPPER_BOUND && !record.GetMove().IsEmpty()),
-                "Saved move is not valid!");
+        TraceIfFalse(
+            (record.GetNodeType() == UPPER_BOUND && record.GetMove().IsEmpty()) ||
+                (record.GetNodeType() != UPPER_BOUND && !record.GetMove().IsEmpty()),
+            "Saved move is not valid!"
+        );
 
         // hash uses 48 bytes inside the record while masks uses at least log2(16 * 1024 * 1024 / 16) = 20
         const size_t pos = zHash & _hashMask;
@@ -210,17 +212,17 @@ struct TranspositionTable
     [[nodiscard]] static INLINE int AdjustMateScoreForTT(const int eval, const int depthLeft, const int rootDepth)
     {
         const int distToRoot = rootDepth - depthLeft;
-        const int prevDist = eval > 0 ? POSITIVE_INFINITY - eval : eval - NEGATIVE_INFINITY;
+        const int prevDist   = eval > 0 ? POSITIVE_INFINITY - eval : eval - NEGATIVE_INFINITY;
 
         const int correctedDist = prevDist - distToRoot;
         return eval > 0 ? POSITIVE_INFINITY - correctedDist : NEGATIVE_INFINITY + correctedDist;
     }
 
-    [[nodiscard]] static INLINE int16_t AdjustMateScoreForTTIfNeeded(const int eval, const int depthLeft, const int rootDepth)
+    [[nodiscard]] static INLINE int16_t
+    AdjustMateScoreForTTIfNeeded(const int eval, const int depthLeft, const int rootDepth)
     {
-        return IsMateScore(eval) ?
-            static_cast<int16_t>(AdjustMateScoreForTT(eval, depthLeft, rootDepth)) :
-            static_cast<int16_t>(eval);
+        return IsMateScore(eval) ? static_cast<int16_t>(AdjustMateScoreForTT(eval, depthLeft, rootDepth))
+                                 : static_cast<int16_t>(eval);
     }
 
     // ------------------------------

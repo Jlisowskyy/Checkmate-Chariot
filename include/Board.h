@@ -160,7 +160,7 @@ struct Board
     int MovingColor                        = WHITE;
     int HalfMoves                          = {};
     uint64_t BitBoards[BitBoardsCount + 1] = {}; // additional sentinel board
-    uint16_t Age{};  // stores total half moves since the beginning of the game
+    uint16_t Age{};                              // stores total half moves since the beginning of the game
 };
 
 #endif // BOARD_H
