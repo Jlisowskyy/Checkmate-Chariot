@@ -406,9 +406,9 @@ void MoveGenerator::_processElPassantMoves(
 
         if constexpr (ApplyHeuristicEval)
         {
-            int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, 0, pawnMap, moveMap);
+            int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, 0, pawnMap, moveMap);
             eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, ExtractMsbPos(moveMap));
-            mv.SetEval(eval);
+            mv.SetEval(static_cast<int16_t>(eval));
         }
 
         results.Push(_threadStack, mv);
@@ -561,11 +561,11 @@ void MoveGenerator::_processNonAttackingMoves(
 
             if constexpr (ApplyHeuristicEval)
             {
-                int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
+                int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
                 eval         = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
-                mv.SetEval(eval);
+                mv.SetEval(static_cast<int16_t>(eval));
             }
 
             results.Push(_threadStack, mv);
@@ -593,9 +593,9 @@ void MoveGenerator::_processNonAttackingMoves(
                 // preparing heuristic eval info
                 if constexpr (ApplyHeuristicEval)
                 {
-                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
+                    int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
                     eval         = MoveSortEval::ApplyPromotionEffects(eval, TargetBoard);
-                    mv.SetEval(eval);
+                    mv.SetEval(static_cast<int16_t>(eval));
                 }
 
                 results.Push(_threadStack, mv);
@@ -641,10 +641,10 @@ void MoveGenerator::_processAttackingMoves(
             // preparing heuristic eval info
             if constexpr (ApplyHeuristicEval)
             {
-                int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
+                int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
                 eval         = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
                 eval         = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
-                mv.SetEval(eval);
+                mv.SetEval(static_cast<int16_t>(eval));
             }
 
             results.Push(_threadStack, mv);
@@ -674,11 +674,11 @@ void MoveGenerator::_processAttackingMoves(
 
                 if constexpr (ApplyHeuristicEval)
                 {
-                    int16_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
+                    int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
                     eval         = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
                     eval         = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
                     eval         = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
-                    mv.SetEval(eval);
+                    mv.SetEval(static_cast<int16_t>(eval));
                 }
 
                 results.Push(_threadStack, mv);
@@ -733,10 +733,10 @@ void MoveGenerator::_processPlainKingMoves(
 
             if constexpr (ApplyHeuristicEval)
             {
-                int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
-                mv.SetEval(eval);
+                mv.SetEval(static_cast<int16_t>(eval));
             }
 
             results.Push(_threadStack, mv);
@@ -772,9 +772,9 @@ void MoveGenerator::_processPlainKingMoves(
 
         if constexpr (ApplyHeuristicEval)
         {
-            int16_t eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(0, _mostRecentSq, newPos);
+            int32_t eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(0, _mostRecentSq, newPos);
             eval += MoveSortEval::FigureEval[attackedFigBoardIndex]; // adding value of the killed figure
-            mv.SetEval(eval);
+            mv.SetEval(static_cast<int16_t>(eval));
         }
 
         results.Push(_threadStack, mv);
@@ -818,10 +818,10 @@ void MoveGenerator::_processKingCastlings(payload &results, const uint64_t block
 
             if constexpr (ApplyHeuristicEval)
             {
-                int16_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
-                mv.SetEval(eval);
+                mv.SetEval(static_cast<int16_t>(eval));
             }
 
             results.Push(_threadStack, mv);
