@@ -16,7 +16,6 @@
 #include "../include/TestsAndDebugging/DebugTools.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
 
-static constexpr int NO_EVAL = TranspositionTable::HashRecord::NoEval;
 using RepMap                 = std::unordered_map<uint64_t, int>;
 
 #ifndef NDEBUG
@@ -526,7 +525,6 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
 
-
     if (wasTTHit && prevSearchRes.GetStatVal() != NO_EVAL)
         statEval = prevSearchRes.GetStatVal();
     else {
@@ -626,7 +624,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
 
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
-    if (wasTTHit)
+    if (wasTTHit && prevSearchRes.GetEval() != NO_EVAL)
     {
         if (prevSearchRes.GetNodeType() == PV_NODE)
             return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(-extendedDepth, _currRootDepth);
