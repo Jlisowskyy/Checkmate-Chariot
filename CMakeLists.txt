@@ -208,7 +208,7 @@ add_compile_definitions(TEST_TT=1)
 add_compile_definitions(TEST_ASP_WIN=1)
 
 # Uncomment to allow usage of aspiration windows inside the search
-add_compile_definitions(USE_ASP_WIN=1)
+#add_compile_definitions(USE_ASP_WIN=1)
 
 ################################################################################
 #                                  Post build                                  #

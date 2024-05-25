@@ -448,7 +448,7 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
         if (prevSearchRes.GetNodeType() == LOWER_BOUND && prevSearchRes.GetEval() >= beta)
             return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(depthLeft, _currRootDepth);
 
-        if (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetEval() < alpha)
+        if (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetEval() <= alpha)
             return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(depthLeft, _currRootDepth);
     }
 
@@ -643,7 +643,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         if (prevSearchRes.GetNodeType() == LOWER_BOUND && prevSearchRes.GetEval() >= beta)
             return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(-extendedDepth, _currRootDepth);
 
-        if (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetEval() < alpha)
+        if (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetEval() <= alpha)
             return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(-extendedDepth, _currRootDepth);
 
         if (prevSearchRes.GetStatVal() != NO_EVAL)
