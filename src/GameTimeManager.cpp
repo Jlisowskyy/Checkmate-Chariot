@@ -12,7 +12,7 @@
 #include "../include/ThreadManagement/GameTimeManagerUtils.h"
 
 // Static fields initialization
-double GameTimeManager::expectedMoves = averageMovesPerGame * distribution;
+double GameTimeManager::expectedMoves  = averageMovesPerGame * distribution;
 double GameTimeManager::moveCorrection = averageMovesPerGame * (1 - distribution);
 
 bool GameTimeManager::TimerRunning       = false;
@@ -109,8 +109,10 @@ void GameTimeManager::_search_management_thread(
     }
 }
 
-lli GameTimeManager::CalculateTimeMsPerMove(const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs,
-                                            const lli incrementMs, const uint16_t moveAge, const Color color)
+lli GameTimeManager::CalculateTimeMsPerMove(
+    const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs, const lli incrementMs,
+    const uint16_t moveAge, const Color color
+)
 {
     /*
      * --------------------------------- Main Idea ----------------------------------
@@ -207,15 +209,17 @@ lli GameTimeManager::CalculateTimeMsPerMove(const Board &bd, const lli timeLimit
      */
 
     // If the time left is less than the increment, return the increment (-1 to avoid time loss)
-    if (timeLimitClockMs < incrementMs) return (incrementMs != 1 ? incrementMs - 1 : 1);
+    if (timeLimitClockMs < incrementMs)
+        return (incrementMs != 1 ? incrementMs - 1 : 1);
 
-    if (moveAge > expectedMoves + moveCorrection * adaptationThreshold){
+    if (moveAge > expectedMoves + moveCorrection * adaptationThreshold)
+    {
         expectedMoves += moveCorrection * adaptationFactor;
     }
 
     const double maxMoveAge = expectedMoves + moveCorrection;
-    const double a           = (moveAge / 2) * 1'000;
-    const double b           = maxMoveAge * 1'000;
+    const double a          = (moveAge / 2) * 1'000;
+    const double b          = maxMoveAge * 1'000;
 
     const int32_t em   = (int32_t)(maxMoveAge - moveAge / 2);
     const int32_t xmin = (int32_t)(((double)timeLimitClockMs / ((double)em)) / 4);
@@ -284,7 +288,8 @@ void GameTimeManager::PonderHit(Color color, const Board &bd, uint16_t moveAge)
     StartSearchManagementAsync(_ponderTimes, color, bd, moveAge);
 }
 
-void GameTimeManager::Restart() {
-    expectedMoves = averageMovesPerGame * distribution;
+void GameTimeManager::Restart()
+{
+    expectedMoves  = averageMovesPerGame * distribution;
     moveCorrection = averageMovesPerGame * (1 - distribution);
 }

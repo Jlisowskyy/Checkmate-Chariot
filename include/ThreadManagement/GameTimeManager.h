@@ -64,9 +64,10 @@ class [[maybe_unused]] GameTimeManager
     static bool GetShouldStop() { return ShouldStop; }
 
     /// <summary> Calculate the time in milliseconds for a move </summary>
-    [[maybe_unused]] static lli
-    CalculateTimeMsPerMove(const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs,
-                           const lli incrementMs, const uint16_t moveAge, const Color color);
+    [[maybe_unused]] static lli CalculateTimeMsPerMove(
+        const Board &bd, const lli timeLimitClockMs, const lli timeLimitPerMoveMs, const lli incrementMs,
+        const uint16_t moveAge, const Color color
+    );
 
     private:
     /// @See StartTimerAsync
@@ -103,9 +104,9 @@ class [[maybe_unused]] GameTimeManager
 
     // Time management constants - used for tuning the time management function
     static constexpr uint32_t averageMovesPerGame = 40;
-    static constexpr double adaptationThreshold = (double) 1/100;
-    static constexpr double adaptationFactor = (double) 1/40;
-    static constexpr double distribution = (double) 0;
+    static constexpr double adaptationThreshold   = (double)1 / 100;
+    static constexpr double adaptationFactor      = (double)1 / 40;
+    static constexpr double distribution          = (double)0;
 
     // Wake on update mechanism
     static std::condition_variable cv;

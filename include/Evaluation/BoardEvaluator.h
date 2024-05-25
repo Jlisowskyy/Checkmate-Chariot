@@ -156,7 +156,8 @@ class BoardEvaluator
     {
         int32_t blackMaterial = 0;
         int32_t whiteMaterial = 0;
-        for(size_t i = pawnsIndex; i < kingIndex; i++){
+        for (size_t i = pawnsIndex; i < kingIndex; i++)
+        {
             whiteMaterial += CountOnesInBoard(bd.BitBoards[i]) * FigurePhases[i];
             blackMaterial += CountOnesInBoard(bd.BitBoards[i + bPawnsIndex]) * FigurePhases[i];
         }
