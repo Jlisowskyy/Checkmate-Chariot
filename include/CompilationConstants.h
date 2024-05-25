@@ -104,21 +104,6 @@ static constexpr bool TestTT = false;
 //---------------------------
 
 // ------------------------------
-// Display statistics about aspiration window flow
-
-#ifdef TEST_ASP_WIN
-
-static constexpr bool TestAsp = true;
-
-#else
-
-static constexpr bool TestAsp = false;
-
-#endif // TEST_ASP_WIN
-
-//---------------------------
-
-// ------------------------------
 // Controls whether aspiration windows are used inside the search
 
 #ifdef USE_ASP_WIN
@@ -128,6 +113,21 @@ static constexpr bool UseAsp = true;
 #else
 
 static constexpr bool UseAsp = false;
+
+#endif // TEST_ASP_WIN
+
+//---------------------------
+
+// ------------------------------
+// Display statistics about aspiration window flow
+
+#ifdef TEST_ASP_WIN
+
+static constexpr bool TestAsp = UseAsp;
+
+#else
+
+static constexpr bool TestAsp = false;
 
 #endif // TEST_ASP_WIN
 

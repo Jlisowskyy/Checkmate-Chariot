@@ -283,9 +283,9 @@ void GameTimeManager::StartPonder(const GoTimeInfo &tInfo)
     ShouldStop   = false;
 }
 
-void GameTimeManager::PonderHit(Color color, const Board &bd, uint16_t moveAge)
+void GameTimeManager::PonderHit(Color color, const Board &bd)
 {
-    StartSearchManagementAsync(_ponderTimes, color, bd, moveAge);
+    StartSearchManagementAsync(_ponderTimes, color, bd, bd.Age);
 }
 
 void GameTimeManager::Restart()

@@ -27,11 +27,17 @@ bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
         pos        = _skipBlanks(pos, fenPos);
         pos        = _processElPassant(workBoard, pos, fenPos);
         pos        = _skipBlanks(pos, fenPos);
-        _processMovesCounts(workBoard, pos, fenPos);
+        pos        = _processMovesCounts(pos, fenPos, bd.HalfMoves);
+        pos        = _skipBlanks(pos, fenPos);
+        int age;
+        _processMovesCounts(pos, fenPos, age);
+
+        // We store half moves instead of full moves
+        bd.Age = std::max(static_cast<uint16_t>(age * 2 - 1), static_cast<uint16_t >(1));
     }
     catch (const std::exception &exc)
     {
-        GlobalLogger.LogStream << (exc.what());
+        GlobalLogger.LogStream << (exc.what()) << '\n';
         GlobalLogger.LogStream << ("[ INFO ] Loading default layout...\n");
         bd = StartBoard;
         return false;
@@ -62,9 +68,7 @@ std::string FenTranslator::Translate(const Board &board)
     fenPos += ' ';
     fenPos += std::to_string(board.HalfMoves);
     fenPos += ' ';
-
-    // skpping moves counters - not supported
-    fenPos += "1";
+    fenPos += std::to_string((board.Age + 1) / 2);
 
     return fenPos;
 }
@@ -325,12 +329,17 @@ size_t FenTranslator::_skipBlanks(size_t pos, const std::string &fenPos)
     return pos;
 }
 
-void FenTranslator::_processMovesCounts(Board &bd, size_t pos, const std::string &fenPos)
+size_t FenTranslator::_processMovesCounts(size_t pos, const std::string &fenPos, int& counter)
 {
     static constexpr auto convert = [](const std::string &str) -> int
     {
         return std::stoi(str);
     };
 
-    ParseTools::ExtractNextNumeric<int, convert>(fenPos, pos, bd.HalfMoves);
+    size_t rv = ParseTools::ExtractNextNumeric<int, convert>(fenPos, pos, counter);
+
+    if (rv == ParseTools::InvalidNextWorldRead)
+        throw std::runtime_error("Move counter has not been found!");
+
+    return rv;
 }

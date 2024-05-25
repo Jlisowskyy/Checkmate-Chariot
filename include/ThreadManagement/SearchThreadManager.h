@@ -38,12 +38,12 @@ struct SearchThreadManager
 
     [[nodiscard]] StackType &GetDefaultStack() { return _stacks[0]; }
 
-    bool Go(const Board &bd, const RepMap &rMap, uint16_t age, const GoInfo &info);
+    bool Go(const Board &bd, const RepMap &rMap, const GoInfo &info);
 
     /* Function is not thread safe! Is when there is no time to start up threads! */
-    static void GoWoutThread(const Board &bd, const RepMap &rMap, uint16_t age, const GoInfo &info);
+    static void GoWoutThread(const Board &bd, const RepMap &rMap, const GoInfo &info);
 
-    bool GoInfinite(const Board &bd, const RepMap &rMap, uint16_t age);
+    bool GoInfinite(const Board &bd, const RepMap &rMap);
 
     void Stop();
 
@@ -62,7 +62,7 @@ struct SearchThreadManager
 
     private:
     static void _threadSearchJob(
-        const Board *bd, const RepMap *rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, uint16_t age, int depth
+        const Board *bd, const RepMap *rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, int depth
     );
 
     // ------------------------------

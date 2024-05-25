@@ -305,12 +305,12 @@ int BestMoveSearch::_pwsSearch(
 
             // updating if profitable
             if (depthLeft >= prevSearchRes.GetDepth() ||
-                (!wasTTHit && _age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
+                (!wasTTHit && bd.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
             {
                 const TranspositionTable::HashRecord record{zHash, moves[0].GetPackedMove(),
                                                             bestEval,  wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL,
                                                             depthLeft, LOWER_BOUND,
-                                                            _age, _currRootDepth};
+                                                            bd.Age, _currRootDepth};
                 TTable.Add(record, zHash);
                 TestTTAdd();
             }
@@ -394,14 +394,14 @@ int BestMoveSearch::_pwsSearch(
 
     // updating if profitable
     if (depthLeft >= prevSearchRes.GetDepth() ||
-        (!wasTTHit && _age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
+        (!wasTTHit && bd.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
     {
         const NodeType nType = (bestEval >= beta   ? LOWER_BOUND :
                                 bestMove.IsEmpty() ? UPPER_BOUND :
                                                      PV_NODE);
 
         const TranspositionTable::HashRecord record{
-            zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age, _currRootDepth
+            zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, bd.Age, _currRootDepth
         };
 
         TTable.Add(record, zHash);
@@ -500,12 +500,12 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     }
 
     if (depthLeft >= prevSearchRes.GetDepth() ||
-        (!wasTTHit && _age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
+        (!wasTTHit && bd.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : UPPER_BOUND);
 
         const TranspositionTable::HashRecord record{
-            zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age, _currRootDepth
+            zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, bd.Age, _currRootDepth
         };
         TTable.Add(record, zHash);
     }
@@ -602,13 +602,13 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     // clean up
     _stack.PopAggregate(moves);
 
-    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && bd.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
     {
         const NodeType nType = (bestEval >= beta   ? LOWER_BOUND :
                                 bestMove.IsEmpty() ? UPPER_BOUND :
                                 PV_NODE);
 
-        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age, _currRootDepth};
+        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, bd.Age, _currRootDepth};
         TTable.Add(record, zHash);
     }
 
@@ -700,10 +700,10 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         }
     }
 
-    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && bd.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : UPPER_BOUND);
-        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age, _currRootDepth};
+        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, bd.Age, _currRootDepth};
         TTable.Add(record, zHash);
     }
 

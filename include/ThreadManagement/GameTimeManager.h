@@ -54,7 +54,7 @@ class [[maybe_unused]] GameTimeManager
     static void StartPonder(const GoTimeInfo &tInfo);
 
     /* Function starts time management accordingly to previously saved times */
-    static void PonderHit(Color color, const Board &bd, uint16_t moveAge);
+    static void PonderHit(Color color, const Board &bd);
 
     /// <summary> Stop the search management thread </summary>
     static void StopSearchManagement();

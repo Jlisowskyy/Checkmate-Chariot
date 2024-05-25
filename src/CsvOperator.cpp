@@ -29,7 +29,6 @@ std::vector<std::pair<std::string, int>> CsvOperator::ReadPosDepthCsv(std::ifstr
         if (pos == 0)
             throw std::runtime_error("missing comma: expected two values fen position and depth");
 
-        innerBuf.pop_back();
         records.emplace_back(innerBuf, 0);
 
         pos = ParseTools::ExtractNextWord(buffer, innerBuf, pos + 1);

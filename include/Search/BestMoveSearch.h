@@ -138,8 +138,8 @@ class BestMoveSearch
      * */
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board, const RepMap &rMap, Stack<Move, DEFAULT_STACK_SIZE> &s, const uint16_t age)
-        : _stack(s), _board(board), _repMap(rMap), _age(age)
+    BestMoveSearch(const Board &board, const RepMap &rMap, Stack<Move, DEFAULT_STACK_SIZE> &s)
+        : _stack(s), _board(board), _repMap(rMap)
     {
     }
     ~BestMoveSearch() = default;
@@ -203,7 +203,6 @@ class BestMoveSearch
     Board _board;
     RepMap _repMap;
     PV _pv{};
-    const uint16_t _age;
     uint64_t _visitedNodes = 0;
     uint64_t _cutoffNodes  = 0;
     int _currRootDepth     = 0;
