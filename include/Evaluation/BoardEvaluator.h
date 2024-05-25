@@ -152,6 +152,7 @@ class BoardEvaluator
     /// \brief Function returns material value per player for a given board
     /// \param Board &bd - board to evaluate
     /// \return (whiteMaterial, blackMaterial) - tuple with material values for white and black player
+    // TODO: REPLACE FigurePhaes with FigureValuePoints?
     [[nodiscard]] static INLINE std::tuple<int32_t, int32_t> GetMaterialPerPlayer(const Board &bd)
     {
         int32_t blackMaterial = 0;
