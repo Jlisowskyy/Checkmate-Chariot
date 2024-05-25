@@ -140,7 +140,7 @@ def main():
             Game.PlayerColor.BLACK, 10000, 0
         ),
         Game(
-            "90 moves game",
+            "88 moves game",
             engine.pgn_str_to_uci_str(
                 "1. Nc3 d5 2. d4 Nf6 3. Nf3 c6 4. Bf4 e6 5. e3 Bd6 6. Bxd6 Qxd6 7. Bd3 Nbd7 8. e4 dxe4 9. Bxe4 O-O 10. Bd3 Rd8 11. O-O c5 12. Nb5 Qb6 13. a4 cxd4 14. a5 Qc5 15. Nbxd4 h6 16. Nb5 Qe7 17. Nc7 Rb8 18. Qd2 a6 19. Rad1 Qc5 20. Qc3 Qxc3 21. bxc3 b5 22. c4 bxc4 23. Bxc4 Bb7 24. Bxa6 Rdc8 25. Bxb7 Rxb7 26. Nxe6 fxe6 27. Ra1 Ra8 28. Rfe1 Ra6 29. h4 Rb4 30. Ree3 Kf8 31. g3 Ke7 32. Ree1 Rb5 33. Nd4 Rc5 34. f4 Rc3 35. Kh2 Rc4 36. Rad1 Rc5 37. Ree2 Rd5 38. c4 Rc5 39. Rde1 Nf8 40. Rc1 Rd6 41. Nb3 Rcc6 42. Rd2 Rxd2+ 43. Nxd2 N8d7 44. Kg2 Rd6 45. Nf3 Ra6 46. Ra1 Kd6 47. Nd2 Nc5 48. Kf3 Kc7 49. Ke3 Rd6 50. Ra3 h5 51. Ke2 Ra6 52. Ke3 Rd6 53. Ke2 g6 54. Nf3 Kb7 55. Ne5 Ka6 56. Nxg6 Nfe4 57. Ne5 Nd2 58. Ke3 Ndb3 59. Kf3 Rd2 60. g4 Nd4+ 61. Ke3 Rd1 62. Nd3 Ndc2+ 63. Kf3 Nxd3 64. Rc3 Nd4+ 65. Ke3 Nxf4 66. Kxf4 Ne2+ 67. Ke5 Nxc3 68. gxh5 Rh1 69. Kf6 Rxh5 70. Kg6 Rh1 71. h6 Kxa5 72. h7 e4 73. c5 Kb5 74. Kg7 Rxh7+ 75. Kxh7 Kxc5 76. Kh6 e4 77. Kh5 e3 78. Kg4 e2 79. Kf5 Kc4 80. Kg6 Kb3 81. Kh7 Nd5 82. Kh8 e1=Q 83. Kh7 Qg3 84. Kh8 Ne3 85. Kh7 Qg5 86. Kh8 Qf6+ 87. Kg8 Kc2 88. Kh7 Nf5 89. Kg8 Qg7#"
             ),
