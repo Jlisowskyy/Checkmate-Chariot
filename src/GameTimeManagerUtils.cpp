@@ -11,8 +11,8 @@ std::tuple<lli, lli, lli> GameTimeManagerUtils::ParseGoTimeInfo(const GoTimeInfo
     lli timeLimitPerMoveMs = tInfo.moveTime == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : tInfo.moveTime;
     lli incrementMs =
         (color == BLACK ? tInfo.bInc : tInfo.wInc); // Get the time left for the engine to play (on the clock)
+    incrementMs      = incrementMs == GoTimeInfo::NotSet ? 0 : incrementMs;
     timeLimitClockMs = timeLimitClockMs == GoTimeInfo::NotSet ? GoTimeInfo::Infinite : timeLimitClockMs;
 
-    incrementMs = incrementMs == GoTimeInfo::NotSet ? 0 : incrementMs;
     return {timeLimitClockMs, timeLimitPerMoveMs, incrementMs};
 }
