@@ -776,7 +776,12 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
         }
     }
 
-    std::swap(moves.data[maxInd], moves.data[targetPos]);
+    const auto signedTargetPos = static_cast<signed_size_t>(targetPos);
+    auto bestMove = moves.data[maxInd];
+    for (signed_size_t i = static_cast<signed_size_t>(maxInd) - 1; i > signedTargetPos; --i)
+        moves.data[i + 1] = moves.data[i];
+    moves.data[targetPos] = bestMove;
+
     TraceIfFalse(
         maxInd == targetPos || moves.data[targetPos].GetEval() >= moves.data[targetPos + 1].GetEval(),
         "Move sorting failed!"
