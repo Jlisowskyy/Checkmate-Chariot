@@ -118,6 +118,21 @@ static constexpr bool TestAsp = false;
 
 //---------------------------
 
+// ------------------------------
+// Controls whether aspiration windows are used inside the search
+
+#ifdef USE_ASP_WIN
+
+static constexpr bool UseAsp = true;
+
+#else
+
+static constexpr bool UseAsp = false;
+
+#endif // TEST_ASP_WIN
+
+//---------------------------
+
 // ssize_t is defined by POSIX. Such define allows to use it on posix+windows
 using signed_size_t = std::make_signed<size_t>::type;
 

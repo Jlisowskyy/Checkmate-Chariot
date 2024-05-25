@@ -101,7 +101,7 @@ void BestMoveSearch::IterativeDeepening(
         _visitedNodes  = 0;
         _cutoffNodes   = 0;
 
-        if (depth < 7)
+        if (UseAsp && depth < 7)
         {
             // set according depth inside the pv buffer
             _pv.SetDepth(depth);
@@ -111,7 +111,7 @@ void BestMoveSearch::IterativeDeepening(
             _histTable.ScaleTableDown();
 
             // performs the search without aspiration window to gather some initial statistics about the move
-            eval = _pwsSearch(_board, NEGATIVE_INFINITY, POSITIVE_INFINITY, depth, zHash, {}, _pv, true);
+            eval = _pwsSearch(_board, NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth, zHash, {}, _pv, true);
             TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // if there was call to abort then abort
@@ -154,8 +154,8 @@ void BestMoveSearch::IterativeDeepening(
                     if constexpr (TestAsp)
                         stat.RetryFailLow(alpha, beta, eval);
 
-                    alpha = std::max(alpha - delta, NEGATIVE_INFINITY);
                     beta  = (alpha + beta) / 2;
+                    alpha = std::max(eval - delta, NEGATIVE_INFINITY - 1);
                 }
                 else if (eval >= beta)
                 {
@@ -163,7 +163,7 @@ void BestMoveSearch::IterativeDeepening(
                         stat.RetryFailHigh(alpha, beta, eval);
 
                     // We failed high so move the upper boundary
-                    beta = std::min(beta + delta, POSITIVE_INFINITY);
+                    beta = std::min(eval + delta, POSITIVE_INFINITY + 1);
                 }
                 else
                     break;
