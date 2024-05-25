@@ -8,6 +8,9 @@
 #include "../include/Search/TranspositionTable.h"
 #include "../include/Search/ZobristHash.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
+#include "../include/Search/BestMoveSearch.h"
+#include "../include/Evaluation/BoardEvaluatorPrinter.h"
+#include "../include/Evaluation/BoardEvaluator.h"
 
 std::string Engine::_debugEnginePath = Engine::_defaultBookPath;
 
@@ -212,4 +215,18 @@ void Engine::PonderHit()
         TManager.DisablePonder();
         GameTimeManager::PonderHit(static_cast<Color>(_board.MovingColor), _board, _age);
     }
+}
+
+int Engine::GetQuiesceEval() {
+    BestMoveSearch searcher{_board, _repetitionMap, TManager.GetDefaultStack(), _age};
+    return searcher.QuiesceEval();
+}
+
+int Engine::GetEvalPrinted() {
+    BoardEvaluatorPrinter::resetEval<EvalMode::PrintMode>();
+    BoardEvaluatorPrinter::setBoard<EvalMode::PrintMode>(_board);
+    int32_t eval = BoardEvaluator::Evaluation2<EvalMode::PrintMode>(_board);
+    BoardEvaluatorPrinter::printAll<EvalMode::PrintMode>();
+
+    return eval;
 }

@@ -6,7 +6,6 @@
 #define UCITRANSLATOR_H
 
 #include "../Engine.h"
-#include "../Evaluation/BoardEvaluator.h"
 #include "../ThreadManagement/GameTimeManager.h"
 
 /*
