@@ -542,21 +542,18 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
     if (wasTTHit && prevSearchRes.GetStatVal() != NO_EVAL)
         statEval = prevSearchRes.GetStatVal();
-    else
+    else {
         statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
 
+        if (wasTTHit)
+            prevSearchRes.SetStatVal(statEval);
+    }
+
     int bestEval = statEval;
-    if (bestEval >= alpha)
+    if (bestEval > alpha)
     {
         if (bestEval >= beta)
-        {
-            ++_cutoffNodes;
-
-            if (wasTTHit)
-                prevSearchRes.SetStatVal(statEval);
-
-            return bestEval;
-        }
+            return ++_cutoffNodes, bestEval;
 
         alpha = bestEval;
     }
@@ -592,7 +589,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         {
             bestEval = moveValue;
 
-            if (moveValue >= alpha)
+            if (moveValue > alpha)
             {
                 bestMove = moves[i].GetPackedMove();
                 if (moveValue >= beta)
@@ -652,22 +649,17 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
 
         if (prevSearchRes.GetStatVal() != NO_EVAL)
             statEval = prevSearchRes.GetStatVal();
-        else
+        else {
             statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
+            prevSearchRes.SetStatVal(statEval);
+        }
     }
     else
         statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
 
     int bestEval = statEval;
     if (bestEval >= beta)
-    {
-        ++_cutoffNodes;
-
-        if (wasTTHit)
-            prevSearchRes.SetStatVal(statEval);
-
-        return bestEval;
-    }
+        return ++_cutoffNodes, bestEval;
 
     // generating moves
     MoveGenerator mechanics(bd, _stack);
