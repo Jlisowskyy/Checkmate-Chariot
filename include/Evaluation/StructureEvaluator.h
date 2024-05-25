@@ -83,7 +83,7 @@ struct StructureEvaluator
     static constexpr int16_t RookSemiOpenFileBonus = 8;
     static constexpr int16_t CoveredPawnBonus      = 4;
     static constexpr int16_t DoubledPawnPenalty    = -25;
-    static constexpr int16_t IsolatedPawnPenalty   = -40;
+    static constexpr int16_t IsolatedPawnPenalty   = -25;
     static constexpr int16_t PassedPawnBonus       = 50;
 };
 

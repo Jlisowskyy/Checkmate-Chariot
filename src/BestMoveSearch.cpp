@@ -515,7 +515,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     if (_isDrawByReps(zHash))
         return DRAW_SCORE;
 
-    int statEval;
+    int bestEval = NEGATIVE_INFINITY;
     PackedMove bestMove{};
     ++_visitedNodes;
 
@@ -524,16 +524,19 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
 
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
+
+//    ChessMechanics mech(bd);
+//    const bool isCheck = mech.IsCheck();
     if (wasTTHit && prevSearchRes.GetStatVal() != NO_EVAL)
-        statEval = prevSearchRes.GetStatVal();
+        bestEval = prevSearchRes.GetStatVal();
     else {
-        statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
+        bestEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
 
         if (wasTTHit)
-            prevSearchRes.SetStatVal(statEval);
+            prevSearchRes.SetStatVal(bestEval);
     }
 
-    int bestEval = statEval;
+
     if (bestEval > alpha)
     {
         if (bestEval >= beta)
