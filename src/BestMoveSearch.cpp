@@ -240,7 +240,7 @@ int BestMoveSearch::_pwsSearch(
 
     // last depth static eval needed or prev pv node value
     if (depthLeft == 0)
-        return _quiescenceSearch(bd, alpha, beta, zHash);
+        return _quiescenceSearch(bd, alpha, beta, zHash, 0);
 
     // Check whether we reached end of the legal path
     if (_isDrawByReps(zHash))
@@ -502,7 +502,7 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     return bestEval;
 }
 
-int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint64_t zHash)
+int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint64_t zHash, const int extendedDepth)
 {
     TraceIfFalse(beta > alpha, "Beta is not greater than alpha");
 
@@ -517,41 +517,53 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     int bestEval = NEGATIVE_INFINITY;
     int statEval;
     PackedMove bestMove{};
+    MoveGenerator::payload moves;
     ++_visitedNodes;
 
     // reading Transposition table for the best move
     auto &prevSearchRes = TTable.GetRecord(zHash);
 
+    MoveGenerator mechanics(bd, _stack);
+    const bool isCheck = mechanics.IsCheck();
+
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
 
-    if (wasTTHit && prevSearchRes.GetStatVal() != NO_EVAL)
-        statEval = prevSearchRes.GetStatVal();
-    else {
-        statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
-
-        if (wasTTHit)
-            prevSearchRes.SetStatVal(statEval);
-    }
-
-    bestEval = statEval;
-    if (bestEval > alpha)
+    // Avoid static evaluation when king is checked
+    if (!isCheck)
     {
-        if (bestEval >= beta)
-            return ++_cutoffNodes, bestEval;
+        if (wasTTHit && prevSearchRes.GetStatVal() != NO_EVAL)
+            statEval = prevSearchRes.GetStatVal();
+        else {
+            statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
 
-        alpha = bestEval;
+            if (wasTTHit)
+                prevSearchRes.SetStatVal(statEval);
+        }
+
+        bestEval = statEval;
+        if (bestEval > alpha)
+        {
+            if (bestEval >= beta)
+                return ++_cutoffNodes, bestEval;
+
+            alpha = bestEval;
+        }
+
+        moves = mechanics.GetMovesFast<true>();
     }
+    else {
+        moves = mechanics.GetMovesFast();
 
-    // generating moves
-    MoveGenerator mechanics(bd, _stack);
-    auto moves = mechanics.GetMovesFast<true>();
+        if (moves.size == 0)
+            return mechanics.IsCheck() ? GetMateValue(-extendedDepth, _currRootDepth) : DRAW_SCORE;
+    }
 
     // saving volatile fields
     VolatileBoardData oldData{bd};
 
     // Empty move cannot be a capture move se we are sure that valid move is saved
-    if (wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetMove().IsCapture())
+    if (wasTTHit && ((prevSearchRes.GetNodeType() != UPPER_BOUND && isCheck) || prevSearchRes.GetMove().IsCapture()))
         _pullMoveToFront(moves, prevSearchRes.GetMove());
     else
         _fetchBestMove(moves, 0);
@@ -563,7 +575,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
             _fetchBestMove(moves, i);
 
         zHash               = ProcessAttackMove(bd, moves[i], zHash, oldData, _repMap);
-        const int moveValue = -_quiescenceSearch(bd, -beta, -alpha, zHash);
+        const int moveValue = -_quiescenceSearch(bd, -beta, -alpha, zHash, extendedDepth + 1);
         zHash               = RevertMove(bd, moves[i], zHash, oldData, _repMap);
 
         // if there was call to abort then abort
@@ -591,7 +603,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     // clean up
     _stack.PopAggregate(moves);
 
-    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && bd.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+    if (!isCheck && !wasTTHit && (prevSearchRes.GetDepth() == 0 || bd.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
     {
         const NodeType nType = (bestEval >= beta   ? LOWER_BOUND :
                                 bestMove.IsEmpty() ? UPPER_BOUND :
@@ -616,48 +628,61 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
 
     const int beta = alpha + 1;
     int statEval;
+    int bestEval = NEGATIVE_INFINITY;
     PackedMove bestMove{};
+    MoveGenerator::payload moves;
     ++_visitedNodes;
 
     // reading Transposition table for the best move
-    auto prevSearchRes = TTable.GetRecord(zHash);
+    auto& prevSearchRes = TTable.GetRecord(zHash);
 
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
-    if (wasTTHit && prevSearchRes.GetEval() != NO_EVAL)
-    {
-        if (prevSearchRes.GetNodeType() == PV_NODE)
-            return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(-extendedDepth, _currRootDepth);
 
-        if (prevSearchRes.GetNodeType() == LOWER_BOUND && prevSearchRes.GetEval() >= beta)
-            return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(-extendedDepth, _currRootDepth);
-
-        if (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetEval() <= alpha)
-            return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(-extendedDepth, _currRootDepth);
-
-        if (prevSearchRes.GetStatVal() != NO_EVAL)
-            statEval = prevSearchRes.GetStatVal();
-        else {
-            statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
-            prevSearchRes.SetStatVal(statEval);
-        }
-    }
-    else
-        statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
-
-    int bestEval = statEval;
-    if (bestEval >= beta)
-        return ++_cutoffNodes, bestEval;
-
-    // generating moves
     MoveGenerator mechanics(bd, _stack);
-    auto moves = mechanics.GetMovesFast<true>();
+    const bool isCheck = mechanics.IsCheck();
+
+    if (!isCheck)
+    {
+        if (wasTTHit)
+        {
+            if (prevSearchRes.GetNodeType() == PV_NODE)
+                return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(-extendedDepth, _currRootDepth);
+
+            if (prevSearchRes.GetNodeType() == LOWER_BOUND && prevSearchRes.GetEval() >= beta)
+                return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(-extendedDepth, _currRootDepth);
+
+            if (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetEval() <= alpha)
+                return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(-extendedDepth, _currRootDepth);
+
+            if (prevSearchRes.GetStatVal() != NO_EVAL)
+                statEval = prevSearchRes.GetStatVal();
+            else {
+                statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
+                prevSearchRes.SetStatVal(statEval);
+            }
+        }
+        else
+            statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
+
+        bestEval = statEval;
+        if (bestEval >= beta)
+            return ++_cutoffNodes, bestEval;
+
+        moves = mechanics.GetMovesFast<true>();
+    }
+    else{
+        moves = mechanics.GetMovesFast();
+
+        if (moves.size == 0)
+            return mechanics.IsCheck() ? GetMateValue(-extendedDepth, _currRootDepth) : DRAW_SCORE;
+    }
 
     // saving volatile fields
     VolatileBoardData oldData{bd};
 
     // Empty move cannot be a capture move se we are sure that valid move is saved
-    if (wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetMove().IsCapture())
+    if (wasTTHit && ((prevSearchRes.GetNodeType() != UPPER_BOUND && isCheck) || prevSearchRes.GetMove().IsCapture()))
         _pullMoveToFront(moves, prevSearchRes.GetMove());
     else
         _fetchBestMove(moves, 0);
@@ -689,7 +714,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         }
     }
 
-    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && bd.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+    if (!isCheck && !wasTTHit && (prevSearchRes.GetDepth() == 0 || bd.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : UPPER_BOUND);
         const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, bd.Age, _currRootDepth};
@@ -750,5 +775,5 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
 int BestMoveSearch::QuiesceEval() {
     uint64_t hash = ZHasher.GenerateHash(_board);
 
-    return _quiescenceSearch(_board, NEGATIVE_INFINITY, POSITIVE_INFINITY, hash);
+    return _quiescenceSearch(_board, NEGATIVE_INFINITY, POSITIVE_INFINITY, hash, 0);
 }

@@ -177,7 +177,7 @@ class BestMoveSearch
     [[nodiscard]] int
     _pwsSearch(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);
     [[nodiscard]] int _zwSearch(Board &bd, int alpha, int depthLeft, uint64_t zHash, Move prevMove);
-    [[nodiscard]] int _quiescenceSearch(Board &bd, int alpha, int beta, uint64_t zHash);
+    [[nodiscard]] int _quiescenceSearch(Board &bd, int alpha, int beta, uint64_t zHash, int extendedDepth);
     [[nodiscard]] int _zwQuiescenceSearch(Board &bd, int alpha, uint64_t zHash, int extendedDepth);
 
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
