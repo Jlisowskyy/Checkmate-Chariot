@@ -755,7 +755,10 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Packed
     // if move found swapping
     if (ind != moves.size)
     {
-        std::swap(moves.data[ind], moves.data[0]);
+        auto bestMove = moves.data[ind];
+        for (signed_size_t i = static_cast<signed_size_t>(ind) - 1; i > 0; --i)
+            moves.data[i + 1] = moves.data[i];
+        moves.data[0] = bestMove;
         return;
     }
 
