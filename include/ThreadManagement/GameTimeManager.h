@@ -104,9 +104,9 @@ class [[maybe_unused]] GameTimeManager
 
     // Time management constants - used for tuning the time management function
     static constexpr uint32_t averageMovesPerGame = 40;
-    static constexpr double adaptationThreshold   = (double)1 / 100;
-    static constexpr double adaptationFactor      = (double)1 / 40;
-    static constexpr double distribution          = (double)0;
+    static constexpr double adaptationThreshold   = 1.0 / 100;
+    static constexpr double adaptationFactor      = 1.0 / 40;
+    static constexpr double distribution          = 0.0;
 
     // Wake on update mechanism
     static std::condition_variable cv;
