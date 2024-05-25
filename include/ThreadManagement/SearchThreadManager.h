@@ -40,14 +40,15 @@ struct SearchThreadManager
 
     bool Go(const Board &bd, const RepMap &rMap, const GoInfo &info);
 
-    /* Function is not thread safe! Is when there is no time to start up threads! */
+    /* This function is not thread safe! Use it when there is no time left on the clock to start a thread */
     static void GoWoutThread(const Board &bd, const RepMap &rMap, const GoInfo &info);
 
     bool GoInfinite(const Board &bd, const RepMap &rMap);
 
     void Stop();
 
-    // TODO: Temporary solution, should be expanded with threading model
+    // TODO: Temporary solution, should be expanded with a threading model
+    /// @brief Joins all search threads.
     void Consolidate();
 
     [[nodiscard]] bool IsSearchOn() const { return _isSearchOn; }
