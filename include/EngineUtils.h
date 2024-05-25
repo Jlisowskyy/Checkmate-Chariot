@@ -76,6 +76,22 @@ extern const char IndexToFigCharMap[Board::BitBoardsCount];
 /* Does the same thing as above but in reverse */
 extern const std::unordered_map<char, size_t> FigCharToIndexMap;
 
+/*
+ * Function checks whether given score is a mate,
+ * it is needed due to usage of multiple mate score adjusted accordingly to the distance to root
+ * */
+inline INLINE bool IsMateScore(const int score)
+{
+    return abs(score) >= BEST_MATE_VALUE_ABS;
+}
+
+/* Function adjusts mate score accordingly to the distance to root */
+[[nodiscard]] inline INLINE int GetMateValue(const int depthLeft, const int rootDepth)
+{
+    const int distToRoot = rootDepth - depthLeft;
+    return NEGATIVE_INFINITY + distToRoot;
+}
+
 // Structure stores time information that were parsed and should be passed to 'go' search function
 struct GoTimeInfo
 {

@@ -808,7 +808,7 @@ class BoardEvaluator
         100,   // Pawn
         325,   // Knight
         325,   // Bishop
-        500,   // Rook
+        500,   // RookS
         975,   // Queen
         10000, // king
         -100,  // Pawn
