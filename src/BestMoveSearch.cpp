@@ -633,13 +633,14 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
     if (wasTTHit)
     {
-//        const NodeType expectedType = prevSearchRes.GetEval() >= beta ? LOWER_BOUND : UPPER_BOUND;
-//
-//        if (expectedType == prevSearchRes.GetNodeType() || prevSearchRes.GetNodeType() == PV_NODE)
-//        {
-//            ++_cutoffNodes;
-//            return prevSearchRes.GetEval();
-//        }
+        if (prevSearchRes.GetNodeType() == PV_NODE)
+            return ++_cutoffNodes, prevSearchRes.GetEval();
+
+        if (prevSearchRes.GetNodeType() == LOWER_BOUND && prevSearchRes.GetEval() >= beta)
+            return ++_cutoffNodes, prevSearchRes.GetEval();
+
+        if (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetEval() < alpha)
+            return ++_cutoffNodes, prevSearchRes.GetEval();
 
         if (prevSearchRes.GetStatVal() != NO_EVAL)
             statEval = prevSearchRes.GetStatVal();
