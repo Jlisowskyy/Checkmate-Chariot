@@ -138,8 +138,8 @@ class BestMoveSearch
      * */
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board, const RepMap &rMap, Stack<Move, DEFAULT_STACK_SIZE> &s, const uint16_t age)
-        : _stack(s), _board(board), _repMap(rMap), _age(age)
+    BestMoveSearch(const Board &board, const RepMap &rMap, Stack<Move, DEFAULT_STACK_SIZE> &s)
+        : _stack(s), _board(board), _repMap(rMap)
     {
     }
     ~BestMoveSearch() = default;
@@ -152,7 +152,7 @@ class BestMoveSearch
      * Main search functions. Perform searches going through every depth one by one
      * to collect information about shallower nodes. It is profitable, because average chess position tree expansion
      * rate is +/- 40. Let 'd' be the current depth and r = '40' to be tree growth rate. So cost to go through every
-     * previous depth is: cost(d) = 1/(40^(d-1)) + 1/(40^(d-2)) + ... +  1/(40^(d)) ~= 1/r that is in most cases
+     * previous depth is: cost(d) = 1/(40^(1)) + 1/(40^(2)) + ... +  1/(40^(d-1)) ~= 1/r that is in most cases
      * such operation costs us only 1/40 ~= 2% of whole time processing. In short, it is quite profitable overall.
      *
      * Input:
@@ -165,6 +165,7 @@ class BestMoveSearch
      * */
 
     void IterativeDeepening(PackedMove *bestMove, PackedMove *ponderMove, int maxDepth, bool writeInfo = true);
+    int QuiesceEval();
 
     // ------------------------------
     // Private class methods
@@ -176,13 +177,12 @@ class BestMoveSearch
     [[nodiscard]] int
     _pwsSearch(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);
     [[nodiscard]] int _zwSearch(Board &bd, int alpha, int depthLeft, uint64_t zHash, Move prevMove);
-    [[nodiscard]] int _quiescenceSearch(Board &bd, int alpha, int beta, uint64_t zHash);
-    [[nodiscard]] int _zwQuiescenceSearch(Board &bd, int alpha, uint64_t zHash);
+    [[nodiscard]] int _quiescenceSearch(Board &bd, int alpha, int beta, uint64_t zHash, int extendedDepth);
+    [[nodiscard]] int _zwQuiescenceSearch(Board &bd, int alpha, uint64_t zHash, int extendedDepth);
 
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
     static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);
 
-    [[nodiscard]] int _getMateValue(int depthLeft) const;
     [[nodiscard]] INLINE bool _isDrawByReps(const uint64_t hash)
     {
         return _repMap[hash] >= 3 || _board.HalfMoves >= 50;
@@ -203,7 +203,6 @@ class BestMoveSearch
     Board _board;
     RepMap _repMap;
     PV _pv{};
-    const uint16_t _age;
     uint64_t _visitedNodes = 0;
     uint64_t _cutoffNodes  = 0;
     int _currRootDepth     = 0;

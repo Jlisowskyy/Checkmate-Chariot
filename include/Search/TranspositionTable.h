@@ -52,10 +52,11 @@ struct TranspositionTable
 
         HashRecord(
             const uint64_t hash, const PackedMove mv, const int eval, const int statVal, const int depth,
-            const nodeType nType, const uint16_t age
+            const NodeType nType, const uint16_t age, const int rootDepth
         )
-            : _zobristHashAndAgePacked(_packHashAndAge(hash, age)), _madeMove(mv), _eval(static_cast<int16_t>(eval)),
-              _value(static_cast<int16_t>(statVal)), _depth(static_cast<uint8_t>(depth)), _type(nType)
+            : _zobristHashAndAgePacked(_packHashAndAge(hash, age)), _madeMove(mv),
+              _eval(AdjustMateScoreForTTIfNeeded(eval, depth, rootDepth)), _value(static_cast<int16_t>(statVal)),
+              _depth(static_cast<uint8_t>(depth)), _type(nType)
         {
         }
 
@@ -71,11 +72,25 @@ struct TranspositionTable
 
         [[nodiscard]] PackedMove GetMove() const { return _madeMove; }
         [[nodiscard]] int GetEval() const { return _eval; }
+
+        [[nodiscard]] INLINE int GetAdjustedEval(const int depthLeft, const int rootDepth) const
+        {
+            int eval = _eval;
+
+            if (IsMateScore(eval))
+            {
+                const int currDist = rootDepth - depthLeft;
+                eval += eval + (eval > 0 ? -currDist : currDist);
+            }
+
+            return eval;
+        }
+
         [[nodiscard]] int GetStatVal() const { return _value; }
         [[nodiscard]] int GetDepth() const { return _depth; }
         [[nodiscard]] bool IsEmpty() const { return GetAge() == 0; }
         [[nodiscard]] uint16_t GetAge() const { return _zobristHashAndAgePacked & AgeBytes; }
-        [[nodiscard]] nodeType GetNodeType() const { return _type; }
+        [[nodiscard]] NodeType GetNodeType() const { return _type; }
         [[nodiscard]] bool IsSameHash(const uint64_t hash) const
         {
             // Note: Hash is packed together with age, so we need to compare only valuable part
@@ -97,8 +112,6 @@ struct TranspositionTable
         // ------------------------------
 
         public:
-        static constexpr int NoEval = std::numeric_limits<int16_t>::max();
-
 #ifdef NDEBUG // otherwise used inside the asserts out of the container
 
         private:
@@ -109,7 +122,7 @@ struct TranspositionTable
         int16_t _eval;                     // 2 bytes
         int16_t _value;                    // 2 bytes
         uint8_t _depth;                    // 1 byte
-        nodeType _type;                    // 1 byte
+        NodeType _type;                    // 1 byte
 
         // Mask used to hash age
         static constexpr uint64_t AgeBytes = 0xFFFF;
@@ -143,6 +156,12 @@ struct TranspositionTable
     // Method adds new record to the table
     INLINE void Add(const HashRecord &record, const uint64_t zHash)
     {
+        TraceIfFalse(
+            (record.GetNodeType() == UPPER_BOUND && record.GetMove().IsEmpty()) ||
+                (record.GetNodeType() != UPPER_BOUND && !record.GetMove().IsEmpty()),
+            "Saved move is not valid!"
+        );
+
         // hash uses 48 bytes inside the record while masks uses at least log2(16 * 1024 * 1024 / 16) = 20
         const size_t pos = zHash & _hashMask;
 
@@ -188,6 +207,23 @@ struct TranspositionTable
     signed_size_t ResizeTable(size_t sizeMB);
 
     [[nodiscard]] size_t GetContainedElements() const;
+
+    /* Function adjusts the mate score to prevent returning mate scores from TT with misleading values */
+    [[nodiscard]] static INLINE int AdjustMateScoreForTT(const int eval, const int depthLeft, const int rootDepth)
+    {
+        const int distToRoot = rootDepth - depthLeft;
+        const int prevDist   = eval > 0 ? POSITIVE_INFINITY - eval : eval - NEGATIVE_INFINITY;
+
+        const int correctedDist = prevDist - distToRoot;
+        return eval > 0 ? POSITIVE_INFINITY - correctedDist : NEGATIVE_INFINITY + correctedDist;
+    }
+
+    [[nodiscard]] static INLINE int16_t
+    AdjustMateScoreForTTIfNeeded(const int eval, const int depthLeft, const int rootDepth)
+    {
+        return IsMateScore(eval) ? static_cast<int16_t>(AdjustMateScoreForTT(eval, depthLeft, rootDepth))
+                                 : static_cast<int16_t>(eval);
+    }
 
     // ------------------------------
     // private methods

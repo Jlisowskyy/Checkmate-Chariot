@@ -9,8 +9,6 @@
 #include <format>
 #include <stdexcept>
 
-#include "../include/EngineUtils.h"
-
 TranspositionTable TTable{};
 
 TranspositionTable::TranspositionTable()

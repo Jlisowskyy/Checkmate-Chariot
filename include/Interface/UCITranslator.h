@@ -6,7 +6,6 @@
 #define UCITRANSLATOR_H
 
 #include "../Engine.h"
-#include "../Evaluation/BoardEvaluator.h"
 #include "../ThreadManagement/GameTimeManager.h"
 
 /*
@@ -174,9 +173,6 @@ class UCITranslator
 
     /* Simply start perft move */
     UCICommand _goPerftResponse(const std::string &str, size_t pos);
-
-    /* "go ponder" implementation */
-    UCICommand _goPonder(const std::string &str, size_t pos);
 
     /* Simply starts debug test - refer to MoveGenerationTester.PerformSingleShallowTest */
     UCICommand _goDebugResponse(const std::string &str, size_t pos);

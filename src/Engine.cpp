@@ -3,8 +3,11 @@
 //
 
 #include "../include/Engine.h"
+#include "../include/Evaluation/BoardEvaluator.h"
+#include "../include/Evaluation/BoardEvaluatorPrinter.h"
 #include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
+#include "../include/Search/BestMoveSearch.h"
 #include "../include/Search/TranspositionTable.h"
 #include "../include/Search/ZobristHash.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
@@ -35,9 +38,6 @@ std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
 
 bool Engine::SetFenPosition(const std::string &fenStr)
 {
-    // restarting position age
-    _age = 1;
-
     // Validation whether given fenstr is same as startpos, because of some weird uci implementations not using startpos
     if (fenStr.length() >= _startposPrefix.length() && fenStr.substr(0, _startposPrefix.length()) == _startposPrefix)
     {
@@ -66,9 +66,6 @@ bool Engine::SetFenPosition(const std::string &fenStr)
 
 void Engine::SetStartPos()
 {
-    // restarting position age
-    _age = 1;
-
     _isStartPosPlayed = true;
     _board            = FenTranslator::GetDefault();
     _startingBoard    = _board;
@@ -92,7 +89,7 @@ bool Engine::ApplyMoves(const std::vector<std::string> &UCIMoves)
     _board = workBoard;
 
     // applying corresponding age
-    _age = UCIMoves.size() + 1;
+    _board.Age += static_cast<int>(UCIMoves.size());
     return true;
 }
 
@@ -189,16 +186,16 @@ void Engine::Go(GoInfo &info, const std::vector<std::string> &moves)
         colTime    = 1;
         info.depth = std::min(info.depth, 1);
 
-        SearchThreadManager::GoWoutThread(_board, _repetitionMap, _age, info);
+        SearchThreadManager::GoWoutThread(_board, _repetitionMap, info);
         return;
     }
 
-    TManager.Go(_board, _repetitionMap, _age, info);
+    TManager.Go(_board, _repetitionMap, info);
 }
 
 void Engine::StopSearch() { TManager.Stop(); }
 
-void Engine::GoInfinite() { TManager.GoInfinite(_board, _repetitionMap, _age); }
+void Engine::GoInfinite() { TManager.GoInfinite(_board, _repetitionMap); }
 
 void Engine::_clearHash(Engine &) { TTable.ClearTable(); }
 
@@ -212,6 +209,22 @@ void Engine::PonderHit()
     if (TManager.IsSearchOn() && TManager.IsPonderOn())
     {
         TManager.DisablePonder();
-        GameTimeManager::PonderHit(static_cast<Color>(_board.MovingColor), _board, _age);
+        GameTimeManager::PonderHit(static_cast<Color>(_board.MovingColor), _board);
     }
+}
+
+int Engine::GetQuiesceEval()
+{
+    BestMoveSearch searcher{_board, _repetitionMap, TManager.GetDefaultStack()};
+    return searcher.QuiesceEval();
+}
+
+int Engine::GetEvalPrinted()
+{
+    BoardEvaluatorPrinter::resetEval<EvalMode::PrintMode>();
+    BoardEvaluatorPrinter::setBoard<EvalMode::PrintMode>(_board);
+    int32_t eval = BoardEvaluator::Evaluation2<EvalMode::PrintMode>(_board);
+    BoardEvaluatorPrinter::printAll<EvalMode::PrintMode>();
+
+    return eval;
 }

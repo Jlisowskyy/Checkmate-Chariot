@@ -35,7 +35,7 @@ TEST(GoCommandTest, stopCommandResponse)
 
     auto infiniteSearch = [&]()
     {
-        threadManager.GoInfinite(board, reps, 0);
+        threadManager.GoInfinite(board, reps);
     };
 
     auto depthSearch = [&]()
@@ -43,7 +43,7 @@ TEST(GoCommandTest, stopCommandResponse)
         GoInfo info{};
         info.depth = 100;
 
-        threadManager.Go(board, reps, 0, info);
+        threadManager.Go(board, reps, info);
     };
 
     auto moveTimeSearch = [&]()
@@ -51,7 +51,7 @@ TEST(GoCommandTest, stopCommandResponse)
         GoInfo info{};
         info.timeInfo.moveTime = 100000;
 
-        threadManager.Go(board, reps, 0, info);
+        threadManager.Go(board, reps, info);
     };
 
     auto colTimeSearch = [&]()
@@ -60,7 +60,7 @@ TEST(GoCommandTest, stopCommandResponse)
         info.timeInfo.wTime = 100000;
         info.timeInfo.bTime = 100000;
 
-        threadManager.Go(board, reps, 0, info);
+        threadManager.Go(board, reps, info);
     };
 
     Case(colTimeSearch);
@@ -82,7 +82,7 @@ TEST(GoCommandTest, timeSpentTest)
     GoInfo info{};
     info.timeInfo.moveTime = 1200;
 
-    threadManager.Go(board, {}, 0, info);
+    threadManager.Go(board, {}, info);
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
     threadManager.Stop();

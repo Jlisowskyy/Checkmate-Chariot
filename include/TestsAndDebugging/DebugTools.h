@@ -20,7 +20,8 @@ class AspWinStat
     enum class FailType
     {
         FailLow,
-        FailHigh
+        FailHigh,
+        FinalBoundaries
     };
 
     std::queue<std::tuple<FailType, int, int, int>> _fails{};
@@ -28,6 +29,10 @@ class AspWinStat
     public:
     void RetryFailLow(int alpha, int beta, int eval) { _fails.emplace(FailType::FailLow, alpha, beta, eval); }
     void RetryFailHigh(int alpha, int beta, int eval) { _fails.emplace(FailType::FailHigh, alpha, beta, eval); }
+    void RecordFinalBoundaries(int alpha, int beta, int eval)
+    {
+        _fails.emplace(FailType::FinalBoundaries, alpha, beta, eval);
+    }
 
     void DisplayAndClean()
     {
@@ -40,7 +45,11 @@ class AspWinStat
             _fails.pop();
 
             GlobalLogger.LogStream << std::format(
-                "{} a:{}, b:{}, e:{} ", type == FailType::FailHigh ? 'H' : 'L', alpa, beta, eval
+                "{} a:{}, b:{}, e:{} ",
+                type == FailType::FailHigh  ? 'H'
+                : type == FailType::FailLow ? 'L'
+                                            : 'E',
+                alpa, beta, eval
             );
         }
         GlobalLogger.LogStream << std::endl;

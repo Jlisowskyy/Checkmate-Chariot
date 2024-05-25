@@ -203,8 +203,8 @@ class Move
         // applying new el passant field
         bd.ElPassantField = MaxMsbPossible >> mv.GetElPassantField();
 
-        bd.HalfMoves =
-            (bd.HalfMoves + 1) * (!(mv.GetStartBoardIndex() == wPawnsIndex || mv.GetStartBoardIndex() == bPawnsIndex));
+        bd.HalfMoves = (bd.HalfMoves + 1) * (!(mv.GetStartBoardIndex() == wPawnsIndex ||
+                                               mv.GetStartBoardIndex() == bPawnsIndex || mv.IsAttackingMove()));
 
         // applying additional castling operation
         const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];

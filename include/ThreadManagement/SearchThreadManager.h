@@ -38,16 +38,17 @@ struct SearchThreadManager
 
     [[nodiscard]] StackType &GetDefaultStack() { return _stacks[0]; }
 
-    bool Go(const Board &bd, const RepMap &rMap, uint16_t age, const GoInfo &info);
+    bool Go(const Board &bd, const RepMap &rMap, const GoInfo &info);
 
-    /* Function is not thread safe! Is when there is no time to start up threads! */
-    static void GoWoutThread(const Board &bd, const RepMap &rMap, uint16_t age, const GoInfo &info);
+    /* This function is not thread safe! Use it when there is no time left on the clock to start a thread */
+    static void GoWoutThread(const Board &bd, const RepMap &rMap, const GoInfo &info);
 
-    bool GoInfinite(const Board &bd, const RepMap &rMap, uint16_t age);
+    bool GoInfinite(const Board &bd, const RepMap &rMap);
 
     void Stop();
 
-    // TODO: Temporary solution, should be expanded with threading model
+    // TODO: Temporary solution, should be expanded with a threading model
+    /// @brief Joins all search threads.
     void Consolidate();
 
     [[nodiscard]] bool IsSearchOn() const { return _isSearchOn; }
@@ -61,9 +62,8 @@ struct SearchThreadManager
     // ------------------------------
 
     private:
-    static void _threadSearchJob(
-        const Board *bd, const RepMap *rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, uint16_t age, int depth
-    );
+    static void
+    _threadSearchJob(const Board *bd, const RepMap *rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, int depth);
 
     // ------------------------------
     // Class fields

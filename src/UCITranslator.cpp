@@ -158,12 +158,9 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
 
 UCITranslator::UCICommand UCITranslator::_evalPositionStatic([[maybe_unused]] const std::string &)
 {
-    Board b = _engine.GetUnderlyingBoardCopy();
-    BoardEvaluatorPrinter::resetEval<EvalMode::PrintMode>();
-    BoardEvaluatorPrinter::setBoard<EvalMode::PrintMode>(b);
-    int32_t eval = BoardEvaluator::Evaluation2<EvalMode::PrintMode>(b);
-    BoardEvaluatorPrinter::printAll<EvalMode::PrintMode>();
+    const int eval = _engine.GetEvalPrinted();
     GlobalLogger.LogStream << "Evaluation from Evaluation2: " << eval << std::endl;
+    GlobalLogger.LogStream << "Evaluation with quiesce: " << _engine.GetQuiesceEval() << std::endl;
 
     return UCICommand::evalCommand;
 }
