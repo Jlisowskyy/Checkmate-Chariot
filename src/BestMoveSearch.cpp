@@ -337,7 +337,7 @@ int BestMoveSearch::_pwsSearch(
             return TIME_STOP_RESERVED_VALUE;
 
         // if not, research move
-        if (alpha < moveEval && moveEval < beta)
+        if (alpha < moveEval)
         {
             TTable.Prefetch(zHash);
             _kTable.ClearPlyFloor(depthLeft - 1);
@@ -371,18 +371,6 @@ int BestMoveSearch::_pwsSearch(
                     pv.InsertNext(bestMove, inPV);
                 }
             }
-        }
-        else if (moveEval >= beta)
-        {
-            bestEval = moveEval;
-            bestMove = moves[i].GetPackedMove();
-
-            if (moves[i].IsQuietMove())
-                _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
-
-            ++_cutoffNodes;
-            zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
-            break;
         }
 
         // move reverted after possible research
