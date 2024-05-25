@@ -35,9 +35,6 @@ class Engine
 
     ~Engine() = default;
 
-    /* Initializes all values to defaults */
-    void Initialize();
-
     // ------------------------------
     // Type interaction
     // ------------------------------
@@ -100,7 +97,7 @@ class Engine
     private:
     /* Method simply generates moves and checks whether given moves is on the list if that's true applies the move to
      * the board */
-    bool _applyMove(Board &board, const std::string &move);
+    bool _applyMove(Board &board, const std::string &move, uint64_t &hash);
 
     // ------------------------------------
     // UCI option accessing functions
@@ -127,9 +124,10 @@ class Engine
     // private fields
     // ------------------------------
 
-    Board _board{};
-    Board _startingBoard{};
+    Board _board         = FenTranslator::GetDefault();
+    Board _startingBoard = FenTranslator::GetDefault();
     OpeningBook _book{};
+    std::unordered_map<uint64_t, int> _repetitionMap{};
     std::string _bookPath = _defaultBookPath;
 
     bool _isStartPosPlayed                            = true;

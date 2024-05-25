@@ -106,6 +106,8 @@ void DisplayBoard(const Board &bd)
                                    ? "-"
                                    : ConvertToStrPos(bd.ElPassantField))
                            << std::endl;
+
+    GlobalLogger.LogStream << "Half moves made from last pawn move: " << bd.HalfMoves << std::endl;
 }
 
 uint64_t ExtractPosFromStr(int x, const int y)

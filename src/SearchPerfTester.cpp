@@ -14,7 +14,7 @@
 #include "../include/TestsAndDebugging/CsvOperator.h"
 
 bool SearchPerfTester::PerformSearchPerfTest(
-    const std::string &inputTestPath, const std::string &output, Stack<Move, DefaultStackSize> &stack
+    const std::string &inputTestPath, const std::string &output, Stack<Move, DEFAULT_STACK_SIZE> &stack
 )
 {
     // reading csv file
@@ -46,11 +46,11 @@ bool SearchPerfTester::PerformSearchPerfTest(
 }
 
 double
-SearchPerfTester::_performTestCase(const std::string &testCase, const int depth, Stack<Move, DefaultStackSize> &stack)
+SearchPerfTester::_performTestCase(const std::string &testCase, const int depth, Stack<Move, DEFAULT_STACK_SIZE> &stack)
 {
     Board bd;
     FenTranslator::Translate(testCase, bd);
-    BestMoveSearch searcher(bd, stack, 1);
+    BestMoveSearch searcher(bd, {}, stack, 1);
 
     const auto tStart = std::chrono::steady_clock::now();
     if (depth > 0)

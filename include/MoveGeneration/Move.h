@@ -128,6 +128,21 @@ struct PackedMove
     uint16_t _packedMove;
 };
 
+/* Class used to preserve some crucial board state between moves */
+struct VolatileBoardData
+{
+    VolatileBoardData() = delete;
+
+    constexpr VolatileBoardData(const Board &bd)
+        : HalfMoves(bd.HalfMoves), Castlings(bd.Castlings), OldElPassant(bd.ElPassantField)
+    {
+    }
+
+    const int HalfMoves;
+    const std::bitset<Board::CastlingCount + 1> Castlings;
+    const uint64_t OldElPassant;
+};
+
 class Move
 {
     public:
@@ -188,6 +203,9 @@ class Move
         // applying new el passant field
         bd.ElPassantField = MaxMsbPossible >> mv.GetElPassantField();
 
+        bd.HalfMoves =
+            (bd.HalfMoves + 1) * (!(mv.GetStartBoardIndex() == wPawnsIndex || mv.GetStartBoardIndex() == bPawnsIndex));
+
         // applying additional castling operation
         const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
         bd.BitBoards[boardIndex] |= field;
@@ -199,9 +217,7 @@ class Move
 
     [[nodiscard]] bool IsEmpty() const { return _packedMove.IsEmpty(); }
 
-    static void UnmakeMove(
-        const Move mv, Board &bd, const std::bitset<Board::CastlingCount + 1> castlings, const uint64_t oldElPassant
-    )
+    static void UnmakeMove(const Move mv, Board &bd, const VolatileBoardData &data)
     {
         TraceIfFalse(mv.IsOkeyMove(), "Given move is not valid!");
 
@@ -217,10 +233,13 @@ class Move
         bd.BitBoards[mv.GetKilledBoardIndex()] |= MaxMsbPossible >> mv.GetKilledFigureField();
 
         // recovering old castlings
-        bd.Castlings = castlings;
+        bd.Castlings = data.Castlings;
 
         // recovering old el passant field
-        bd.ElPassantField = oldElPassant;
+        bd.ElPassantField = data.OldElPassant;
+
+        // Reversing Half Moves
+        bd.HalfMoves = data.HalfMoves;
 
         // reverting castling operation
         const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];

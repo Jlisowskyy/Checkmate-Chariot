@@ -117,9 +117,12 @@ set(CHECKMATE_CHARIOT_SOURCES
         src/GameTimeManager.cpp
         include/ThreadManagement/GameTimeManagerUtils.h
         src/GameTimeManagerUtils.cpp
-        include/TestsAndDebugging/TestSetup.h
         src/BoardEvaluator.cpp
+        include/Evaluation/BoardEvaluatorPrinter.h
+        src/BoardEvaluatorPrinter.cpp
+        include/TestsAndDebugging/TestSetup.h
         include/TestsAndDebugging/StateReconstructor.h
+        include/TestsAndDebugging/DebugTools.h
 )
 
 # Create a library with the core functionality
@@ -200,7 +203,10 @@ else()
 endif()
 
 # Uncomment to add gathering TT statistics
- add_compile_definitions(TEST_TT=1)
+add_compile_definitions(TEST_TT=1)
+
+# Uncomment to add displaying debug info about aspiration window
+add_compile_definitions(TEST_ASP_WIN=1)
 
 ################################################################################
 #                                  Post build                                  #

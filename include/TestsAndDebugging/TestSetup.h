@@ -61,7 +61,6 @@ struct TestSetup
     static void _job(std::stringstream *stream, Engine *engine, std::binary_semaphore *sem)
     {
         GameTimeManager::StartTimerAsync();
-        engine->Initialize();
 
         UCITranslator translator{*engine};
 

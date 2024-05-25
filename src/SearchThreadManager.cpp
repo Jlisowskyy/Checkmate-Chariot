@@ -9,8 +9,12 @@
 
 #include <format>
 
-SearchThreadManager::~SearchThreadManager() { Consolidate(); }
-bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
+SearchThreadManager::~SearchThreadManager()
+{
+    Stop();
+    Consolidate();
+}
+bool SearchThreadManager::Go(const Board &bd, const RepMap &rMap, uint16_t age, const GoInfo &info)
 {
     // ensuring only one search is running at a time
     if (_isSearchOn)
@@ -28,7 +32,8 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
 
     // Running up the searching worker
     _threads[MainSearchThreadInd] = new std::thread(
-        _threadSearchJob, &bd, &_stacks[MainSearchThreadInd], &_isSearchOn, age, std::min(info.depth, MaxSearchDepth)
+        _threadSearchJob, &bd, &rMap, &_stacks[MainSearchThreadInd], &_isSearchOn, age,
+        std::min(info.depth, MAX_SEARCH_DEPTH)
     );
     WrapTraceMsgInfo("Search thread started");
 
@@ -36,12 +41,12 @@ bool SearchThreadManager::Go(const Board &bd, uint16_t age, const GoInfo &info)
     return true;
 }
 
-bool SearchThreadManager::GoInfinite(const Board &bd, uint16_t age)
+bool SearchThreadManager::GoInfinite(const Board &bd, const RepMap &rMap, uint16_t age)
 {
     GoInfo info;
     info.timeInfo = GoTimeInfo::GetInfiniteTime();
-    info.depth    = MaxSearchDepth;
-    return Go(bd, age, info);
+    info.depth    = MAX_SEARCH_DEPTH;
+    return Go(bd, rMap, age, info);
 }
 
 void SearchThreadManager::Stop()
@@ -60,22 +65,19 @@ void SearchThreadManager::Stop()
 }
 
 void SearchThreadManager::_threadSearchJob(
-    const Board *bd, Stack<Move, DefaultStackSize> *s, bool *guard, uint16_t age, int depth
+    const Board *bd, const RepMap *rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, uint16_t age, int depth
 )
 {
     PackedMove output{};
     PackedMove ponder{};
 
     *guard = true;
-    BestMoveSearch searcher{*bd, *s, age};
+    BestMoveSearch searcher{*bd, *rMap, *s, age};
     searcher.IterativeDeepening(&output, &ponder, depth);
 
     GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
                            << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
                            << std::endl;
-
-    if constexpr (TestTT)
-        TTable.DisplayStatisticsAndReset();
 
     *guard = false;
 }
@@ -91,7 +93,7 @@ void SearchThreadManager::Consolidate()
     WrapTraceMsgInfo("Thread manager consolidated successfully");
 }
 
-void SearchThreadManager::GoWoutThread(const Board &bd, uint16_t age, const GoInfo &info)
+void SearchThreadManager::GoWoutThread(const Board &bd, const RepMap &rMap, uint16_t age, const GoInfo &info)
 {
     static StackType s{};
 
@@ -100,7 +102,7 @@ void SearchThreadManager::GoWoutThread(const Board &bd, uint16_t age, const GoIn
     PackedMove output{};
     PackedMove ponder{};
 
-    BestMoveSearch searcher{bd, s, age};
+    BestMoveSearch searcher{bd, rMap, s, age};
     searcher.IterativeDeepening(&output, &ponder, info.depth);
 
     GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())

@@ -156,11 +156,15 @@ UCITranslator::UCICommand UCITranslator::_positionResponse(const std::string &st
     return UCICommand::positionCommand;
 }
 
-UCITranslator::UCICommand UCITranslator::_evalPositionStatic(const std::string &str)
+UCITranslator::UCICommand UCITranslator::_evalPositionStatic([[maybe_unused]] const std::string &)
 {
-    std::string workStr;
-    Board b      = _engine.GetUnderlyingBoardCopy();
+    Board b = _engine.GetUnderlyingBoardCopy();
+    BoardEvaluatorPrinter::resetEval<EvalMode::PrintMode>();
+    BoardEvaluatorPrinter::setBoard<EvalMode::PrintMode>(b);
     int32_t eval = BoardEvaluator::Evaluation2<EvalMode::PrintMode>(b);
+    BoardEvaluatorPrinter::printAll<EvalMode::PrintMode>();
+    GlobalLogger.LogStream << "Evaluation from Evaluation2: " << eval << std::endl;
+
     return UCICommand::evalCommand;
 }
 
@@ -524,7 +528,8 @@ UCITranslator::UCICommand UCITranslator::_calculateTimePerMove(const std::string
     GlobalLogger.TraceStream << "[ INFO ] Increment: " << incrementMs << std::endl;
 
     lli timePerMove =
-        GameTimeManager::CalculateTimeMsPerMove(board, timeLimitClockMs, timeLimitPerMoveMs, incrementMs, age);
+            GameTimeManager::CalculateTimeMsPerMove(board, timeLimitClockMs, timeLimitPerMoveMs, incrementMs, age,
+                                                    (Color)_engine.GetMovingColor());
 
     GlobalLogger.LogStream << "Calculated time per move:" << timePerMove << std::endl;
     timePerMoveLogger.LogStream << timePerMove << std::endl;
@@ -558,7 +563,7 @@ UCITranslator::UCICommand UCITranslator::_reconstruct(const std::string &str)
      *  For debug usage you should change its content!
      * */
 
-    const auto testLambda = [](TestSetup &setup)
+    const auto testLambda = [](TestSetup &)
     {
         GlobalLogger.TraceStream << "BREAKPOINT FOUND!" << std::endl;
     };
