@@ -113,11 +113,11 @@ struct GoInfo
  * https://www.chessprogramming.org/Node_Types
  * */
 
-enum nodeType : uint8_t
+enum NodeType : uint8_t
 {
-    pvNode,
-    lowerBound,
-    upperBound
+    PV_NODE,
+    LOWER_BOUND,
+    UPPER_BOUND
 };
 
 /*

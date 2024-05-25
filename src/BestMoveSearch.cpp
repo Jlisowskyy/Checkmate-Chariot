@@ -23,7 +23,7 @@ using RepMap                 = std::unordered_map<uint64_t, int>;
 
 #define TestNullMove() TraceIfFalse(!record._madeMove.IsEmpty(), "Received empty move inside the TT")
 #define TestTTAdd()                                                                                                    \
-    TraceIfFalse(record._type != nodeType::upperBound, "Received upper board node inside the TT!");                    \
+    TraceIfFalse(record._type != NodeType::UPPER_BOUND, "Received upper board node inside the TT!");                    \
     TestNullMove()
 
 #else
@@ -101,7 +101,7 @@ void BestMoveSearch::IterativeDeepening(
         _visitedNodes  = 0;
         _cutoffNodes   = 0;
 
-        if (true)
+        if (depth < 7)
         {
             // set according depth inside the pv buffer
             _pv.SetDepth(depth);
@@ -229,8 +229,6 @@ int BestMoveSearch::_pwsSearch(
 )
 {
     TraceIfFalse(alpha < beta, "Alpha is not less than beta");
-
-    nodeType nType = upperBound;
     PackedMove bestMove{};
 
     // if we need to stop the search signal it
@@ -270,7 +268,7 @@ int BestMoveSearch::_pwsSearch(
         // first follow pv from previous ID (Iterative deepening) iteration,
         // we follow only single PV we previously saved
         _pullMoveToFront(moves, _pv(depthLeft, _currRootDepth));
-    else if (wasTTHit && !prevSearchRes.GetMove().IsEmpty())
+    else if (wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
         // if we have any move saved from last time we visited that node and the move is valid try to use it
         // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always be empty
         //       In other words we don't use best move from fail low nodes
@@ -305,9 +303,9 @@ int BestMoveSearch::_pwsSearch(
             if (depthLeft >= prevSearchRes.GetDepth() ||
                 (!wasTTHit && _age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
             {
-                const TranspositionTable::HashRecord record{zHash,     moves[0].GetPackedMove(),
+                const TranspositionTable::HashRecord record{zHash, moves[0].GetPackedMove(),
                                                             bestEval,  wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL,
-                                                            depthLeft, lowerBound,
+                                                            depthLeft, LOWER_BOUND,
                                                             _age};
                 TTable.Add(record, zHash);
                 TestTTAdd();
@@ -317,7 +315,6 @@ int BestMoveSearch::_pwsSearch(
             return bestEval;
         }
 
-        nType    = pvNode;
         alpha    = bestEval;
         bestMove = moves[0].GetPackedMove();
         pv.InsertNext(bestMove, inPV);
@@ -360,14 +357,12 @@ int BestMoveSearch::_pwsSearch(
                     {
                         if (moves[i].IsQuietMove())
                             _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
-                        nType = lowerBound;
 
                         ++_cutoffNodes;
                         zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
                         break;
                     }
 
-                    nType = pvNode;
                     alpha = bestEval;
                     pv.InsertNext(bestMove, inPV);
                 }
@@ -380,7 +375,6 @@ int BestMoveSearch::_pwsSearch(
 
             if (moves[i].IsQuietMove())
                 _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
-            nType = lowerBound;
 
             ++_cutoffNodes;
             zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
@@ -398,16 +392,16 @@ int BestMoveSearch::_pwsSearch(
     if (depthLeft >= prevSearchRes.GetDepth() ||
         (!wasTTHit && _age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
     {
+        const NodeType nType = (bestEval >= beta   ? LOWER_BOUND :
+                                bestMove.IsEmpty() ? UPPER_BOUND :
+                                                     PV_NODE);
+
         const TranspositionTable::HashRecord record{
             zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age
         };
+
         TTable.Add(record, zHash);
     }
-
-    TraceIfFalse(
-        nType != pvNode || bestMove.IsOkeyMove(),
-        "When the node fails low there should be no best move (null move), otherwise we expect the node to be PV one"
-    );
 
     return bestEval;
 }
@@ -417,7 +411,6 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
 {
     const int beta = alpha + 1;
     int bestEval   = NEGATIVE_INFINITY;
-    nodeType nType = upperBound;
     PackedMove bestMove{};
 
     // if we need to stop the search signal it
@@ -445,15 +438,13 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
 
     if (wasTTHit && prevSearchRes.GetDepth() >= depthLeft)
     {
-        const nodeType expectedType = prevSearchRes.GetEval() >= beta ? lowerBound : upperBound;
-
-        if (prevSearchRes.GetNodeType() == pvNode)
+        if (prevSearchRes.GetNodeType() == PV_NODE)
             return ++_cutoffNodes, prevSearchRes.GetEval();
 
-        if (prevSearchRes.GetNodeType() == lowerBound && prevSearchRes.GetEval() >= beta)
+        if (prevSearchRes.GetNodeType() == LOWER_BOUND && prevSearchRes.GetEval() >= beta)
             return ++_cutoffNodes, prevSearchRes.GetEval();
 
-        if (prevSearchRes.GetNodeType() == upperBound && prevSearchRes.GetEval() < alpha)
+        if (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetEval() < alpha)
             return ++_cutoffNodes, prevSearchRes.GetEval();
     }
 
@@ -472,8 +463,9 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     // processing each move
     for (size_t i = 0; i < moves.size; ++i)
     {
-        // load the best move from TT if possible
-        if (i == 0 && wasTTHit && !prevSearchRes.GetMove().IsEmpty())
+        // load the best move from TT if possible, EmptyMove means UPPER_BOUND record which we want to avoid using
+        // and additionally entries with depth 0 were saved during quiesce search so are not useful here
+        if (i == 0 && wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
             _pullMoveToFront(moves, prevSearchRes.GetMove());
         else
             _fetchBestMove(moves, i);
@@ -496,7 +488,6 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
                 if (moves[i].IsQuietMove())
                     _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
 
-                nType    = lowerBound;
                 bestMove = moves[i].GetPackedMove();
                 ++_cutoffNodes;
                 break;
@@ -507,6 +498,8 @@ BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint6
     if (depthLeft >= prevSearchRes.GetDepth() ||
         (!wasTTHit && _age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
     {
+        const NodeType nType = (bestEval >= beta ? LOWER_BOUND : UPPER_BOUND);
+
         const TranspositionTable::HashRecord record{
             zHash, bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL, depthLeft, nType, _age
         };
@@ -532,7 +525,6 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
 
     int statEval;
     PackedMove bestMove{};
-    nodeType nType = upperBound;
     ++_visitedNodes;
 
     // reading Transposition table for the best move
@@ -566,7 +558,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     VolatileBoardData oldData{bd};
 
     // Empty move cannot be a capture move se we are sure that valid move is saved
-    if (wasTTHit && prevSearchRes.GetMove().IsCapture())
+    if (wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetMove().IsCapture())
         _pullMoveToFront(moves, prevSearchRes.GetMove());
     else
         _fetchBestMove(moves, 0);
@@ -595,8 +587,6 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
                 if (moveValue >= beta)
                 {
                     ++_cutoffNodes;
-
-                    nType = lowerBound;
                     break;
                 }
 
@@ -608,11 +598,16 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
     // clean up
     _stack.PopAggregate(moves);
 
-//    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
-//    {
-//        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
-//        TTable.Add(record, zHash);
-//    }
+    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+    {
+        const NodeType nType = (bestEval >= beta   ? LOWER_BOUND :
+                                bestMove.IsEmpty() ? UPPER_BOUND :
+                                PV_NODE);
+
+        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
+        TTable.Add(record, zHash);
+    }
+
     return bestEval;
 }
 
@@ -628,7 +623,6 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
 
     const int beta = alpha + 1;
     int statEval;
-    nodeType nType = upperBound;
     PackedMove bestMove{};
     ++_visitedNodes;
 
@@ -639,9 +633,9 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
     if (wasTTHit)
     {
-//        const nodeType expectedType = prevSearchRes.GetEval() >= beta ? lowerBound : upperBound;
+//        const NodeType expectedType = prevSearchRes.GetEval() >= beta ? LOWER_BOUND : UPPER_BOUND;
 //
-//        if (expectedType == prevSearchRes.GetNodeType() || prevSearchRes.GetNodeType() == pvNode)
+//        if (expectedType == prevSearchRes.GetNodeType() || prevSearchRes.GetNodeType() == PV_NODE)
 //        {
 //            ++_cutoffNodes;
 //            return prevSearchRes.GetEval();
@@ -669,7 +663,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
     VolatileBoardData oldData{bd};
 
     // Empty move cannot be a capture move se we are sure that valid move is saved
-    if (wasTTHit && prevSearchRes.GetMove().IsCapture())
+    if (wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetMove().IsCapture())
         _pullMoveToFront(moves, prevSearchRes.GetMove());
     else
         _fetchBestMove(moves, 0);
@@ -695,18 +689,18 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
             {
                 ++_cutoffNodes;
 
-                nType    = lowerBound;
                 bestMove = moves[i].GetPackedMove();
                 break;
             }
         }
     }
 
-//    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
-//    {
-//        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
-//        TTable.Add(record, zHash);
-//    }
+    if (prevSearchRes.GetDepth() == 0 || (!wasTTHit && _age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+    {
+        const NodeType nType = (bestEval >= beta ? LOWER_BOUND : UPPER_BOUND);
+        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval, 0, nType, _age};
+        TTable.Add(record, zHash);
+    }
 
     // clean up
     _stack.PopAggregate(moves);

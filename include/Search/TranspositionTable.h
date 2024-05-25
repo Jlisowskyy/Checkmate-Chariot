@@ -51,8 +51,8 @@ struct TranspositionTable
         // ------------------------------
 
         HashRecord(
-            const uint64_t hash, const PackedMove mv, const int eval, const int statVal, const int depth,
-            const nodeType nType, const uint16_t age
+                const uint64_t hash, const PackedMove mv, const int eval, const int statVal, const int depth,
+                const NodeType nType, const uint16_t age
         )
             : _zobristHashAndAgePacked(_packHashAndAge(hash, age)), _madeMove(mv), _eval(static_cast<int16_t>(eval)),
               _value(static_cast<int16_t>(statVal)), _depth(static_cast<uint8_t>(depth)), _type(nType)
@@ -75,7 +75,7 @@ struct TranspositionTable
         [[nodiscard]] int GetDepth() const { return _depth; }
         [[nodiscard]] bool IsEmpty() const { return GetAge() == 0; }
         [[nodiscard]] uint16_t GetAge() const { return _zobristHashAndAgePacked & AgeBytes; }
-        [[nodiscard]] nodeType GetNodeType() const { return _type; }
+        [[nodiscard]] NodeType GetNodeType() const { return _type; }
         [[nodiscard]] bool IsSameHash(const uint64_t hash) const
         {
             // Note: Hash is packed together with age, so we need to compare only valuable part
@@ -109,7 +109,7 @@ struct TranspositionTable
         int16_t _eval;                     // 2 bytes
         int16_t _value;                    // 2 bytes
         uint8_t _depth;                    // 1 byte
-        nodeType _type;                    // 1 byte
+        NodeType _type;                    // 1 byte
 
         // Mask used to hash age
         static constexpr uint64_t AgeBytes = 0xFFFF;
@@ -143,8 +143,8 @@ struct TranspositionTable
     // Method adds new record to the table
     INLINE void Add(const HashRecord &record, const uint64_t zHash)
     {
-        TraceIfFalse((record.GetNodeType() == upperBound && record.GetMove().IsEmpty())
-                || (record.GetNodeType() != upperBound && !record.GetMove().IsEmpty()),
+        TraceIfFalse((record.GetNodeType() == UPPER_BOUND && record.GetMove().IsEmpty())
+                || (record.GetNodeType() != UPPER_BOUND && !record.GetMove().IsEmpty()),
                 "Saved move is not valid!");
 
         // hash uses 48 bytes inside the record while masks uses at least log2(16 * 1024 * 1024 / 16) = 20
