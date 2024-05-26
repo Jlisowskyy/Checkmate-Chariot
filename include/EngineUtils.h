@@ -148,4 +148,14 @@ enum class EvalMode
     PrintMode
 };
 
+/* Function finds index of figure type based on given single bit BitBoard */
+constexpr int FindFigType(const uint64_t BitBoard, const Board& bd)
+{
+    int rv = 0;
+    constexpr int range = static_cast<int>(Board::BitBoardsCount);
+    for (int i = 0; i < range; ++i)
+        rv = ((bd.BitBoards[i] & BitBoard) != 0) * i;
+    return rv;
+}
+
 #endif // ENGINETYPEDEFS_H
