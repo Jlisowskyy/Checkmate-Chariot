@@ -322,7 +322,7 @@ void MoveGenerator::_processPawnMoves(
         results, pawnAttacks, enemyMap, allyMap, pinnedFigMap, nonPromotingPawns, allowedMoveFilter
     );
 
-    // During quiesce search we should also check all promotions
+    // During quiesce search we should also check all promotions so GenOnlyAttackMoves is false
     if (promotingPawns)
         _processFigMoves<false, ApplyHeuristicEval, MapT, false, true, true, isCheck>(
             results, pawnAttacks, enemyMap, allyMap, pinnedFigMap, promotingPawns, allowedMoveFilter
