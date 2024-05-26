@@ -341,7 +341,7 @@ int BestMoveSearch::_pwsSearch(
             return TIME_STOP_RESERVED_VALUE;
 
         // if not, research move
-        if (alpha < moveEval)
+        if (alpha < moveEval && moveEval < beta)
         {
             TTable.Prefetch(zHash);
             _kTable.ClearPlyFloor(depthLeft - 1);
@@ -360,25 +360,26 @@ int BestMoveSearch::_pwsSearch(
                 {
                     bestMove = moves[i].GetPackedMove();
 
-                    // cut-off found
-                    if (moveEval >= beta)
-                    {
-                        if (moves[i].IsQuietMove())
-                            _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
-
-                        ++_cutoffNodes;
-                        zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
-                        break;
+                    if (moveEval < beta) {
+                        alpha = bestEval;
+                        pv.InsertNext(bestMove, inPV);
                     }
-
-                    alpha = bestEval;
-                    pv.InsertNext(bestMove, inPV);
                 }
             }
         }
 
         // move reverted after possible research
         zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
+
+        // cut-off found
+        if (moveEval >= beta)
+        {
+            if (moves[i].IsQuietMove())
+                _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
+
+            ++_cutoffNodes;
+            break;
+        }
     }
 
     // clean up
@@ -542,6 +543,8 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         else
         {
             statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
+            TraceIfFalse(statEval <= POSITIVE_INFINITY && statEval >= NEGATIVE_INFINITY,
+                         "Received suspicious static evaluation points!");
 
             if (wasTTHit)
                 prevSearchRes.SetStatVal(statEval);
@@ -667,6 +670,9 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
             else
             {
                 statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
+                TraceIfFalse(statEval <= POSITIVE_INFINITY && statEval >= NEGATIVE_INFINITY,
+                             "Received suspicious static evaluation points!");
+
                 prevSearchRes.SetStatVal(statEval);
             }
         }
@@ -756,7 +762,7 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Packed
     if (ind != moves.size)
     {
         auto bestMove = moves.data[ind];
-        for (signed_size_t i = static_cast<signed_size_t>(ind) - 1; i > 0; --i)
+        for (signed_size_t i = static_cast<signed_size_t>(ind) - 1; i >= 0; --i)
             moves.data[i + 1] = moves.data[i];
         moves.data[0] = bestMove;
         return;
@@ -781,7 +787,7 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
 
     const auto signedTargetPos = static_cast<signed_size_t>(targetPos);
     auto bestMove = moves.data[maxInd];
-    for (signed_size_t i = static_cast<signed_size_t>(maxInd) - 1; i > signedTargetPos; --i)
+    for (signed_size_t i = static_cast<signed_size_t>(maxInd) - 1; i >= signedTargetPos; --i)
         moves.data[i + 1] = moves.data[i];
     moves.data[targetPos] = bestMove;
 

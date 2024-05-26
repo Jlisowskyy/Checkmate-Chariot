@@ -58,6 +58,8 @@ struct TranspositionTable
               _eval(AdjustMateScoreForTTIfNeeded(eval, depth, rootDepth)), _value(static_cast<int16_t>(statVal)),
               _depth(static_cast<uint8_t>(depth)), _type(nType)
         {
+            TraceIfFalse(depth >= 0, "HashRecord received negative depth");
+            TraceIfFalse(eval <= POSITIVE_INFINITY && eval >= NEGATIVE_INFINITY, "Received eval outside possible bounds!");
         }
 
         HashRecord(const HashRecord &) = default;
@@ -80,7 +82,7 @@ struct TranspositionTable
             if (IsMateScore(eval))
             {
                 const int currDist = rootDepth - depthLeft;
-                eval += eval + (eval > 0 ? -currDist : currDist);
+                eval += (eval > 0 ? -currDist : currDist);
             }
 
             return eval;
@@ -215,7 +217,9 @@ struct TranspositionTable
         const int prevDist   = eval > 0 ? POSITIVE_INFINITY - eval : eval - NEGATIVE_INFINITY;
 
         const int correctedDist = prevDist - distToRoot;
-        return eval > 0 ? POSITIVE_INFINITY - correctedDist : NEGATIVE_INFINITY + correctedDist;
+        const int adjustedEval = eval > 0 ? POSITIVE_INFINITY - correctedDist : NEGATIVE_INFINITY + correctedDist;
+
+        return adjustedEval;
     }
 
     [[nodiscard]] static INLINE int16_t
