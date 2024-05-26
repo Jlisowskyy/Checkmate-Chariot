@@ -439,6 +439,7 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
                 statEval = prevSearchRes.GetStatVal();
             else
             {
+                // otherwise calculate the static eval
                 statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
                 TraceIfFalse(statEval <= POSITIVE_INFINITY && statEval >= NEGATIVE_INFINITY,
                              "Received suspicious static evaluation points!");
@@ -447,8 +448,10 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
             }
         }
         else
+            // again no tt entry calculate eval
             statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
 
+        // check for stand-pat cut-off
         bestEval = statEval;
         if (bestEval > alpha)
         {
@@ -462,6 +465,7 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
     }
     else
     {
+        // When there is check we need to go through every possible move to get a better view about the position
         moves = mechanics.GetMovesFast();
 
         if (moves.size == 0)
