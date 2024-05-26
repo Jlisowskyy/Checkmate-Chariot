@@ -341,7 +341,7 @@ int BestMoveSearch::_pwsSearch(
             return TIME_STOP_RESERVED_VALUE;
 
         // if not, research move
-        if (alpha < moveEval && moveEval < beta)
+        if (alpha < moveEval)
         {
             TTable.Prefetch(zHash);
             _kTable.ClearPlyFloor(depthLeft - 1);
@@ -360,26 +360,25 @@ int BestMoveSearch::_pwsSearch(
                 {
                     bestMove = moves[i].GetPackedMove();
 
-                    if (moveEval < beta) {
-                        alpha = bestEval;
-                        pv.InsertNext(bestMove, inPV);
+                    // cut-off found
+                    if (moveEval >= beta)
+                    {
+                        if (moves[i].IsQuietMove())
+                            _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
+
+                        ++_cutoffNodes;
+                        zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
+                        break;
                     }
+
+                    alpha = bestEval;
+                    pv.InsertNext(bestMove, inPV);
                 }
             }
         }
 
         // move reverted after possible research
         zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
-
-        // cut-off found
-        if (moveEval >= beta)
-        {
-            if (moves[i].IsQuietMove())
-                _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
-
-            ++_cutoffNodes;
-            break;
-        }
     }
 
     // clean up
@@ -521,7 +520,7 @@ int BestMoveSearch::_quiescenceSearch(Board &bd, int alpha, const int beta, uint
         return DRAW_SCORE;
 
     int bestEval = NEGATIVE_INFINITY;
-    int statEval;
+    int statEval = NO_EVAL;
     PackedMove bestMove{};
     MoveGenerator::payload moves;
     ++_visitedNodes;
@@ -637,7 +636,7 @@ int BestMoveSearch::_zwQuiescenceSearch(Board &bd, const int alpha, uint64_t zHa
         return DRAW_SCORE;
 
     const int beta = alpha + 1;
-    int statEval;
+    int statEval = NO_EVAL;
     int bestEval = NEGATIVE_INFINITY;
     PackedMove bestMove{};
     MoveGenerator::payload moves;
