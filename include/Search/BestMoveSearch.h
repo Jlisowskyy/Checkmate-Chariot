@@ -188,7 +188,6 @@ class BestMoveSearch
 
     [[nodiscard]] int
     _pwsSearch(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);
-    [[nodiscard]] int _zwSearch(Board &bd, int alpha, int depthLeft, uint64_t zHash, Move prevMove);
 
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
     static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);
@@ -213,6 +212,7 @@ class BestMoveSearch
     Board _board;
     RepMap _repMap;
     PV _pv{};
+    PV _dummyPv{};
     uint64_t _visitedNodes = 0;
     uint64_t _cutoffNodes  = 0;
     int _currRootDepth     = 0;

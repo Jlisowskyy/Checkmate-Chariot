@@ -322,11 +322,7 @@ int BestMoveSearch::_search(Board &bd, int alpha, int beta, int depthLeft, uint6
         // us best move that is possible.
         // In case of non pv nodes we only search with zw
         if (!IsPvNode || i != 0) {
-            moveEval = -_zwSearch(bd, -(alpha + 1), depthLeft - 1, zHash, moves[i]);
-
-            // if there was call to abort then abort
-            if (std::abs(moveEval) == TIME_STOP_RESERVED_VALUE)
-                return TIME_STOP_RESERVED_VALUE;
+            moveEval = -_search<SearchType::NoPVSearch>(bd, -(alpha + 1), -alpha, depthLeft - 1, zHash, moves[i], _dummyPv, false);
         }
 
         // if not, research move only in case of pv nodes
@@ -336,39 +332,37 @@ int BestMoveSearch::_search(Board &bd, int alpha, int beta, int depthLeft, uint6
             _kTable.ClearPlyFloor(depthLeft - 1);
 
             // Research with full window
-            moveEval = -_pwsSearch(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV, false);
-
-            // if there was call to abort then abort
-            if (std::abs(moveEval) == TIME_STOP_RESERVED_VALUE)
-                return TIME_STOP_RESERVED_VALUE;
-
-            // Check whether we should update values
-            if (moveEval > bestEval)
-            {
-                bestEval = moveEval;
-                if (moveEval > alpha)
-                {
-                    bestMove = moves[i].GetPackedMove();
-
-                    if (moveEval < beta)
-                    {
-                        alpha = bestEval;
-                        pv.InsertNext(bestMove, inPV);
-                    }
-                }
-            }
+            moveEval = -_search<SearchType::PVSearch>(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV, followPv && i == 0);
         }
+
+        // if there was call to abort then abort
+        if (std::abs(moveEval) == TIME_STOP_RESERVED_VALUE)
+            return TIME_STOP_RESERVED_VALUE;
+
         // move reverted after possible research
         zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
 
-        // cut-off found
-        if (moveEval >= beta)
+        // Check whether we should update values
+        if (moveEval > bestEval)
         {
-            if (moves[i].IsQuietMove())
-                _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
+            bestEval = moveEval;
+            if (moveEval > alpha)
+            {
+                bestMove = moves[i].GetPackedMove();
 
-            ++_cutoffNodes;
-            break;
+                // cut-off found
+                if (moveEval >= beta)
+                {
+                    if (moves[i].IsQuietMove())
+                        _saveQuietMoveInfo(moves[i], prevMove, depthLeft);
+
+                    ++_cutoffNodes;
+                    break;
+                }
+
+                alpha = bestEval;
+                pv.InsertNext(bestMove, inPV);
+            }
         }
     }
 
@@ -418,6 +412,8 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
 
+    // When we have a check we cannot use static evaluation at all due to possible dangers that may happen
+    // that means we should resolve most of the lines with checks
     MoveGenerator mechanics(bd, _stack);
     const bool isCheck = mechanics.IsCheck();
 
@@ -535,14 +531,6 @@ int BestMoveSearch::_pwsSearch(
 {
     return _search<SearchType::PVSearch>(bd, alpha, beta, depthLeft, zHash, prevMove, pv, followPv);
 }
-
-[[nodiscard]] int
-BestMoveSearch::_zwSearch(Board &bd, const int alpha, const int depthLeft, uint64_t zHash, const Move prevMove)
-{
-    static PV _dummyPv{};
-    return _search<SearchType::NoPVSearch>(bd, alpha, alpha + 1, depthLeft, zHash, prevMove, _dummyPv, false);
-}
-
 
 void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const PackedMove mv)
 {
