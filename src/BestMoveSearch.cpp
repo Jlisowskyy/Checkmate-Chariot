@@ -263,7 +263,8 @@ int BestMoveSearch::_search(
     bool wasTTHit = prevSearchRes.IsSameHash(zHash);
 
     // When we missed the TT read we should try IID to save our situation
-    if (!wasTTHit && !followPv && depthLeft >= IID_MIN_DEPTH) {
+    if (!wasTTHit && !followPv && depthLeft >= IID_MIN_DEPTH)
+    {
         _search<searchType>(bd, alpha, beta, depthLeft - IID_REDUCTION, zHash, prevMove, pv, false);
 
         // Retry TT read
