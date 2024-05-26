@@ -139,6 +139,35 @@ struct KingSafetyEval
     // ------------------------------
 
     private:
+
+    static constexpr std::array<uint64_t , Board::BitBoardFields> _kingRings = []() constexpr
+    {
+        constexpr int MovesOffsets[] = { -1, 1, 8, -8 };
+
+        std::array<uint64_t , Board::BitBoardFields> rv{};
+
+        const int range = static_cast<int>(Board::BitBoardFields);
+        for (int msbInd = 0; msbInd < range; ++msbInd)
+        {
+            const uint64_t basicMoves = KingMap::GetMoves(msbInd);
+            uint64_t mask = basicMoves;
+
+            for (int offset : MovesOffsets)
+            {
+                const int newMsbPos = msbInd + offset;
+
+                // first of all we check whether we do not exceed possible range,
+                // secondly we check to not accidentally put king on the other side of the board
+                if (newMsbPos >= 0 && newMsbPos <= 63 && ((MaxMsbPossible >> newMsbPos) & basicMoves) != 0)
+                    mask |= KingMap::GetMoves(newMsbPos);
+            }
+
+            rv[msbInd] = mask;
+        }
+
+        return rv;
+    }();
+
     static constexpr std::array<std::array<uint64_t, Board::BitBoardFields>, 2> _kingPawnDefenseFields = []() constexpr
     {
         std::array<std::array<uint64_t, Board::BitBoardFields>, 2> rv{};
