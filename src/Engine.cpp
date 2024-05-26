@@ -216,7 +216,7 @@ void Engine::PonderHit()
 int Engine::GetQuiesceEval()
 {
     BestMoveSearch searcher{_board, _repetitionMap, TManager.GetDefaultStack()};
-    return searcher.QuiesceEval();
+    return searcher.QuiesceEval() * BoardEvaluator::ScoreGrain;
 }
 
 int Engine::GetEvalPrinted()
@@ -226,5 +226,5 @@ int Engine::GetEvalPrinted()
     int32_t eval = BoardEvaluator::Evaluation2<EvalMode::PrintMode>(_board);
     BoardEvaluatorPrinter::printAll<EvalMode::PrintMode>();
 
-    return eval;
+    return (_board.MovingColor == WHITE ? eval : -eval);
 }

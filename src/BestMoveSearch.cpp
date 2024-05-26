@@ -100,7 +100,7 @@ void BestMoveSearch::IterativeDeepening(
         _visitedNodes  = 0;
         _cutoffNodes   = 0;
 
-        if (UseAsp && depth < 7)
+        if (UseAsp && depth < ASP_WND_MIN_DEPTH)
         {
             // set according depth inside the pv buffer
             _pv.SetDepth(depth);

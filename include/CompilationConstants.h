@@ -38,9 +38,12 @@ static constexpr int IID_MIN_DEPTH = 6;
 /* Ply reduction for IID case*/
 static constexpr int IID_REDUCTION = 2;
 
+/* Minimal depth from which Aspiration Windows are used*/
+static constexpr int ASP_WND_MIN_DEPTH = 7;
+
 // Initial Aspiration Window Delta its cp value is equal to INITIAL_ASP_WINDOW_DELTA * BoardEvaluator::ScoreGrain
 // (probably 8) ~= 48
-static constexpr int16_t INITIAL_ASP_WINDOW_DELTA = 6;
+static constexpr int16_t INITIAL_ASP_WINDOW_DELTA = 3;
 static constexpr int MAX_ASP_WINDOW_RETRIES       = 4;
 
 // ------------------------------
