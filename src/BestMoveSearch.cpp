@@ -661,12 +661,14 @@ int BestMoveSearch::_see(const Move mv) const {
     uint64_t attackFromBitBoard = MaxMsbPossible >> mv.GetStartField();
     auto [attackersBitBoard, fullMap, xray] = _prepareForSEE(mv.GetTargetField());
 
+    int attackerFigType = FindFigType(attackFromBitBoard, _board);
+    int color = _board.MovingColor;
     scores[depth] = BoardEvaluator::BasicFigureValues[mv.GetKilledBoardIndex()];
     do {
         depth++;
 
         // sum up points
-        scores[depth] = BoardEvaluator::BasicFigureValues[FindFigType(attackFromBitBoard, _board)] - scores[depth - 1];
+        scores[depth] = BoardEvaluator::BasicFigureValues[attackerFigType] - scores[depth - 1];
 
         // pseudo make move
         attackersBitBoard ^= attackFromBitBoard;
@@ -676,9 +678,27 @@ int BestMoveSearch::_see(const Move mv) const {
         if (attackFromBitBoard & xray)
             attackersBitBoard |= _updateAttackers(fullMap, mv.GetTargetField());
 
+        color = SwapColor(color);
+        attackFromBitBoard = _getLeastValuablePiece(attackersBitBoard, color, attackerFigType);
     } while(attackFromBitBoard);
 
     while (--depth)
         scores[depth - 1] = - std::max(-scores[depth - 1], scores[depth]);
     return scores[0];
+}
+
+uint64_t BestMoveSearch::_getLeastValuablePiece(uint64_t pieces, int color, int &pieceIndOut) const {
+    const int range = static_cast<int>(kingIndex);
+    for (int ind = 0; ind < range; ++ind)
+    {
+        const int colIndex = color * static_cast<int>(Board::BitBoardsPerCol) + ind;
+        const uint64_t intersection = pieces & _board.BitBoards[colIndex];
+
+        if (intersection) {
+            pieceIndOut = ind;
+            return ExtractLsbBit(intersection);
+        }
+    }
+
+    return 0;
 }

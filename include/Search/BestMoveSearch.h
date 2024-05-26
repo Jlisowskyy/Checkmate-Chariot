@@ -216,6 +216,8 @@ class BestMoveSearch
 
     uint64_t _updateAttackers(uint64_t fullMap, int msbPos) const;
 
+    uint64_t _getLeastValuablePiece(uint64_t pieces, int color, int& pieceIndOut) const;
+
     // ------------------------------
     // Class fields
     // ------------------------------
