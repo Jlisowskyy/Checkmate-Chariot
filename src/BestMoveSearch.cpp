@@ -30,7 +30,6 @@ using RepMap = std::unordered_map<uint64_t, int>;
 #define TestTTAdd()
 #endif // NDEBUG
 
-
 [[nodiscard]] inline INLINE uint64_t
 ProcessAttackMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardData &data, RepMap &rMap)
 {
@@ -232,9 +231,10 @@ void BestMoveSearch::IterativeDeepening(
         TTable.DisplayStatisticsAndReset();
 }
 
-template<BestMoveSearch::SearchType searchType>
-int BestMoveSearch::_search(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove,
-                            PV &pv, bool followPv)
+template <BestMoveSearch::SearchType searchType>
+int BestMoveSearch::_search(
+    Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv
+)
 {
     static constexpr bool IsPvNode = searchType == SearchType::PVSearch;
     TraceIfFalse(alpha < beta, "Alpha is not less than beta");
@@ -280,7 +280,7 @@ int BestMoveSearch::_search(Board &bd, int alpha, int beta, int depthLeft, uint6
 
     // generate moves
     MoveGenerator mechanics(
-            bd, _stack, _histTable, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField()
+        bd, _stack, _histTable, _kTable, _cmTable.GetCounterMove(prevMove), depthLeft, prevMove.GetTargetField()
     );
     auto moves = mechanics.GetMovesFast();
 
@@ -305,13 +305,15 @@ int BestMoveSearch::_search(Board &bd, int alpha, int beta, int depthLeft, uint6
                 _pullMoveToFront(moves, _pv(depthLeft, _currRootDepth));
             else if (wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
                 // if we have any move saved from last time we visited that node and the move is valid try to use it
-                // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always be empty
+                // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always be
+                // empty
                 //       In other words we don't use best move from fail low nodes
                 _pullMoveToFront(moves, prevSearchRes.GetMove());
             else
                 _fetchBestMove(moves, 0);
         }
-        else _fetchBestMove(moves, i);
+        else
+            _fetchBestMove(moves, i);
 
         // stores the most recent return value of child trees,
         // alpha + 1 value enforces the second if trigger in first iteration in case of pv nodes
@@ -321,8 +323,11 @@ int BestMoveSearch::_search(Board &bd, int alpha, int beta, int depthLeft, uint6
         // In pv nodes we always search first move on full window due to assumption that TT will give
         // us best move that is possible.
         // In case of non pv nodes we only search with zw
-        if (!IsPvNode || i != 0) {
-            moveEval = -_search<SearchType::NoPVSearch>(bd, -(alpha + 1), -alpha, depthLeft - 1, zHash, moves[i], _dummyPv, false);
+        if (!IsPvNode || i != 0)
+        {
+            moveEval = -_search<SearchType::NoPVSearch>(
+                bd, -(alpha + 1), -alpha, depthLeft - 1, zHash, moves[i], _dummyPv, false
+            );
         }
 
         // if not, research move only in case of pv nodes
@@ -332,7 +337,9 @@ int BestMoveSearch::_search(Board &bd, int alpha, int beta, int depthLeft, uint6
             _kTable.ClearPlyFloor(depthLeft - 1);
 
             // Research with full window
-            moveEval = -_search<SearchType::PVSearch>(bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV, followPv && i == 0);
+            moveEval = -_search<SearchType::PVSearch>(
+                bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV, followPv && i == 0
+            );
         }
 
         // if there was call to abort then abort
@@ -385,7 +392,7 @@ int BestMoveSearch::_search(Board &bd, int alpha, int beta, int depthLeft, uint6
     return bestEval;
 }
 
-template<BestMoveSearch::SearchType searchType>
+template <BestMoveSearch::SearchType searchType>
 int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int extendedDepth)
 {
     static constexpr bool IsPvNode = searchType == SearchType::PVSearch;
@@ -423,7 +430,8 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
         if (wasTTHit)
         {
             // Check for tt cut-off in case of zw quiesce search
-            if constexpr (!IsPvNode){
+            if constexpr (!IsPvNode)
+            {
                 if (prevSearchRes.GetNodeType() == PV_NODE)
                     return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(-extendedDepth, _currRootDepth);
 
@@ -441,8 +449,10 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
             {
                 // otherwise calculate the static eval
                 statEval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
-                TraceIfFalse(statEval <= POSITIVE_INFINITY && statEval >= NEGATIVE_INFINITY,
-                             "Received suspicious static evaluation points!");
+                TraceIfFalse(
+                    statEval <= POSITIVE_INFINITY && statEval >= NEGATIVE_INFINITY,
+                    "Received suspicious static evaluation points!"
+                );
 
                 prevSearchRes.SetStatVal(statEval);
             }
@@ -555,8 +565,7 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Packed
     if (ind != moves.size)
     {
         auto bestMove = moves.data[ind];
-        for (signed_size_t i = static_cast<signed_size_t>(ind) - 1; i >= 0; --i)
-            moves.data[i + 1] = moves.data[i];
+        for (signed_size_t i = static_cast<signed_size_t>(ind) - 1; i >= 0; --i) moves.data[i + 1] = moves.data[i];
         moves.data[0] = bestMove;
         return;
     }
@@ -579,7 +588,7 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
     }
 
     const auto signedTargetPos = static_cast<signed_size_t>(targetPos);
-    auto bestMove = moves.data[maxInd];
+    auto bestMove              = moves.data[maxInd];
     for (signed_size_t i = static_cast<signed_size_t>(maxInd) - 1; i >= signedTargetPos; --i)
         moves.data[i + 1] = moves.data[i];
     moves.data[targetPos] = bestMove;

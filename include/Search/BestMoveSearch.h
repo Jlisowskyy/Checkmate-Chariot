@@ -126,7 +126,8 @@ class BestMoveSearch
         int _depth{1};
     };
 
-    enum class SearchType{
+    enum class SearchType
+    {
         PVSearch,
         NoPVSearch
     };
@@ -180,11 +181,10 @@ class BestMoveSearch
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimizing player
 
-    template<SearchType searchType>
+    template <SearchType searchType>
     int _search(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);
 
-    template<SearchType searchType>
-    int _qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int extendedDepth);
+    template <SearchType searchType> int _qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int extendedDepth);
 
     [[nodiscard]] int
     _pwsSearch(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);

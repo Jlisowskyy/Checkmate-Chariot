@@ -59,7 +59,9 @@ struct TranspositionTable
               _depth(static_cast<uint8_t>(depth)), _type(nType)
         {
             TraceIfFalse(depth >= 0, "HashRecord received negative depth");
-            TraceIfFalse(eval <= POSITIVE_INFINITY && eval >= NEGATIVE_INFINITY, "Received eval outside possible bounds!");
+            TraceIfFalse(
+                eval <= POSITIVE_INFINITY && eval >= NEGATIVE_INFINITY, "Received eval outside possible bounds!"
+            );
         }
 
         HashRecord(const HashRecord &) = default;
@@ -217,7 +219,7 @@ struct TranspositionTable
         const int prevDist   = eval > 0 ? POSITIVE_INFINITY - eval : eval - NEGATIVE_INFINITY;
 
         const int correctedDist = prevDist - distToRoot;
-        const int adjustedEval = eval > 0 ? POSITIVE_INFINITY - correctedDist : NEGATIVE_INFINITY + correctedDist;
+        const int adjustedEval  = eval > 0 ? POSITIVE_INFINITY - correctedDist : NEGATIVE_INFINITY + correctedDist;
 
         return adjustedEval;
     }
