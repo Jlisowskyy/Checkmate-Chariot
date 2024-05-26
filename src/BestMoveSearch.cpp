@@ -260,7 +260,16 @@ int BestMoveSearch::_search(
     const auto prevSearchRes = TTable.GetRecord(zHash);
 
     // check whether hashes are same
-    const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
+    bool wasTTHit = prevSearchRes.IsSameHash(zHash);
+
+    // When we missed the TT read we should try IID to save our situation
+    if (!wasTTHit && !followPv && depthLeft >= IID_MIN_DEPTH) {
+        _search<searchType>(bd, alpha, beta, depthLeft - IID_REDUCTION, zHash, prevMove, pv, false);
+
+        // Retry TT read
+        wasTTHit = prevSearchRes.IsSameHash(zHash);
+    }
+
     if constexpr (TestTT)
         TTable.UpdateStatistics(wasTTHit);
 
@@ -310,7 +319,7 @@ int BestMoveSearch::_search(
                 //       In other words we don't use best move from fail low nodes
                 _pullMoveToFront(moves, prevSearchRes.GetMove());
             else
-                _fetchBestMove(moves, 0);
+                _fetchBestMove(moves, i);
         }
         else
             _fetchBestMove(moves, i);

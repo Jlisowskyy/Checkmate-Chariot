@@ -32,6 +32,12 @@ static constexpr int BEST_MATE_VALUE_ABS             = -(BEST_MATE_VALUE);
 static constexpr uint16_t QUIESENCE_AGE_DIFF_REPLACE = 16;
 static constexpr uint16_t DEFAULT_AGE_DIFF_REPLACE   = 10;
 
+/* Depth from which Internal Iterative Deepening (IID) is used */
+static constexpr int IID_MIN_DEPTH = 6;
+
+/* Ply reduction for IID case*/
+static constexpr int IID_REDUCTION = 2;
+
 // Initial Aspiration Window Delta its cp value is equal to INITIAL_ASP_WINDOW_DELTA * BoardEvaluator::ScoreGrain
 // (probably 8) ~= 48
 static constexpr int16_t INITIAL_ASP_WINDOW_DELTA = 6;
