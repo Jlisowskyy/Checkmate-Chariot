@@ -27,7 +27,7 @@ struct MoveGenerator : ChessMechanics
 {
     using stck    = Stack<Move, DEFAULT_STACK_SIZE>;
     using payload = stck::StackPayload;
-    
+
     // ------------------------------
     // Class Creation
     // ------------------------------
@@ -38,7 +38,7 @@ struct MoveGenerator : ChessMechanics
         const Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
         const PackedMove counterMove = {}, const int depthLeft = 0, const int mostRecentMovedSquare = 0
     )
-        : ChessMechanics(bd), _threadStack(s),  _counterMove(counterMove), _kTable(kt), _hTable(ht),
+        : ChessMechanics(bd), _threadStack(s), _counterMove(counterMove), _kTable(kt), _hTable(ht),
           _depthLeft(depthLeft), _mostRecentSq(mostRecentMovedSquare)
     {
     }
@@ -56,7 +56,7 @@ struct MoveGenerator : ChessMechanics
     template <bool GenOnlyAttackMoves = false, bool ApplyHeuristicEval = true> payload GetMovesFast();
 
     std::map<std::string, uint64_t> GetCountedMoves(int depth);
-    uint64_t CountMoves(Board& bd, int depth);
+    uint64_t CountMoves(Board &bd, int depth);
 
     // ------------------------------
     // private methods
@@ -235,9 +235,7 @@ void MoveGenerator::_singleCheckGen(
     const auto [pinnedFigsMap, allowedTilesMap] = [&]() -> std::pair<uint64_t, uint64_t>
     {
         if (checkType == slidingFigCheck)
-            return GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WAllowedTiles>(
-                _board.MovingColor, fullMap
-            );
+            return GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WAllowedTiles>(_board.MovingColor, fullMap);
 
         [[maybe_unused]] const auto [pinnedFigsMap, _] =
             GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(_board.MovingColor, fullMap);
@@ -604,10 +602,9 @@ void MoveGenerator::_processAttackingMoves(
     while (attackingMoves)
     {
         // extracting moves
-        const int movePos        = ExtractMsbPos(attackingMoves);
-        const uint64_t moveBoard = MaxMsbPossible >> movePos;
-        const size_t attackedFigBoardIndex =
-            GetIndexOfContainingBitBoard(moveBoard, SwapColor(_board.MovingColor));
+        const int movePos                  = ExtractMsbPos(attackingMoves);
+        const uint64_t moveBoard           = MaxMsbPossible >> movePos;
+        const size_t attackedFigBoardIndex = GetIndexOfContainingBitBoard(moveBoard, SwapColor(_board.MovingColor));
 
         if constexpr (!promotePawns)
         // simple figure case
@@ -739,8 +736,7 @@ void MoveGenerator::_processPlainKingMoves(
         const uint64_t newKingBoard = MaxMsbPossible >> newPos;
 
         // finding an attacked figure
-        const size_t attackedFigBoardIndex =
-            GetIndexOfContainingBitBoard(newKingBoard, SwapColor(_board.MovingColor));
+        const size_t attackedFigBoardIndex = GetIndexOfContainingBitBoard(newKingBoard, SwapColor(_board.MovingColor));
 
         Move mv{};
 

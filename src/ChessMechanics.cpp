@@ -4,10 +4,10 @@
 
 #include "../include/MoveGeneration/ChessMechanics.h"
 
+#include "../include/Evaluation/BoardEvaluator.h"
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/KingMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
-#include "../include/Evaluation/BoardEvaluator.h"
 
 bool ChessMechanics::IsCheck() const
 {
@@ -179,18 +179,20 @@ uint64_t ChessMechanics::GenerateAllowedTilesForPrecisedPinnedFig(const uint64_t
     return BishopPerspectiveMoves & BishopMap::GetMoves(ExtractMsbPos(KingBoard), fullMap ^ figBoard);
 }
 
-int ChessMechanics::SEE(const Move mv) const {
+int ChessMechanics::SEE(const Move mv) const
+{
     static constexpr size_t MaximalFigureCount = 32;
 
     int scores[MaximalFigureCount];
-    int depth = 0;
-    uint64_t attackFromBitBoard = MaxMsbPossible >> mv.GetStartField();
+    int depth                               = 0;
+    uint64_t attackFromBitBoard             = MaxMsbPossible >> mv.GetStartField();
     auto [attackersBitBoard, fullMap, xray] = _prepareForSEE(mv.GetTargetField());
 
     int attackerFigType = FindFigType(attackFromBitBoard, _board);
-    int color = _board.MovingColor;
-    scores[depth] = BoardEvaluator::BasicFigureValues[mv.GetKilledBoardIndex()];
-    do {
+    int color           = _board.MovingColor;
+    scores[depth]       = BoardEvaluator::BasicFigureValues[mv.GetKilledBoardIndex()];
+    do
+    {
         depth++;
 
         // sum up points
@@ -204,34 +206,32 @@ int ChessMechanics::SEE(const Move mv) const {
         if (attackFromBitBoard & xray)
             attackersBitBoard |= _updateAttackers(fullMap, mv.GetTargetField());
 
-        color = SwapColor(color);
+        color              = SwapColor(color);
         attackFromBitBoard = GetLeastValuablePiece(attackersBitBoard, color, attackerFigType);
-    } while(attackFromBitBoard);
+    } while (attackFromBitBoard);
 
-    while (--depth)
-        scores[depth - 1] = - std::max(-scores[depth - 1], scores[depth]);
+    while (--depth) scores[depth - 1] = -std::max(-scores[depth - 1], scores[depth]);
     return scores[0];
 }
 
-ChessMechanics::_seePackage ChessMechanics::_prepareForSEE(const int msbPos) const {
+ChessMechanics::_seePackage ChessMechanics::_prepareForSEE(const int msbPos) const
+{
     const uint64_t bishops = _board.BitBoards[wQueensIndex] | _board.BitBoards[bQueensIndex] |
                              _board.BitBoards[wBishopsIndex] | _board.BitBoards[bBishopsIndex];
-    const uint64_t rooks =  _board.BitBoards[wQueensIndex] | _board.BitBoards[bQueensIndex] |
-                            _board.BitBoards[wRooksIndex] | _board.BitBoards[bRooksIndex];
+    const uint64_t rooks = _board.BitBoards[wQueensIndex] | _board.BitBoards[bQueensIndex] |
+                           _board.BitBoards[wRooksIndex] | _board.BitBoards[bRooksIndex];
     const uint64_t knights = _board.BitBoards[wKnightsIndex] | _board.BitBoards[bKnightsIndex];
-    const uint64_t kings = _board.BitBoards[wKingIndex] | _board.BitBoards[bKnightsIndex];
-    const uint64_t fullMap = bishops | rooks | knights | kings | _board.BitBoards[wPawnsIndex] |
-                             _board.BitBoards[bPawnsIndex];
+    const uint64_t kings   = _board.BitBoards[wKingIndex] | _board.BitBoards[bKnightsIndex];
+    const uint64_t fullMap =
+        bishops | rooks | knights | kings | _board.BitBoards[wPawnsIndex] | _board.BitBoards[bPawnsIndex];
 
     uint64_t attackers = 0;
-    attackers |= (BishopMap::GetMoves(msbPos, fullMap) & bishops)
-                 | (RookMap::GetMoves(msbPos, fullMap) & rooks)
-                 | (KnightMap::GetMoves(msbPos) & knights)
-                 | (KingMap::GetMoves(msbPos) & kings);
+    attackers |= (BishopMap::GetMoves(msbPos, fullMap) & bishops) | (RookMap::GetMoves(msbPos, fullMap) & rooks) |
+                 (KnightMap::GetMoves(msbPos) & knights) | (KingMap::GetMoves(msbPos) & kings);
 
     const uint64_t figBitBoard = MaxMsbPossible >> msbPos;
-    attackers |= (WhitePawnMap::GetAttackFields(figBitBoard) & _board.BitBoards[bPawnsIndex])
-                 | (BlackPawnMap::GetAttackFields(figBitBoard) & _board.BitBoards[wPawnsIndex]);
+    attackers |= (WhitePawnMap::GetAttackFields(figBitBoard) & _board.BitBoards[bPawnsIndex]) |
+                 (BlackPawnMap::GetAttackFields(figBitBoard) & _board.BitBoards[wPawnsIndex]);
 
     const uint64_t mayXray = bishops | rooks | _board.BitBoards[wPawnsIndex] | _board.BitBoards[bPawnsIndex];
     return {attackers, fullMap, mayXray};

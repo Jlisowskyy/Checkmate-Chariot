@@ -27,7 +27,7 @@ std::map<std::string, uint64_t> MoveGenerator::GetCountedMoves(const int depth)
     return rv;
 }
 
-uint64_t MoveGenerator::CountMoves(Board& bd, const int depth)
+uint64_t MoveGenerator::CountMoves(Board &bd, const int depth)
 {
     if (depth == 0)
         return 1;

@@ -9,8 +9,8 @@
 #include "../Board.h"
 
 #include "BishopMap.h"
-#include "RookMap.h"
 #include "Move.h"
+#include "RookMap.h"
 
 struct ChessMechanics
 {
@@ -72,8 +72,9 @@ struct ChessMechanics
     [[nodiscard]] INLINE size_t GetIndexOfContainingBitBoard(const uint64_t map, const int col) const
     {
         const size_t colIndex = col * Board::BitBoardsPerCol;
-        size_t rv = 0;
-        for (size_t i = 0; i < Board::BitBoardsPerCol; ++i) {
+        size_t rv             = 0;
+        for (size_t i = 0; i < Board::BitBoardsPerCol; ++i)
+        {
             rv += ((_board.BitBoards[colIndex + i] & map) != 0) * i;
         }
         return colIndex + rv;
@@ -90,14 +91,16 @@ struct ChessMechanics
 
     [[nodiscard]] uint64_t GetAllowedTilesWhenCheckedByNonSliding() const;
 
-    [[nodiscard]] INLINE uint64_t GetLeastValuablePiece(uint64_t pieces, int color, int &pieceIndOut) const {
+    [[nodiscard]] INLINE uint64_t GetLeastValuablePiece(uint64_t pieces, int color, int &pieceIndOut) const
+    {
         const int range = static_cast<int>(kingIndex);
         for (int ind = 0; ind < range; ++ind)
         {
-            const int colIndex = color * static_cast<int>(Board::BitBoardsPerCol) + ind;
+            const int colIndex          = color * static_cast<int>(Board::BitBoardsPerCol) + ind;
             const uint64_t intersection = pieces & _board.BitBoards[colIndex];
 
-            if (intersection) {
+            if (intersection)
+            {
                 pieceIndOut = ind;
                 return ExtractLsbBit(intersection);
             }
@@ -113,11 +116,12 @@ struct ChessMechanics
     [[nodiscard]] int SEE(Move mv) const;
 
     /* Function finds index of figure type based on given single bit BitBoard */
-    static INLINE int FindFigType(const uint64_t BitBoard, const Board& bd)
+    static INLINE int FindFigType(const uint64_t BitBoard, const Board &bd)
     {
-        int rv = 0;
+        int rv              = 0;
         constexpr int range = static_cast<int>(Board::BitBoardsPerCol);
-        for (int i = 0; i < range; ++i) {
+        for (int i = 0; i < range; ++i)
+        {
             rv += ((bd.BitBoards[i] & BitBoard) != 0) * i;
             rv += ((bd.BitBoards[wPawnsIndex + i] & BitBoard) != 0) * i;
         }
@@ -127,22 +131,25 @@ struct ChessMechanics
     // ------------------------------
     // private methods
     // ------------------------------
-private:
 
-    [[nodiscard]] INLINE uint64_t _updateAttackers(const uint64_t fullMap, const int msbPos) const {
+    private:
+    [[nodiscard]] INLINE uint64_t _updateAttackers(const uint64_t fullMap, const int msbPos) const
+    {
         const uint64_t bishops = (_board.BitBoards[wQueensIndex] | _board.BitBoards[bQueensIndex] |
-                                  _board.BitBoards[wBishopsIndex] | _board.BitBoards[bBishopsIndex]) & fullMap;
-        const uint64_t rooks =  (_board.BitBoards[wQueensIndex] | _board.BitBoards[bQueensIndex] |
-                                 _board.BitBoards[wRooksIndex] | _board.BitBoards[bRooksIndex]) & fullMap;
+                                  _board.BitBoards[wBishopsIndex] | _board.BitBoards[bBishopsIndex]) &
+                                 fullMap;
+        const uint64_t rooks = (_board.BitBoards[wQueensIndex] | _board.BitBoards[bQueensIndex] |
+                                _board.BitBoards[wRooksIndex] | _board.BitBoards[bRooksIndex]) &
+                               fullMap;
 
         uint64_t attackers = 0;
-        attackers |= (BishopMap::GetMoves(msbPos, fullMap) & bishops)
-                     | (RookMap::GetMoves(msbPos, fullMap) & rooks);
+        attackers |= (BishopMap::GetMoves(msbPos, fullMap) & bishops) | (RookMap::GetMoves(msbPos, fullMap) & rooks);
 
         return attackers;
     }
 
-    struct _seePackage{
+    struct _seePackage
+    {
         uint64_t attackersBitBoard;
         uint64_t fullMap;
         uint64_t xrayMap;
@@ -177,7 +184,7 @@ private:
     // Class fields
     // ------------------------------
 
-protected:
+    protected:
     const Board &_board;
 };
 
