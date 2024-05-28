@@ -149,7 +149,7 @@ enum class EvalMode
 };
 
 /* Function finds index of figure type based on given single bit BitBoard */
-int FindFigType(const uint64_t BitBoard, const Board& bd)
+inline INLINE int FindFigType(const uint64_t BitBoard, const Board& bd)
 {
     int rv = 0;
     constexpr int range = static_cast<int>(Board::BitBoardsPerCol);

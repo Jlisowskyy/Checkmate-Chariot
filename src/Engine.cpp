@@ -18,22 +18,8 @@ void Engine::WriteBoard() const { DisplayBoard(_board); }
 
 std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
 {
-    Board startingBoard = _board;
-    MoveGenerator game(startingBoard, TManager.GetDefaultStack());
-    std::map<std::string, uint64_t> moveMap{};
-
-    const auto moves = game.GetMovesFast();
-
-    VolatileBoardData data{startingBoard};
-    for (size_t i = 0; i < moves.size; ++i)
-    {
-        Move::MakeMove(moves[i], startingBoard);
-        moveMap[moves[i].GetLongAlgebraicNotation()] = game.CountMoves(depth - 1);
-        Move::UnmakeMove(moves[i], startingBoard, data);
-    }
-
-    TManager.GetDefaultStack().PopAggregate(moves);
-    return moveMap;
+    MoveGenerator mgen{_board, TManager.GetDefaultStack()};
+    return mgen.GetCountedMoves(depth);
 }
 
 bool Engine::SetFenPosition(const std::string &fenStr)

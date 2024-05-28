@@ -45,7 +45,7 @@ struct MoveGenerator
     MoveGenerator() = delete;
 
     explicit MoveGenerator(
-        Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
+        const Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
         const PackedMove counterMove = {}, const int depthLeft = 0, const int mostRecentMovedSquare = 0
     )
         : _mechanics(bd), _threadStack(s), _board(bd), _counterMove(counterMove), _kTable(kt), _hTable(ht),
@@ -68,7 +68,7 @@ struct MoveGenerator
     template <bool GenOnlyAttackMoves = false, bool ApplyHeuristicEval = true> payload GetMovesFast();
 
     std::map<std::string, uint64_t> GetCountedMoves(int depth);
-    uint64_t CountMoves(int depth);
+    uint64_t CountMoves(Board& bd, int depth);
 
     // ------------------------------
     // private methods
@@ -139,9 +139,9 @@ struct MoveGenerator
     };
 
     // Move generation components
-    ChessMechanics _mechanics;
+    const ChessMechanics _mechanics;
     Stack<Move, DEFAULT_STACK_SIZE> &_threadStack;
-    Board &_board;
+    const Board &_board;
 
     // Heuristic evaluation components
     const PackedMove _counterMove;

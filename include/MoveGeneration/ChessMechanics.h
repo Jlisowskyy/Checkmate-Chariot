@@ -35,7 +35,7 @@ struct ChessMechanics
 
     ChessMechanics() = delete;
 
-    explicit ChessMechanics(Board &bd) : _board(bd) {}
+    explicit ChessMechanics(const Board &bd) : _board(bd) {}
 
     ChessMechanics(ChessMechanics &other) = default;
 
@@ -85,7 +85,7 @@ struct ChessMechanics
     // Class fields
     // ------------------------------
 
-    Board &_board;
+    const Board &_board;
 };
 
 template <ChessMechanics::PinnedFigGen genType>
