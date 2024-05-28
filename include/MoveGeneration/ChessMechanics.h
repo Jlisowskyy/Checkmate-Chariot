@@ -50,12 +50,34 @@ struct ChessMechanics
 
     [[nodiscard]] bool IsCheck() const;
 
-    [[nodiscard]] uint64_t GetFullBitMap() const;
+    // Gets occupancy maps, which simply indicates whether some field is occupied or not. Does not distinguish colors.
+    [[nodiscard]] INLINE uint64_t GetFullBitMap() const
+    {
+        uint64_t map = 0;
+        for (const auto m : _board.BitBoards) map |= m;
+        return map;
+    }
 
-    [[nodiscard]] uint64_t GetColBitMap(int col) const;
+    // Gets occupancy maps, which simply indicates whether some field is occupied or not, by desired color figures.
+    [[nodiscard]] INLINE uint64_t GetColBitMap(const int col) const
+    {
+        TraceIfFalse(col == 1 || col == 0, "Invalid color!");
+
+        uint64_t map = 0;
+        for (size_t i = 0; i < Board::BitBoardsPerCol; ++i) map |= _board.BitBoards[Board::BitBoardsPerCol * col + i];
+        return map;
+    }
 
     // does not check kings BitBoards!!!
-    [[nodiscard]] size_t GetIndexOfContainingBitBoard(uint64_t map, int col) const;
+    [[nodiscard]] INLINE size_t GetIndexOfContainingBitBoard(const uint64_t map, const int col) const
+    {
+        const size_t colIndex = col * Board::BitBoardsPerCol;
+        size_t rv = 0;
+        for (size_t i = 0; i < Board::BitBoardsPerCol; ++i) {
+            rv += ((_board.BitBoards[colIndex + i] & map) != 0) * i;
+        }
+        return colIndex + rv;
+    }
 
     // [blockedFigMap, checksCount, checkType]
     [[nodiscard]] std::tuple<uint64_t, uint8_t, uint8_t> GetBlockedFieldBitMap(uint64_t fullMap) const;
@@ -84,7 +106,23 @@ struct ChessMechanics
         return 0;
     }
 
+    /*
+     * SEE - Static Exchange Evaluation - function used to get approximated gain
+     * after making given move, that is: it performs every exchange on field given by the move
+     * */
     [[nodiscard]] int SEE(Move mv) const;
+
+    /* Function finds index of figure type based on given single bit BitBoard */
+    static INLINE int FindFigType(const uint64_t BitBoard, const Board& bd)
+    {
+        int rv = 0;
+        constexpr int range = static_cast<int>(Board::BitBoardsPerCol);
+        for (int i = 0; i < range; ++i) {
+            rv += ((bd.BitBoards[i] & BitBoard) != 0) * i;
+            rv += ((bd.BitBoards[wPawnsIndex + i] & BitBoard) != 0) * i;
+        }
+        return rv;
+    }
 
     // ------------------------------
     // private methods
@@ -116,7 +154,20 @@ private:
     _getRookBlockedMap(uint64_t rookMap, uint64_t fullMapWoutKing, uint64_t kingMap);
 
     template <class MoveGeneratorT>
-    [[nodiscard]] static uint64_t _blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen);
+    [[nodiscard]] INLINE static uint64_t _blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen)
+    {
+        uint64_t blockedMap = 0;
+
+        while (board != 0)
+        {
+            const int figPos = ExtractMsbPos(board);
+            board ^= (MaxMsbPossible >> figPos);
+
+            blockedMap |= mGen(figPos);
+        }
+
+        return blockedMap;
+    }
 
     // returns [ pinnedFigMap, allowedTilesMap ]
     template <class MoveMapT, PinnedFigGen type>
@@ -146,21 +197,6 @@ std::pair<uint64_t, uint64_t> ChessMechanics::GetPinnedFigsMap(const int col, co
     );
 
     return {pinnedByBishops | pinnedByRooks, allowedBishops | allowedRooks};
-}
-
-template <class MoveGeneratorT> uint64_t ChessMechanics::_blockIterativeGenerator(uint64_t board, MoveGeneratorT mGen)
-{
-    uint64_t blockedMap = 0;
-
-    while (board != 0)
-    {
-        const int figPos = ExtractMsbPos(board);
-        board ^= (MaxMsbPossible >> figPos);
-
-        blockedMap |= mGen(figPos);
-    }
-
-    return blockedMap;
 }
 
 template <class MoveMapT, ChessMechanics::PinnedFigGen type>

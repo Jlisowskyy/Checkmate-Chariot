@@ -51,47 +51,6 @@ bool ChessMechanics::IsCheck() const
     return false;
 }
 
-// Gets occupancy maps, which simply indicates whether some field is occupied or not. Does not distinguish colors.
-uint64_t ChessMechanics::GetFullBitMap() const
-{
-    uint64_t map = 0;
-    for (const auto m : _board.BitBoards) map |= m;
-    return map;
-}
-
-// Gets occupancy maps, which simply indicates whether some field is occupied or not, by desired color figures.
-uint64_t ChessMechanics::GetColBitMap(const int col) const
-{
-    TraceIfFalse(col == 1 || col == 0, "Invalid color!");
-
-    uint64_t map = 0;
-    for (size_t i = 0; i < Board::BitBoardsPerCol; ++i) map |= _board.BitBoards[Board::BitBoardsPerCol * col + i];
-    return map;
-}
-
-size_t ChessMechanics::GetIndexOfContainingBitBoard(uint64_t map, int col) const
-{
-    TraceIfFalse(col == 1 || col == 0, "Invalid color!");
-    TraceIfFalse(map != 0, "BitMap is empty!");
-
-    const size_t range    = Board::BitBoardsPerCol * col + kingIndex;
-    const size_t startInd = Board::BitBoardsPerCol * col;
-
-    for (size_t i = startInd; i < range; ++i)
-        if ((_board.BitBoards[i] & map) != 0)
-            return i;
-
-#ifndef NDEBUG
-    throw std::runtime_error(std::format(
-        "[ ERROR ] This code path should never be executed in {} on line {}"
-        "\n Figure not found on enemy maps!",
-        __FILE__, __LINE__
-    ));
-#endif
-
-    return 0;
-}
-
 /*      IMPORTANT NOTES:
  *  BlockedFieldsMap - indicates wheter some field could be attacked by enemy figures in their next round.
  *  During generation process there are check test performed with counting, what yields 3 code branches inside main
