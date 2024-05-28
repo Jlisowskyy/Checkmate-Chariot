@@ -177,6 +177,7 @@ private:
     // Class fields
     // ------------------------------
 
+protected:
     const Board &_board;
 };
 
