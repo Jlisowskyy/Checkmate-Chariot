@@ -4,8 +4,6 @@
 
 #include "../include/Engine.h"
 #include "../include/Evaluation/BoardEvaluator.h"
-#include "../include/Evaluation/BoardEvaluatorPrinter.h"
-#include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/Search/BestMoveSearch.h"
 #include "../include/Search/TranspositionTable.h"

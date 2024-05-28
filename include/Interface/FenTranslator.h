@@ -102,15 +102,17 @@ struct FenTranslator
         .Castlings      = {0b11111},
         .ElPassantField = Board::InvalidElPassantBitBoard,
         .MovingColor    = WHITE,
+        .HalfMoves = 0,
         .BitBoards =
-            {
-                           65280LLU, 66LLU,
-                           36LLU, 129LLU,
-                           8LLU, 16LLU,
-                           71776119061217280LLU, 4755801206503243776LLU,
-                           2594073385365405696LLU, 9295429630892703744LLU,
-                           576460752303423488LLU, 1152921504606846976LLU,
-                           }
+                {
+                        65280LLU, 66LLU,
+                        36LLU, 129LLU,
+                        8LLU, 16LLU,
+                        71776119061217280LLU, 4755801206503243776LLU,
+                        2594073385365405696LLU, 9295429630892703744LLU,
+                        576460752303423488LLU, 1152921504606846976LLU,
+                },
+        .Age = 1
     };
 };
 

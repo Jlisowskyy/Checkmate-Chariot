@@ -3,6 +3,7 @@
 #include "../include/Interface/FenTranslator.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
 #include "../include/ThreadManagement/SearchThreadManager.h"
+#include "../include/TestsAndDebugging/TestSetup.h"
 
 TEST(GoCommandTest, stopCommandResponse)
 {
@@ -98,4 +99,31 @@ TEST(GoCommandTest, timeSpentTest)
 
     auto t2 = std::chrono::steady_clock::now();
     ASSERT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count(), 1200 * 1.1);
+}
+
+TEST(Aging, EngineAging)
+{
+    TestSetup setup{};
+
+    setup.Initialize();
+
+    setup.ProcessCommandSync("position startpos moves e2e4 e7e5");
+
+    ASSERT_EQ(setup.GetEngine().GetAge(), 3);
+    ASSERT_EQ(setup.GetEngine().GetUnderlyingBoardCopy().HalfMoves, 0);
+
+    setup.ProcessCommandSync("position startpos moves e2e4 e7e5 a2a4 a7a5 h2h4");
+
+    ASSERT_EQ(setup.GetEngine().GetAge(), 6);
+    ASSERT_EQ(setup.GetEngine().GetUnderlyingBoardCopy().HalfMoves, 0);
+
+    setup.ProcessCommandSync("position startpos moves e2e4 e7e5 a2a4 a7a5 h2h4 d7d5 b1c3");
+
+    ASSERT_EQ(setup.GetEngine().GetAge(), 8);
+    ASSERT_EQ(setup.GetEngine().GetUnderlyingBoardCopy().HalfMoves, 1);
+
+    setup.ProcessCommandSync("position startpos moves e2e4 e7e5 a2a4 a7a5 h2h4 d7d5 b1c3 d5e4");
+
+    ASSERT_EQ(setup.GetEngine().GetAge(), 9);
+    ASSERT_EQ(setup.GetEngine().GetUnderlyingBoardCopy().HalfMoves, 0);
 }

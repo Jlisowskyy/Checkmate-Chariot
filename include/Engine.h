@@ -72,7 +72,10 @@ class Engine
     /* Simply returns the moving color */
     [[nodiscard]] int GetMovingColor() const { return _board.MovingColor; }
 
-    [[nodiscard]] uint16_t GetAge() const { return _board.Age; }
+    [[nodiscard]] uint16_t GetAge() const {
+        TraceIfFalse(_board.Age >= 1, "Board contains age smaller than 1!");
+        return _board.Age;
+    }
 
     /* Returns FEN encoded actual board state */
     [[nodiscard]] std::string GetFenTranslation() const;

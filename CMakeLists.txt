@@ -201,6 +201,9 @@ else()
     message(FATAL_ERROR "Unknown compiler")
 endif()
 
+# Uncomment to stop enforcing inline on INLINE macro
+add_compile_definitions(PREVENT_FORCE_INLINE=1)
+
 # Uncomment to add gathering TT statistics
 add_compile_definitions(TEST_TT=1)
 

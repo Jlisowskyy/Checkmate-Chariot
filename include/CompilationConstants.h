@@ -63,6 +63,11 @@ static constexpr int MAX_ASP_WINDOW_RETRIES       = 4;
 
 #endif
 
+#else
+
+// No forced inline allowed
+#define INLINE
+
 #endif // PREVENT_FORCE_INLINE
 
 // ------------------------------
