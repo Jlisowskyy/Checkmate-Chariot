@@ -10,6 +10,8 @@
 
 #include "../CompilationConstants.h"
 #include "../Interface/Logger.h"
+#include "../MoveGeneration/MoveGenerator.h"
+#include "../Search/ZobristHash.h"
 
 /*
  * struct defines statistics gathered during execution about aspiration window flow
@@ -55,5 +57,18 @@ class AspWinStat
         GlobalLogger.LogStream << std::endl;
     }
 };
+
+bool IsDrawExtremelySlow(const Board& bd)
+{
+    MoveGenerator::stck s{};
+    MoveGenerator generator{bd, s};
+
+    auto mvs = generator.GetMovesFast();
+    const size_t cnt = mvs.size;
+    s.PopAggregate(mvs);
+    const uint64_t hash = ZHasher.GenerateHash(bd);
+
+    return generator.IsDrawByReps(hash) || (cnt == 0 && !generator.IsCheck());
+}
 
 #endif // CHECKMATE_CHARIOT_DEBUGTOOLS_H

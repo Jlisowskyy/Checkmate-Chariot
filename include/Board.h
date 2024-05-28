@@ -8,6 +8,7 @@
 #include <array>
 #include <bitset>
 #include <cinttypes>
+#include <unordered_map>
 
 #include "BitOperations.h"
 
@@ -155,12 +156,22 @@ struct Board
         MinMsbPossible << 61 | MinMsbPossible << 62, MinMsbPossible << 58 | MinMsbPossible << 59 | MinMsbPossible << 57
     };
 
-    std::bitset<CastlingCount + 1> Castlings{0}; // additional sentinel field
+// --------------------------------
+// Main processing components
+// --------------------------------
+
+    std::bitset<CastlingCount + 1> Castlings = {0}; // additional sentinel field
     uint64_t ElPassantField                = MaxMsbPossible >> InvalidElPassantField;
     int MovingColor                        = WHITE;
+    std::array<uint64_t, BitBoardsCount + 1> BitBoards = {}; // additional sentinel board
+
+// --------------------------------------
+// Draw and state monitoring fields
+// --------------------------------------
+
     int HalfMoves                          = {};
-    uint64_t BitBoards[BitBoardsCount + 1] = {}; // additional sentinel board
-    uint16_t Age{};                              // stores total half moves since the beginning of the game
+    uint16_t Age = {};                              // stores total half moves since the beginning of the game
+    std::unordered_map<uint64_t, int> Repetitions = {}; // Stores hashes of previous encountered positions
 };
 
 #endif // BOARD_H

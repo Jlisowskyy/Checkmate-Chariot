@@ -4,7 +4,6 @@
 
 #include "../include/ThreadManagement/SearchThreadManager.h"
 #include "../include/Search/BestMoveSearch.h"
-#include "../include/Search/TranspositionTable.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
 
 #include <format>
@@ -14,7 +13,7 @@ SearchThreadManager::~SearchThreadManager()
     Stop();
     Consolidate();
 }
-bool SearchThreadManager::Go(const Board &bd, const RepMap &rMap, const GoInfo &info)
+bool SearchThreadManager::Go(const Board &bd, const GoInfo &info)
 {
     // ensuring only one search is running at a time
     if (_isSearchOn)
@@ -32,7 +31,7 @@ bool SearchThreadManager::Go(const Board &bd, const RepMap &rMap, const GoInfo &
 
     // Running up the searching worker
     _threads[MainSearchThreadInd] = new std::thread(
-        _threadSearchJob, &bd, &rMap, &_stacks[MainSearchThreadInd], &_isSearchOn,
+        _threadSearchJob, &bd, &_stacks[MainSearchThreadInd], &_isSearchOn,
         std::min(info.depth, MAX_SEARCH_DEPTH)
     );
     WrapTraceMsgInfo("Search thread started");
@@ -41,12 +40,12 @@ bool SearchThreadManager::Go(const Board &bd, const RepMap &rMap, const GoInfo &
     return true;
 }
 
-bool SearchThreadManager::GoInfinite(const Board &bd, const RepMap &rMap)
+bool SearchThreadManager::GoInfinite(const Board &bd)
 {
     GoInfo info;
     info.timeInfo = GoTimeInfo::GetInfiniteTime();
     info.depth    = MAX_SEARCH_DEPTH;
-    return Go(bd, rMap, info);
+    return Go(bd, info);
 }
 
 void SearchThreadManager::Stop()
@@ -65,14 +64,14 @@ void SearchThreadManager::Stop()
 }
 
 void SearchThreadManager::_threadSearchJob(
-    const Board *bd, const RepMap *rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, int depth
+    const Board *bd, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, int depth
 )
 {
     PackedMove output{};
     PackedMove ponder{};
 
     *guard = true;
-    BestMoveSearch searcher{*bd, *rMap, *s};
+    BestMoveSearch searcher{*bd, *s};
     searcher.IterativeDeepening(&output, &ponder, depth);
 
     GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
@@ -93,7 +92,7 @@ void SearchThreadManager::Consolidate()
     WrapTraceMsgInfo("Thread manager consolidated successfully");
 }
 
-void SearchThreadManager::GoWoutThread(const Board &bd, const RepMap &rMap, const GoInfo &info)
+void SearchThreadManager::GoWoutThread(const Board &bd, const GoInfo &info)
 {
     static StackType s{};
 
@@ -102,7 +101,7 @@ void SearchThreadManager::GoWoutThread(const Board &bd, const RepMap &rMap, cons
     PackedMove output{};
     PackedMove ponder{};
 
-    BestMoveSearch searcher{bd, rMap, s};
+    BestMoveSearch searcher{bd, s};
     searcher.IterativeDeepening(&output, &ponder, info.depth);
 
     GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())

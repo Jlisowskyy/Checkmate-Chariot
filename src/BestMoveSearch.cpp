@@ -31,39 +31,37 @@ using RepMap = std::unordered_map<uint64_t, int>;
 #endif // NDEBUG
 
 [[nodiscard]] inline INLINE uint64_t
-ProcessAttackMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardData &data, RepMap &rMap)
+ProcessAttackMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardData &data)
 {
 
     const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
     TTable.Prefetch(nextHash);
     Move::MakeMove(mv, bd);
-    rMap[nextHash]++;
+    bd.Repetitions[nextHash]++;
 
     return nextHash;
 }
 
 [[nodiscard]] inline INLINE uint64_t ProcessMove(
-    Board &bd, const Move mv, const int depth, const uint64_t hash, KillerTable &table, const VolatileBoardData &data,
-    RepMap &rMap
-)
+    Board &bd, const Move mv, const int depth, const uint64_t hash, KillerTable &table, const VolatileBoardData &data)
 {
 
     const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
     TTable.Prefetch(nextHash);
     Move::MakeMove(mv, bd);
     table.ClearPlyFloor(depth);
-    rMap[nextHash]++;
+    bd.Repetitions[nextHash]++;
 
     return nextHash;
 }
 
 [[nodiscard]] inline INLINE uint64_t
-RevertMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardData &data, RepMap &rMap)
+RevertMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardData &data)
 {
     Move::UnmakeMove(mv, bd, data);
 
-    if (const int occurs = --rMap[hash]; occurs == 0)
-        rMap.erase(hash);
+    if (const int occurs = --bd.Repetitions[hash]; occurs == 0)
+        bd.Repetitions.erase(hash);
 
     return ZHasher.UpdateHash(hash, mv, data);
 }
@@ -250,7 +248,8 @@ int BestMoveSearch::_search(
         return _qSearch<searchType>(bd, alpha, beta, zHash, 0);
 
     // Check whether we reached end of the legal path
-    if (_isDrawByReps(zHash))
+    ChessMechanics mech{_board};
+    if (mech.IsDrawByReps(zHash))
         return DRAW_SCORE;
 
     // incrementing nodes counter;
@@ -328,7 +327,7 @@ int BestMoveSearch::_search(
         // stores the most recent return value of child trees,
         // alpha + 1 value enforces the second if trigger in first iteration in case of pv nodes
         int moveEval = alpha + 1;
-        zHash        = ProcessMove(bd, moves[i], depthLeft - 1, zHash, _kTable, oldData, _repMap);
+        zHash        = ProcessMove(bd, moves[i], depthLeft - 1, zHash, _kTable, oldData);
 
         // In pv nodes we always search first move on full window due to assumption that TT will give
         // us best move that is possible.
@@ -357,7 +356,7 @@ int BestMoveSearch::_search(
             return TIME_STOP_RESERVED_VALUE;
 
         // move reverted after possible research
-        zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
+        zHash = RevertMove(bd, moves[i], zHash, oldData);
 
         // Check whether we should update values
         if (moveEval > bestEval)
@@ -415,7 +414,8 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
         return TIME_STOP_RESERVED_VALUE;
 
     // Check whether we reached end of the legal path
-    if (_isDrawByReps(zHash))
+    ChessMechanics mech{_board};
+    if (mech.IsDrawByReps(zHash))
         return DRAW_SCORE;
 
     int bestEval = NEGATIVE_INFINITY;
@@ -508,9 +508,9 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
         if (i != 0)
             _fetchBestMove(moves, i);
 
-        zHash               = ProcessAttackMove(bd, moves[i], zHash, oldData, _repMap);
+        zHash               = ProcessAttackMove(bd, moves[i], zHash, oldData);
         const int moveValue = -_qSearch<searchType>(bd, -beta, -alpha, zHash, extendedDepth + 1);
-        zHash               = RevertMove(bd, moves[i], zHash, oldData, _repMap);
+        zHash               = RevertMove(bd, moves[i], zHash, oldData);
 
         // if there was call to abort then abort
         if (std::abs(moveValue) == TIME_STOP_RESERVED_VALUE)

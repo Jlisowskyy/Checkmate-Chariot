@@ -13,21 +13,6 @@ const char IndexToFigCharMap[Board::BitBoardsCount]{
     'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k',
 };
 
-const std::unordered_map<char, size_t> FigCharToIndexMap{
-    {'P',   wPawnsIndex},
-    {'N', wKnightsIndex},
-    {'B', wBishopsIndex},
-    {'R',   wRooksIndex},
-    {'Q',  wQueensIndex},
-    {'K',    wKingIndex},
-    {'p',   bPawnsIndex},
-    {'n', bKnightsIndex},
-    {'b', bBishopsIndex},
-    {'r',   bRooksIndex},
-    {'q',  bQueensIndex},
-    {'k',    bKingIndex}
-};
-
 void DisplayMask(const uint64_t mask)
 {
     for (int y = 56; y >= 0; y -= 8)

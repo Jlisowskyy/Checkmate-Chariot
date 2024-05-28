@@ -46,8 +46,6 @@
 
 class BestMoveSearch
 {
-    using RepMap = std::unordered_map<uint64_t, int>;
-
     // ------------------------------
     // Class inner types
     // ------------------------------
@@ -144,8 +142,8 @@ class BestMoveSearch
      * */
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board, const RepMap &rMap, Stack<Move, DEFAULT_STACK_SIZE> &s)
-        : _stack(s), _board(board), _repMap(rMap)
+    BestMoveSearch(const Board &board,  Stack<Move, DEFAULT_STACK_SIZE> &s)
+        : _stack(s), _board(board)
     {
     }
     ~BestMoveSearch() = default;
@@ -192,11 +190,6 @@ class BestMoveSearch
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
     static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);
 
-    [[nodiscard]] INLINE bool _isDrawByReps(const uint64_t hash)
-    {
-        return _repMap[hash] >= 3 || _board.HalfMoves >= 50;
-    }
-
     void INLINE _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth)
     {
         _kTable.SaveKillerMove(mv, depth);
@@ -210,7 +203,6 @@ class BestMoveSearch
 
     Stack<Move, DEFAULT_STACK_SIZE> &_stack;
     Board _board;
-    RepMap _repMap;
     PV _pv{};
     PV _dummyPv{};
     uint64_t _visitedNodes = 0;

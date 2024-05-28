@@ -9,6 +9,13 @@
 #include "../include/MoveGeneration/WhitePawnMap.h"
 #include "../include/ParseTools.h"
 
+// Initialize default board
+const Board FenTranslator::StartBoard = []() {
+    Board bd{};
+    FenTranslator::Translate(FenTranslator::StartingPosition, bd);
+    return bd;
+}();
+
 const Board &FenTranslator::GetDefault() { return StartBoard; }
 
 bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
@@ -314,7 +321,7 @@ void FenTranslator::_addFigure(const std::string &pos, char fig, Board &bd)
 
     if (!FigCharToIndexMap.contains(fig))
         throw std::runtime_error(
-            std::format("[ ERROR ] Encountered invalid character ({0})inside fen position description!\n", fig)
+            std::format("[ ERROR ] Encountered invalid character ({}) inside fen position description!\n", fig)
         );
 
     bd.BitBoards[FigCharToIndexMap.at(fig)] |= field;

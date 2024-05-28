@@ -134,7 +134,6 @@ class Engine
     Board _board         = FenTranslator::GetDefault();
     Board _startingBoard = FenTranslator::GetDefault();
     OpeningBook _book{};
-    std::unordered_map<uint64_t, int> _repetitionMap{};
     std::string _bookPath = _defaultBookPath;
 
     bool _isStartPosPlayed                            = true;

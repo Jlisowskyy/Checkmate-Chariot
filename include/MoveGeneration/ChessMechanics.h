@@ -50,6 +50,11 @@ struct ChessMechanics
 
     [[nodiscard]] bool IsCheck() const;
 
+    [[nodiscard]] INLINE bool IsDrawByReps(const uint64_t hash)
+    {
+        return _board.Repetitions.at(hash) >= 3 || _board.HalfMoves >= 50;
+    }
+
     // Gets occupancy maps, which simply indicates whether some field is occupied or not. Does not distinguish colors.
     [[nodiscard]] INLINE uint64_t GetFullBitMap() const
     {
