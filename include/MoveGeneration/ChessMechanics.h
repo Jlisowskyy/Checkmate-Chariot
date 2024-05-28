@@ -10,6 +10,7 @@
 
 #include "BishopMap.h"
 #include "RookMap.h"
+#include "Move.h"
 
 struct ChessMechanics
 {
@@ -67,9 +68,49 @@ struct ChessMechanics
 
     [[nodiscard]] uint64_t GetAllowedTilesWhenCheckedByNonSliding() const;
 
+    [[nodiscard]] INLINE uint64_t GetLeastValuablePiece(uint64_t pieces, int color, int &pieceIndOut) const {
+        const int range = static_cast<int>(kingIndex);
+        for (int ind = 0; ind < range; ++ind)
+        {
+            const int colIndex = color * static_cast<int>(Board::BitBoardsPerCol) + ind;
+            const uint64_t intersection = pieces & _board.BitBoards[colIndex];
+
+            if (intersection) {
+                pieceIndOut = ind;
+                return ExtractLsbBit(intersection);
+            }
+        }
+
+        return 0;
+    }
+
+    [[nodiscard]] int SEE(Move mv) const;
+
     // ------------------------------
     // private methods
     // ------------------------------
+private:
+
+    [[nodiscard]] INLINE uint64_t _updateAttackers(const uint64_t fullMap, const int msbPos) const {
+        const uint64_t bishops = (_board.BitBoards[wQueensIndex] | _board.BitBoards[bQueensIndex] |
+                                  _board.BitBoards[wBishopsIndex] | _board.BitBoards[bBishopsIndex]) & fullMap;
+        const uint64_t rooks =  (_board.BitBoards[wQueensIndex] | _board.BitBoards[bQueensIndex] |
+                                 _board.BitBoards[wRooksIndex] | _board.BitBoards[bRooksIndex]) & fullMap;
+
+        uint64_t attackers = 0;
+        attackers |= (BishopMap::GetMoves(msbPos, fullMap) & bishops)
+                     | (RookMap::GetMoves(msbPos, fullMap) & rooks);
+
+        return attackers;
+    }
+
+    struct _seePackage{
+        uint64_t attackersBitBoard;
+        uint64_t fullMap;
+        uint64_t xrayMap;
+    };
+
+    [[nodiscard]] inline INLINE _seePackage _prepareForSEE(int msbPos) const;
 
     static std::pair<uint64_t, uint8_t>
     _getRookBlockedMap(uint64_t rookMap, uint64_t fullMapWoutKing, uint64_t kingMap);

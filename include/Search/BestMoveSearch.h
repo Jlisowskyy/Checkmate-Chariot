@@ -204,20 +204,6 @@ class BestMoveSearch
         _histTable.SetBonusMove(mv, depth);
     }
 
-    int _see(Move mv) const;
-
-    struct _seePackage{
-        uint64_t attackersBitBoard;
-        uint64_t fullMap;
-        uint64_t xrayMap;
-    };
-
-    _seePackage _prepareForSEE(int msbPos) const;
-
-    uint64_t _updateAttackers(uint64_t fullMap, int msbPos) const;
-
-    uint64_t _getLeastValuablePiece(uint64_t pieces, int color, int& pieceIndOut) const;
-
     // ------------------------------
     // Class fields
     // ------------------------------
