@@ -18,22 +18,8 @@ void Engine::WriteBoard() const { DisplayBoard(_board); }
 
 std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
 {
-    Board startingBoard = _board;
-    MoveGenerator game(startingBoard, TManager.GetDefaultStack());
-    std::map<std::string, uint64_t> moveMap{};
-
-    const auto moves = game.GetMovesFast();
-
-    VolatileBoardData data{startingBoard};
-    for (size_t i = 0; i < moves.size; ++i)
-    {
-        Move::MakeMove(moves[i], startingBoard);
-        moveMap[moves[i].GetLongAlgebraicNotation()] = game.CountMoves(depth - 1);
-        Move::UnmakeMove(moves[i], startingBoard, data);
-    }
-
-    TManager.GetDefaultStack().PopAggregate(moves);
-    return moveMap;
+    MoveGenerator mgen{_board, TManager.GetDefaultStack()};
+    return mgen.GetCountedMoves(depth);
 }
 
 bool Engine::SetFenPosition(const std::string &fenStr)
@@ -216,7 +202,7 @@ void Engine::PonderHit()
 int Engine::GetQuiesceEval()
 {
     BestMoveSearch searcher{_board, _repetitionMap, TManager.GetDefaultStack()};
-    return searcher.QuiesceEval();
+    return searcher.QuiesceEval() * BoardEvaluator::ScoreGrain;
 }
 
 int Engine::GetEvalPrinted()
@@ -226,5 +212,5 @@ int Engine::GetEvalPrinted()
     int32_t eval = BoardEvaluator::Evaluation2<EvalMode::PrintMode>(_board);
     BoardEvaluatorPrinter::printAll<EvalMode::PrintMode>();
 
-    return eval;
+    return (_board.MovingColor == WHITE ? eval : -eval);
 }

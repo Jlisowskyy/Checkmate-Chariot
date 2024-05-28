@@ -126,6 +126,12 @@ class BestMoveSearch
         int _depth{1};
     };
 
+    enum class SearchType
+    {
+        PVSearch,
+        NoPVSearch
+    };
+
     public:
     // ------------------------------
     // Class creation
@@ -174,11 +180,14 @@ class BestMoveSearch
     private:
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimizing player
+
+    template <SearchType searchType>
+    int _search(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);
+
+    template <SearchType searchType> int _qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int extendedDepth);
+
     [[nodiscard]] int
     _pwsSearch(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);
-    [[nodiscard]] int _zwSearch(Board &bd, int alpha, int depthLeft, uint64_t zHash, Move prevMove);
-    [[nodiscard]] int _quiescenceSearch(Board &bd, int alpha, int beta, uint64_t zHash, int extendedDepth);
-    [[nodiscard]] int _zwQuiescenceSearch(Board &bd, int alpha, uint64_t zHash, int extendedDepth);
 
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
     static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);
@@ -203,6 +212,7 @@ class BestMoveSearch
     Board _board;
     RepMap _repMap;
     PV _pv{};
+    PV _dummyPv{};
     uint64_t _visitedNodes = 0;
     uint64_t _cutoffNodes  = 0;
     int _currRootDepth     = 0;

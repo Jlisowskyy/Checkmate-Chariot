@@ -23,20 +23,10 @@
 #include <array>
 #include <map>
 
-struct MoveGenerator
+struct MoveGenerator : ChessMechanics
 {
     using stck    = Stack<Move, DEFAULT_STACK_SIZE>;
     using payload = stck::StackPayload;
-
-    // ------------------------------
-    // Class inner types
-    // ------------------------------
-
-    enum checkType
-    {
-        slidingFigCheck,
-        simpleFigCheck
-    };
 
     // ------------------------------
     // Class Creation
@@ -45,10 +35,10 @@ struct MoveGenerator
     MoveGenerator() = delete;
 
     explicit MoveGenerator(
-        Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
+        const Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
         const PackedMove counterMove = {}, const int depthLeft = 0, const int mostRecentMovedSquare = 0
     )
-        : _mechanics(bd), _threadStack(s), _board(bd), _counterMove(counterMove), _kTable(kt), _hTable(ht),
+        : ChessMechanics(bd), _threadStack(s), _counterMove(counterMove), _kTable(kt), _hTable(ht),
           _depthLeft(depthLeft), _mostRecentSq(mostRecentMovedSquare)
     {
     }
@@ -63,12 +53,10 @@ struct MoveGenerator
     // Class interaction
     // ------------------------------
 
-    [[nodiscard]] bool IsCheck() const { return _mechanics.IsCheck(); }
-
     template <bool GenOnlyAttackMoves = false, bool ApplyHeuristicEval = true> payload GetMovesFast();
 
     std::map<std::string, uint64_t> GetCountedMoves(int depth);
-    uint64_t CountMoves(int depth);
+    uint64_t CountMoves(Board &bd, int depth);
 
     // ------------------------------
     // private methods
@@ -139,9 +127,7 @@ struct MoveGenerator
     };
 
     // Move generation components
-    ChessMechanics _mechanics;
     Stack<Move, DEFAULT_STACK_SIZE> &_threadStack;
-    Board &_board;
 
     // Heuristic evaluation components
     const PackedMove _counterMove;
@@ -153,8 +139,8 @@ struct MoveGenerator
 
 template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval> MoveGenerator::payload MoveGenerator::GetMovesFast()
 {
-    const uint64_t fullMap                             = _mechanics.GetFullBitMap();
-    const auto [blockedFigMap, checksCount, checkType] = _mechanics.GetBlockedFieldBitMap(fullMap);
+    const uint64_t fullMap                             = GetFullBitMap();
+    const auto [blockedFigMap, checksCount, checkType] = GetBlockedFieldBitMap(fullMap);
 
     TraceIfFalse(blockedFigMap != 0, "Blocked fig map must at least contains fields controlled by king!");
     TraceIfFalse(
@@ -190,10 +176,10 @@ void MoveGenerator::_noCheckGen(payload &results, const uint64_t fullMap, const 
     TraceIfFalse(fullMap != 0, "Full map is empty!");
 
     [[maybe_unused]] const auto [pinnedFigsMap, _] =
-        _mechanics.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(_board.MovingColor, fullMap);
+        GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(_board.MovingColor, fullMap);
 
-    const uint64_t enemyMap = _mechanics.GetColBitMap(SwapColor(_board.MovingColor));
-    const uint64_t allyMap  = _mechanics.GetColBitMap(_board.MovingColor);
+    const uint64_t enemyMap = GetColBitMap(SwapColor(_board.MovingColor));
+    const uint64_t allyMap  = GetColBitMap(_board.MovingColor);
 
     const uint64_t pawnAttacks =
         _board.MovingColor == WHITE
@@ -249,18 +235,16 @@ void MoveGenerator::_singleCheckGen(
     const auto [pinnedFigsMap, allowedTilesMap] = [&]() -> std::pair<uint64_t, uint64_t>
     {
         if (checkType == slidingFigCheck)
-            return _mechanics.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WAllowedTiles>(
-                _board.MovingColor, fullMap
-            );
+            return GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WAllowedTiles>(_board.MovingColor, fullMap);
 
         [[maybe_unused]] const auto [pinnedFigsMap, _] =
-            _mechanics.GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(_board.MovingColor, fullMap);
-        return {pinnedFigsMap, _mechanics.GetAllowedTilesWhenCheckedByNonSliding()};
+            GetPinnedFigsMap<ChessMechanics::PinnedFigGen::WoutAllowedTiles>(_board.MovingColor, fullMap);
+        return {pinnedFigsMap, GetAllowedTilesWhenCheckedByNonSliding()};
     }();
 
     // helping variable preparation
-    const uint64_t enemyMap = _mechanics.GetColBitMap(SwapColor(_board.MovingColor));
-    const uint64_t allyMap  = _mechanics.GetColBitMap(_board.MovingColor);
+    const uint64_t enemyMap = GetColBitMap(SwapColor(_board.MovingColor));
+    const uint64_t allyMap  = GetColBitMap(_board.MovingColor);
 
     const uint64_t pawnAttacks =
         _board.MovingColor == WHITE
@@ -303,8 +287,8 @@ void MoveGenerator::_singleCheckGen(
 template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval>
 void MoveGenerator::_doubleCheckGen(payload &results, const uint64_t blockedFigMap) const
 {
-    const uint64_t allyMap  = _mechanics.GetColBitMap(_board.MovingColor);
-    const uint64_t enemyMap = _mechanics.GetColBitMap(SwapColor(_board.MovingColor));
+    const uint64_t allyMap  = GetColBitMap(_board.MovingColor);
+    const uint64_t enemyMap = GetColBitMap(SwapColor(_board.MovingColor));
     _processPlainKingMoves<GenOnlyAttackMoves, ApplyHeuristicEval>(results, blockedFigMap, allyMap, enemyMap);
 }
 
@@ -322,8 +306,9 @@ void MoveGenerator::_processPawnMoves(
         results, pawnAttacks, enemyMap, allyMap, pinnedFigMap, nonPromotingPawns, allowedMoveFilter
     );
 
+    // During quiesce search we should also check all promotions so GenOnlyAttackMoves is false
     if (promotingPawns)
-        _processFigMoves<GenOnlyAttackMoves, ApplyHeuristicEval, MapT, false, true, true, isCheck>(
+        _processFigMoves<false, ApplyHeuristicEval, MapT, false, true, true, isCheck>(
             results, pawnAttacks, enemyMap, allyMap, pinnedFigMap, promotingPawns, allowedMoveFilter
         );
 
@@ -370,12 +355,12 @@ void MoveGenerator::_processElPassantMoves(
             // should be unblocked on specific lines
 
             if ((pawnMap & pinnedFigMap) != 0 &&
-                (_mechanics.GenerateAllowedTilesForPrecisedPinnedFig(pawnMap, fullMap) & moveMap) == 0)
+                (GenerateAllowedTilesForPrecisedPinnedFig(pawnMap, fullMap) & moveMap) == 0)
             {
                 possiblePawnsToMove ^= pawnMap;
                 continue;
             }
-            if ((_mechanics.GenerateAllowedTilesForPrecisedPinnedFig(_board.ElPassantField, fullMap) & moveMap) == 0)
+            if ((GenerateAllowedTilesForPrecisedPinnedFig(_board.ElPassantField, fullMap) & moveMap) == 0)
             {
                 possiblePawnsToMove ^= pawnMap;
                 continue;
@@ -492,7 +477,7 @@ void MoveGenerator::_processFigMoves(
         // processing moves
         const int figPos            = ExtractMsbPos(pinnedOnes);
         const uint64_t figBoard     = MaxMsbPossible >> figPos;
-        const uint64_t allowedTiles = _mechanics.GenerateAllowedTilesForPrecisedPinnedFig(figBoard, fullMap);
+        const uint64_t allowedTiles = GenerateAllowedTilesForPrecisedPinnedFig(figBoard, fullMap);
         const uint64_t figMoves     = MapT::GetMoves(figPos, fullMap, enemyMap) & ~allyMap & allowedTiles;
         // TODO: check applied here?
         // TODO: breaking if there?
@@ -617,10 +602,9 @@ void MoveGenerator::_processAttackingMoves(
     while (attackingMoves)
     {
         // extracting moves
-        const int movePos        = ExtractMsbPos(attackingMoves);
-        const uint64_t moveBoard = MaxMsbPossible >> movePos;
-        const size_t attackedFigBoardIndex =
-            _mechanics.GetIndexOfContainingBitBoard(moveBoard, SwapColor(_board.MovingColor));
+        const int movePos                  = ExtractMsbPos(attackingMoves);
+        const uint64_t moveBoard           = MaxMsbPossible >> movePos;
+        const size_t attackedFigBoardIndex = GetIndexOfContainingBitBoard(moveBoard, SwapColor(_board.MovingColor));
 
         if constexpr (!promotePawns)
         // simple figure case
@@ -752,8 +736,7 @@ void MoveGenerator::_processPlainKingMoves(
         const uint64_t newKingBoard = MaxMsbPossible >> newPos;
 
         // finding an attacked figure
-        const size_t attackedFigBoardIndex =
-            _mechanics.GetIndexOfContainingBitBoard(newKingBoard, SwapColor(_board.MovingColor));
+        const size_t attackedFigBoardIndex = GetIndexOfContainingBitBoard(newKingBoard, SwapColor(_board.MovingColor));
 
         Move mv{};
 

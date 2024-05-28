@@ -113,7 +113,7 @@ struct Board
 
     static bool Comp(const Board &a, const Board &b);
 
-    constexpr uint64_t GetFigBoard(int col, size_t figDesc) { return BitBoards[col * BitBoardsPerCol + figDesc]; }
+    constexpr uint64_t GetFigBoard(int col, size_t figDesc) const { return BitBoards[col * BitBoardsPerCol + figDesc]; }
 
     // ------------------------------
     // Class fields
