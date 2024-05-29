@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
 #include "../include/Interface/FenTranslator.h"
+#include "../include/TestsAndDebugging/TestSetup.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
 #include "../include/ThreadManagement/SearchThreadManager.h"
-#include "../include/TestsAndDebugging/TestSetup.h"
 
 TEST(GoCommandTest, stopCommandResponse)
 {
@@ -11,7 +11,6 @@ TEST(GoCommandTest, stopCommandResponse)
     std::this_thread::sleep_for(std::chrono::seconds(1));
     SearchThreadManager threadManager{};
     Board board = FenTranslator::GetDefault();
-    std::unordered_map<uint64_t, int> reps{};
     const auto Case = [&]<typename CaseFuncT>(CaseFuncT func)
     {
         auto t1 = std::chrono::steady_clock::now();
@@ -36,7 +35,7 @@ TEST(GoCommandTest, stopCommandResponse)
 
     auto infiniteSearch = [&]()
     {
-        threadManager.GoInfinite(board, reps);
+        threadManager.GoInfinite(board);
     };
 
     auto depthSearch = [&]()
@@ -44,7 +43,7 @@ TEST(GoCommandTest, stopCommandResponse)
         GoInfo info{};
         info.depth = 100;
 
-        threadManager.Go(board, reps, info);
+        threadManager.Go(board, info);
     };
 
     auto moveTimeSearch = [&]()
@@ -52,7 +51,7 @@ TEST(GoCommandTest, stopCommandResponse)
         GoInfo info{};
         info.timeInfo.moveTime = 100000;
 
-        threadManager.Go(board, reps, info);
+        threadManager.Go(board, info);
     };
 
     auto colTimeSearch = [&]()
@@ -61,7 +60,7 @@ TEST(GoCommandTest, stopCommandResponse)
         info.timeInfo.wTime = 100000;
         info.timeInfo.bTime = 100000;
 
-        threadManager.Go(board, reps, info);
+        threadManager.Go(board, info);
     };
 
     Case(colTimeSearch);
@@ -83,7 +82,7 @@ TEST(GoCommandTest, timeSpentTest)
     GoInfo info{};
     info.timeInfo.moveTime = 1200;
 
-    threadManager.Go(board, {}, info);
+    threadManager.Go(board, info);
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
     threadManager.Stop();

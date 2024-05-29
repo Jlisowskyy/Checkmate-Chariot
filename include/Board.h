@@ -105,11 +105,11 @@ struct Board
     // Class creation
     // ------------------------------
 
-    Board() = default;
+    Board()  = default;
     ~Board() = default;
 
-    Board(const Board&) = default;
-    Board& operator=(const Board&) = default;
+    Board(const Board &)            = default;
+    Board &operator=(const Board &) = default;
 
     // ------------------------------
     // class interaction
@@ -166,21 +166,21 @@ struct Board
         MinMsbPossible << 61 | MinMsbPossible << 62, MinMsbPossible << 58 | MinMsbPossible << 59 | MinMsbPossible << 57
     };
 
-// --------------------------------
-// Main processing components
-// --------------------------------
+    // --------------------------------
+    // Main processing components
+    // --------------------------------
 
-    std::bitset<CastlingCount + 1> Castlings = {0}; // additional sentinel field
-    uint64_t ElPassantField                = MaxMsbPossible >> InvalidElPassantField;
-    int MovingColor                        = WHITE;
+    std::bitset<CastlingCount + 1> Castlings           = {0}; // additional sentinel field
+    uint64_t ElPassantField                            = MaxMsbPossible >> InvalidElPassantField;
+    int MovingColor                                    = WHITE;
     std::array<uint64_t, BitBoardsCount + 1> BitBoards = {}; // additional sentinel board
 
-// --------------------------------------
-// Draw and state monitoring fields
-// --------------------------------------
+    // --------------------------------------
+    // Draw and state monitoring fields
+    // --------------------------------------
 
-    int HalfMoves                          = {};
-    uint16_t Age = {};                              // stores total half moves since the beginning of the game
+    int HalfMoves                                 = {};
+    uint16_t Age                                  = {}; // stores total half moves since the beginning of the game
     std::unordered_map<uint64_t, int> Repetitions = {}; // Stores hashes of previous encountered positions
 };
 

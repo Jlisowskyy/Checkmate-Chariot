@@ -58,12 +58,12 @@ class AspWinStat
     }
 };
 
-bool IsDrawExtremelySlow(const Board& bd)
+bool IsDrawExtremelySlow(const Board &bd)
 {
     MoveGenerator::stck s{};
     MoveGenerator generator{bd, s};
 
-    auto mvs = generator.GetMovesFast();
+    auto mvs         = generator.GetMovesFast();
     const size_t cnt = mvs.size;
     s.PopAggregate(mvs);
     const uint64_t hash = ZHasher.GenerateHash(bd);

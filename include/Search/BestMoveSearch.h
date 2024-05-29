@@ -142,10 +142,7 @@ class BestMoveSearch
      * */
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board,  Stack<Move, DEFAULT_STACK_SIZE> &s)
-        : _stack(s), _board(board)
-    {
-    }
+    BestMoveSearch(const Board &board, Stack<Move, DEFAULT_STACK_SIZE> &s) : _stack(s), _board(board) {}
     ~BestMoveSearch() = default;
 
     // ------------------------------

@@ -31,8 +31,7 @@ bool SearchThreadManager::Go(const Board &bd, const GoInfo &info)
 
     // Running up the searching worker
     _threads[MainSearchThreadInd] = new std::thread(
-        _threadSearchJob, &bd, &_stacks[MainSearchThreadInd], &_isSearchOn,
-        std::min(info.depth, MAX_SEARCH_DEPTH)
+        _threadSearchJob, &bd, &_stacks[MainSearchThreadInd], &_isSearchOn, std::min(info.depth, MAX_SEARCH_DEPTH)
     );
     WrapTraceMsgInfo("Search thread started");
 
@@ -63,9 +62,7 @@ void SearchThreadManager::Stop()
     WrapTraceMsgInfo("Search thread stopped successfully");
 }
 
-void SearchThreadManager::_threadSearchJob(
-    const Board *bd, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, int depth
-)
+void SearchThreadManager::_threadSearchJob(const Board *bd, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, int depth)
 {
     PackedMove output{};
     PackedMove ponder{};

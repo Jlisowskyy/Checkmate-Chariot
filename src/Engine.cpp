@@ -47,7 +47,7 @@ bool Engine::SetFenPosition(const std::string &fenStr)
 void Engine::SetStartPos()
 {
     _isStartPosPlayed = true;
-    _board  = _startingBoard = _defaultBoard;
+    _board = _startingBoard = _defaultBoard;
 }
 
 const EngineInfo &Engine::GetEngineInfo() { return engineInfo; }
@@ -94,7 +94,7 @@ bool Engine::_applyMove(Board &board, const std::string &move, uint64_t &hash)
         {
             VolatileBoardData data{board};
             hash = ZHasher.UpdateHash(hash, moves[i], data);
-             board.Repetitions[hash]++;
+            board.Repetitions[hash]++;
 
             Move::MakeMove(moves[i], board);
             TManager.GetDefaultStack().PopAggregate(moves);
@@ -161,11 +161,11 @@ void Engine::Go(GoInfo &info, const std::vector<std::string> &moves)
         colTime    = 1;
         info.depth = std::min(info.depth, 1);
 
-        SearchThreadManager::GoWoutThread(_board,  info);
+        SearchThreadManager::GoWoutThread(_board, info);
         return;
     }
 
-    TManager.Go(_board,  info);
+    TManager.Go(_board, info);
 }
 
 void Engine::StopSearch() { TManager.Stop(); }
@@ -190,7 +190,7 @@ void Engine::PonderHit()
 
 int Engine::GetQuiesceEval()
 {
-    BestMoveSearch searcher{_board,  TManager.GetDefaultStack()};
+    BestMoveSearch searcher{_board, TManager.GetDefaultStack()};
     return searcher.QuiesceEval() * BoardEvaluator::ScoreGrain;
 }
 
@@ -204,11 +204,8 @@ int Engine::GetEvalPrinted()
     return (_board.MovingColor == WHITE ? eval : -eval);
 }
 
-Engine::Engine() : _defaultBoard([](){
-    Board rv;
-    FenTranslator::Translate(FenTranslator::StartingPosition, rv);
-    return rv;
-}())
+Engine::Engine()
+    : _defaultBoard(FenTranslator::GetDefault())
 {
     _board = _startingBoard = _defaultBoard;
 }

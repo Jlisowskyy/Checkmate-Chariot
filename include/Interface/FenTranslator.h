@@ -17,6 +17,13 @@ struct FenTranslator
     // Class interaction
     // ------------------------------
 
+    static INLINE Board GetDefault()
+    {
+        Board rv;
+        Translate(StartingPosition, rv);
+        return rv;
+    }
+
     static bool Translate(const std::string &fenPos, Board &bd)
         // Function simply translates position from FEN notation into inner representation.
         ;

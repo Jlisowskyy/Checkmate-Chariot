@@ -51,12 +51,9 @@ struct TestSetup
         }
     }
 
-    void WaitForResult()
-    {
-        _outSem.acquire();
-    }
+    void WaitForResult() { _outSem.acquire(); }
 
-    void ProcessCommandSync(const std::string& str)
+    void ProcessCommandSync(const std::string &str)
     {
         ProcessCommand(str);
         WaitForResult();
@@ -69,7 +66,8 @@ struct TestSetup
     // ------------------------------
 
     private:
-    static void _job(std::stringstream *stream, Engine *engine, std::binary_semaphore *sem, std::binary_semaphore *outSem)
+    static void
+    _job(std::stringstream *stream, Engine *engine, std::binary_semaphore *sem, std::binary_semaphore *outSem)
     {
         GameTimeManager::StartTimerAsync();
 

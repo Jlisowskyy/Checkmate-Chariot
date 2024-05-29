@@ -40,7 +40,7 @@ struct SearchThreadManager
     bool Go(const Board &bd, const GoInfo &info);
 
     /* This function is not thread safe! Use it when there is no time left on the clock to start a thread */
-    static void GoWoutThread(const Board &bd,  const GoInfo &info);
+    static void GoWoutThread(const Board &bd, const GoInfo &info);
 
     bool GoInfinite(const Board &bd);
 
@@ -61,8 +61,7 @@ struct SearchThreadManager
     // ------------------------------
 
     private:
-    static void
-    _threadSearchJob(const Board *bd, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, int depth);
+    static void _threadSearchJob(const Board *bd, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, int depth);
 
     // ------------------------------
     // Class fields

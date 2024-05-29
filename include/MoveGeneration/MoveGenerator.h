@@ -58,8 +58,8 @@ struct MoveGenerator : ChessMechanics
     std::map<std::string, uint64_t> GetCountedMoves(int depth);
     uint64_t CountMoves(Board &bd, int depth);
 
-    using ChessMechanics::IsDrawByReps;
     using ChessMechanics::IsCheck;
+    using ChessMechanics::IsDrawByReps;
 
     // ------------------------------
     // private methods

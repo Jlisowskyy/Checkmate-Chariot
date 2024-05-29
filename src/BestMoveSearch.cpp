@@ -43,7 +43,8 @@ ProcessAttackMove(Board &bd, const Move mv, const uint64_t hash, const VolatileB
 }
 
 [[nodiscard]] inline INLINE uint64_t ProcessMove(
-    Board &bd, const Move mv, const int depth, const uint64_t hash, KillerTable &table, const VolatileBoardData &data)
+    Board &bd, const Move mv, const int depth, const uint64_t hash, KillerTable &table, const VolatileBoardData &data
+)
 {
 
     const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);

@@ -32,10 +32,10 @@ bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
         _processMovesCounts(pos, fenPos, age);
 
         // We store half moves instead of full moves
-        bd.Age = std::max(static_cast<uint16_t>(age * 2 - 1), static_cast<uint16_t>(1));
+        workBoard.Age = std::max(static_cast<uint16_t>(age * 2 - 1), static_cast<uint16_t>(1));
 
         const uint64_t startHash = ZHasher.GenerateHash(bd);
-        bd.Repetitions[startHash]++;
+        workBoard.Repetitions[startHash]++;
     }
     catch (const std::exception &exc)
     {
