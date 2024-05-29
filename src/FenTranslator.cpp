@@ -8,15 +8,7 @@
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
 #include "../include/ParseTools.h"
-
-// Initialize default board
-const Board FenTranslator::StartBoard = []() {
-    Board bd{};
-    FenTranslator::Translate(FenTranslator::StartingPosition, bd);
-    return bd;
-}();
-
-const Board &FenTranslator::GetDefault() { return StartBoard; }
+#include "../include/Search/ZobristHash.h"
 
 bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
 {
@@ -41,12 +33,14 @@ bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
 
         // We store half moves instead of full moves
         bd.Age = std::max(static_cast<uint16_t>(age * 2 - 1), static_cast<uint16_t>(1));
+
+        const uint64_t startHash = ZHasher.GenerateHash(bd);
+        bd.Repetitions[startHash]++;
     }
     catch (const std::exception &exc)
     {
         GlobalLogger.LogStream << (exc.what()) << '\n';
         GlobalLogger.LogStream << ("[ INFO ] Loading default layout...\n");
-        bd = StartBoard;
         return false;
     }
 

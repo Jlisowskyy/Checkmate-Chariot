@@ -47,8 +47,7 @@ bool Engine::SetFenPosition(const std::string &fenStr)
 void Engine::SetStartPos()
 {
     _isStartPosPlayed = true;
-    _board            = FenTranslator::GetDefault();
-    _startingBoard    = _board;
+    _board  = _startingBoard = _defaultBoard;
 }
 
 const EngineInfo &Engine::GetEngineInfo() { return engineInfo; }
@@ -203,4 +202,13 @@ int Engine::GetEvalPrinted()
     BoardEvaluatorPrinter::printAll<EvalMode::PrintMode>();
 
     return (_board.MovingColor == WHITE ? eval : -eval);
+}
+
+Engine::Engine() : _defaultBoard([](){
+    Board rv;
+    FenTranslator::Translate(FenTranslator::StartingPosition, rv);
+    return rv;
+}())
+{
+    _board = _startingBoard = _defaultBoard;
 }

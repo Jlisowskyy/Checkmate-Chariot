@@ -93,6 +93,7 @@ void DisplayBoard(const Board &bd)
                            << std::endl;
 
     GlobalLogger.LogStream << "Half moves made from last pawn move: " << bd.HalfMoves << std::endl;
+    GlobalLogger.LogStream << "Board age: " << bd.Age << std::endl;
 }
 
 uint64_t ExtractPosFromStr(int x, const int y)
@@ -145,7 +146,7 @@ void *AlignedAlloc(const size_t alignment, const size_t size)
 }
 void AlignedFree(void *ptr)
 {
-#ifdef _MSC_VER
+#ifdef __WIN32__
     _aligned_free(ptr);
 #else
     std::free(ptr);

@@ -17,8 +17,6 @@ struct FenTranslator
     // Class interaction
     // ------------------------------
 
-    static const Board &GetDefault();
-
     static bool Translate(const std::string &fenPos, Board &bd)
         // Function simply translates position from FEN notation into inner representation.
         ;
@@ -97,8 +95,6 @@ struct FenTranslator
 
     public:
     static constexpr auto StartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
-    static const Board StartBoard;
 };
 
 #endif // FENTRANSLATOR_H

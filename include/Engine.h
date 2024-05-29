@@ -28,7 +28,7 @@ class Engine
     // --------------------------------------
 
     public:
-    Engine() = default;
+    Engine();
 
     /* Load with initial state */
     Engine(const Board &bd) : _board(bd), _startingBoard(bd) {}
@@ -131,8 +131,9 @@ class Engine
     // private fields
     // ------------------------------
 
-    Board _board         = FenTranslator::GetDefault();
-    Board _startingBoard = FenTranslator::GetDefault();
+    const Board _defaultBoard;
+    Board _board;
+    Board _startingBoard;
     OpeningBook _book{};
     std::string _bookPath = _defaultBookPath;
 
