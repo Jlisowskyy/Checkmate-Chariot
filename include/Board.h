@@ -102,6 +102,16 @@ enum CastlingPossibilities : size_t
 struct Board
 {
     // ------------------------------
+    // Class creation
+    // ------------------------------
+
+    Board() = default;
+    ~Board() = default;
+
+    Board(const Board&) = default;
+    Board& operator=(const Board&) = default;
+
+    // ------------------------------
     // class interaction
     // ------------------------------
 
