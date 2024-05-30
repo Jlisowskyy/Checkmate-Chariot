@@ -90,7 +90,8 @@ int BestMoveSearch::IterativeDeepening(
     PV pvBuff{};
 
     // usual search path
-    for (int32_t depth = 1; depth <= maxDepth; ++depth)
+    const int range = std::min(maxDepth, MAX_SEARCH_DEPTH);
+    for (int32_t depth = 1; depth <= range; ++depth)
     {
         // Search start time point
         [[maybe_unused]] auto timeStart = GameTimeManager::GetCurrentTime();
@@ -253,13 +254,13 @@ int BestMoveSearch::_search(
     if (depthLeft == 0)
         return _qSearch<searchType>(bd, alpha, beta, zHash, 0);
 
+    // incrementing nodes counter;
+    ++_visitedNodes;
+
     // Check whether we reached end of the legal path
     ChessMechanics mech{_board};
     if (mech.IsDrawByReps(zHash))
         return DRAW_SCORE;
-
-    // incrementing nodes counter;
-    ++_visitedNodes;
 
     // reading Transposition table for the best move
     const auto prevSearchRes = TTable.GetRecord(zHash);
@@ -419,6 +420,9 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
     if (GameTimeManager::GetShouldStop())
         return TIME_STOP_RESERVED_VALUE;
 
+    // incrementing nodes counter
+    ++_visitedNodes;
+
     // Check whether we reached end of the legal path
     ChessMechanics mech{_board};
     if (mech.IsDrawByReps(zHash))
@@ -427,7 +431,6 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
     int bestEval = NEGATIVE_INFINITY;
     int statEval = NO_EVAL;
     MoveGenerator::payload moves;
-    ++_visitedNodes;
 
     // reading Transposition table for the best move
     auto &prevSearchRes = TTable.GetRecord(zHash);
