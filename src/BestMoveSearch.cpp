@@ -67,22 +67,23 @@ RevertMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardDat
     return ZHasher.UpdateHash(hash, mv, data);
 }
 
-void BestMoveSearch::IterativeDeepening(
+int BestMoveSearch::IterativeDeepening(
     PackedMove *bestMove, PackedMove *ponderMove, const int32_t maxDepth, const bool writeInfo
 )
 {
     // When the passed depth is 0, we need to evaluate the board statically
     if (maxDepth == 0)
     {
-        GlobalLogger.LogStream << "info depth 0 score cp "
-                               << BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor) << std::endl;
+        const int score = BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor);
+        GlobalLogger.LogStream << "info depth 0 score cp " << score << std::endl;
 
-        return;
+        return score;
     }
 
     // Generate unique hash for the board
     const uint64_t zHash = ZHasher.GenerateHash(_board);
     int32_t eval{};
+    int32_t prevEval{};
     int64_t avg{};
 
     // prepare pv buffer
@@ -193,6 +194,8 @@ void BestMoveSearch::IterativeDeepening(
         if (std::abs(eval) == TIME_STOP_RESERVED_VALUE)
             break;
 
+        prevEval = eval;
+
         // Search stop time point
         [[maybe_unused]] auto timeStop = GameTimeManager::GetCurrentTime();
 
@@ -217,7 +220,7 @@ void BestMoveSearch::IterativeDeepening(
                 _pv[0].GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
-            _pv.Print();
+            _pv.Print(eval == 0);
             GlobalLogger.LogStream << std::endl;
         }
 
@@ -228,6 +231,8 @@ void BestMoveSearch::IterativeDeepening(
 
     if constexpr (TestTT)
         TTable.DisplayStatisticsAndReset();
+
+    return prevEval;
 }
 
 template <BestMoveSearch::SearchType searchType>

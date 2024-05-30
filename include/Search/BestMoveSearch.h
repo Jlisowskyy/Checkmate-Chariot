@@ -71,39 +71,45 @@ class BestMoveSearch
          * according to internal depth field.
          * */
 
-        void InsertNext(const PackedMove mv, const PV &pv)
+        INLINE void InsertNext(const PackedMove mv, const PV &pv)
         {
             _path[0] = mv;
             memcpy(_path + 1, pv._path, (_depth - 1) * sizeof(PackedMove));
         }
 
-        void SetDepth(const int depth) { _depth = depth; }
+        INLINE void SetDepth(const int depth) { _depth = depth; }
 
         /* Set a new depth and clears the path on that depth range */
-        void Clear(const int nDepth)
+        INLINE void Clear(const int nDepth)
         {
             SetDepth(nDepth);
             memset(_path, 0, _depth * sizeof(PackedMove));
         }
 
         /* Clones the path from the given PV*/
-        void Clone(const PV &pv)
+        INLINE void Clone(const PV &pv)
         {
             _depth = pv._depth;
             memcpy(_path, pv._path, (_depth) * sizeof(PackedMove));
         }
 
         /* Prints the path to the Logger */
-        void Print() const
+        INLINE void Print(const bool isDraw) const
         {
             std::string buff{};
-            for (int i = 0; i < _depth; ++i) buff += _path[i].GetLongAlgebraicNotation() + ' ';
+
+            if (!isDraw)
+                // when no draw was detected we expect null moves to be printed to simplify debuging
+                for (int i = 0; i < _depth; ++i) buff += _path[i].GetLongAlgebraicNotation() + ' ';
+            else
+                // We do not allow null moves when there was some draw detected
+                for (int i = 0; i < _depth && !_path[i].IsEmpty(); ++i) buff += _path[i].GetLongAlgebraicNotation() + ' ';
 
             GlobalLogger.LogStream << buff;
         }
 
         /* Debug function to check internal state of the PV */
-        [[nodiscard]] bool IsFilled() const
+        INLINE [[nodiscard]] bool IsFilled() const
         {
             for (int i = 0; i < _depth; ++i)
                 if (_path[i].IsEmpty())
@@ -114,10 +120,10 @@ class BestMoveSearch
 
         /* Returns the move on the given depth, with respect to given 'rootDepth' where depth is same as in search
          * function */
-        PackedMove operator()(const int depthLeft, const int rootDepth) const { return _path[rootDepth - depthLeft]; }
+        INLINE PackedMove operator()(const int depthLeft, const int rootDepth) const { return _path[rootDepth - depthLeft]; }
 
         /* returns the move */
-        PackedMove operator[](const int ply) const { return _path[ply]; }
+        INLINE PackedMove operator[](const int ply) const { return _path[ply]; }
 
         private:
         PackedMove _path[MAX_SEARCH_DEPTH + 1]{};
@@ -165,7 +171,7 @@ class BestMoveSearch
      *
      * */
 
-    void IterativeDeepening(PackedMove *bestMove, PackedMove *ponderMove, int maxDepth, bool writeInfo = true);
+    int IterativeDeepening(PackedMove *bestMove, PackedMove *ponderMove, int maxDepth, bool writeInfo = true);
     int QuiesceEval();
 
     // ------------------------------
