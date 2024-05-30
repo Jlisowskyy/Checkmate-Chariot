@@ -26,7 +26,7 @@ bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
         pos        = _skipBlanks(pos, fenPos);
         pos        = _processElPassant(workBoard, pos, fenPos);
         pos        = _skipBlanks(pos, fenPos);
-        pos        = _processMovesCounts(pos, fenPos, bd.HalfMoves);
+        pos        = _processMovesCounts(pos, fenPos, workBoard.HalfMoves);
         pos        = _skipBlanks(pos, fenPos);
         int age;
         _processMovesCounts(pos, fenPos, age);

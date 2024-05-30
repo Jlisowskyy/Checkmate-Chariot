@@ -58,7 +58,7 @@ class AspWinStat
     }
 };
 
-bool IsDrawExtremelySlow(const Board &bd)
+inline bool IsDrawExtremelySlow(const Board &bd)
 {
     MoveGenerator::stck s{};
     MoveGenerator generator{bd, s};
