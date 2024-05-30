@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include "BitOperations.h"
+#include "CompilationConstants.h"
 
 /*
  * Given enum defines values and order of both colors. All indexing schemes used across the projects follows given
@@ -126,6 +127,8 @@ struct Board
 
     constexpr uint64_t GetFigBoard(int col, size_t figDesc) const { return BitBoards[col * BitBoardsPerCol + figDesc]; }
 
+    [[nodiscard]] bool IsEndGame() const { return LastPhase < END_GAME_PHASE; }
+
     // ------------------------------
     // Class fields
     // ------------------------------
@@ -182,6 +185,12 @@ struct Board
     int HalfMoves                                 = {};
     uint16_t Age                                  = {}; // stores total half moves since the beginning of the game
     std::unordered_map<uint64_t, int> Repetitions = {}; // Stores hashes of previous encountered positions
+
+    // ------------------------------
+    // Optimisation components
+    // ------------------------------
+
+    int LastPhase = {}; // Field used to save previously calculated phase during evaluation
 };
 
 #endif // BOARD_H

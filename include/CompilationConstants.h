@@ -32,6 +32,13 @@ static constexpr int BEST_MATE_VALUE_ABS             = -(BEST_MATE_VALUE);
 static constexpr uint16_t QUIESENCE_AGE_DIFF_REPLACE = 16;
 static constexpr uint16_t DEFAULT_AGE_DIFF_REPLACE   = 10;
 
+// average pawn value + some part of average pawn
+static constexpr int DELTA_PRUNNING_SAFETY_MARGIN = 115 + 115/6;
+// average queen value - average pawn value
+static constexpr int DELTA_PRUNNING_PROMO = 1000 - 115;
+
+static constexpr int END_GAME_PHASE = 64;
+
 /* Depth from which Internal Iterative Deepening (IID) is used */
 static constexpr int IID_MIN_DEPTH = 6;
 

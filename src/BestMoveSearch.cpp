@@ -462,8 +462,10 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
             }
 
             // Try to read from tt previously calculated static evaluation
-            if (prevSearchRes.GetStatVal() != NO_EVAL)
+            if (prevSearchRes.GetStatVal() != NO_EVAL) {
                 statEval = prevSearchRes.GetStatVal();
+                BoardEvaluator::PopulateLastPhase(bd);
+            }
             else
             {
                 // otherwise calculate the static eval
@@ -516,6 +518,20 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
     {
         if (i != 0)
             _fetchBestMove(moves, i);
+
+        // prunnings on the move
+        if (!isCheck)
+        {
+
+            /*                  DELTA PRUNNING                              */
+
+            // Increase delta in case of promotion
+            int delta = DELTA_PRUNNING_SAFETY_MARGIN + mech.SEE(moves[i]) +
+                        (moves[i].GetPackedMove().IsPromo() ? DELTA_PRUNNING_PROMO : 0);
+
+            if (statEval + delta < alpha && !bd.IsEndGame())
+                continue;
+        }
 
         zHash               = ProcessAttackMove(bd, moves[i], zHash, oldData);
         const int moveValue = -_qSearch<searchType>(bd, -beta, -alpha, zHash, extendedDepth + 1);

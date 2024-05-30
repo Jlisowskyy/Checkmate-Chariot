@@ -122,6 +122,9 @@ class BoardEvaluator
         const auto [isSuccess, counts] = _countFigures(bd);
         const int32_t phase            = _calcPhase(counts);
 
+        // save phase for later usage
+        bd.LastPhase = phase;
+
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setPhase<mode>(phase);
 
@@ -163,6 +166,16 @@ class BoardEvaluator
             blackMaterial += CountOnesInBoard(bd.BitBoards[i + bPawnsIndex]) * FigurePhases[i];
         }
         return {whiteMaterial, blackMaterial};
+    }
+
+    /* Function calculates phase of the given board and saves the results inside LastPhase field */
+    static void PopulateLastPhase(Board& bd)
+    {
+        const auto [isSuccess, counts] = _countFigures(bd);
+        const int32_t phase            = _calcPhase(counts);
+
+        // save phase for later usage
+        bd.LastPhase = phase;
     }
 
     // ------------------------------
