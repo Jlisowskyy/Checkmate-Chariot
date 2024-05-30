@@ -436,6 +436,21 @@ class BoardEvaluator
         -10000 // king
     };
 
+    static constexpr int16_t ColorlessBasicFigureValues[]{
+            100,   // Pawn
+            325,   // Knight
+            325,   // Bishop
+            500,   // RookS
+            975,   // Queen
+            10000, // king
+            100,  // Pawn
+            325,  // Knight
+            325,  // Bishop
+            500,  // Rook
+            975,  // Queen
+            10000 // king
+    };
+
     // values that are used to calculate material value of given board at the end-game stage
     static constexpr int16_t EndGameFigureValues[]{
         130,  // Pawn

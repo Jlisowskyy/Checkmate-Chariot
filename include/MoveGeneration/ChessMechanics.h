@@ -38,8 +38,7 @@ struct ChessMechanics
 
     explicit ChessMechanics(const Board &bd) : _board(bd) {}
 
-    ChessMechanics(ChessMechanics &other) = default;
-
+    ChessMechanics(ChessMechanics &other) = delete;
     ChessMechanics &operator=(ChessMechanics &) = delete;
 
     ~ChessMechanics() = default;

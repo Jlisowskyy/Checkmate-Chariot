@@ -28,6 +28,8 @@ struct FenTranslator
         // Function simply translates position from FEN notation into inner representation.
         ;
 
+    static Board GetTranslated(const std::string& fenPos);
+
     static std::string Translate(const Board &board);
 
     // ------------------------------
