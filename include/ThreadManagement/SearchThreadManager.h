@@ -34,7 +34,6 @@ public:
 
     SearchThreadManager();
 
-    // TODO: Temporary solution, should be expanded with threading model
     ~SearchThreadManager();
 
     SearchThreadManager(const SearchThreadManager &) = delete;

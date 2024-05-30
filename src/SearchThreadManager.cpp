@@ -15,7 +15,7 @@ SearchThreadManager::~SearchThreadManager()
 
     // signal stop
     _shouldStop = true;
-    _searchSem.acquire();
+    _searchSem.release();
 
     _threads[MainSearchThreadInd]->join();
     delete _threads[MainSearchThreadInd];
