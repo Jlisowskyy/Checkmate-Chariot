@@ -56,7 +56,6 @@ bool Engine::ApplyMoves(const std::vector<std::string> &UCIMoves)
 {
     Board workBoard = _startingBoard;
     uint64_t hash   = ZHasher.GenerateHash(workBoard);
-    workBoard.Repetitions[hash]++;
 
     for (auto &move : UCIMoves)
         if (!_applyMove(workBoard, move, hash))
