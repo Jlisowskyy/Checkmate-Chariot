@@ -522,14 +522,18 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
         // prunnings on the move
         if (!isCheck)
         {
-
+            const int SEEValue = mech.SEE(moves[i]);
             /*                  DELTA PRUNNING                              */
 
             // Increase delta in case of promotion
-            int delta = DELTA_PRUNNING_SAFETY_MARGIN + mech.SEE(moves[i]) +
+            int delta = DELTA_PRUNNING_SAFETY_MARGIN + SEEValue +
                         (moves[i].GetPackedMove().IsPromo() ? DELTA_PRUNNING_PROMO : 0);
 
             if (statEval + delta < alpha && !bd.IsEndGame())
+                continue;
+
+            /*                  SEE capture value estimation                */
+            if (SEEValue < SEE_GOOD_MOVE_BOUNDARY)
                 continue;
         }
 

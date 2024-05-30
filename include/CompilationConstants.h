@@ -37,6 +37,10 @@ static constexpr int DELTA_PRUNNING_SAFETY_MARGIN = 115 + 115/6;
 // average queen value - average pawn value
 static constexpr int DELTA_PRUNNING_PROMO = 1000 - 115;
 
+// value below which SEE capture is considered bad
+static constexpr int SEE_GOOD_MOVE_BOUNDARY = 115 / 2;
+
+// value of phase below game is considering to be an end-game
 static constexpr int END_GAME_PHASE = 64;
 
 /* Depth from which Internal Iterative Deepening (IID) is used */
