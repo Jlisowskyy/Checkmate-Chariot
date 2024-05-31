@@ -122,6 +122,7 @@ set(CHECKMATE_CHARIOT_SOURCES
         include/TestsAndDebugging/TestSetup.h
         include/TestsAndDebugging/StateReconstructor.h
         include/TestsAndDebugging/DebugTools.h
+        src/DebugTools.cpp
 )
 
 # Create a library with the core functionality
@@ -143,6 +144,7 @@ add_executable(Checkmate-Chariot-Tests
         tests/UCITranslator.cc
         tests/BoardEvaluator.cc
         tests/ChessMechanics.cc
+        tests/SearchTests.cc
 )
 target_link_libraries(
         Checkmate-Chariot-Tests PRIVATE Checkmate-Core GTest::gtest_main)
