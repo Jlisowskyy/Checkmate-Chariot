@@ -130,6 +130,11 @@ class BoardEvaluator
 
         const int32_t materialEval =
             isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation<mode>(counts, phase);
+
+        // Avoid positional evaluation on material constellations that are enforced draws
+        if (materialEval == EVAL_DRAW_RESERVED_VALUE)
+            return DRAW_SCORE;
+
         const int32_t positionEval = _evaluateFields<mode>(bd, phase);
 
         // only to print bonuses
@@ -592,6 +597,8 @@ class BoardEvaluator
 
     static constexpr size_t BlackFigStartIndex = 5;
 
+    // Table stores hashed material values for material constellations limited by hash function mentioned above
+    // In case of draw material stored value is equal to EVAL_DRAW_RESERVED_VALUE
     static MaterialArrayT _materialTable;
 };
 

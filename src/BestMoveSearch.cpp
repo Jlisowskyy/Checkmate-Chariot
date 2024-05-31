@@ -396,7 +396,7 @@ int BestMoveSearch::_search(
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
         const TranspositionTable::HashRecord record{zHash,     bestMove,
-                                                    bestEval,  wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL,
+                                                    bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL_RESERVED_VALUE,
                                                     depthLeft, nType,
                                                     bd.Age,    _currRootDepth};
 
@@ -429,7 +429,7 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
         return DRAW_SCORE;
 
     int bestEval = NEGATIVE_INFINITY;
-    int statEval = NO_EVAL;
+    int statEval = NO_EVAL_RESERVED_VALUE;
     MoveGenerator::payload moves;
 
     // reading Transposition table for the best move
@@ -462,7 +462,7 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
             }
 
             // Try to read from tt previously calculated static evaluation
-            if (prevSearchRes.GetStatVal() != NO_EVAL) {
+            if (prevSearchRes.GetStatVal() != NO_EVAL_RESERVED_VALUE) {
                 statEval = prevSearchRes.GetStatVal();
                 BoardEvaluator::PopulateLastPhase(bd);
             }
