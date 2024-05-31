@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
+#include "../include/Interface/Logger.h"
+
 #include "../include/Interface/FenTranslator.h"
 #include "../include/TestsAndDebugging/TestSetup.h"
-#include "../include/ThreadManagement/GameTimeManager.h"
-#include "../include/ThreadManagement/SearchThreadManager.h"
 
 TEST(GoCommandTest, stopCommandResponse)
 {
