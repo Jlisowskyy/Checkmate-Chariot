@@ -10,6 +10,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # We C++ 20 is required by the main exec
 
 ################################################################################
+#                             Tunable parameters                               #
+################################################################################
+
+# Uncomment to stop enforcing inline on INLINE macro
+#add_compile_definitions(PREVENT_FORCE_INLINE=1)
+
+# Uncomment to add gathering TT statistics
+add_compile_definitions(TEST_TT=1)
+
+# Uncomment to add displaying debug info about aspiration window
+add_compile_definitions(TEST_ASP_WIN=1)
+
+# Uncomment to allow usage of aspiration windows inside the search
+#add_compile_definitions(USE_ASP_WIN=1)
+
+################################################################################
 #                     Inspecting platform capabilities                         #
 ################################################################################
 
@@ -122,6 +138,7 @@ set(CHECKMATE_CHARIOT_SOURCES
         include/TestsAndDebugging/TestSetup.h
         include/TestsAndDebugging/StateReconstructor.h
         include/TestsAndDebugging/DebugTools.h
+        src/DebugTools.cpp
 )
 
 # Create a library with the core functionality
@@ -142,6 +159,8 @@ add_executable(Checkmate-Chariot-Tests
         tests/Logger.cc
         tests/UCITranslator.cc
         tests/BoardEvaluator.cc
+        tests/ChessMechanics.cc
+        tests/SearchTests.cc
 )
 target_link_libraries(
         Checkmate-Chariot-Tests PRIVATE Checkmate-Core GTest::gtest_main)
@@ -174,9 +193,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        target_compile_options(Checkmate-Core PUBLIC -fconstexpr-ops-limit=133554432;-g;-fopenmp)
+        target_compile_options(Checkmate-Core PUBLIC -fconstexpr-ops-limit=133554432;-g;-fopenmp;-O0)
     elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
-        target_compile_options(Checkmate-Core PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=1335544322 ;-funroll-loops;-fno-peel-loops;-fno-tracer)
+        target_compile_options(Checkmate-Core PUBLIC -O3;-march=native;-fopenmp;-fconstexpr-ops-limit=1335544322 ;-funroll-loops;-fno-peel-loops;-fno-tracer;)
     elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
         target_compile_options(Checkmate-Core PUBLIC -g;-fconstexpr-ops-limit=133554432;-fopenmp;-O2;-march=native;-fopenmp)
     else()
@@ -200,15 +219,6 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 else()
     message(FATAL_ERROR "Unknown compiler")
 endif()
-
-# Uncomment to add gathering TT statistics
-add_compile_definitions(TEST_TT=1)
-
-# Uncomment to add displaying debug info about aspiration window
-add_compile_definitions(TEST_ASP_WIN=1)
-
-# Uncomment to allow usage of aspiration windows inside the search
-#add_compile_definitions(USE_ASP_WIN=1)
 
 ################################################################################
 #                                  Post build                                  #

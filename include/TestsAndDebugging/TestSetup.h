@@ -31,13 +31,13 @@ struct TestSetup
     // Class interaction
     // ------------------------------
 
-    void Initialize() { _translatorThread = new std::thread(_job, &_stream, &_eng, &_sem); }
+    void Initialize() { _translatorThread = new std::thread(_job, &_stream, &_eng, &_inSem, &_outSem); }
 
     void ProcessCommand(const std::string &str)
     {
         _stream.clear();
         _stream << str << std::endl;
-        _sem.release();
+        _inSem.release();
     }
 
     void Close()
@@ -51,6 +51,14 @@ struct TestSetup
         }
     }
 
+    void WaitForResult() { _outSem.acquire(); }
+
+    void ProcessCommandSync(const std::string &str)
+    {
+        ProcessCommand(str);
+        WaitForResult();
+    }
+
     Engine &GetEngine() { return _eng; }
 
     // ------------------------------
@@ -58,23 +66,29 @@ struct TestSetup
     // ------------------------------
 
     private:
-    static void _job(std::stringstream *stream, Engine *engine, std::binary_semaphore *sem)
+    static void
+    _job(std::stringstream *stream, Engine *engine, std::binary_semaphore *sem, std::binary_semaphore *outSem)
     {
         GameTimeManager::StartTimerAsync();
 
         UCITranslator translator{*engine};
 
+        bool result;
         do
         {
             sem->acquire();
-        } while (translator.BeginCommandTranslation(*stream) != UCITranslator::UCICommand::quitCommand);
+            result = translator.BeginCommandTranslation(*stream) != UCITranslator::UCICommand::quitCommand;
+            outSem->release();
+
+        } while (result);
     }
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
-    std::binary_semaphore _sem{0};
+    std::binary_semaphore _inSem{0};
+    std::binary_semaphore _outSem{0};
     std::stringstream _stream{};
     std::thread *_translatorThread{};
     Engine _eng{};

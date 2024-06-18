@@ -343,7 +343,7 @@ class Move
 
     public:
     static constexpr std::pair<size_t, uint64_t> CastlingActions[] = {
-        {Board::SentinelBoardIndex,                          0LLU},
+        {Board::SentinelBoardIndex,                          1LLU},
         {              wRooksIndex, Board::CastlingNewRookMaps[0]},
         {              wRooksIndex, Board::CastlingNewRookMaps[1]},
         {              bRooksIndex, Board::CastlingNewRookMaps[2]},

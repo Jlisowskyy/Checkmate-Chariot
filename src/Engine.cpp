@@ -4,8 +4,6 @@
 
 #include "../include/Engine.h"
 #include "../include/Evaluation/BoardEvaluator.h"
-#include "../include/Evaluation/BoardEvaluatorPrinter.h"
-#include "../include/MoveGeneration/ChessMechanics.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/Search/BestMoveSearch.h"
 #include "../include/Search/TranspositionTable.h"
@@ -43,19 +41,13 @@ bool Engine::SetFenPosition(const std::string &fenStr)
     // Setup start board
     _startingBoard = _board;
 
-    // clearing repetitions
-    if (isParsed)
-        _repetitionMap.clear();
-
     return isParsed;
 }
 
 void Engine::SetStartPos()
 {
     _isStartPosPlayed = true;
-    _board            = FenTranslator::GetDefault();
-    _startingBoard    = _board;
-    _repetitionMap.clear();
+    _board = _startingBoard = _defaultBoard;
 }
 
 const EngineInfo &Engine::GetEngineInfo() { return engineInfo; }
@@ -64,14 +56,10 @@ bool Engine::ApplyMoves(const std::vector<std::string> &UCIMoves)
 {
     Board workBoard = _startingBoard;
     uint64_t hash   = ZHasher.GenerateHash(workBoard);
-    _repetitionMap[hash]++;
 
     for (auto &move : UCIMoves)
         if (!_applyMove(workBoard, move, hash))
-        {
-            _repetitionMap.clear();
             return false;
-        }
     _board = workBoard;
 
     // applying corresponding age
@@ -105,7 +93,7 @@ bool Engine::_applyMove(Board &board, const std::string &move, uint64_t &hash)
         {
             VolatileBoardData data{board};
             hash = ZHasher.UpdateHash(hash, moves[i], data);
-            _repetitionMap[hash]++;
+            board.Repetitions[hash]++;
 
             Move::MakeMove(moves[i], board);
             TManager.GetDefaultStack().PopAggregate(moves);
@@ -172,16 +160,16 @@ void Engine::Go(GoInfo &info, const std::vector<std::string> &moves)
         colTime    = 1;
         info.depth = std::min(info.depth, 1);
 
-        SearchThreadManager::GoWoutThread(_board, _repetitionMap, info);
+        SearchThreadManager::GoWoutThread(_board, info);
         return;
     }
 
-    TManager.Go(_board, _repetitionMap, info);
+    TManager.Go(_board, info);
 }
 
 void Engine::StopSearch() { TManager.Stop(); }
 
-void Engine::GoInfinite() { TManager.GoInfinite(_board, _repetitionMap); }
+void Engine::GoInfinite() { TManager.GoInfinite(_board); }
 
 void Engine::_clearHash(Engine &) { TTable.ClearTable(); }
 
@@ -201,7 +189,7 @@ void Engine::PonderHit()
 
 int Engine::GetQuiesceEval()
 {
-    BestMoveSearch searcher{_board, _repetitionMap, TManager.GetDefaultStack()};
+    BestMoveSearch searcher{_board, TManager.GetDefaultStack()};
     return searcher.QuiesceEval() * BoardEvaluator::ScoreGrain;
 }
 
@@ -214,3 +202,5 @@ int Engine::GetEvalPrinted()
 
     return (_board.MovingColor == WHITE ? eval : -eval);
 }
+
+Engine::Engine() : _defaultBoard(FenTranslator::GetDefault()) { _board = _startingBoard = _defaultBoard; }

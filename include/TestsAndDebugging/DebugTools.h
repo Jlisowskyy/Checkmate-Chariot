@@ -10,6 +10,7 @@
 
 #include "../CompilationConstants.h"
 #include "../Interface/Logger.h"
+#include "../MoveGeneration/Move.h"
 
 /*
  * struct defines statistics gathered during execution about aspiration window flow
@@ -34,26 +35,11 @@ class AspWinStat
         _fails.emplace(FailType::FinalBoundaries, alpha, beta, eval);
     }
 
-    void DisplayAndClean()
-    {
-        const size_t total = _fails.size();
-
-        GlobalLogger.LogStream << std::format("[ INFO ][ Asp Win Stats: {} ] ", total);
-        while (!_fails.empty())
-        {
-            const auto [type, alpa, beta, eval] = _fails.front();
-            _fails.pop();
-
-            GlobalLogger.LogStream << std::format(
-                "{} a:{}, b:{}, e:{} ",
-                type == FailType::FailHigh  ? 'H'
-                : type == FailType::FailLow ? 'L'
-                                            : 'E',
-                alpa, beta, eval
-            );
-        }
-        GlobalLogger.LogStream << std::endl;
-    }
+    void DisplayAndClean();
 };
+
+bool IsDrawDebug(const Board &bd);
+
+Move GetMoveDebug(const Board &bd, const std::string &str);
 
 #endif // CHECKMATE_CHARIOT_DEBUGTOOLS_H

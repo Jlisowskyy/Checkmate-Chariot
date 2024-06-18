@@ -28,7 +28,7 @@ class Engine
     // --------------------------------------
 
     public:
-    Engine() = default;
+    Engine();
 
     /* Load with initial state */
     Engine(const Board &bd) : _board(bd), _startingBoard(bd) {}
@@ -72,7 +72,11 @@ class Engine
     /* Simply returns the moving color */
     [[nodiscard]] int GetMovingColor() const { return _board.MovingColor; }
 
-    [[nodiscard]] uint16_t GetAge() const { return _board.Age; }
+    [[nodiscard]] uint16_t GetAge() const
+    {
+        TraceIfFalse(_board.Age >= 1, "Board contains age smaller than 1!");
+        return _board.Age;
+    }
 
     /* Returns FEN encoded actual board state */
     [[nodiscard]] std::string GetFenTranslation() const;
@@ -128,10 +132,10 @@ class Engine
     // private fields
     // ------------------------------
 
-    Board _board         = FenTranslator::GetDefault();
-    Board _startingBoard = FenTranslator::GetDefault();
+    const Board _defaultBoard;
+    Board _board;
+    Board _startingBoard;
     OpeningBook _book{};
-    std::unordered_map<uint64_t, int> _repetitionMap{};
     std::string _bookPath = _defaultBookPath;
 
     bool _isStartPosPlayed                            = true;

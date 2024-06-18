@@ -6,6 +6,7 @@
 #define SEARCHTHREADMANAGER_H
 
 #include <map>
+#include <semaphore>
 #include <string>
 #include <thread>
 
@@ -13,17 +14,27 @@
 #include "../MoveGeneration/Move.h"
 #include "Stack.h"
 
-struct SearchThreadManager
+class SearchThreadManager
 {
+    // ------------------------------
+    // Class inner types
+    // ------------------------------
+
+    struct _searchArgs_t
+    {
+        const Board *bd;
+        int depth;
+    };
+
+    public:
     using StackType = Stack<Move, DEFAULT_STACK_SIZE>;
-    using RepMap    = std::unordered_map<uint64_t, int>;
+
     // ------------------------------
     // Class creation
     // ------------------------------
 
-    SearchThreadManager() = default;
+    SearchThreadManager();
 
-    // TODO: Temporary solution, should be expanded with threading model
     ~SearchThreadManager();
 
     SearchThreadManager(const SearchThreadManager &) = delete;
@@ -38,18 +49,14 @@ struct SearchThreadManager
 
     [[nodiscard]] StackType &GetDefaultStack() { return _stacks[0]; }
 
-    bool Go(const Board &bd, const RepMap &rMap, const GoInfo &info);
+    bool Go(const Board &bd, const GoInfo &info);
 
     /* This function is not thread safe! Use it when there is no time left on the clock to start a thread */
-    static void GoWoutThread(const Board &bd, const RepMap &rMap, const GoInfo &info);
+    static void GoWoutThread(const Board &bd, const GoInfo &info);
 
-    bool GoInfinite(const Board &bd, const RepMap &rMap);
+    bool GoInfinite(const Board &bd);
 
-    void Stop();
-
-    // TODO: Temporary solution, should be expanded with a threading model
-    /// @brief Joins all search threads.
-    void Consolidate();
+    void Stop() const;
 
     [[nodiscard]] bool IsSearchOn() const { return _isSearchOn; }
 
@@ -62,8 +69,10 @@ struct SearchThreadManager
     // ------------------------------
 
     private:
-    static void
-    _threadSearchJob(const Board *bd, const RepMap *rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, int depth);
+    static void _passiveThreadSearchJob(
+        Stack<Move, DEFAULT_STACK_SIZE> *s, _searchArgs_t *args, bool *guard, const bool *shouldStop,
+        std::binary_semaphore *taskSem, std::binary_semaphore *bootup
+    );
 
     // ------------------------------
     // Class fields
@@ -71,6 +80,12 @@ struct SearchThreadManager
 
     bool _isSearchOn{false};
     bool _isPonderOn{false};
+
+    // Passive thread components
+    bool _shouldStop{false};
+    std::binary_semaphore _searchSem{0};
+    std::binary_semaphore _bootupSem{0};
+    _searchArgs_t _searchArgs{};
 
     // TODO: Implement logical thread detection
 

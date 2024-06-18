@@ -190,13 +190,17 @@ int ChessMechanics::SEE(const Move mv) const
 
     int attackerFigType = FindFigType(attackFromBitBoard, _board);
     int color           = _board.MovingColor;
-    scores[depth]       = BoardEvaluator::BasicFigureValues[mv.GetKilledBoardIndex()];
+    scores[depth]       = BoardEvaluator::ColorlessBasicFigureValues[mv.GetKilledBoardIndex()];
     do
     {
         depth++;
 
         // sum up points
-        scores[depth] = BoardEvaluator::BasicFigureValues[attackerFigType] - scores[depth - 1];
+        scores[depth] = BoardEvaluator::ColorlessBasicFigureValues[attackerFigType] - scores[depth - 1];
+
+        // try to get a cut-off
+        if (std::max(-scores[depth - 1], scores[depth]) < 0)
+            break;
 
         // pseudo make move
         attackersBitBoard ^= attackFromBitBoard;

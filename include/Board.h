@@ -8,8 +8,10 @@
 #include <array>
 #include <bitset>
 #include <cinttypes>
+#include <unordered_map>
 
 #include "BitOperations.h"
+#include "CompilationConstants.h"
 
 /*
  * Given enum defines values and order of both colors. All indexing schemes used across the projects follows given
@@ -101,6 +103,16 @@ enum CastlingPossibilities : size_t
 struct Board
 {
     // ------------------------------
+    // Class creation
+    // ------------------------------
+
+    Board()  = default;
+    ~Board() = default;
+
+    Board(const Board &)            = default;
+    Board &operator=(const Board &) = default;
+
+    // ------------------------------
     // class interaction
     // ------------------------------
 
@@ -114,6 +126,8 @@ struct Board
     static bool Comp(const Board &a, const Board &b);
 
     constexpr uint64_t GetFigBoard(int col, size_t figDesc) const { return BitBoards[col * BitBoardsPerCol + figDesc]; }
+
+    [[nodiscard]] bool IsEndGame() const { return LastPhase < END_GAME_PHASE; }
 
     // ------------------------------
     // Class fields
@@ -155,12 +169,28 @@ struct Board
         MinMsbPossible << 61 | MinMsbPossible << 62, MinMsbPossible << 58 | MinMsbPossible << 59 | MinMsbPossible << 57
     };
 
-    std::bitset<CastlingCount + 1> Castlings{0}; // additional sentinel field
-    uint64_t ElPassantField                = MaxMsbPossible >> InvalidElPassantField;
-    int MovingColor                        = WHITE;
-    int HalfMoves                          = {};
-    uint64_t BitBoards[BitBoardsCount + 1] = {}; // additional sentinel board
-    uint16_t Age{};                              // stores total half moves since the beginning of the game
+    // --------------------------------
+    // Main processing components
+    // --------------------------------
+
+    std::bitset<CastlingCount + 1> Castlings           = {0}; // additional sentinel field
+    uint64_t ElPassantField                            = MaxMsbPossible >> InvalidElPassantField;
+    int MovingColor                                    = WHITE;
+    std::array<uint64_t, BitBoardsCount + 1> BitBoards = {}; // additional sentinel board
+
+    // --------------------------------------
+    // Draw and state monitoring fields
+    // --------------------------------------
+
+    int HalfMoves                                 = {};
+    uint16_t Age                                  = {}; // stores total half moves since the beginning of the game
+    std::unordered_map<uint64_t, int> Repetitions = {}; // Stores hashes of previous encountered positions
+
+    // ------------------------------
+    // Optimisation components
+    // ------------------------------
+
+    int LastPhase = {}; // Field used to save previously calculated phase during evaluation
 };
 
 #endif // BOARD_H

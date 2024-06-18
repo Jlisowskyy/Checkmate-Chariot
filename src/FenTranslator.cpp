@@ -8,8 +8,7 @@
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
 #include "../include/ParseTools.h"
-
-const Board &FenTranslator::GetDefault() { return StartBoard; }
+#include "../include/Search/ZobristHash.h"
 
 bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
 {
@@ -27,19 +26,21 @@ bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
         pos        = _skipBlanks(pos, fenPos);
         pos        = _processElPassant(workBoard, pos, fenPos);
         pos        = _skipBlanks(pos, fenPos);
-        pos        = _processMovesCounts(pos, fenPos, bd.HalfMoves);
+        pos        = _processMovesCounts(pos, fenPos, workBoard.HalfMoves);
         pos        = _skipBlanks(pos, fenPos);
         int age;
         _processMovesCounts(pos, fenPos, age);
 
         // We store half moves instead of full moves
-        bd.Age = std::max(static_cast<uint16_t>(age * 2 - 1), static_cast<uint16_t>(1));
+        workBoard.Age = std::max(static_cast<uint16_t>(age * 2 - 1), static_cast<uint16_t>(1));
+
+        const uint64_t startHash = ZHasher.GenerateHash(workBoard);
+        workBoard.Repetitions[startHash]++;
     }
     catch (const std::exception &exc)
     {
         GlobalLogger.LogStream << (exc.what()) << '\n';
         GlobalLogger.LogStream << ("[ INFO ] Loading default layout...\n");
-        bd = StartBoard;
         return false;
     }
 
@@ -314,7 +315,7 @@ void FenTranslator::_addFigure(const std::string &pos, char fig, Board &bd)
 
     if (!FigCharToIndexMap.contains(fig))
         throw std::runtime_error(
-            std::format("[ ERROR ] Encountered invalid character ({0})inside fen position description!\n", fig)
+            std::format("[ ERROR ] Encountered invalid character ({}) inside fen position description!\n", fig)
         );
 
     bd.BitBoards[FigCharToIndexMap.at(fig)] |= field;
@@ -341,5 +342,13 @@ size_t FenTranslator::_processMovesCounts(size_t pos, const std::string &fenPos,
     if (rv == ParseTools::InvalidNextWorldRead)
         throw std::runtime_error("Move counter has not been found!");
 
+    return rv;
+}
+
+Board FenTranslator::GetTranslated(const std::string &fenPos)
+{
+    Board rv;
+    if (!Translate(fenPos, rv))
+        rv = GetDefault();
     return rv;
 }

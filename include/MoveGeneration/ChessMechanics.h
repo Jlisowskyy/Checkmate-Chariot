@@ -38,8 +38,7 @@ struct ChessMechanics
 
     explicit ChessMechanics(const Board &bd) : _board(bd) {}
 
-    ChessMechanics(ChessMechanics &other) = default;
-
+    ChessMechanics(ChessMechanics &other)       = delete;
     ChessMechanics &operator=(ChessMechanics &) = delete;
 
     ~ChessMechanics() = default;
@@ -49,6 +48,11 @@ struct ChessMechanics
     // ------------------------------
 
     [[nodiscard]] bool IsCheck() const;
+
+    [[nodiscard]] INLINE bool IsDrawByReps(const uint64_t hash)
+    {
+        return _board.Repetitions.at(hash) >= 3 || _board.HalfMoves >= 50;
+    }
 
     // Gets occupancy maps, which simply indicates whether some field is occupied or not. Does not distinguish colors.
     [[nodiscard]] INLINE uint64_t GetFullBitMap() const

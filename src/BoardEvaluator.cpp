@@ -38,7 +38,7 @@ BoardEvaluator::MaterialArrayT BoardEvaluator::_materialTable = []() -> Material
 
         for (size_t i = 0; i < drawPos.size(); ++i) index += drawPos[i] * FigCoefs[i];
 
-        arr[index] = 0;
+        arr[index] = EVAL_DRAW_RESERVED_VALUE;
     }
 
     return arr;

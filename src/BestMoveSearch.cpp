@@ -31,20 +31,19 @@ using RepMap = std::unordered_map<uint64_t, int>;
 #endif // NDEBUG
 
 [[nodiscard]] inline INLINE uint64_t
-ProcessAttackMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardData &data, RepMap &rMap)
+ProcessAttackMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardData &data)
 {
 
     const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
     TTable.Prefetch(nextHash);
     Move::MakeMove(mv, bd);
-    rMap[nextHash]++;
+    bd.Repetitions[nextHash]++;
 
     return nextHash;
 }
 
 [[nodiscard]] inline INLINE uint64_t ProcessMove(
-    Board &bd, const Move mv, const int depth, const uint64_t hash, KillerTable &table, const VolatileBoardData &data,
-    RepMap &rMap
+    Board &bd, const Move mv, const int depth, const uint64_t hash, KillerTable &table, const VolatileBoardData &data
 )
 {
 
@@ -52,45 +51,47 @@ ProcessAttackMove(Board &bd, const Move mv, const uint64_t hash, const VolatileB
     TTable.Prefetch(nextHash);
     Move::MakeMove(mv, bd);
     table.ClearPlyFloor(depth);
-    rMap[nextHash]++;
+    bd.Repetitions[nextHash]++;
 
     return nextHash;
 }
 
 [[nodiscard]] inline INLINE uint64_t
-RevertMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardData &data, RepMap &rMap)
+RevertMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardData &data)
 {
     Move::UnmakeMove(mv, bd, data);
 
-    if (const int occurs = --rMap[hash]; occurs == 0)
-        rMap.erase(hash);
+    if (const int occurs = --bd.Repetitions[hash]; occurs == 0)
+        bd.Repetitions.erase(hash);
 
     return ZHasher.UpdateHash(hash, mv, data);
 }
 
-void BestMoveSearch::IterativeDeepening(
+int BestMoveSearch::IterativeDeepening(
     PackedMove *bestMove, PackedMove *ponderMove, const int32_t maxDepth, const bool writeInfo
 )
 {
     // When the passed depth is 0, we need to evaluate the board statically
     if (maxDepth == 0)
     {
-        GlobalLogger.LogStream << "info depth 0 score cp "
-                               << BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor) << std::endl;
+        const int score = BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor);
+        GlobalLogger.LogStream << "info depth 0 score cp " << score << std::endl;
 
-        return;
+        return score;
     }
 
     // Generate unique hash for the board
     const uint64_t zHash = ZHasher.GenerateHash(_board);
     int32_t eval{};
+    int32_t prevEval{};
     int64_t avg{};
 
     // prepare pv buffer
     PV pvBuff{};
 
     // usual search path
-    for (int32_t depth = 1; depth <= maxDepth; ++depth)
+    const int range = std::min(maxDepth, MAX_SEARCH_DEPTH);
+    for (int32_t depth = 1; depth <= range; ++depth)
     {
         // Search start time point
         [[maybe_unused]] auto timeStart = GameTimeManager::GetCurrentTime();
@@ -194,6 +195,8 @@ void BestMoveSearch::IterativeDeepening(
         if (std::abs(eval) == TIME_STOP_RESERVED_VALUE)
             break;
 
+        prevEval = eval;
+
         // Search stop time point
         [[maybe_unused]] auto timeStop = GameTimeManager::GetCurrentTime();
 
@@ -218,7 +221,7 @@ void BestMoveSearch::IterativeDeepening(
                 _pv[0].GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
-            _pv.Print();
+            _pv.Print(eval == 0);
             GlobalLogger.LogStream << std::endl;
         }
 
@@ -229,6 +232,8 @@ void BestMoveSearch::IterativeDeepening(
 
     if constexpr (TestTT)
         TTable.DisplayStatisticsAndReset();
+
+    return prevEval;
 }
 
 template <BestMoveSearch::SearchType searchType>
@@ -249,12 +254,13 @@ int BestMoveSearch::_search(
     if (depthLeft == 0)
         return _qSearch<searchType>(bd, alpha, beta, zHash, 0);
 
-    // Check whether we reached end of the legal path
-    if (_isDrawByReps(zHash))
-        return DRAW_SCORE;
-
     // incrementing nodes counter;
     ++_visitedNodes;
+
+    // Check whether we reached end of the legal path
+    ChessMechanics mech{_board};
+    if (mech.IsDrawByReps(zHash))
+        return DRAW_SCORE;
 
     // reading Transposition table for the best move
     const auto prevSearchRes = TTable.GetRecord(zHash);
@@ -328,7 +334,7 @@ int BestMoveSearch::_search(
         // stores the most recent return value of child trees,
         // alpha + 1 value enforces the second if trigger in first iteration in case of pv nodes
         int moveEval = alpha + 1;
-        zHash        = ProcessMove(bd, moves[i], depthLeft - 1, zHash, _kTable, oldData, _repMap);
+        zHash        = ProcessMove(bd, moves[i], depthLeft - 1, zHash, _kTable, oldData);
 
         // In pv nodes we always search first move on full window due to assumption that TT will give
         // us best move that is possible.
@@ -357,7 +363,7 @@ int BestMoveSearch::_search(
             return TIME_STOP_RESERVED_VALUE;
 
         // move reverted after possible research
-        zHash = RevertMove(bd, moves[i], zHash, oldData, _repMap);
+        zHash = RevertMove(bd, moves[i], zHash, oldData);
 
         // Check whether we should update values
         if (moveEval > bestEval)
@@ -389,10 +395,10 @@ int BestMoveSearch::_search(
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
-        const TranspositionTable::HashRecord record{zHash,     bestMove,
-                                                    bestEval,  wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL,
-                                                    depthLeft, nType,
-                                                    bd.Age,    _currRootDepth};
+        const TranspositionTable::HashRecord record{
+            zHash,     bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL_RESERVED_VALUE,
+            depthLeft, nType,    bd.Age,   _currRootDepth
+        };
 
         TTable.Add(record, zHash);
     }
@@ -414,14 +420,17 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
     if (GameTimeManager::GetShouldStop())
         return TIME_STOP_RESERVED_VALUE;
 
+    // incrementing nodes counter
+    ++_visitedNodes;
+
     // Check whether we reached end of the legal path
-    if (_isDrawByReps(zHash))
+    ChessMechanics mech{_board};
+    if (mech.IsDrawByReps(zHash))
         return DRAW_SCORE;
 
     int bestEval = NEGATIVE_INFINITY;
-    int statEval = NO_EVAL;
+    int statEval = NO_EVAL_RESERVED_VALUE;
     MoveGenerator::payload moves;
-    ++_visitedNodes;
 
     // reading Transposition table for the best move
     auto &prevSearchRes = TTable.GetRecord(zHash);
@@ -453,8 +462,11 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
             }
 
             // Try to read from tt previously calculated static evaluation
-            if (prevSearchRes.GetStatVal() != NO_EVAL)
+            if (prevSearchRes.GetStatVal() != NO_EVAL_RESERVED_VALUE)
+            {
                 statEval = prevSearchRes.GetStatVal();
+                BoardEvaluator::PopulateLastPhase(bd);
+            }
             else
             {
                 // otherwise calculate the static eval
@@ -508,9 +520,27 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
         if (i != 0)
             _fetchBestMove(moves, i);
 
-        zHash               = ProcessAttackMove(bd, moves[i], zHash, oldData, _repMap);
+        // prunnings on the move
+        if (!isCheck)
+        {
+            const int SEEValue = mech.SEE(moves[i]);
+            /*                  DELTA PRUNNING                              */
+
+            // Increase delta in case of promotion
+            int delta = DELTA_PRUNNING_SAFETY_MARGIN + SEEValue +
+                        (moves[i].GetPackedMove().IsPromo() ? DELTA_PRUNNING_PROMO : 0);
+
+            if (statEval + delta < alpha && !bd.IsEndGame())
+                continue;
+
+            /*                  SEE capture value estimation                */
+            if (SEEValue < SEE_GOOD_MOVE_BOUNDARY)
+                continue;
+        }
+
+        zHash               = ProcessAttackMove(bd, moves[i], zHash, oldData);
         const int moveValue = -_qSearch<searchType>(bd, -beta, -alpha, zHash, extendedDepth + 1);
-        zHash               = RevertMove(bd, moves[i], zHash, oldData, _repMap);
+        zHash               = RevertMove(bd, moves[i], zHash, oldData);
 
         // if there was call to abort then abort
         if (std::abs(moveValue) == TIME_STOP_RESERVED_VALUE)

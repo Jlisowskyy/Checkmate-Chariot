@@ -4,17 +4,24 @@
 
 #include "../include/ThreadManagement/SearchThreadManager.h"
 #include "../include/Search/BestMoveSearch.h"
-#include "../include/Search/TranspositionTable.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
 
 #include <format>
 
 SearchThreadManager::~SearchThreadManager()
 {
+    // cancel search if is up
     Stop();
-    Consolidate();
+
+    // signal stop
+    _shouldStop = true;
+    _searchSem.release();
+
+    _threads[MainSearchThreadInd]->join();
+    delete _threads[MainSearchThreadInd];
+    _threads[MainSearchThreadInd] = nullptr;
 }
-bool SearchThreadManager::Go(const Board &bd, const RepMap &rMap, const GoInfo &info)
+bool SearchThreadManager::Go(const Board &bd, const GoInfo &info)
 {
     // ensuring only one search is running at a time
     if (_isSearchOn)
@@ -30,26 +37,29 @@ bool SearchThreadManager::Go(const Board &bd, const RepMap &rMap, const GoInfo &
         GameTimeManager::StartPonder(info.timeInfo);
     }
 
-    // Running up the searching worker
-    _threads[MainSearchThreadInd] = new std::thread(
-        _threadSearchJob, &bd, &rMap, &_stacks[MainSearchThreadInd], &_isSearchOn,
-        std::min(info.depth, MAX_SEARCH_DEPTH)
-    );
-    WrapTraceMsgInfo("Search thread started");
+    // prepare arguments
+    _searchArgs.bd    = &bd;
+    _searchArgs.depth = info.depth;
+
+    // signal search start
+    _searchSem.release();
+
+    // wait for search thread start to prevent races on guard
+    _bootupSem.acquire();
 
     // Signaling success
     return true;
 }
 
-bool SearchThreadManager::GoInfinite(const Board &bd, const RepMap &rMap)
+bool SearchThreadManager::GoInfinite(const Board &bd)
 {
     GoInfo info;
     info.timeInfo = GoTimeInfo::GetInfiniteTime();
     info.depth    = MAX_SEARCH_DEPTH;
-    return Go(bd, rMap, info);
+    return Go(bd, info);
 }
 
-void SearchThreadManager::Stop()
+void SearchThreadManager::Stop() const
 {
     // avoiding unnecessary actions
     if (!_isSearchOn)
@@ -57,43 +67,9 @@ void SearchThreadManager::Stop()
 
     // signaling forced abortion
     GameTimeManager::StopSearchManagement();
-
-    _threads[MainSearchThreadInd]->join(); // waiting for the main search thread to finish
-    delete _threads[MainSearchThreadInd];
-    _threads[MainSearchThreadInd] = nullptr;
-    WrapTraceMsgInfo("Search thread stopped successfully");
 }
 
-void SearchThreadManager::_threadSearchJob(
-    const Board *bd, const RepMap *rMap, Stack<Move, DEFAULT_STACK_SIZE> *s, bool *guard, int depth
-)
-{
-    PackedMove output{};
-    PackedMove ponder{};
-
-    *guard = true;
-    BestMoveSearch searcher{*bd, *rMap, *s};
-    searcher.IterativeDeepening(&output, &ponder, depth);
-
-    GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
-                           << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
-                           << std::endl;
-
-    *guard = false;
-}
-void SearchThreadManager::Consolidate()
-{
-    if (_threads[MainSearchThreadInd] != nullptr)
-    {
-        _threads[MainSearchThreadInd]->join();
-        delete _threads[MainSearchThreadInd];
-        _threads[MainSearchThreadInd] = nullptr;
-    }
-
-    WrapTraceMsgInfo("Thread manager consolidated successfully");
-}
-
-void SearchThreadManager::GoWoutThread(const Board &bd, const RepMap &rMap, const GoInfo &info)
+void SearchThreadManager::GoWoutThread(const Board &bd, const GoInfo &info)
 {
     static StackType s{};
 
@@ -102,10 +78,59 @@ void SearchThreadManager::GoWoutThread(const Board &bd, const RepMap &rMap, cons
     PackedMove output{};
     PackedMove ponder{};
 
-    BestMoveSearch searcher{bd, rMap, s};
+    BestMoveSearch searcher{bd, s};
     searcher.IterativeDeepening(&output, &ponder, info.depth);
 
     GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
                            << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
                            << std::endl;
+}
+
+void SearchThreadManager::_passiveThreadSearchJob(
+    Stack<Move, DEFAULT_STACK_SIZE> *s, SearchThreadManager::_searchArgs_t *args, bool *guard, const bool *shouldStop,
+    std::binary_semaphore *taskSem, std::binary_semaphore *bootup
+)
+{
+    PackedMove output{};
+    PackedMove ponder{};
+
+    // be alive until SearchThreadManager is destructed
+    while (!*shouldStop)
+    {
+        // waiting for task
+        taskSem->acquire();
+
+        // destruction is being processed
+        if (*shouldStop)
+        {
+            break;
+        }
+
+        // Read arguments
+        const Board &bd = *(args->bd);
+        const int depth = args->depth;
+
+        // harden search status
+        *guard = true;
+        // signal start command that thread is ready
+        bootup->release();
+
+        // run search
+        BestMoveSearch searcher{bd, *s};
+        searcher.IterativeDeepening(&output, &ponder, depth);
+
+        GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
+                               << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
+                               << std::endl;
+
+        // harden search status
+        *guard = false;
+    }
+}
+
+SearchThreadManager::SearchThreadManager()
+{
+    _threads[MainSearchThreadInd] = new std::thread(
+        _passiveThreadSearchJob, &GetDefaultStack(), &_searchArgs, &_isSearchOn, &_shouldStop, &_searchSem, &_bootupSem
+    );
 }

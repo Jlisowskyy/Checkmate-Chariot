@@ -24,13 +24,25 @@ static constexpr int16_t SPECIAL_DRAW_SCORE = 0;
 
 static constexpr int RESERVED_SCORE_VALUES           = 64;
 static constexpr int TIME_STOP_RESERVED_VALUE        = std::numeric_limits<int16_t>::max() - 1;
-static constexpr int NO_EVAL                         = std::numeric_limits<int16_t>::max() - 2;
+static constexpr int NO_EVAL_RESERVED_VALUE          = std::numeric_limits<int16_t>::max() - 2;
+static constexpr int EVAL_DRAW_RESERVED_VALUE        = std::numeric_limits<int16_t>::max() - 3;
 static constexpr int NEGATIVE_INFINITY               = std::numeric_limits<int16_t>::min() + RESERVED_SCORE_VALUES + 1;
 static constexpr int POSITIVE_INFINITY               = std::numeric_limits<int16_t>::max() - RESERVED_SCORE_VALUES;
 static constexpr int BEST_MATE_VALUE                 = NEGATIVE_INFINITY + MAX_SEARCH_DEPTH;
 static constexpr int BEST_MATE_VALUE_ABS             = -(BEST_MATE_VALUE);
 static constexpr uint16_t QUIESENCE_AGE_DIFF_REPLACE = 16;
 static constexpr uint16_t DEFAULT_AGE_DIFF_REPLACE   = 10;
+
+// average pawn value + some part of average pawn
+static constexpr int DELTA_PRUNNING_SAFETY_MARGIN = 115 + 115 / 6;
+// average queen value - average pawn value
+static constexpr int DELTA_PRUNNING_PROMO = 1000 - 115;
+
+// value below which SEE capture is considered bad
+static constexpr int SEE_GOOD_MOVE_BOUNDARY = 115 / 2;
+
+// value of phase below game is considering to be an end-game
+static constexpr int END_GAME_PHASE = 64;
 
 /* Depth from which Internal Iterative Deepening (IID) is used */
 static constexpr int IID_MIN_DEPTH = 6;
@@ -62,6 +74,11 @@ static constexpr int MAX_ASP_WINDOW_RETRIES       = 4;
 #define INLINE __attribute__((always_inline))
 
 #endif
+
+#else
+
+// No forced inline allowed
+#define INLINE
 
 #endif // PREVENT_FORCE_INLINE
 

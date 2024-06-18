@@ -122,11 +122,19 @@ class BoardEvaluator
         const auto [isSuccess, counts] = _countFigures(bd);
         const int32_t phase            = _calcPhase(counts);
 
+        // save phase for later usage
+        bd.LastPhase = phase;
+
         if constexpr (mode == EvalMode::PrintMode)
             BoardEvaluatorPrinter::setPhase<mode>(phase);
 
         const int32_t materialEval =
             isSuccess ? _materialTable[_getMaterialBoardIndex(counts)] : _slowMaterialCalculation<mode>(counts, phase);
+
+        // Avoid positional evaluation on material constellations that are enforced draws
+        if (materialEval == EVAL_DRAW_RESERVED_VALUE)
+            return DRAW_SCORE;
+
         const int32_t positionEval = _evaluateFields<mode>(bd, phase);
 
         // only to print bonuses
@@ -163,6 +171,16 @@ class BoardEvaluator
             blackMaterial += CountOnesInBoard(bd.BitBoards[i + bPawnsIndex]) * FigurePhases[i];
         }
         return {whiteMaterial, blackMaterial};
+    }
+
+    /* Function calculates phase of the given board and saves the results inside LastPhase field */
+    static void PopulateLastPhase(Board &bd)
+    {
+        const auto [isSuccess, counts] = _countFigures(bd);
+        const int32_t phase            = _calcPhase(counts);
+
+        // save phase for later usage
+        bd.LastPhase = phase;
     }
 
     // ------------------------------
@@ -436,6 +454,21 @@ class BoardEvaluator
         -10000 // king
     };
 
+    static constexpr int16_t ColorlessBasicFigureValues[]{
+        100,   // Pawn
+        325,   // Knight
+        325,   // Bishop
+        500,   // RookS
+        975,   // Queen
+        10000, // king
+        100,   // Pawn
+        325,   // Knight
+        325,   // Bishop
+        500,   // Rook
+        975,   // Queen
+        10000  // king
+    };
+
     // values that are used to calculate material value of given board at the end-game stage
     static constexpr int16_t EndGameFigureValues[]{
         130,  // Pawn
@@ -564,6 +597,8 @@ class BoardEvaluator
 
     static constexpr size_t BlackFigStartIndex = 5;
 
+    // Table stores hashed material values for material constellations limited by hash function mentioned above
+    // In case of draw material stored value is equal to EVAL_DRAW_RESERVED_VALUE
     static MaterialArrayT _materialTable;
 };
 

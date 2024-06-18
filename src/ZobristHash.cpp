@@ -32,7 +32,8 @@ uint64_t ZobristHasher::GenerateHash(const Board &board) const
         hash ^= _colorHash;
 
     // hashing castling possibilites
-    hash ^= _castlingHashes[board.Castlings.to_ullong()];
+    const unsigned long long rights = board.Castlings.to_ullong();
+    hash ^= _castlingHashes[rights];
 
     // hashing el passant field
     hash ^= _elPassantHashes[ExtractMsbPos(board.ElPassantField)];

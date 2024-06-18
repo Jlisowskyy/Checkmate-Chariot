@@ -74,7 +74,22 @@ std::string ConvertToStrPos(uint64_t boardMap);
 extern const char IndexToFigCharMap[Board::BitBoardsCount];
 
 /* Does the same thing as above but in reverse */
-extern const std::unordered_map<char, size_t> FigCharToIndexMap;
+/* This object must be inline due to problem with extern initialisation on startup  */
+/* When FenTranslator referred empty not initialised map on its static field init */
+inline static const std::unordered_map<char, size_t> FigCharToIndexMap{
+    {'P',   wPawnsIndex},
+    {'N', wKnightsIndex},
+    {'B', wBishopsIndex},
+    {'R',   wRooksIndex},
+    {'Q',  wQueensIndex},
+    {'K',    wKingIndex},
+    {'p',   bPawnsIndex},
+    {'n', bKnightsIndex},
+    {'b', bBishopsIndex},
+    {'r',   bRooksIndex},
+    {'q',  bQueensIndex},
+    {'k',    bKingIndex}
+};
 
 /*
  * Function checks whether given score is a mate,

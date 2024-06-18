@@ -17,11 +17,18 @@ struct FenTranslator
     // Class interaction
     // ------------------------------
 
-    static const Board &GetDefault();
+    static INLINE Board GetDefault()
+    {
+        Board rv;
+        Translate(StartingPosition, rv);
+        return rv;
+    }
 
     static bool Translate(const std::string &fenPos, Board &bd)
         // Function simply translates position from FEN notation into inner representation.
         ;
+
+    static Board GetTranslated(const std::string &fenPos);
 
     static std::string Translate(const Board &board);
 
@@ -97,21 +104,6 @@ struct FenTranslator
 
     public:
     static constexpr auto StartingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
-    static constexpr Board StartBoard = {
-        .Castlings      = {0b11111},
-        .ElPassantField = Board::InvalidElPassantBitBoard,
-        .MovingColor    = WHITE,
-        .BitBoards =
-            {
-                           65280LLU, 66LLU,
-                           36LLU, 129LLU,
-                           8LLU, 16LLU,
-                           71776119061217280LLU, 4755801206503243776LLU,
-                           2594073385365405696LLU, 9295429630892703744LLU,
-                           576460752303423488LLU, 1152921504606846976LLU,
-                           }
-    };
 };
 
 #endif // FENTRANSLATOR_H

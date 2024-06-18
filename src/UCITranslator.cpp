@@ -68,11 +68,6 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         if (auto iter = CommandBuff.find(workStr); iter != CommandBuff.end())
         {
             auto commandType = (this->*(iter->second))(buffer.substr(pos));
-
-            // CheckNum whether some joining could be done between parsing commands
-            if (commandType != UCICommand::goCommand && !_engine.TManager.IsSearchOn())
-                _engine.TManager.Consolidate();
-
             return commandType;
         }
     return UCICommand::InvalidCommand;
