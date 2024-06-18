@@ -2,12 +2,13 @@
 // Created by Jlisowskyy on 5/31/24.
 //
 
+#include "../include/TestsAndDebugging/DebugTools.h"
 #include "../include/Board.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/Search/ZobristHash.h"
-#include "../include/TestsAndDebugging/DebugTools.h"
 
-bool IsDrawDebug(const Board &bd) {
+bool IsDrawDebug(const Board &bd)
+{
     MoveGenerator::stck s{};
     MoveGenerator generator{bd, s};
 
@@ -19,7 +20,8 @@ bool IsDrawDebug(const Board &bd) {
     return generator.IsDrawByReps(hash) || (cnt == 0 && !generator.IsCheck());
 }
 
-Move GetMoveDebug(const Board &bd, const std::string &str) {
+Move GetMoveDebug(const Board &bd, const std::string &str)
+{
     Stack<Move, DEFAULT_STACK_SIZE> s;
     MoveGenerator mech{bd, s};
     auto moves = mech.GetMovesFast();
@@ -35,7 +37,8 @@ Move GetMoveDebug(const Board &bd, const std::string &str) {
     return {};
 }
 
-void AspWinStat::DisplayAndClean() {
+void AspWinStat::DisplayAndClean()
+{
     const size_t total = _fails.size();
 
     GlobalLogger.LogStream << std::format("[ INFO ][ Asp Win Stats: {} ] ", total);
@@ -45,11 +48,11 @@ void AspWinStat::DisplayAndClean() {
         _fails.pop();
 
         GlobalLogger.LogStream << std::format(
-                "{} a:{}, b:{}, e:{} ",
-                type == FailType::FailHigh  ? 'H'
-                                            : type == FailType::FailLow ? 'L'
-                                                                        : 'E',
-                alpa, beta, eval
+            "{} a:{}, b:{}, e:{} ",
+            type == FailType::FailHigh  ? 'H'
+            : type == FailType::FailLow ? 'L'
+                                        : 'E',
+            alpa, beta, eval
         );
     }
     GlobalLogger.LogStream << std::endl;

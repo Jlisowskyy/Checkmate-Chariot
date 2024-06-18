@@ -10,7 +10,7 @@ TEST(GoCommandTest, stopCommandResponse)
     GameTimeManager::StartTimerAsync();
     std::this_thread::sleep_for(std::chrono::seconds(1));
     SearchThreadManager threadManager{};
-    Board board = FenTranslator::GetDefault();
+    Board board     = FenTranslator::GetDefault();
     const auto Case = [&]<typename CaseFuncT>(CaseFuncT func)
     {
         auto t1 = std::chrono::steady_clock::now();

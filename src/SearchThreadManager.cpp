@@ -38,7 +38,7 @@ bool SearchThreadManager::Go(const Board &bd, const GoInfo &info)
     }
 
     // prepare arguments
-    _searchArgs.bd = &bd;
+    _searchArgs.bd    = &bd;
     _searchArgs.depth = info.depth;
 
     // signal search start
@@ -86,25 +86,28 @@ void SearchThreadManager::GoWoutThread(const Board &bd, const GoInfo &info)
                            << std::endl;
 }
 
-void SearchThreadManager::_passiveThreadSearchJob(Stack<Move, DEFAULT_STACK_SIZE> *s,
-                                                  SearchThreadManager::_searchArgs_t *args, bool *guard,
-                                                  const bool *shouldStop, std::binary_semaphore* taskSem, std::binary_semaphore* bootup) {
+void SearchThreadManager::_passiveThreadSearchJob(
+    Stack<Move, DEFAULT_STACK_SIZE> *s, SearchThreadManager::_searchArgs_t *args, bool *guard, const bool *shouldStop,
+    std::binary_semaphore *taskSem, std::binary_semaphore *bootup
+)
+{
     PackedMove output{};
     PackedMove ponder{};
 
     // be alive until SearchThreadManager is destructed
-    while(!*shouldStop)
+    while (!*shouldStop)
     {
         // waiting for task
         taskSem->acquire();
 
         // destruction is being processed
-        if (*shouldStop){
+        if (*shouldStop)
+        {
             break;
         }
 
         // Read arguments
-        const Board& bd = *(args->bd);
+        const Board &bd = *(args->bd);
         const int depth = args->depth;
 
         // harden search status
@@ -125,7 +128,9 @@ void SearchThreadManager::_passiveThreadSearchJob(Stack<Move, DEFAULT_STACK_SIZE
     }
 }
 
-SearchThreadManager::SearchThreadManager() {
-    _threads[MainSearchThreadInd] = new std::thread(_passiveThreadSearchJob, &GetDefaultStack(), &_searchArgs,
-                                                    &_isSearchOn, &_shouldStop, &_searchSem, &_bootupSem);
+SearchThreadManager::SearchThreadManager()
+{
+    _threads[MainSearchThreadInd] = new std::thread(
+        _passiveThreadSearchJob, &GetDefaultStack(), &_searchArgs, &_isSearchOn, &_shouldStop, &_searchSem, &_bootupSem
+    );
 }

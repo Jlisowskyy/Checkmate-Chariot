@@ -199,7 +199,8 @@ int ChessMechanics::SEE(const Move mv) const
         scores[depth] = BoardEvaluator::ColorlessBasicFigureValues[attackerFigType] - scores[depth - 1];
 
         // try to get a cut-off
-        if (std::max(-scores[depth-1], scores[depth]) < 0) break;
+        if (std::max(-scores[depth - 1], scores[depth]) < 0)
+            break;
 
         // pseudo make move
         attackersBitBoard ^= attackFromBitBoard;

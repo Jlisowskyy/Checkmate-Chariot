@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
 #include "../include/MoveGeneration/MoveGenerator.h"
-#include "../include/TestsAndDebugging/TestSetup.h"
-#include "../include/TestsAndDebugging/DebugTools.h"
 #include "../include/Search/BestMoveSearch.h"
+#include "../include/TestsAndDebugging/DebugTools.h"
+#include "../include/TestsAndDebugging/TestSetup.h"
 
 TEST(ChessMechTests, Draw50Test)
 {
@@ -29,11 +29,10 @@ TEST(ChessMechTests, Draw50Test)
 
 TEST(ChessMechTests, ThreeFoldRepetition)
 {
-    auto counter = [](std::unordered_map<uint64_t, int>& map) -> int
+    auto counter = [](std::unordered_map<uint64_t, int> &map) -> int
     {
         int sum{};
-        for (auto [key, count] : map)
-            sum += count;
+        for (auto [key, count] : map) sum += count;
         return sum;
     };
 
@@ -46,12 +45,15 @@ TEST(ChessMechTests, ThreeFoldRepetition)
     EXPECT_TRUE(IsDrawDebug(bd));
     EXPECT_EQ(counter(bd.Repetitions), 9);
 
-    setup.ProcessCommandSync("position fen rnbqkbnr/pppppppp/Q7/8/8/8/PPPPPPPP/RNB1KBNR b KQkq - 0 1 moves b8c6 g1f3 c6b8 f3g1 b8c6 g1f3 c6b8 f3g1");
+    setup.ProcessCommandSync("position fen rnbqkbnr/pppppppp/Q7/8/8/8/PPPPPPPP/RNB1KBNR b KQkq - 0 1 moves b8c6 g1f3 "
+                             "c6b8 f3g1 b8c6 g1f3 c6b8 f3g1");
     bd = setup.GetEngine().GetUnderlyingBoardCopy();
     EXPECT_TRUE(IsDrawDebug(bd));
     EXPECT_EQ(counter(bd.Repetitions), 9);
 
-    setup.ProcessCommandSync("position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR b KQkq - 0 1 moves b8c6 g1f3 c6b8 f3g1 b8c6 g1f3 c6b8");
+    setup.ProcessCommandSync(
+        "position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR b KQkq - 0 1 moves b8c6 g1f3 c6b8 f3g1 b8c6 g1f3 c6b8"
+    );
     bd = setup.GetEngine().GetUnderlyingBoardCopy();
     EXPECT_TRUE(!IsDrawDebug(bd));
     EXPECT_EQ(counter(bd.Repetitions), 8);
@@ -64,20 +66,13 @@ TEST(ChessMechTests, ThreeFoldRepetition)
 
 TEST(ChessMechTests, SEE1)
 {
-    static const char* positions[] {
-        "1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - - 0 1",
-        "1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - - 0 1"
+    static const char *positions[]{
+        "1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - - 0 1", "1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - - 0 1"
     };
 
-    static const char* moves[] {
-        "e1e5",
-        "d3e5"
-    };
+    static const char *moves[]{"e1e5", "d3e5"};
 
-    static const int scores[] = {
-        100,
-        -225
-    };
+    static const int scores[] = {100, -225};
 
     for (size_t i = 0; i < sizeof(positions) / sizeof(const char *); ++i)
     {

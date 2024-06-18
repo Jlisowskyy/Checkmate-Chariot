@@ -38,6 +38,6 @@ class AspWinStat
 };
 
 bool IsDrawDebug(const Board &bd);
-Move GetMoveDebug(const Board& bd, const std::string& str);
+Move GetMoveDebug(const Board &bd, const std::string &str);
 
 #endif // CHECKMATE_CHARIOT_DEBUGTOOLS_H

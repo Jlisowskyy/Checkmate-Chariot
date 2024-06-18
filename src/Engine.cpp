@@ -203,8 +203,4 @@ int Engine::GetEvalPrinted()
     return (_board.MovingColor == WHITE ? eval : -eval);
 }
 
-Engine::Engine()
-    : _defaultBoard(FenTranslator::GetDefault())
-{
-    _board = _startingBoard = _defaultBoard;
-}
+Engine::Engine() : _defaultBoard(FenTranslator::GetDefault()) { _board = _startingBoard = _defaultBoard; }

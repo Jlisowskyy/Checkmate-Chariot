@@ -6,9 +6,9 @@
 #define SEARCHTHREADMANAGER_H
 
 #include <map>
+#include <semaphore>
 #include <string>
 #include <thread>
-#include <semaphore>
 
 #include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
@@ -20,12 +20,13 @@ class SearchThreadManager
     // Class inner types
     // ------------------------------
 
-    struct _searchArgs_t{
-        const Board* bd;
+    struct _searchArgs_t
+    {
+        const Board *bd;
         int depth;
     };
 
-public:
+    public:
     using StackType = Stack<Move, DEFAULT_STACK_SIZE>;
 
     // ------------------------------
@@ -68,9 +69,10 @@ public:
     // ------------------------------
 
     private:
-
-    static void _passiveThreadSearchJob(Stack<Move, DEFAULT_STACK_SIZE> *s, _searchArgs_t* args, bool *guard,
-                                        const bool *shouldStop, std::binary_semaphore* taskSem, std::binary_semaphore* bootup);
+    static void _passiveThreadSearchJob(
+        Stack<Move, DEFAULT_STACK_SIZE> *s, _searchArgs_t *args, bool *guard, const bool *shouldStop,
+        std::binary_semaphore *taskSem, std::binary_semaphore *bootup
+    );
 
     // ------------------------------
     // Class fields

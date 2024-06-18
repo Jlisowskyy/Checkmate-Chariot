@@ -345,7 +345,8 @@ size_t FenTranslator::_processMovesCounts(size_t pos, const std::string &fenPos,
     return rv;
 }
 
-Board FenTranslator::GetTranslated(const std::string &fenPos) {
+Board FenTranslator::GetTranslated(const std::string &fenPos)
+{
     Board rv;
     if (!Translate(fenPos, rv))
         rv = GetDefault();

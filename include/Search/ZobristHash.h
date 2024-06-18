@@ -41,7 +41,7 @@ struct ZobristHasher
         oldHash ^= _elPassantHashes[mv.GetElPassantField()];           // placing new elPassantFiled
 
         const unsigned long long rights1 = data.Castlings.to_ullong();
-        oldHash ^= _castlingHashes[rights1];         // removing old castlings
+        oldHash ^= _castlingHashes[rights1]; // removing old castlings
 
         const unsigned long long rights2 = mv.GetCastlingRights().to_ullong();
         oldHash ^= _castlingHashes[rights2]; // placing new ones

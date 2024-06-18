@@ -174,7 +174,7 @@ class BoardEvaluator
     }
 
     /* Function calculates phase of the given board and saves the results inside LastPhase field */
-    static void PopulateLastPhase(Board& bd)
+    static void PopulateLastPhase(Board &bd)
     {
         const auto [isSuccess, counts] = _countFigures(bd);
         const int32_t phase            = _calcPhase(counts);
@@ -455,18 +455,18 @@ class BoardEvaluator
     };
 
     static constexpr int16_t ColorlessBasicFigureValues[]{
-            100,   // Pawn
-            325,   // Knight
-            325,   // Bishop
-            500,   // RookS
-            975,   // Queen
-            10000, // king
-            100,  // Pawn
-            325,  // Knight
-            325,  // Bishop
-            500,  // Rook
-            975,  // Queen
-            10000 // king
+        100,   // Pawn
+        325,   // Knight
+        325,   // Bishop
+        500,   // RookS
+        975,   // Queen
+        10000, // king
+        100,   // Pawn
+        325,   // Knight
+        325,   // Bishop
+        500,   // Rook
+        975,   // Queen
+        10000  // king
     };
 
     // values that are used to calculate material value of given board at the end-game stage

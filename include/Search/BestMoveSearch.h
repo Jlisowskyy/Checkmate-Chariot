@@ -103,7 +103,8 @@ class BestMoveSearch
                 for (int i = 0; i < _depth; ++i) buff += _path[i].GetLongAlgebraicNotation() + ' ';
             else
                 // We do not allow null moves when there was some draw detected
-                for (int i = 0; i < _depth && !_path[i].IsEmpty(); ++i) buff += _path[i].GetLongAlgebraicNotation() + ' ';
+                for (int i = 0; i < _depth && !_path[i].IsEmpty(); ++i)
+                    buff += _path[i].GetLongAlgebraicNotation() + ' ';
 
             GlobalLogger.LogStream << buff;
         }
@@ -120,7 +121,10 @@ class BestMoveSearch
 
         /* Returns the move on the given depth, with respect to given 'rootDepth' where depth is same as in search
          * function */
-        INLINE PackedMove operator()(const int depthLeft, const int rootDepth) const { return _path[rootDepth - depthLeft]; }
+        INLINE PackedMove operator()(const int depthLeft, const int rootDepth) const
+        {
+            return _path[rootDepth - depthLeft];
+        }
 
         /* returns the move */
         INLINE PackedMove operator[](const int ply) const { return _path[ply]; }
