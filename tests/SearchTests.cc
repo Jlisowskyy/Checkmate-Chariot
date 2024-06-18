@@ -17,8 +17,6 @@ TEST(TranspositionTableTests, HashFunctionTest1)
         "position startpos"
     };
 
-
-
     std::vector<std::vector<std::string>> movesSubCommands{
         {"d3h7", "g8f8", "h7h8", "f8f7"},
         ParseTools::Split("g1f3 b7b6 e2e4 c8b7 b1c3 e7e6 a2a3 g8f6 e4e5 f6d5 f1c4 d5c3 d2c3 d7d6 c1g5 f8e7 g5e7 d8e7 e5d6 c7d6 e1g1 e8g8"),
@@ -48,12 +46,18 @@ TEST(TranspositionTableTests, HashFunctionTest1)
             EXPECT_EQ(currMove.GetLongAlgebraicNotation(), mv);
 
             setup.ProcessCommandSync(fullCommand);
-            hash = ZHasher.UpdateHash(hash, currMove, vd);
+
+            if (mv == "e1g1")
+                GlobalLogger.LogStream << "xd";
 
             const uint64_t genHash = ZHasher.GenerateHash(setup.GetEngine().GetUnderlyingBoardCopy());
+            hash = ZHasher.UpdateHash(hash, currMove, vd);
 
             // Generated hash should be same as normal hash
             EXPECT_EQ(hash, genHash);
+
+            if (hash != genHash)
+                GlobalLogger.LogStream << "xd";
         }
     }
 }
