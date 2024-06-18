@@ -10,6 +10,7 @@
 
 #include "../CompilationConstants.h"
 #include "../Interface/Logger.h"
+#include "../MoveGeneration/Move.h"
 
 /*
  * struct defines statistics gathered during execution about aspiration window flow
@@ -38,6 +39,7 @@ class AspWinStat
 };
 
 bool IsDrawDebug(const Board &bd);
+
 Move GetMoveDebug(const Board &bd, const std::string &str);
 
 #endif // CHECKMATE_CHARIOT_DEBUGTOOLS_H

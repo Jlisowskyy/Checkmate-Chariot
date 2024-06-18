@@ -3,7 +3,6 @@
 //
 
 #include "../include/TestsAndDebugging/DebugTools.h"
-#include "../include/Board.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/Search/ZobristHash.h"
 
