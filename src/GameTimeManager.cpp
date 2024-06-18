@@ -268,6 +268,7 @@ lli GameTimeManager::CalculateTimeMsPerMove(
 
     GlobalLogger.TraceStream << std::format("[ INFO ] Time calculated for this move: {}", ans) << std::endl;
 
+    //    TODO: Add google tests hooks
     //    assert(ans >= 0 && "Time for move must be positive");
     //    assert(ans <= timeLimitPerMoveMs && "Time for move must be less than the time limit per move");
     //    assert(ans <= timeLimitClockMs && "Time for move must be less than the time limit on the clock");
