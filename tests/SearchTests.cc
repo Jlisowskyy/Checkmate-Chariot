@@ -47,17 +47,11 @@ TEST(TranspositionTableTests, HashFunctionTest1)
 
             setup.ProcessCommandSync(fullCommand);
 
-            if (mv == "e1g1")
-                GlobalLogger.LogStream << "xd";
-
             const uint64_t genHash = ZHasher.GenerateHash(setup.GetEngine().GetUnderlyingBoardCopy());
             hash                   = ZHasher.UpdateHash(hash, currMove, vd);
 
             // Generated hash should be same as normal hash
             EXPECT_EQ(hash, genHash);
-
-            if (hash != genHash)
-                GlobalLogger.LogStream << "xd";
         }
     }
 }
