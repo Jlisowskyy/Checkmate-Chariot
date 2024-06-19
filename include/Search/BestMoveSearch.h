@@ -186,13 +186,10 @@ class BestMoveSearch
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimizing player
 
-    template <SearchType searchType>
-    int _search(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);
+    template <SearchType searchType, bool followPv>
+    int _search(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv);
 
     template <SearchType searchType> int _qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int extendedDepth);
-
-    [[nodiscard]] int
-    _pwsSearch(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);
 
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
     static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);

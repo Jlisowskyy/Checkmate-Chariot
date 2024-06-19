@@ -22,6 +22,8 @@ static constexpr uint64_t MSEC_TO_NSEC = 1000 * 1000;
 static constexpr int16_t DRAW_SCORE         = 0;
 static constexpr int16_t SPECIAL_DRAW_SCORE = 0;
 
+static constexpr int FULL_DEPTH_FACTOR = 1;
+
 static constexpr int RESERVED_SCORE_VALUES           = 64;
 static constexpr int TIME_STOP_RESERVED_VALUE        = std::numeric_limits<int16_t>::max() - 1;
 static constexpr int NO_EVAL_RESERVED_VALUE          = std::numeric_limits<int16_t>::max() - 2;

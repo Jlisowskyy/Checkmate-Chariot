@@ -111,7 +111,7 @@ int BestMoveSearch::IterativeDeepening(
             _histTable.ScaleTableDown();
 
             // performs the search without aspiration window to gather some initial statistics about the move
-            eval = _pwsSearch(_board, NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth, zHash, {}, _pv, true);
+            eval = _search<SearchType::PVSearch, true>(_board, NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR, zHash, {}, _pv);
             TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // if there was call to abort then abort
@@ -142,8 +142,7 @@ int BestMoveSearch::IterativeDeepening(
                 // cleaning tables used in previous iterations
                 _kTable.ClearPlyFloor(depth);
                 _histTable.ScaleTableDown();
-
-                eval = _pwsSearch(_board, alpha, beta, depth, zHash, {}, pvBuff, true);
+                eval = _search<SearchType::PVSearch, true>(_board, alpha, beta, depth * FULL_DEPTH_FACTOR, zHash, {}, pvBuff);
 
                 // if there was call to abort then abort
                 if (std::abs(eval) == TIME_STOP_RESERVED_VALUE)
@@ -236,9 +235,9 @@ int BestMoveSearch::IterativeDeepening(
     return prevEval;
 }
 
-template <BestMoveSearch::SearchType searchType>
+template <BestMoveSearch::SearchType searchType, bool followPv>
 int BestMoveSearch::_search(
-    Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv
+    Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv
 )
 {
     static constexpr bool IsPvNode = searchType == SearchType::PVSearch;
@@ -269,13 +268,14 @@ int BestMoveSearch::_search(
     bool wasTTHit = prevSearchRes.IsSameHash(zHash);
 
     // When we missed the TT read we should try IID to save our situation
-    if (!wasTTHit && !followPv && depthLeft >= IID_MIN_DEPTH)
-    {
-        _search<searchType>(bd, alpha, beta, depthLeft - IID_REDUCTION, zHash, prevMove, pv, false);
+    if constexpr (!followPv)
+        if (!wasTTHit && depthLeft >= IID_MIN_DEPTH)
+        {
+            _search<searchType, false>(bd, alpha, beta, depthLeft - IID_REDUCTION, zHash, prevMove, pv);
 
-        // Retry TT read
-        wasTTHit = prevSearchRes.IsSameHash(zHash);
-    }
+            // Retry TT read
+            wasTTHit = prevSearchRes.IsSameHash(zHash);
+        }
 
     if constexpr (TestTT)
         TTable.UpdateStatistics(wasTTHit);
@@ -341,8 +341,8 @@ int BestMoveSearch::_search(
         // In case of non pv nodes we only search with zw
         if (!IsPvNode || i != 0)
         {
-            moveEval = -_search<SearchType::NoPVSearch>(
-                bd, -(alpha + 1), -alpha, depthLeft - 1, zHash, moves[i], _dummyPv, false
+            moveEval = -_search<SearchType::NoPVSearch, false>(
+                bd, -(alpha + 1), -alpha, depthLeft - 1, zHash, moves[i], _dummyPv
             );
         }
 
@@ -353,9 +353,14 @@ int BestMoveSearch::_search(
             _kTable.ClearPlyFloor(depthLeft - 1);
 
             // Research with full window
-            moveEval = -_search<SearchType::PVSearch>(
-                bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV, followPv && i == 0
-            );
+            if (followPv && i == 0)
+                moveEval = -_search<SearchType::PVSearch, true>(
+                    bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV
+                );
+            else
+                moveEval = -_search<SearchType::PVSearch, false>(
+                        bd, -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV
+                );
         }
 
         // if there was call to abort then abort
@@ -576,14 +581,6 @@ int BestMoveSearch::_qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int
     // clean up
     _stack.PopAggregate(moves);
     return bestEval;
-}
-
-int BestMoveSearch::_pwsSearch(
-    Board &bd, int alpha, const int beta, const int depthLeft, uint64_t zHash, const Move prevMove, PV &pv,
-    bool followPv
-)
-{
-    return _search<SearchType::PVSearch>(bd, alpha, beta, depthLeft, zHash, prevMove, pv, followPv);
 }
 
 void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const PackedMove mv)
