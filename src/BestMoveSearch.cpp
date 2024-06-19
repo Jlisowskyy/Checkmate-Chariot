@@ -111,7 +111,7 @@ int BestMoveSearch::IterativeDeepening(
             _histTable.ScaleTableDown();
 
             // performs the search without aspiration window to gather some initial statistics about the move
-            eval = _search<SearchType::PVSearch, true>(NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR, zHash, {}, _pv);
+            eval = _search<SearchType::PVSearch, true>(NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, _pv);
             TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // if there was call to abort then abort
@@ -142,7 +142,7 @@ int BestMoveSearch::IterativeDeepening(
                 // cleaning tables used in previous iterations
                 _kTable.ClearPlyFloor(depth);
                 _histTable.ScaleTableDown();
-                eval = _search<SearchType::PVSearch, true>(alpha, beta, depth * FULL_DEPTH_FACTOR, zHash, {}, pvBuff);
+                eval = _search<SearchType::PVSearch, true>(alpha, beta, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff);
 
                 // if there was call to abort then abort
                 if (std::abs(eval) == TIME_STOP_RESERVED_VALUE)
@@ -237,7 +237,7 @@ int BestMoveSearch::IterativeDeepening(
 
 template <BestMoveSearch::SearchType searchType, bool followPv>
 int BestMoveSearch::_search(
-    int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv
+    int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv
 )
 {
     static constexpr bool IsPvNode = searchType == SearchType::PVSearch;
@@ -250,8 +250,8 @@ int BestMoveSearch::_search(
         return TIME_STOP_RESERVED_VALUE;
 
     // last depth static eval needed or prev pv node value
-    if (depthLeft == 0)
-        return _qSearch<searchType>(alpha, beta, zHash, 0);
+    if (depthLeft <= 0)
+        return _qSearch<searchType>(alpha, beta, ply, zHash, 0);
 
     // incrementing nodes counter;
     ++_visitedNodes;
@@ -271,7 +271,7 @@ int BestMoveSearch::_search(
     if constexpr (!followPv)
         if (!wasTTHit && depthLeft >= IID_MIN_DEPTH)
         {
-            _search<searchType, false>(alpha, beta, depthLeft - IID_REDUCTION, zHash, prevMove, pv);
+            _search<searchType, false>(alpha, beta, depthLeft - IID_REDUCTION, ply, zHash, prevMove, pv);
 
             // Retry TT read
             wasTTHit = prevSearchRes.IsSameHash(zHash);
@@ -342,7 +342,7 @@ int BestMoveSearch::_search(
         if (!IsPvNode || i != 0)
         {
             moveEval = -_search<SearchType::NoPVSearch, false>(
-                -(alpha + 1), -alpha, depthLeft - 1, zHash, moves[i], _dummyPv
+                -(alpha + 1), -alpha, depthLeft - 1, ply + 1, zHash, moves[i], _dummyPv
             );
         }
 
@@ -355,11 +355,11 @@ int BestMoveSearch::_search(
             // Research with full window
             if (followPv && i == 0)
                 moveEval = -_search<SearchType::PVSearch, true>(
-                     -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV
+                     -beta, -alpha, depthLeft - 1, ply + 1, zHash, moves[i], inPV
                 );
             else
                 moveEval = -_search<SearchType::PVSearch, false>(
-                         -beta, -alpha, depthLeft - 1, zHash, moves[i], inPV
+                         -beta, -alpha, depthLeft - 1, ply + 1, zHash, moves[i], inPV
                 );
         }
 
@@ -414,7 +414,7 @@ int BestMoveSearch::_search(
 }
 
 template <BestMoveSearch::SearchType searchType>
-int BestMoveSearch::_qSearch(int alpha, int beta, uint64_t zHash, int extendedDepth)
+int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth)
 {
     static constexpr bool IsPvNode = searchType == SearchType::PVSearch;
     TraceIfFalse(beta > alpha, "Beta is not greater than alpha");
@@ -544,7 +544,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, uint64_t zHash, int extendedDe
         }
 
         zHash               = ProcessAttackMove(_board, moves[i], zHash, oldData);
-        const int moveValue = -_qSearch<searchType>( -beta, -alpha, zHash, extendedDepth + 1);
+        const int moveValue = -_qSearch<searchType>( -beta, -alpha, ply + 1,zHash, extendedDepth + 1);
         zHash               = RevertMove(_board, moves[i], zHash, oldData);
 
         // if there was call to abort then abort
@@ -640,5 +640,5 @@ int BestMoveSearch::QuiesceEval()
 {
     uint64_t hash = ZHasher.GenerateHash(_board);
 
-    return _qSearch<SearchType::PVSearch>(NEGATIVE_INFINITY, POSITIVE_INFINITY, hash, 0);
+    return _qSearch<SearchType::PVSearch>(NEGATIVE_INFINITY, POSITIVE_INFINITY, 0, hash, 0);
 }
