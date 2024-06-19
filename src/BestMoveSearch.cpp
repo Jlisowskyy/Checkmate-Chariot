@@ -103,9 +103,6 @@ int BestMoveSearch::IterativeDeepening(
 
         if (UseAsp && depth < ASP_WND_MIN_DEPTH)
         {
-            // set according depth inside the pv buffer
-            _pv.SetDepth(depth);
-
             // cleaning tables used in previous iteration
             _kTable.ClearPlyFloor(depth);
             _histTable.ScaleTableDown();
@@ -130,7 +127,6 @@ int BestMoveSearch::IterativeDeepening(
             int32_t delta           = INITIAL_ASP_WINDOW_DELTA;
             int32_t alpha           = averageScore - delta;
             int32_t beta            = averageScore + delta;
-            pvBuff.SetDepth(depth);
             [[maybe_unused]] AspWinStat stat{}; // Used only with TEST_ASP_WIN define
 
             // TODO: add some kind of logging inside the debug mode
@@ -308,17 +304,17 @@ int BestMoveSearch::_search(
     VolatileBoardData oldData{_board};
     PackedMove bestMove{};
     int bestEval = NEGATIVE_INFINITY;
-    PV inPV{depthLeft};
+    PV inPV{};
 
     // processing each move
     for (size_t i = 0; i < moves.size; ++i)
     {
         if (i == 0)
         {
-            if (IsPvNode && followPv && depthLeft != 1)
+            if (IsPvNode && followPv && _pv.Contains(ply))
                 // first follow pv from previous ID (Iterative deepening) iteration,
                 // we follow only single PV we previously saved
-                _pullMoveToFront(moves, _pv(depthLeft, _currRootDepth));
+                _pullMoveToFront(moves, _pv[ply]);
             else if (wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
                 // if we have any move saved from last time we visited that node and the move is valid try to use it
                 // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always be
