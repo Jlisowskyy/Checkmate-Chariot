@@ -23,9 +23,11 @@ static constexpr int16_t DRAW_SCORE         = 0;
 static constexpr int16_t SPECIAL_DRAW_SCORE = 0;
 
 // ------------------------- EXTENSIONS ------------------------------
-static constexpr int FULL_DEPTH_FACTOR = 1;
-
-
+static constexpr int FULL_DEPTH_FACTOR = 4;
+static constexpr int ONY_REPLY_EXTENSION = 2;
+static constexpr int CHECK_EXTENSION = 4;
+static constexpr int PV_EXTENSION = 1;
+static constexpr int EVEN_EXCHANGE_EXTENSION = 4;
 
 static constexpr int RESERVED_SCORE_VALUES           = 64;
 static constexpr int TIME_STOP_RESERVED_VALUE        = std::numeric_limits<int16_t>::max() - 1;
@@ -164,6 +166,22 @@ static constexpr bool TestAsp = false;
 #endif // TEST_ASP_WIN
 
 //---------------------------
+
+// --------------------------
+// Trace extension changes
+
+#ifdef TRACE_EXTENSIONS
+
+static constexpr bool TraceExtensions = true;
+
+#else
+
+static constexpr bool TraceExtensions = false;
+
+#endif // TRACE_EXTENSIONS
+// --------------------------
+
+
 
 // ssize_t is defined by POSIX. Such define allows to use it on posix+windows
 using signed_size_t = std::make_signed<size_t>::type;

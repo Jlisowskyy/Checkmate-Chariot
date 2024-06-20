@@ -242,6 +242,12 @@ int BestMoveSearch::_search(
     if constexpr (!IsPvNode)
         TraceIfFalse(beta == alpha + 1, "Invalid alpha/beta in zw search");
 
+    if (ply > _maxPlyReached)
+    {
+        _maxPlyReached = ply;
+        TraceWithInfo(std::format("Reached new max ply: {}", ply));
+    }
+
     // if we need to stop the search signal it
     if (GameTimeManager::GetShouldStop())
         return TIME_STOP_RESERVED_VALUE;
@@ -292,6 +298,15 @@ int BestMoveSearch::_search(
     if (moves.size == 0)
         return mechanics.IsCheck() ? GetMateValue(ply) : DRAW_SCORE;
 
+    // Extends paths where we have only one move possible
+    // TODO: consider do it other way to detect it also on leafs
+    if (moves.size == 1) {
+        depthLeft += ONY_REPLY_EXTENSION;
+
+        if constexpr (TraceExtensions)
+            TraceWithInfo("Applied one reply extension");
+    }
+
     // saving volatile board state
     VolatileBoardData oldData{_board};
     PackedMove bestMove{};
@@ -303,10 +318,19 @@ int BestMoveSearch::_search(
     {
         if (i == 0)
         {
-            if (IsPvNode && followPv && _pv.Contains(ply))
+            if (IsPvNode && followPv && _pv.Contains(ply)) {
                 // first follow pv from previous ID (Iterative deepening) iteration,
                 // we follow only single PV we previously saved
                 _pullMoveToFront(moves, _pv[ply]);
+
+                // Extend pvs to detect changes earlier
+                if (ply % 2 == 1) {
+                    depthLeft += PV_EXTENSION;
+
+                    if (TraceExtensions)
+                        TraceWithInfo("Applied pv extension");
+                }
+            }
             else {
                 PackedMove prevBestMove{};
                 if (!wasTTHit) {
@@ -334,6 +358,7 @@ int BestMoveSearch::_search(
         // alpha + 1 value enforces the second if trigger in first iteration in case of pv nodes
         int moveEval = alpha + 1;
         zHash        = ProcessMove(_board, moves[i], ply, zHash, _kTable, oldData);
+        const int extensions = _deduceExtensions(prevMove, moves[i]);
 
         // In pv nodes we always search first move on full window due to assumption that TT will give
         // us best move that is possible.
@@ -341,7 +366,7 @@ int BestMoveSearch::_search(
         if (!IsPvNode || i != 0)
         {
             moveEval = -_search<SearchType::NoPVSearch, false>(
-                -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], _dummyPv, nullptr
+                -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR + extensions, ply + 1, zHash, moves[i], _dummyPv, nullptr
             );
         }
 
@@ -643,4 +668,27 @@ int BestMoveSearch::QuiesceEval()
     uint64_t hash = ZHasher.GenerateHash(_board);
 
     return _qSearch<SearchType::PVSearch>(NEGATIVE_INFINITY, POSITIVE_INFINITY, 0, hash, 0);
+}
+
+int BestMoveSearch::_deduceExtensions(Move prevMove, Move actMove) {
+    int rv{};
+
+    ChessMechanics mech{_board};
+    // check extensions
+    rv += mech.IsCheck() * CHECK_EXTENSION;
+    if (TraceExtensions && rv != 0)
+        TraceWithInfo("Applied check extension");
+
+    // we are sure that actMove is attacking move because is moved to the same square as prevMove
+    if (!prevMove.IsEmpty() && prevMove.GetTargetField() == actMove.GetTargetField() && prevMove.IsAttackingMove()
+        && BoardEvaluator::BasicFigureValues[prevMove.GetKilledBoardIndex()] + BoardEvaluator::BasicFigureValues[actMove.GetKilledBoardIndex()] == 0){
+        TraceIfFalse(actMove.IsAttackingMove(), "if check should not allow any non attacking moves to enter!!");
+
+        rv += EVEN_EXCHANGE_EXTENSION;
+
+        if constexpr (TraceExtensions)
+            TraceWithInfo("Applied even exchange extension");
+    }
+
+    return rv;
 }

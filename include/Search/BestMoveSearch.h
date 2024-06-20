@@ -44,6 +44,7 @@
  * When referring to ply search tree, it grows from top to bottom.
  * */
 
+class MoveGenerator;
 class BestMoveSearch
 {
     // ------------------------------
@@ -183,12 +184,14 @@ class BestMoveSearch
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
     static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);
 
-    void INLINE _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth, const int ply)
+    INLINE void _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth, const int ply)
     {
         _kTable.SaveKillerMove(mv, ply);
         _cmTable.SaveCounterMove(mv.GetPackedMove(), prevMove);
         _histTable.SetBonusMove(mv, depth);
     }
+
+    int _deduceExtensions(Move prevMove, Move actMove);
 
     // ------------------------------
     // Class fields
@@ -203,6 +206,7 @@ class BestMoveSearch
     KillerTable _kTable{};
     CounterMoveTable _cmTable{};
     HistoricTable _histTable{};
+    int _maxPlyReached{};
 };
 
 #endif // BESTMOVESEARCH_H
