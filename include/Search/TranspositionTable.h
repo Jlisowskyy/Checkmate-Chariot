@@ -52,10 +52,10 @@ struct TranspositionTable
 
         HashRecord(
             const uint64_t hash, const PackedMove mv, const int eval, const int statVal, const int depth,
-            const NodeType nType, const uint16_t age, const int rootDepth
+            const NodeType nType, const uint16_t age, const int ply
         )
             : _zobristHashAndAgePacked(_packHashAndAge(hash, age)), _madeMove(mv),
-              _eval(AdjustMateScoreForTTIfNeeded(eval, depth, rootDepth)), _value(static_cast<int16_t>(statVal)),
+              _eval(AdjustMateScoreForTTIfNeeded(eval, ply)), _value(static_cast<int16_t>(statVal)),
               _depth(static_cast<uint8_t>(depth)), _type(nType)
         {
             TraceIfFalse(depth >= 0, "HashRecord received negative depth");
@@ -77,14 +77,13 @@ struct TranspositionTable
         [[nodiscard]] PackedMove GetMove() const { return _madeMove; }
         [[nodiscard]] int GetEval() const { return _eval; }
 
-        [[nodiscard]] INLINE int GetAdjustedEval(const int depthLeft, const int rootDepth) const
+        [[nodiscard]] INLINE int GetAdjustedEval(const int ply) const
         {
             int eval = _eval;
 
             if (IsMateScore(eval))
             {
-                const int currDist = rootDepth - depthLeft;
-                eval += (eval > 0 ? -currDist : currDist);
+                eval += (eval > 0 ? -ply : ply);
             }
 
             return eval;
@@ -213,21 +212,20 @@ struct TranspositionTable
     [[nodiscard]] size_t GetContainedElements() const;
 
     /* Function adjusts the mate score to prevent returning mate scores from TT with misleading values */
-    [[nodiscard]] static INLINE int AdjustMateScoreForTT(const int eval, const int depthLeft, const int rootDepth)
+    [[nodiscard]] static INLINE int AdjustMateScoreForTT(const int eval, const int ply)
     {
-        const int distToRoot = rootDepth - depthLeft;
         const int prevDist   = eval > 0 ? POSITIVE_INFINITY - eval : eval - NEGATIVE_INFINITY;
 
-        const int correctedDist = prevDist - distToRoot;
+        const int correctedDist = prevDist - ply;
         const int adjustedEval  = eval > 0 ? POSITIVE_INFINITY - correctedDist : NEGATIVE_INFINITY + correctedDist;
 
         return adjustedEval;
     }
 
     [[nodiscard]] static INLINE int16_t
-    AdjustMateScoreForTTIfNeeded(const int eval, const int depthLeft, const int rootDepth)
+    AdjustMateScoreForTTIfNeeded(const int eval, const int ply)
     {
-        return IsMateScore(eval) ? static_cast<int16_t>(AdjustMateScoreForTT(eval, depthLeft, rootDepth))
+        return IsMateScore(eval) ? static_cast<int16_t>(AdjustMateScoreForTT(eval, ply))
                                  : static_cast<int16_t>(eval);
     }
 

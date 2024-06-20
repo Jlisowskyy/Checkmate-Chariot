@@ -36,10 +36,10 @@ struct MoveGenerator : ChessMechanics
 
     explicit MoveGenerator(
         const Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
-        const PackedMove counterMove = {}, const int depthLeft = 0, const int mostRecentMovedSquare = 0
+        const PackedMove counterMove = {}, const int ply = 0, const int mostRecentMovedSquare = 0
     )
         : ChessMechanics(bd), _threadStack(s), _counterMove(counterMove), _kTable(kt), _hTable(ht),
-          _depthLeft(depthLeft), _mostRecentSq(mostRecentMovedSquare)
+          _ply(ply), _mostRecentSq(mostRecentMovedSquare)
     {
     }
 
@@ -136,7 +136,7 @@ struct MoveGenerator : ChessMechanics
     const PackedMove _counterMove;
     const KillerTable &_kTable;
     const HistoricTable &_hTable;
-    int _depthLeft;
+    int _ply;
     int _mostRecentSq;
 };
 
@@ -550,7 +550,7 @@ void MoveGenerator::_processNonAttackingMoves(
             if constexpr (ApplyHeuristicEval)
             {
                 int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
-                eval         = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+                eval         = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _ply);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
                 mv.SetEval(static_cast<int16_t>(eval));
@@ -720,7 +720,7 @@ void MoveGenerator::_processPlainKingMoves(
 
             if constexpr (ApplyHeuristicEval)
             {
-                int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _ply);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
                 mv.SetEval(static_cast<int16_t>(eval));
@@ -804,7 +804,7 @@ void MoveGenerator::_processKingCastlings(payload &results, const uint64_t block
 
             if constexpr (ApplyHeuristicEval)
             {
-                int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _ply);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
                 mv.SetEval(static_cast<int16_t>(eval));

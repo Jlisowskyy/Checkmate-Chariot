@@ -120,7 +120,6 @@ set(CHECKMATE_CHARIOT_SOURCES
         src/FancyMagicRookMap.cpp
         src/FancyMagicBishopMap.cpp
         src/Move.cpp
-        src/KillerTable.cpp
         src/MapCorrectnessTest.cpp
         src/MapPerformanceTest.cpp
         include/Evaluation/KingSafetyEval.h

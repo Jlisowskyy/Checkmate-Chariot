@@ -54,10 +54,10 @@ struct MoveSortEval
 
     // Function applies killer move bonus to the eval
     static INLINE int32_t
-    ApplyKillerMoveEffect(const int32_t eval, const KillerTable &kTable, const Move mv, const int depthLeft)
+    ApplyKillerMoveEffect(const int32_t eval, const KillerTable &kTable, const Move mv, const int ply)
 
     {
-        return eval + KillerMovePrize * kTable.IsKillerMove(mv, depthLeft);
+        return eval + KillerMovePrize * kTable.IsKillerMove(mv, ply);
     }
 
     // Function applies Counter Move bonus to the eval

@@ -40,15 +40,15 @@ class KillerTable
     // ------------------------------
 
     // simply clears previously saved moves
-    void ClearPlyFloor(int depthLeft);
+    INLINE void ClearPlyFloor(int ply) { _kTable[ply] = {}; }
 
     // saves move to the table if possible
-    INLINE void SaveKillerMove(const Move kMove, const int depthLeft) { _kTable[depthLeft].Push(kMove); }
+    INLINE void SaveKillerMove(const Move kMove, const int ply) { _kTable[ply].Push(kMove); }
 
     // checks whether actual move is a "killer" move
-    [[nodiscard]] INLINE bool IsKillerMove(const Move move, const int depthLeft) const
+    [[nodiscard]] INLINE bool IsKillerMove(const Move move, const int ply) const
     {
-        return _kTable[depthLeft].Contains(move);
+        return _kTable[ply].Contains(move);
     }
 
     private:

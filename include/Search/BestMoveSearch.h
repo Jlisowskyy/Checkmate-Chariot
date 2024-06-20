@@ -73,7 +73,7 @@ class BestMoveSearch
         INLINE void InsertNext(const PackedMove mv, const PV &pv)
         {
             _path[0] = mv;
-            memcpy(_path + 1, pv._path, (pv._depth) * sizeof(PackedMove));
+            memcpy(_path + 1, pv._path, pv._depth * sizeof(PackedMove));
             _depth = 1 + pv._depth;
         }
 
@@ -81,7 +81,7 @@ class BestMoveSearch
         INLINE void Clone(const PV &pv)
         {
             _depth = pv._depth;
-            memcpy(_path, pv._path, (pv._depth) * sizeof(PackedMove));
+            memcpy(_path, pv._path, pv._depth * sizeof(PackedMove));
         }
 
         /* Prints the path to the Logger */
@@ -90,7 +90,7 @@ class BestMoveSearch
             std::string buff{};
 
             if (!isDraw)
-                // when no draw was detected we expect null moves to be printed to simplify debuging
+                // when no draw was detected we expect null moves to be printed to simplify debugging
                 for (int i = 0; i < _depth; ++i) buff += _path[i].GetLongAlgebraicNotation() + ' ';
             else
                 // We do not allow null moves when there was some draw detected
@@ -100,13 +100,13 @@ class BestMoveSearch
             GlobalLogger.LogStream << buff;
         }
 
-        INLINE bool Contains(int ply) const
+        [[nodiscard]] INLINE bool Contains(int ply) const
         {
             return ply < _depth;
         }
 
         /* Debug function to check internal state of the PV */
-        INLINE [[nodiscard]] bool IsFilled() const
+        [[nodiscard]] INLINE bool IsFilled() const
         {
             for (int i = 0; i < _depth; ++i)
                 if (_path[i].IsEmpty())
@@ -183,9 +183,9 @@ class BestMoveSearch
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
     static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);
 
-    void INLINE _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth)
+    void INLINE _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth, const int ply)
     {
-        _kTable.SaveKillerMove(mv, depth);
+        _kTable.SaveKillerMove(mv, ply);
         _cmTable.SaveCounterMove(mv.GetPackedMove(), prevMove);
         _histTable.SetBonusMove(mv, depth);
     }
@@ -200,7 +200,6 @@ class BestMoveSearch
     PV _dummyPv{};
     uint64_t _visitedNodes = 0;
     uint64_t _cutoffNodes  = 0;
-    int _currRootDepth     = 0;
     KillerTable _kTable{};
     CounterMoveTable _cmTable{};
     HistoricTable _histTable{};
