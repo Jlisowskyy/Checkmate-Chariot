@@ -176,7 +176,7 @@ class BestMoveSearch
     // BETA - maximum score of minimizing player
 
     template <SearchType searchType, bool followPv>
-    int _search(int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv);
+    int _search(int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv, PackedMove* bestMoveOut);
 
     template <SearchType searchType> int _qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth);
 

@@ -50,7 +50,7 @@ static constexpr int SEE_GOOD_MOVE_BOUNDARY = 115 / 2;
 static constexpr int END_GAME_PHASE = 64;
 
 /* Depth from which Internal Iterative Deepening (IID) is used */
-static constexpr int IID_MIN_DEPTH_PLY_DEPTH = 6;
+static constexpr int IID_MIN_DEPTH_PLY_DEPTH = 5;
 
 /* Ply reduction for IID case*/
 static constexpr int IID_REDUCTION = 2 * FULL_DEPTH_FACTOR;

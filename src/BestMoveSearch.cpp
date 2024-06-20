@@ -107,7 +107,8 @@ int BestMoveSearch::IterativeDeepening(
             _histTable.ScaleTableDown();
 
             // performs the search without aspiration window to gather some initial statistics about the move
-            eval = _search<SearchType::PVSearch, true>(NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, _pv);
+            eval = _search<SearchType::PVSearch, true>(NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, _pv,
+                                                       nullptr);
             TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // if there was call to abort then abort
@@ -137,7 +138,8 @@ int BestMoveSearch::IterativeDeepening(
                 // cleaning tables used in previous iterations
                 _kTable.ClearPlyFloor(0);
                 _histTable.ScaleTableDown();
-                eval = _search<SearchType::PVSearch, true>(alpha, beta, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff);
+                eval = _search<SearchType::PVSearch, true>(alpha, beta, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff,
+                                                           nullptr);
 
                 // if there was call to abort then abort
                 if (std::abs(eval) == TIME_STOP_RESERVED_VALUE)
@@ -232,7 +234,7 @@ int BestMoveSearch::IterativeDeepening(
 
 template <BestMoveSearch::SearchType searchType, bool followPv>
 int BestMoveSearch::_search(
-    int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv
+    int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv, PackedMove* bestMoveOut
 )
 {
     static constexpr bool IsPvNode = searchType == SearchType::PVSearch;
@@ -262,16 +264,6 @@ int BestMoveSearch::_search(
 
     // check whether hashes are same
     bool wasTTHit = prevSearchRes.IsSameHash(zHash);
-
-    // When we missed the TT read we should try IID to save our situation
-    if constexpr (!followPv)
-        if (!wasTTHit && plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
-        {
-            _search<searchType, false>(alpha, beta, depthLeft - IID_REDUCTION, ply, zHash, prevMove, pv);
-
-            // Retry TT read
-            wasTTHit = prevSearchRes.IsSameHash(zHash);
-        }
 
     if constexpr (TestTT)
         TTable.UpdateStatistics(wasTTHit);
@@ -315,14 +307,25 @@ int BestMoveSearch::_search(
                 // first follow pv from previous ID (Iterative deepening) iteration,
                 // we follow only single PV we previously saved
                 _pullMoveToFront(moves, _pv[ply]);
-            else if (wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
-                // if we have any move saved from last time we visited that node and the move is valid try to use it
-                // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always be
-                // empty
-                //       In other words we don't use best move from fail low nodes
-                _pullMoveToFront(moves, prevSearchRes.GetMove());
-            else
-                _fetchBestMove(moves, i);
+            else {
+                PackedMove prevBestMove{};
+                if (!wasTTHit) {
+                    // try to save our situation by researching children using IID
+                    if (plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
+                        _search<searchType, false>(alpha, beta, depthLeft - IID_REDUCTION, ply, zHash, prevMove, pv,
+                                                   &prevBestMove);
+                } else if (prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
+                    // if we have any move saved from last time we visited that node and the move is valid try to use it
+                    // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always be
+                    // empty
+                    //       In other words we don't use best move from fail low nodes
+                    prevBestMove = prevSearchRes.GetMove();
+
+                if (!prevBestMove.IsEmpty())
+                    _pullMoveToFront(moves, prevBestMove);
+                else
+                    _fetchBestMove(moves, i);
+            }
         }
         else
             _fetchBestMove(moves, i);
@@ -338,7 +341,7 @@ int BestMoveSearch::_search(
         if (!IsPvNode || i != 0)
         {
             moveEval = -_search<SearchType::NoPVSearch, false>(
-                -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], _dummyPv
+                -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], _dummyPv, nullptr
             );
         }
 
@@ -351,11 +354,11 @@ int BestMoveSearch::_search(
             // Research with full window
             if (followPv && i == 0)
                 moveEval = -_search<SearchType::PVSearch, true>(
-                     -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], inPV
+                     -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], inPV, nullptr
                 );
             else
                 moveEval = -_search<SearchType::PVSearch, false>(
-                         -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], inPV
+                         -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], inPV, nullptr
                 );
         }
 
@@ -403,6 +406,9 @@ int BestMoveSearch::_search(
 
         TTable.Add(record, zHash);
     }
+
+    if (bestMoveOut != nullptr)
+        *bestMoveOut = bestMove;
 
     // clean up
     _stack.PopAggregate(moves);

@@ -217,6 +217,7 @@ struct TranspositionTable
         const int prevDist   = eval > 0 ? POSITIVE_INFINITY - eval : eval - NEGATIVE_INFINITY;
 
         const int correctedDist = prevDist - ply;
+        TraceIfFalse(correctedDist >= 0, "Detected malfunction in saved mate scores plys");
         const int adjustedEval  = eval > 0 ? POSITIVE_INFINITY - correctedDist : NEGATIVE_INFINITY + correctedDist;
 
         return adjustedEval;
