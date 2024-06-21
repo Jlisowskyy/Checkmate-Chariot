@@ -190,7 +190,7 @@ void Engine::PonderHit()
 int Engine::GetQuiesceEval()
 {
     BestMoveSearch searcher{_board, TManager.GetDefaultStack()};
-    return searcher.QuiesceEval() * BoardEvaluator::ScoreGrain;
+    return searcher.QuiesceEval() * SCORE_GRAIN;
 }
 
 int Engine::GetEvalPrinted()

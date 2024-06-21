@@ -213,7 +213,7 @@ int BestMoveSearch::IterativeDeepening(
 
             GlobalLogger.LogStream << std::format(
                 "info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
-                depth, spentMs, _visitedNodes, nps, IsMateScore(eval) ? eval : eval * BoardEvaluator::ScoreGrain,
+                depth, spentMs, _visitedNodes, nps, IsMateScore(eval) ? eval : eval * SCORE_GRAIN,
                 _pv[0].GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
@@ -559,7 +559,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
             /*                  DELTA PRUNNING                              */
 
             // Increase delta in case of promotion
-            int delta = DELTA_PRUNNING_SAFETY_MARGIN + SEEValue +
+            int delta = statEval + DELTA_PRUNNING_SAFETY_MARGIN + SEEValue +
                         (moves[i].GetPackedMove().IsPromo() ? DELTA_PRUNNING_PROMO : 0);
 
             if (statEval + delta < alpha && !_board.IsEndGame())

@@ -114,7 +114,7 @@ class BoardEvaluator
     [[nodiscard]] static INLINE int32_t DefaultFullEvalFunction(Board &bd, const int color)
     {
         const int whiteEval = Evaluation2<EvalMode::BaseMode>(bd);
-        return (color == WHITE ? whiteEval : -whiteEval) / ScoreGrain;
+        return (color == WHITE ? whiteEval : -whiteEval) / SCORE_GRAIN;
     }
 
     template <EvalMode mode = EvalMode::BaseMode> [[nodiscard]] static INLINE int32_t Evaluation2(Board &bd)
@@ -347,8 +347,6 @@ class BoardEvaluator
     // ------------------------------
 
     public:
-    // The value below ensures that resulted evaluation score will be rounded  value divisible by ScoreGrain
-    static constexpr int32_t ScoreGrain = 8;
 
     // All belows values are used to calculate material table index, they symbolize coefficients for each figure type
     static constexpr size_t BlackPawnCoef   = MaterialTableSize / 9;

@@ -191,10 +191,8 @@ int ChessMechanics::SEE(const Move mv) const
     uint64_t attackFromBitBoard             = MaxMsbPossible >> mv.GetStartField();
     // perform preparation for SEE, refer to _prepareForSEE for details
     auto [attackersBitBoard, fullMap, xray] = _prepareForSEE(mv.GetTargetField());
-    bool isPromotingLine =  mv.GetTargetField() < 8 || mv.GetTargetField() >= 56;
-    bool promotingColor = mv.GetTargetField() < 8 ? WHITE : BLACK;
 
-    int attackerFigType = mv.GetTargetBoardIndex();
+    int attackerFigType = mv.GetStartBoardIndex();
     int color           = _board.MovingColor;
     scores[depth]       = BoardEvaluator::ColorlessBasicFigureValues[mv.GetKilledBoardIndex()];
     do
@@ -218,18 +216,13 @@ int ChessMechanics::SEE(const Move mv) const
 
         color              = SwapColor(color);
         attackFromBitBoard = getLeastValuablePieceFromLegalToSquare(fullMap, attackersBitBoard, color, attackerFigType);
-
-        // correct figure type in case of promotions
-        if (isPromotingLine && (color = promotingColor) && attackerFigType - color * Board::BitBoardsPerCol == pawnsIndex)
-            attackerFigType = queensIndex;
-
     } while (attackFromBitBoard);
 
     // add some bonus when finally king is left under the check
     // TODO:
 
     while (--depth) scores[depth - 1] = -std::max(-scores[depth - 1], scores[depth]);
-    return scores[0];
+    return scores[0] / SCORE_GRAIN;
 }
 
 ChessMechanics::_seePackage ChessMechanics::_prepareForSEE(const int msbPos) const

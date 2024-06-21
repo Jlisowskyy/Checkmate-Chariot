@@ -17,6 +17,9 @@ static constexpr size_t DEFAULT_STACK_SIZE = 32 * MB / sizeof(uint64_t);
 /* Defines maximal depth of search allowed across the project */
 static constexpr int MAX_SEARCH_DEPTH = 128;
 
+/* Defines granularity of score returned by the static evaluation function */
+static constexpr int SCORE_GRAIN = 4;
+
 static constexpr uint64_t MSEC_TO_NSEC = 1000 * 1000;
 
 static constexpr int16_t DRAW_SCORE         = 0;
@@ -32,6 +35,7 @@ static constexpr int PV_EXTENSION = 2;
 static constexpr int EVEN_EXCHANGE_EXTENSION_PV_NODE = 4;
 static constexpr int EVEN_EXCHANGE_EXTENSION = 2;
 
+// -------------------- RESERVED VALUES -------------------------------
 static constexpr int RESERVED_SCORE_VALUES           = 64;
 static constexpr int TIME_STOP_RESERVED_VALUE        = std::numeric_limits<int16_t>::max() - 1;
 static constexpr int NO_EVAL_RESERVED_VALUE          = std::numeric_limits<int16_t>::max() - 2;
@@ -44,12 +48,12 @@ static constexpr uint16_t QUIESENCE_AGE_DIFF_REPLACE = 16;
 static constexpr uint16_t DEFAULT_AGE_DIFF_REPLACE   = 10;
 
 // average pawn value + some part of average pawn
-static constexpr int DELTA_PRUNNING_SAFETY_MARGIN = 115 + 115 / 6;
+static constexpr int DELTA_PRUNNING_SAFETY_MARGIN = (115 + 115) / SCORE_GRAIN;
 // average queen value - average pawn value
-static constexpr int DELTA_PRUNNING_PROMO = 1000 - 115;
+static constexpr int DELTA_PRUNNING_PROMO = (1000 - 115) / SCORE_GRAIN;
 
 // value below which SEE capture is considered bad
-static constexpr int SEE_GOOD_MOVE_BOUNDARY = 115 / 2;
+static constexpr int SEE_GOOD_MOVE_BOUNDARY = -(115 / 2) / SCORE_GRAIN;
 
 // value of phase below game is considering to be an end-game
 static constexpr int END_GAME_PHASE = 64;
