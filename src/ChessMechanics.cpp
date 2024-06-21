@@ -251,9 +251,9 @@ ChessMechanics::getLeastValuablePieceFromLegalToSquare(uint64_t allPieces, uint6
                                                        int &pieceIndOut) const
 {
     const size_t start = color * Board::BitBoardsPerCol;
-    const size_t range = start + kingIndex + 1;
+    const size_t range = start + kingIndex;
 
-    const int kingMsbPos = ExtractMsbPos(_board.BitBoards[start + kingIndex]);
+    const int kingMsbPos = ExtractMsbPos(_board.BitBoards[range]);
     const uint64_t kingsPerspective = BishopMap::GetMoves(kingMsbPos, allPieces)
             | RookMap::GetMoves(kingMsbPos, allPieces);
 
@@ -303,6 +303,23 @@ ChessMechanics::getLeastValuablePieceFromLegalToSquare(uint64_t allPieces, uint6
             }
 
             intersection ^= figBitBoard;
+        }
+    }
+
+    // No legal moves were found try to use king
+    if ((pieces & _board.BitBoards[range]) != 0)
+    {
+        // if there is no enemy figure attacking our field we can finalize exchange using king
+        const size_t enemyStart = SwapColor(color) * Board::BitBoardsPerCol;
+        const size_t enemyStop = enemyStart + kingIndex + 1;
+        bool found = false;
+        for (size_t i = enemyStart; i < enemyStop; ++i)
+            found |= _board.BitBoards[i] & pieces;
+
+        if (!found)
+        {
+            pieceIndOut = kingIndex;
+            return _board.BitBoards[range];
         }
     }
 
