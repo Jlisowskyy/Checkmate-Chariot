@@ -552,15 +552,15 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         if (i != 0)
             _fetchBestMove(moves, i);
 
-        // prunnings on the move
+        // pruning on the move
         if (!isCheck)
         {
             const int SEEValue = mech.SEE(moves[i]);
-            /*                  DELTA PRUNNING                              */
+            /*                  DELTA PRUNING                              */
 
             // Increase delta in case of promotion
-            int delta = statEval + DELTA_PRUNNING_SAFETY_MARGIN + SEEValue +
-                        (moves[i].GetPackedMove().IsPromo() ? DELTA_PRUNNING_PROMO : 0);
+            int delta = statEval + DELTA_PRUNING_SAFETY_MARGIN + SEEValue +
+                        (moves[i].GetPackedMove().IsPromo() ? DELTA_PRUNING_PROMO : 0);
 
             if (statEval + delta < alpha && !_board.IsEndGame())
                 continue;

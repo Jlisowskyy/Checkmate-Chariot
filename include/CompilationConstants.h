@@ -48,9 +48,9 @@ static constexpr uint16_t QUIESENCE_AGE_DIFF_REPLACE = 16;
 static constexpr uint16_t DEFAULT_AGE_DIFF_REPLACE   = 10;
 
 // average pawn value + some part of average pawn
-static constexpr int DELTA_PRUNNING_SAFETY_MARGIN = (115 + 115) / SCORE_GRAIN;
+static constexpr int DELTA_PRUNING_SAFETY_MARGIN = (115 + 115) / SCORE_GRAIN;
 // average queen value - average pawn value
-static constexpr int DELTA_PRUNNING_PROMO = (1000 - 115) / SCORE_GRAIN;
+static constexpr int DELTA_PRUNING_PROMO = (1000 - 115) / SCORE_GRAIN;
 
 // value below which SEE capture is considered bad
 static constexpr int SEE_GOOD_MOVE_BOUNDARY = -(115 / 2) / SCORE_GRAIN;
