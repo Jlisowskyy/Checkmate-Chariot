@@ -181,14 +181,18 @@ uint64_t ChessMechanics::GenerateAllowedTilesForPrecisedPinnedFig(const uint64_t
 
 int ChessMechanics::SEE(const Move mv) const
 {
+    // limited by figures possible figures on the board
     static constexpr size_t MaximalFigureCount = 32;
 
     int scores[MaximalFigureCount];
     int depth                               = 0;
+
+    // bitboard used to store field from which last attack came
     uint64_t attackFromBitBoard             = MaxMsbPossible >> mv.GetStartField();
+    // perform preparation for SEE, refer to _prepareForSEE for details
     auto [attackersBitBoard, fullMap, xray] = _prepareForSEE(mv.GetTargetField());
 
-    int attackerFigType = FindFigType(attackFromBitBoard, _board);
+    int attackerFigType = mv.GetTargetBoardIndex();
     int color           = _board.MovingColor;
     scores[depth]       = BoardEvaluator::ColorlessBasicFigureValues[mv.GetKilledBoardIndex()];
     do
@@ -202,7 +206,7 @@ int ChessMechanics::SEE(const Move mv) const
         if (std::max(-scores[depth - 1], scores[depth]) < 0)
             break;
 
-        // pseudo make move
+        // pseudo make move - remove figure from attackers and from the full map
         attackersBitBoard ^= attackFromBitBoard;
         fullMap ^= attackFromBitBoard;
 
@@ -211,7 +215,7 @@ int ChessMechanics::SEE(const Move mv) const
             attackersBitBoard |= _updateAttackers(fullMap, mv.GetTargetField());
 
         color              = SwapColor(color);
-        attackFromBitBoard = GetLeastValuablePiece(attackersBitBoard, color, attackerFigType);
+        attackFromBitBoard = getLeastValuablePieceFromLegalToSquare(fullMap, attackersBitBoard, color, attackerFigType);
     } while (attackFromBitBoard);
 
     while (--depth) scores[depth - 1] = -std::max(-scores[depth - 1], scores[depth]);
@@ -237,6 +241,70 @@ ChessMechanics::_seePackage ChessMechanics::_prepareForSEE(const int msbPos) con
     attackers |= (WhitePawnMap::GetAttackFields(figBitBoard) & _board.BitBoards[bPawnsIndex]) |
                  (BlackPawnMap::GetAttackFields(figBitBoard) & _board.BitBoards[wPawnsIndex]);
 
+    // contains also queen figures
     const uint64_t mayXray = bishops | rooks | _board.BitBoards[wPawnsIndex] | _board.BitBoards[bPawnsIndex];
     return {attackers, fullMap, mayXray};
+}
+
+uint64_t
+ChessMechanics::getLeastValuablePieceFromLegalToSquare(uint64_t allPieces, uint64_t pieces, int color,
+                                                       int &pieceIndOut) const
+{
+    const size_t start = color * Board::BitBoardsPerCol;
+    const size_t range = start + kingIndex + 1;
+
+    const int kingMsbPos = ExtractMsbPos(_board.BitBoards[start + kingIndex]);
+    const uint64_t kingsPerspective = BishopMap::GetMoves(kingMsbPos, allPieces)
+            | RookMap::GetMoves(kingMsbPos, allPieces);
+
+    uint64_t bishops;
+    uint64_t rooks;
+    bool inited = false;
+
+    // iterate through boards
+    for (size_t ind = start; ind < range; ++ind)
+    {
+        // find usable figures
+        uint64_t intersection = pieces & _board.BitBoards[ind];
+
+        // check whether simple to calculate unpinned figure is available
+        if (const uint64_t unpinnedFigures = ~kingsPerspective; unpinnedFigures & intersection)
+        {
+            pieceIndOut = static_cast<int>(ind);
+            return ExtractLsbBit(unpinnedFigures & intersection);
+        }
+
+        // otherwise check legality of other figures
+        while (intersection)
+        {
+            // prepare bitboards containing king threatening figures
+            if (!inited)
+            {
+                inited = true;
+                const size_t enemyStart = SwapColor(color) * Board::BitBoardsPerCol;
+
+                bishops = (_board.BitBoards[enemyStart + bishopsIndex] | _board.BitBoards[enemyStart + queensIndex])
+                        & allPieces;
+                rooks = (_board.BitBoards[enemyStart + rooksIndex] | _board.BitBoards[enemyStart + queensIndex])
+                        & allPieces;
+            }
+
+            // extract some piece from the board
+            const int figPos = ExtractMsbPos(intersection);
+            const uint64_t  figBitBoard = MaxMsbPossible >> figPos;
+
+            // check whether figures move uncovers king
+            if (const uint64_t movedAllPieces = allPieces ^ figBitBoard;
+                    (BishopMap::GetMoves(kingMsbPos, movedAllPieces) & bishops) == 0
+                    && (RookMap::GetMoves(kingMsbPos, movedAllPieces) & rooks) == 0)
+            {
+                pieceIndOut = static_cast<int>(ind);
+                return figBitBoard;
+            }
+
+            intersection ^= figBitBoard;
+        }
+    }
+
+    return 0;
 }

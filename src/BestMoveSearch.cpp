@@ -301,7 +301,7 @@ int BestMoveSearch::_search(
     // Extends paths where we have only one move possible
     // TODO: consider do it other way to detect it also on leafs
     if (moves.size == 1) {
-        depthLeft += ONY_REPLY_EXTENSION;
+        depthLeft += IsPvNode ? ONE_REPLY_EXTENSION_PV_NODE : ONE_REPLY_EXTENSION;
 
         if constexpr (TraceExtensions)
             TraceWithInfo("Applied one reply extension");
@@ -358,7 +358,7 @@ int BestMoveSearch::_search(
         // alpha + 1 value enforces the second if trigger in first iteration in case of pv nodes
         int moveEval = alpha + 1;
         zHash        = ProcessMove(_board, moves[i], ply, zHash, _kTable, oldData);
-        const int extensions = _deduceExtensions(prevMove, moves[i]);
+        const int extensions = _deduceExtensions(prevMove, moves[i], IsPvNode);
 
         // In pv nodes we always search first move on full window due to assumption that TT will give
         // us best move that is possible.
@@ -670,12 +670,12 @@ int BestMoveSearch::QuiesceEval()
     return _qSearch<SearchType::PVSearch>(NEGATIVE_INFINITY, POSITIVE_INFINITY, 0, hash, 0);
 }
 
-int BestMoveSearch::_deduceExtensions(Move prevMove, Move actMove) {
+int BestMoveSearch::_deduceExtensions(Move prevMove, Move actMove, const bool isPv) {
     int rv{};
 
     ChessMechanics mech{_board};
     // check extensions
-    rv += mech.IsCheck() * CHECK_EXTENSION;
+    rv += mech.IsCheck() * (isPv ? CHECK_EXTENSION_PV_NODE : CHECK_EXTENSION);
     if (TraceExtensions && rv != 0)
         TraceWithInfo("Applied check extension");
 
@@ -684,7 +684,7 @@ int BestMoveSearch::_deduceExtensions(Move prevMove, Move actMove) {
         && BoardEvaluator::BasicFigureValues[prevMove.GetKilledBoardIndex()] + BoardEvaluator::BasicFigureValues[actMove.GetKilledBoardIndex()] == 0){
         TraceIfFalse(actMove.IsAttackingMove(), "if check should not allow any non attacking moves to enter!!");
 
-        rv += EVEN_EXCHANGE_EXTENSION;
+        rv += isPv ? EVEN_EXCHANGE_EXTENSION_PV_NODE : EVEN_EXCHANGE_EXTENSION;
 
         if constexpr (TraceExtensions)
             TraceWithInfo("Applied even exchange extension");

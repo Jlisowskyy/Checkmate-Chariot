@@ -95,13 +95,16 @@ struct ChessMechanics
 
     [[nodiscard]] uint64_t GetAllowedTilesWhenCheckedByNonSliding() const;
 
+    /* Simply picks the least valuable figure from 'pieces' set with given 'color'.
+     * Returns bitboard containing position of that figure and index of that figure to 'pieceIndOut'
+     * */
     [[nodiscard]] INLINE uint64_t GetLeastValuablePiece(uint64_t pieces, int color, int &pieceIndOut) const
     {
-        const int range = static_cast<int>(kingIndex);
-        for (int ind = 0; ind < range; ++ind)
+        const int start = color * static_cast<int>(Board::BitBoardsPerCol);
+        const int range = start + static_cast<int>(kingIndex);
+        for (int ind = start; ind < range; ++ind)
         {
-            const int colIndex          = color * static_cast<int>(Board::BitBoardsPerCol) + ind;
-            const uint64_t intersection = pieces & _board.BitBoards[colIndex];
+            const uint64_t intersection = pieces & _board.BitBoards[ind];
 
             if (intersection)
             {
@@ -112,6 +115,14 @@ struct ChessMechanics
 
         return 0;
     }
+
+    /* Simply picks the least valuable figure from 'pieces' set with given 'color'.
+     * Checks whether figure can legally attack given field.
+     * Returns bitboard containing position of that figure and index of that figure to 'pieceIndOut'.
+     *
+     * This function assumes that on given field by 'msbPos' for sure there is no king placed.
+     * */
+    [[nodiscard]] uint64_t getLeastValuablePieceFromLegalToSquare(uint64_t allPieces, uint64_t pieces, int color, int &pieceIndOut) const;
 
     /*
      * SEE - Static Exchange Evaluation - function used to get approximated gain
@@ -159,6 +170,12 @@ struct ChessMechanics
         uint64_t xrayMap;
     };
 
+    /*  Function collects information used inside the SEE algorithm it contains:
+     *  - attackersBitBoard - contains every type of figure that in current state of the board could attack given field
+     *  - fullMap - contains every figure on the board
+     *  - xrayMap - contains every figure that attack could be potentially unlocked after other figures move,
+     *              that is: queens, bishops, rooks and pawns
+     * */
     [[nodiscard]] inline INLINE _seePackage _prepareForSEE(int msbPos) const;
 
     static std::pair<uint64_t, uint8_t>

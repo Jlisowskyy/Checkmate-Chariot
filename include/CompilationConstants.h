@@ -24,10 +24,13 @@ static constexpr int16_t SPECIAL_DRAW_SCORE = 0;
 
 // ------------------------- EXTENSIONS ------------------------------
 static constexpr int FULL_DEPTH_FACTOR = 4;
-static constexpr int ONY_REPLY_EXTENSION = 2;
-static constexpr int CHECK_EXTENSION = 4;
-static constexpr int PV_EXTENSION = 1;
-static constexpr int EVEN_EXCHANGE_EXTENSION = 4;
+static constexpr int ONE_REPLY_EXTENSION_PV_NODE = 4;
+static constexpr int ONE_REPLY_EXTENSION = 2;
+static constexpr int CHECK_EXTENSION_PV_NODE = 4;
+static constexpr int CHECK_EXTENSION = 2;
+static constexpr int PV_EXTENSION = 2;
+static constexpr int EVEN_EXCHANGE_EXTENSION_PV_NODE = 4;
+static constexpr int EVEN_EXCHANGE_EXTENSION = 2;
 
 static constexpr int RESERVED_SCORE_VALUES           = 64;
 static constexpr int TIME_STOP_RESERVED_VALUE        = std::numeric_limits<int16_t>::max() - 1;
