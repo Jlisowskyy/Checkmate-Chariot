@@ -354,22 +354,25 @@ int BestMoveSearch::_search(
         else
             _fetchBestMove(moves, i);
 
+        int extensions{};
+        int seeValue = NEGATIVE_INFINITY;
         // pruning
         if (!IsPvNode && i != 0)
         {
             if (moves[i].IsAttackingMove() || moves[i].IsChecking()) {
-                const int seeValue = mechanics.SEE(moves[i]);
+                seeValue = mechanics.SEE(moves[i]);
 
                 if (seeValue < (2 * SEE_GOOD_MOVE_BOUNDARY * plyDepth))
                     continue;
             }
         }
 
+        extensions += _deduceExtensions(prevMove, moves[i], seeValue,IsPvNode);
+
         // stores the most recent return value of child trees,
         // alpha + 1 value enforces the second if trigger in first iteration in case of pv nodes
         int moveEval = alpha + 1;
         zHash        = ProcessMove(_board, moves[i], ply, zHash, _kTable, oldData);
-        const int extensions = _deduceExtensions(prevMove, moves[i], IsPvNode);
 
         // In pv nodes we always search first move on full window due to assumption that TT will give
         // us best move that is possible.
@@ -681,12 +684,14 @@ int BestMoveSearch::QuiesceEval()
     return _qSearch<SearchType::PVSearch>(NEGATIVE_INFINITY, POSITIVE_INFINITY, 0, hash, 0);
 }
 
-int BestMoveSearch::_deduceExtensions(Move prevMove, Move actMove, const bool isPv) {
+int BestMoveSearch::_deduceExtensions(Move prevMove, Move actMove, const int seeValue, const bool isPv) {
     int rv{};
 
     ChessMechanics mech{_board};
     // check extensions
-    rv += mech.IsCheck() * (isPv ? CHECK_EXTENSION_PV_NODE : CHECK_EXTENSION);
+
+    rv += (actMove.IsChecking() && (seeValue == NEGATIVE_INFINITY ? mech.SEE(actMove) : seeValue) > 0)
+            * (isPv ? CHECK_EXTENSION_PV_NODE : CHECK_EXTENSION);
     if (TraceExtensions && rv != 0)
         TraceWithInfo("Applied check extension");
 
