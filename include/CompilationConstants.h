@@ -35,6 +35,12 @@ static constexpr int PV_EXTENSION = 2;
 static constexpr int EVEN_EXCHANGE_EXTENSION_PV_NODE = 4;
 static constexpr int EVEN_EXCHANGE_EXTENSION = 2;
 
+// limits maximal extensions inside the search tree to not overdo
+constexpr bool ShouldExtend(const int ply, const int rootDepth)
+{
+    return ply < rootDepth + 4;
+}
+
 // -------------------- RESERVED VALUES -------------------------------
 static constexpr int RESERVED_SCORE_VALUES           = 64;
 static constexpr int TIME_STOP_RESERVED_VALUE        = std::numeric_limits<int16_t>::max() - 1;

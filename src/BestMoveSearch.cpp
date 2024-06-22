@@ -99,12 +99,14 @@ int BestMoveSearch::IterativeDeepening(
         // preparing variables used to display statistics
         _visitedNodes  = 0;
         _cutoffNodes   = 0;
+        _rootDepth = depth;
 
-        if (UseAsp && depth < ASP_WND_MIN_DEPTH)
+        if (!UseAsp || depth < ASP_WND_MIN_DEPTH)
         {
             // cleaning tables used in previous iteration
             _kTable.ClearPlyFloor(0);
             _histTable.ScaleTableDown();
+            _maxPlyReached = 0;
 
             // performs the search without aspiration window to gather some initial statistics about the move
             eval = _search<SearchType::PVSearch, true>(NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, _pv,
@@ -138,6 +140,7 @@ int BestMoveSearch::IterativeDeepening(
                 // cleaning tables used in previous iterations
                 _kTable.ClearPlyFloor(0);
                 _histTable.ScaleTableDown();
+                _maxPlyReached = 0;
                 eval = _search<SearchType::PVSearch, true>(alpha, beta, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff,
                                                            nullptr);
 
@@ -212,8 +215,8 @@ int BestMoveSearch::IterativeDeepening(
             const double cutOffPerc = static_cast<double>(_cutoffNodes) / static_cast<double>(_visitedNodes);
 
             GlobalLogger.LogStream << std::format(
-                "info depth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
-                depth, spentMs, _visitedNodes, nps, IsMateScore(eval) ? eval : eval * SCORE_GRAIN,
+                "info depth {} seldepth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
+                depth, _maxPlyReached, spentMs, _visitedNodes, nps, IsMateScore(eval) ? eval : eval * SCORE_GRAIN,
                 _pv[0].GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
@@ -300,7 +303,7 @@ int BestMoveSearch::_search(
 
     // Extends paths where we have only one move possible
     // TODO: consider do it other way to detect it also on leafs
-    if (moves.size == 1) {
+    if (ShouldExtend(ply, _rootDepth) && moves.size == 1) {
         depthLeft += IsPvNode ? ONE_REPLY_EXTENSION_PV_NODE : ONE_REPLY_EXTENSION;
 
         if constexpr (TraceExtensions)
@@ -324,7 +327,7 @@ int BestMoveSearch::_search(
                 _pullMoveToFront(moves, _pv[ply]);
 
                 // Extend pvs to detect changes earlier
-                if (ply % 2 == 1) {
+                if (ShouldExtend(ply, _rootDepth) && ply % 2 == 1) {
                     depthLeft += PV_EXTENSION;
 
                     if (TraceExtensions)
@@ -367,7 +370,9 @@ int BestMoveSearch::_search(
             }
         }
 
-        extensions += _deduceExtensions(prevMove, moves[i], seeValue,IsPvNode);
+        if (ShouldExtend(ply, _rootDepth)){
+            extensions += _deduceExtensions(prevMove, moves[i], seeValue,IsPvNode);
+        }
 
         // stores the most recent return value of child trees,
         // alpha + 1 value enforces the second if trigger in first iteration in case of pv nodes

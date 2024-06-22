@@ -207,6 +207,7 @@ class BestMoveSearch
     CounterMoveTable _cmTable{};
     HistoricTable _histTable{};
     int _maxPlyReached{};
+    int _rootDepth{};
 };
 
 #endif // BESTMOVESEARCH_H
