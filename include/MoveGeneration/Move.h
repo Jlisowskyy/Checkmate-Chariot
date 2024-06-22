@@ -15,29 +15,24 @@
 /*      Class encodes chess move and heuristic evaluation
  *  together inside some uint64_t value. Encoding corresponds to value below:
  *  (bit indexed from lsb to msb manner)
- *  - bits 0-16 encodes heuristic evaluation of current move (16 bits)
- *                      Note: additionally to allow simple evaluation on run
- *  - bits 16-22 - encodes field from which figure moved (6 bits) - "StartField" - OBLIG IMPORTANT: should always be
- * filled
- *  - bits 22-26 - encodes board index from which figure moved (4 bits) - "StartBoardIndex" - OBLIG IMPORTANT: should
- * always be filled
- *  - bits 26-32 - encodes field to which figure moved (6 bits) - "TargetField" - OBLIG IMPORTANT: should always be
- * filled
- *  - bits 32-36 - encodes board index to which figure moved - different than option 2
- *          only in case move encodes promotion (4 bits) - "TargetBoardIndex" - OBLIG IMPORTANT: should always be
- * filled, in case no promotion is done simply put here position no 3
- *  - bits 36-40 - encodes board index on which figure was killed (4 bits) - used in case of
- *          attacking moves (4 bits) - "KilledFigureBoardIndex" - OBLIG IMPORTANT: if not used should be filled with
- * sentinel value
- *  - bits 40-46 - encodes field on which figure was killed - used only in case of el passant killing move (6 bits) -
- * "KilledFigureField" - OPT WARNING: possibly unfilled when no attacking move and sentinel value is set
- *  - bits 46-52 - encodes new elPassant field (6 bits) - "ElPassantField" - OBLIG IMPORTANT: should always contain new
- * el passant field, if not used simply put here literal from board
  *  - bits 52-56 - encodes castling rights (4 bits) - "CastlingRights" - OBLIG IMPORTANT: should always be filled, in
  * case no changes was done simply copy previous values
- *  - bits 56-59 - encodes type of performed castling (3 bits) - "CastlingType" - OPT WARNING: possibly unfilled when no
- * castling is done
  */
+
+/*      Class encodes chess move and heuristic evaluation
+ *  together inside some uint64_t value. Encoding corresponds to value below:
+ *  - bits  0-15 - encodes simplistic heuristic evaluation of the move used inside inflight move sorting,
+ *  - bits 16-31 - contains PackedMove instance
+ *  - bits 32-35 - encodes board index from which figure moved
+ *  - bits 36-39 - encodes board index to which figure moved - differs from StartBoardIndex only in case of promotion
+ *  - bits 40-43 - encodes board index on which figure was killed used in case of attacking move
+ *  - bits 44-46 - encodes type of performed castling e.g. white king-side castling
+ *  - bit  47    - indicates whether given moves checks enemy king
+ *  - bits 48-53 - encodes field on which figure was killed - differs from TargetField only in case of el passant
+ *  - bits 54-59 - encodes new elPassant field
+ *  - bits 60-63 - encodes new castling rights
+ */
+
 
 /*      IMPORTANT NOTE:
  *  ALL SET METHODS WORK CORRECTLY ONLY
@@ -290,6 +285,17 @@ class Move
     {
         static constexpr uint16_t CastlingTypeMask = Bit3 << 12;
         return (_packedIndexes & CastlingTypeMask) >> 12;
+    }
+
+    void SetCheckType() {
+        static constexpr uint16_t CheckTypeBit = 1LLU << 15;
+        _packedIndexes |= CheckTypeBit;
+    }
+
+    [[nodiscard]] bool IsChecking() const
+    {
+        static constexpr uint16_t CheckTypeBit = 1LLU << 15;
+        return _packedIndexes & CheckTypeBit;
     }
 
     void SetKilledFigureField(const uint16_t killedFigureField) { _packedMisc |= killedFigureField; }

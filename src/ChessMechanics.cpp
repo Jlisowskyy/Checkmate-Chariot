@@ -183,6 +183,7 @@ int ChessMechanics::SEE(const Move mv) const
 {
     // limited by figures possible figures on the board
     static constexpr size_t MaximalFigureCount = 32;
+    static constexpr int CheckPoints = 125;
 
     int scores[MaximalFigureCount];
     int depth                               = 0;

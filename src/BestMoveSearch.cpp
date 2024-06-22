@@ -354,6 +354,18 @@ int BestMoveSearch::_search(
         else
             _fetchBestMove(moves, i);
 
+        // pruning
+        if (!IsPvNode || i != 0)
+        {
+            // TODO: add direct checks
+            if (moves[i].IsAttackingMove()) {
+                const int seeValue = mechanics.SEE(moves[i]);
+
+                if (seeValue < (SEE_GOOD_MOVE_BOUNDARY * plyDepth)/2)
+                    continue;
+            }
+        }
+
         // stores the most recent return value of child trees,
         // alpha + 1 value enforces the second if trigger in first iteration in case of pv nodes
         int moveEval = alpha + 1;
