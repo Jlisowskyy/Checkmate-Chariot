@@ -181,9 +181,24 @@ uint64_t ChessMechanics::GenerateAllowedTilesForPrecisedPinnedFig(const uint64_t
 
 int ChessMechanics::SEE(const Move mv) const
 {
+    static constexpr uint64_t (*moveGenerators[])(int, uint64_t, uint64_t){
+            WhitePawnMap::GetMoves,
+            KnightMap::GetMoves,
+            BishopMap::GetMoves,
+            RookMap::GetMoves,
+            QueenMap::GetMoves,
+            nullptr,
+            BlackPawnMap::GetMoves,
+            KnightMap::GetMoves,
+            BishopMap::GetMoves,
+            RookMap::GetMoves,
+            QueenMap::GetMoves,
+            nullptr
+    };
+
     // limited by figures possible figures on the board
     static constexpr size_t MaximalFigureCount = 32;
-    static constexpr int CheckPoints = 125;
+    static constexpr int CheckPoints = 200;
 
     int scores[MaximalFigureCount];
     int depth                               = 0;
@@ -203,9 +218,9 @@ int ChessMechanics::SEE(const Move mv) const
         // sum up points
         scores[depth] = BoardEvaluator::ColorlessBasicFigureValues[attackerFigType] - scores[depth - 1];
 
-        // try to get a cut-off
-        if (std::max(-scores[depth - 1], scores[depth]) < 0)
-            break;
+//        // try to get a cut-off
+//        if (std::max(-scores[depth - 1], scores[depth]) < 0)
+//            break;
 
         // pseudo make move - remove figure from attackers and from the full map
         attackersBitBoard ^= attackFromBitBoard;
@@ -220,7 +235,14 @@ int ChessMechanics::SEE(const Move mv) const
     } while (attackFromBitBoard);
 
     // add some bonus when finally king is left under the check
-    // TODO:
+//    if (attackerFigType != wKingIndex && attackerFigType != bKingIndex)
+//    {
+//        auto func = moveGenerators[attackerFigType];
+//        const uint64_t enemyKing = _board.BitBoards[color * Board::BitBoardsPerCol + kingIndex];
+//        const uint64_t attacks = func(mv.GetTargetField(),  fullMap, enemyKing);
+//
+//        scores[depth - 1] += CheckPoints * ((attacks & enemyKing) != 0);
+//    }
 
     while (--depth) scores[depth - 1] = -std::max(-scores[depth - 1], scores[depth]);
     return scores[0] / SCORE_GRAIN;

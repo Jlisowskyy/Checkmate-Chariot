@@ -355,13 +355,12 @@ int BestMoveSearch::_search(
             _fetchBestMove(moves, i);
 
         // pruning
-        if (!IsPvNode || i != 0)
+        if (!IsPvNode && i != 0)
         {
-            // TODO: add direct checks
-            if (moves[i].IsAttackingMove()) {
+            if (moves[i].IsAttackingMove() || moves[i].IsChecking()) {
                 const int seeValue = mechanics.SEE(moves[i]);
 
-                if (seeValue < (SEE_GOOD_MOVE_BOUNDARY * plyDepth)/2)
+                if (seeValue < (2 * SEE_GOOD_MOVE_BOUNDARY * plyDepth))
                     continue;
             }
         }

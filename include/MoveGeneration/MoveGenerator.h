@@ -73,7 +73,7 @@ struct MoveGenerator : ChessMechanics
         const uint64_t enemyKing = _board.BitBoards[enemyColor * Board::BitBoardsPerCol + kingIndex];
         const uint64_t moves = MapT::GetMoves(msbPos, fullMap, 0);
 
-        return enemyKing & moves;
+        return (enemyKing & moves) != 0;
     }
 
     template <class MapT>
@@ -83,7 +83,7 @@ struct MoveGenerator : ChessMechanics
         const uint64_t enemyKing = _board.BitBoards[enemyColor * Board::BitBoardsPerCol + kingIndex];
         const uint64_t moves = MapT::GetAttackFields(pawnBitMap);
 
-        return enemyKing & moves;
+        return (enemyKing & moves) != 0;
     }
 
     template <class MapT>
@@ -103,7 +103,7 @@ struct MoveGenerator : ChessMechanics
         auto func = moveGenerators[targetBitBoardIndex - color * Board::BitBoardsPerCol];
         const uint64_t moves = func(msbPos, fullMap, 0);
 
-        return enemyKing & moves;
+        return (enemyKing & moves) != 0;
     }
 
 
