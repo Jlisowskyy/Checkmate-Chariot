@@ -235,14 +235,14 @@ int ChessMechanics::SEE(const Move mv) const
     } while (attackFromBitBoard);
 
     // add some bonus when finally king is left under the check
-//    if (attackerFigType != wKingIndex && attackerFigType != bKingIndex)
-//    {
-//        auto func = moveGenerators[attackerFigType];
-//        const uint64_t enemyKing = _board.BitBoards[color * Board::BitBoardsPerCol + kingIndex];
-//        const uint64_t attacks = func(mv.GetTargetField(),  fullMap, enemyKing);
-//
-//        scores[depth - 1] += CheckPoints * ((attacks & enemyKing) != 0);
-//    }
+    if (attackerFigType != wKingIndex && attackerFigType != bKingIndex)
+    {
+        auto func = moveGenerators[attackerFigType];
+        const uint64_t enemyKing = _board.BitBoards[color * Board::BitBoardsPerCol + kingIndex];
+        const uint64_t attacks = func(mv.GetTargetField(),  fullMap, enemyKing);
+
+        scores[depth - 1] += CheckPoints * ((attacks & enemyKing) != 0);
+    }
 
     while (--depth) scores[depth - 1] = -std::max(-scores[depth - 1], scores[depth]);
     return scores[0] / SCORE_GRAIN;
