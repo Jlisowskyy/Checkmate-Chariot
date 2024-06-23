@@ -33,7 +33,6 @@
  *  - bits 60-63 - encodes new castling rights
  */
 
-
 /*      IMPORTANT NOTE:
  *  ALL SET METHODS WORK CORRECTLY ONLY
  *  ON BY DEFAULT INITIALIZED OBJECTS EVERY ONE OF THEM WORKS ONCE
@@ -287,7 +286,8 @@ class Move
         return (_packedIndexes & CastlingTypeMask) >> 12;
     }
 
-    void SetCheckType() {
+    void SetCheckType()
+    {
         static constexpr uint16_t CheckTypeBit = 1LLU << 15;
         _packedIndexes |= CheckTypeBit;
     }

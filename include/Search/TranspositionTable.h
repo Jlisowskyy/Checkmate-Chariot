@@ -214,20 +214,18 @@ struct TranspositionTable
     /* Function adjusts the mate score to prevent returning mate scores from TT with misleading values */
     [[nodiscard]] static INLINE int AdjustMateScoreForTT(const int eval, const int ply)
     {
-        const int prevDist   = eval > 0 ? POSITIVE_INFINITY - eval : eval - NEGATIVE_INFINITY;
+        const int prevDist = eval > 0 ? POSITIVE_INFINITY - eval : eval - NEGATIVE_INFINITY;
 
         const int correctedDist = prevDist - ply;
         TraceIfFalse(correctedDist >= 0, "Detected malfunction in saved mate scores plys");
-        const int adjustedEval  = eval > 0 ? POSITIVE_INFINITY - correctedDist : NEGATIVE_INFINITY + correctedDist;
+        const int adjustedEval = eval > 0 ? POSITIVE_INFINITY - correctedDist : NEGATIVE_INFINITY + correctedDist;
 
         return adjustedEval;
     }
 
-    [[nodiscard]] static INLINE int16_t
-    AdjustMateScoreForTTIfNeeded(const int eval, const int ply)
+    [[nodiscard]] static INLINE int16_t AdjustMateScoreForTTIfNeeded(const int eval, const int ply)
     {
-        return IsMateScore(eval) ? static_cast<int16_t>(AdjustMateScoreForTT(eval, ply))
-                                 : static_cast<int16_t>(eval);
+        return IsMateScore(eval) ? static_cast<int16_t>(AdjustMateScoreForTT(eval, ply)) : static_cast<int16_t>(eval);
     }
 
     // ------------------------------

@@ -46,10 +46,7 @@ class KillerTable
     INLINE void SaveKillerMove(const Move kMove, const int ply) { _kTable[ply].Push(kMove); }
 
     // checks whether actual move is a "killer" move
-    [[nodiscard]] INLINE bool IsKillerMove(const Move move, const int ply) const
-    {
-        return _kTable[ply].Contains(move);
-    }
+    [[nodiscard]] INLINE bool IsKillerMove(const Move move, const int ply) const { return _kTable[ply].Contains(move); }
 
     private:
     // ------------------------------

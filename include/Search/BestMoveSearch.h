@@ -101,10 +101,7 @@ class BestMoveSearch
             GlobalLogger.LogStream << buff;
         }
 
-        [[nodiscard]] INLINE bool Contains(int ply) const
-        {
-            return ply < _depth;
-        }
+        [[nodiscard]] INLINE bool Contains(int ply) const { return ply < _depth; }
 
         /* Debug function to check internal state of the PV */
         [[nodiscard]] INLINE bool IsFilled() const
@@ -177,7 +174,9 @@ class BestMoveSearch
     // BETA - maximum score of minimizing player
 
     template <SearchType searchType, bool followPv>
-    int _search(int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv, PackedMove* bestMoveOut);
+    int _search(
+        int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv, PackedMove *bestMoveOut
+    );
 
     template <SearchType searchType> int _qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth);
 

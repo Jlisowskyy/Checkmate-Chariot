@@ -347,7 +347,6 @@ class BoardEvaluator
     // ------------------------------
 
     public:
-
     // All belows values are used to calculate material table index, they symbolize coefficients for each figure type
     static constexpr size_t BlackPawnCoef   = MaterialTableSize / 9;
     static constexpr size_t WhitePawnCoef   = BlackPawnCoef / 9;

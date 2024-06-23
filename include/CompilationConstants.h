@@ -26,24 +26,21 @@ static constexpr int16_t DRAW_SCORE         = 0;
 static constexpr int16_t SPECIAL_DRAW_SCORE = 0;
 
 // ------------------------- EXTENSIONS ------------------------------
-static constexpr int FULL_DEPTH_FACTOR = 4;
-static constexpr int ONE_REPLY_EXTENSION_PV_NODE = FULL_DEPTH_FACTOR;
-static constexpr int ONE_REPLY_EXTENSION = FULL_DEPTH_FACTOR / 2;
-static constexpr int CHECK_EXTENSION_PV_NODE = FULL_DEPTH_FACTOR;
-static constexpr int CHECK_EXTENSION = FULL_DEPTH_FACTOR / 2;
-static constexpr int PV_EXTENSION = FULL_DEPTH_FACTOR / 2;
-static constexpr int EVEN_EXCHANGE_EXTENSION_PV_NODE = FULL_DEPTH_FACTOR;
-static constexpr int EVEN_EXCHANGE_EXTENSION = FULL_DEPTH_FACTOR / 2;
+static constexpr int FULL_DEPTH_FACTOR                    = 4;
+static constexpr int ONE_REPLY_EXTENSION_PV_NODE          = FULL_DEPTH_FACTOR;
+static constexpr int ONE_REPLY_EXTENSION                  = FULL_DEPTH_FACTOR / 2;
+static constexpr int CHECK_EXTENSION_PV_NODE              = FULL_DEPTH_FACTOR;
+static constexpr int CHECK_EXTENSION                      = FULL_DEPTH_FACTOR / 2;
+static constexpr int PV_EXTENSION                         = FULL_DEPTH_FACTOR / 2;
+static constexpr int EVEN_EXCHANGE_EXTENSION_PV_NODE      = FULL_DEPTH_FACTOR;
+static constexpr int EVEN_EXCHANGE_EXTENSION              = FULL_DEPTH_FACTOR / 2;
 static constexpr int SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT = 3;
-static constexpr int SINGULAR_EXTENSION_MIN_DEPTH = 4;
-static constexpr int SINGULAR_EXTENSION = FULL_DEPTH_FACTOR;
-static constexpr int SINGULAR_EXTENSION_DEPTH_MARGIN = 4;
+static constexpr int SINGULAR_EXTENSION_MIN_DEPTH         = 4;
+static constexpr int SINGULAR_EXTENSION                   = FULL_DEPTH_FACTOR;
+static constexpr int SINGULAR_EXTENSION_DEPTH_MARGIN      = 4;
 
 // limits maximal extensions inside the search tree to not overdo
-constexpr bool ShouldExtend(const int ply, const int rootDepth)
-{
-    return ply < rootDepth + 4;
-}
+constexpr bool ShouldExtend(const int ply, const int rootDepth) { return ply < rootDepth + 4; }
 
 // -------------------- RESERVED VALUES -------------------------------
 static constexpr int RESERVED_SCORE_VALUES           = 64;
@@ -197,8 +194,6 @@ static constexpr bool TraceExtensions = false;
 
 #endif // TRACE_EXTENSIONS
 // --------------------------
-
-
 
 // ssize_t is defined by POSIX. Such define allows to use it on posix+windows
 using signed_size_t = std::make_signed<size_t>::type;

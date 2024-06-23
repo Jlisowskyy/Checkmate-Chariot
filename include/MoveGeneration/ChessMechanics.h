@@ -122,7 +122,8 @@ struct ChessMechanics
      *
      * This function assumes that on given field by 'msbPos' for sure there is no king placed.
      * */
-    [[nodiscard]] uint64_t getLeastValuablePieceFromLegalToSquare(uint64_t allPieces, uint64_t pieces, int color, int &pieceIndOut) const;
+    [[nodiscard]] uint64_t
+    getLeastValuablePieceFromLegalToSquare(uint64_t allPieces, uint64_t pieces, int color, int &pieceIndOut) const;
 
     /*
      * SEE - Static Exchange Evaluation - function used to get approximated gain

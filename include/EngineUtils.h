@@ -98,10 +98,7 @@ inline static const std::unordered_map<char, size_t> FigCharToIndexMap{
 inline INLINE bool IsMateScore(const int score) { return abs(score) >= BEST_MATE_VALUE_ABS; }
 
 /* Function adjusts mate score accordingly to the distance to root */
-[[nodiscard]] inline INLINE int GetMateValue(const int ply)
-{
-    return NEGATIVE_INFINITY + ply;
-}
+[[nodiscard]] inline INLINE int GetMateValue(const int ply) { return NEGATIVE_INFINITY + ply; }
 
 // Structure stores time information that were parsed and should be passed to 'go' search function
 struct GoTimeInfo

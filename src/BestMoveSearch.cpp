@@ -43,7 +43,8 @@ ProcessAttackMove(Board &bd, const Move mv, const uint64_t hash, const VolatileB
 }
 
 [[nodiscard]] inline INLINE uint64_t ProcessMove(
-    Board &bd, const Move mv, const int actualPly, const uint64_t hash, KillerTable &table, const VolatileBoardData &data
+    Board &bd, const Move mv, const int actualPly, const uint64_t hash, KillerTable &table,
+    const VolatileBoardData &data
 )
 {
 
@@ -97,9 +98,9 @@ int BestMoveSearch::IterativeDeepening(
         [[maybe_unused]] auto timeStart = GameTimeManager::GetCurrentTime();
 
         // preparing variables used to display statistics
-        _visitedNodes  = 0;
-        _cutoffNodes   = 0;
-        _rootDepth = depth;
+        _visitedNodes = 0;
+        _cutoffNodes  = 0;
+        _rootDepth    = depth;
 
         if (!UseAsp || depth < ASP_WND_MIN_DEPTH)
         {
@@ -109,8 +110,9 @@ int BestMoveSearch::IterativeDeepening(
             _maxPlyReached = 0;
 
             // performs the search without aspiration window to gather some initial statistics about the move
-            eval = _search<SearchType::PVSearch, true>(NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, _pv,
-                                                       nullptr);
+            eval = _search<SearchType::PVSearch, true>(
+                NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, _pv, nullptr
+            );
             TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
             // if there was call to abort then abort
@@ -141,8 +143,9 @@ int BestMoveSearch::IterativeDeepening(
                 _kTable.ClearPlyFloor(0);
                 _histTable.ScaleTableDown();
                 _maxPlyReached = 0;
-                eval = _search<SearchType::PVSearch, true>(alpha, beta, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff,
-                                                           nullptr);
+                eval           = _search<SearchType::PVSearch, true>(
+                    alpha, beta, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff, nullptr
+                );
 
                 // if there was call to abort then abort
                 if (std::abs(eval) == TIME_STOP_RESERVED_VALUE)
@@ -215,7 +218,8 @@ int BestMoveSearch::IterativeDeepening(
             const double cutOffPerc = static_cast<double>(_cutoffNodes) / static_cast<double>(_visitedNodes);
 
             GlobalLogger.LogStream << std::format(
-                "info depth {} seldepth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc {:.2f} pv ",
+                "info depth {} seldepth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc "
+                "{:.2f} pv ",
                 depth, _maxPlyReached, spentMs, _visitedNodes, nps, IsMateScore(eval) ? eval : eval * SCORE_GRAIN,
                 _pv[0].GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
@@ -237,7 +241,7 @@ int BestMoveSearch::IterativeDeepening(
 
 template <BestMoveSearch::SearchType searchType, bool followPv>
 int BestMoveSearch::_search(
-    int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv, PackedMove* bestMoveOut
+    int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv, PackedMove *bestMoveOut
 )
 {
     static constexpr bool IsPvNode = searchType == SearchType::PVSearch;
@@ -305,7 +309,8 @@ int BestMoveSearch::_search(
 
     // Extends paths where we have only one move possible
     // TODO: consider do it other way to detect it also on leafs
-    if (ShouldExtend(ply, _rootDepth) && moves.size == 1) {
+    if (ShouldExtend(ply, _rootDepth) && moves.size == 1)
+    {
         depthLeft += IsPvNode ? ONE_REPLY_EXTENSION_PV_NODE : ONE_REPLY_EXTENSION;
 
         if constexpr (TraceExtensions)
@@ -323,30 +328,36 @@ int BestMoveSearch::_search(
     {
         if (i == 0)
         {
-            if (IsPvNode && followPv && _pv.Contains(ply)) {
+            if (IsPvNode && followPv && _pv.Contains(ply))
+            {
                 // first follow pv from previous ID (Iterative deepening) iteration,
                 // we follow only single PV we previously saved
                 _pullMoveToFront(moves, _pv[ply]);
 
-               // Extend pvs to detect changes earlier
-                if (ShouldExtend(ply, _rootDepth) && ply % 2 == 1) {
+                // Extend pvs to detect changes earlier
+                if (ShouldExtend(ply, _rootDepth) && ply % 2 == 1)
+                {
                     depthLeft += PV_EXTENSION;
 
                     if (TraceExtensions)
                         TraceWithInfo("Applied pv extension");
                 }
             }
-            else {
+            else
+            {
                 PackedMove prevBestMove{};
-                if (!wasTTHit && _excludedMove.IsEmpty()) {
+                if (!wasTTHit && _excludedMove.IsEmpty())
+                {
                     // try to save our situation by researching children using IID
                     if (plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
-                        _search<searchType, false>(alpha, beta, depthLeft - IID_REDUCTION, ply, zHash, prevMove, pv,
-                                                   &prevBestMove);
-                } else if (prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
+                        _search<searchType, false>(
+                            alpha, beta, depthLeft - IID_REDUCTION, ply, zHash, prevMove, pv, &prevBestMove
+                        );
+                }
+                else if (prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
                     // if we have any move saved from last time we visited that node and the move is valid try to use it
-                    // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always be
-                    // empty
+                    // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always
+                    // be empty
                     //       In other words we don't use best move from fail low nodes
                     prevBestMove = prevSearchRes.GetMove();
 
@@ -369,7 +380,8 @@ int BestMoveSearch::_search(
         // we should avoid pruning when returning a mate score is possible
         if (ply > 0 && i != 0 && !IsMateScore(alpha))
         {
-            if (moves[i].IsAttackingMove() || moves[i].IsChecking()) {
+            if (moves[i].IsAttackingMove() || moves[i].IsChecking())
+            {
                 seeValue = mechanics.SEE(moves[i]);
 
                 if (seeValue < (2 * SEE_GOOD_MOVE_BOUNDARY * plyDepth))
@@ -378,14 +390,15 @@ int BestMoveSearch::_search(
         }
 
         // -------------------------- extensions --------------------------------
-        if (ShouldExtend(ply, _rootDepth)){
+        if (ShouldExtend(ply, _rootDepth))
+        {
             // singular extensions:
             // we try to use entry from TT to determine whether given move is the only good move in this node,
             // if given thesis hold we extend proposed move search depth
-            if (ply > 0 && wasTTHit && _excludedMove.IsEmpty() && moves[i].GetPackedMove() == prevSearchRes.GetMove()
-                && plyDepth - prevSearchRes.GetDepth() <= SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT
-                && (prevSearchRes.GetNodeType() == LOWER_BOUND || prevSearchRes.GetNodeType() == PV_NODE)
-                && plyDepth > SINGULAR_EXTENSION_MIN_DEPTH)
+            if (ply > 0 && wasTTHit && _excludedMove.IsEmpty() && moves[i].GetPackedMove() == prevSearchRes.GetMove() &&
+                plyDepth - prevSearchRes.GetDepth() <= SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT &&
+                (prevSearchRes.GetNodeType() == LOWER_BOUND || prevSearchRes.GetNodeType() == PV_NODE) &&
+                plyDepth > SINGULAR_EXTENSION_MIN_DEPTH)
             {
                 // TODO: investigate deeply the depth
                 const int singularDepth = (depthLeft - FULL_DEPTH_FACTOR) / 2;
@@ -394,9 +407,9 @@ int BestMoveSearch::_search(
                 const int singularBeta = prevSearchRes.GetEval() - SINGULAR_EXTENSION_DEPTH_MARGIN * plyDepth;
 
                 // NOTE: due to single excluded move no recursive singular searched are allowed
-                _excludedMove = prevSearchRes.GetMove();
+                _excludedMove           = prevSearchRes.GetMove();
                 const int singularValue = _search<SearchType::NoPVSearch, false>(
-                singularBeta - 1, singularBeta, singularDepth, ply, zHash, prevMove, _dummyPv, nullptr
+                    singularBeta - 1, singularBeta, singularDepth, ply, zHash, prevMove, _dummyPv, nullptr
                 );
                 _excludedMove = PackedMove{};
 
@@ -404,14 +417,15 @@ int BestMoveSearch::_search(
                 if (singularValue < singularBeta)
                     extensions += SINGULAR_EXTENSION;
                 // Multi-cut pruning
-                else if (singularBeta >= beta) {
+                else if (singularBeta >= beta)
+                {
                     _stack.PopAggregate(moves);
                     return singularBeta;
                 }
             }
 
             // simple extensions deduction
-            extensions += _deduceExtensions(prevMove, moves[i], seeValue,IsPvNode);
+            extensions += _deduceExtensions(prevMove, moves[i], seeValue, IsPvNode);
         }
 
         // stores the most recent return value of child trees,
@@ -425,7 +439,8 @@ int BestMoveSearch::_search(
         if (!IsPvNode || i != 0)
         {
             moveEval = -_search<SearchType::NoPVSearch, false>(
-                -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR + extensions, ply + 1, zHash, moves[i], _dummyPv, nullptr
+                -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR + extensions, ply + 1, zHash, moves[i], _dummyPv,
+                nullptr
             );
         }
 
@@ -438,11 +453,11 @@ int BestMoveSearch::_search(
             // Research with full window
             if (followPv && i == 0)
                 moveEval = -_search<SearchType::PVSearch, true>(
-                     -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], inPV, nullptr
+                    -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], inPV, nullptr
                 );
             else
                 moveEval = -_search<SearchType::PVSearch, false>(
-                         -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], inPV, nullptr
+                    -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], inPV, nullptr
                 );
         }
 
@@ -479,13 +494,13 @@ int BestMoveSearch::_search(
 
     // updating if profitable
     if (_excludedMove.IsEmpty() && (plyDepth >= prevSearchRes.GetDepth() ||
-        (!wasTTHit && _board.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE)))
+                                    (!wasTTHit && _board.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE)))
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
         const TranspositionTable::HashRecord record{
-            zHash,     bestMove, bestEval, wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL_RESERVED_VALUE,
-            plyDepth, nType,    _board.Age,   ply
+            zHash,    bestMove, bestEval,   wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL_RESERVED_VALUE,
+            plyDepth, nType,    _board.Age, ply
         };
 
         TTable.Add(record, zHash);
@@ -630,7 +645,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         }
 
         zHash               = ProcessAttackMove(_board, moves[i], zHash, oldData);
-        const int moveValue = -_qSearch<searchType>( -beta, -alpha, ply + 1,zHash, extendedDepth + 1);
+        const int moveValue = -_qSearch<searchType>(-beta, -alpha, ply + 1, zHash, extendedDepth + 1);
         zHash               = RevertMove(_board, moves[i], zHash, oldData);
 
         // if there was call to abort then abort
@@ -659,8 +674,8 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
-        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval, statEval,
-                                                    0,     nType,    _board.Age,   ply + extendedDepth};
+        const TranspositionTable::HashRecord record{zHash, bestMove, bestEval,   statEval,
+                                                    0,     nType,    _board.Age, ply + extendedDepth};
         TTable.Add(record, zHash);
     }
 
@@ -729,20 +744,24 @@ int BestMoveSearch::QuiesceEval()
     return _qSearch<SearchType::PVSearch>(NEGATIVE_INFINITY, POSITIVE_INFINITY, 0, hash, 0);
 }
 
-int BestMoveSearch::_deduceExtensions(Move prevMove, Move actMove, const int seeValue, const bool isPv) {
+int BestMoveSearch::_deduceExtensions(Move prevMove, Move actMove, const int seeValue, const bool isPv)
+{
     int rv{};
 
     ChessMechanics mech{_board};
     // check extensions
 
-    rv += (actMove.IsChecking() && (seeValue == NEGATIVE_INFINITY ? mech.SEE(actMove) : seeValue) > 0)
-            * (isPv ? CHECK_EXTENSION_PV_NODE : CHECK_EXTENSION);
+    rv += (actMove.IsChecking() && (seeValue == NEGATIVE_INFINITY ? mech.SEE(actMove) : seeValue) > 0) *
+          (isPv ? CHECK_EXTENSION_PV_NODE : CHECK_EXTENSION);
     if (TraceExtensions && rv != 0)
         TraceWithInfo("Applied check extension");
 
     // we are sure that actMove is attacking move because is moved to the same square as prevMove
-    if (!prevMove.IsEmpty() && prevMove.GetTargetField() == actMove.GetTargetField() && prevMove.IsAttackingMove()
-        && BoardEvaluator::BasicFigureValues[prevMove.GetKilledBoardIndex()] + BoardEvaluator::BasicFigureValues[actMove.GetKilledBoardIndex()] == 0){
+    if (!prevMove.IsEmpty() && prevMove.GetTargetField() == actMove.GetTargetField() && prevMove.IsAttackingMove() &&
+        BoardEvaluator::BasicFigureValues[prevMove.GetKilledBoardIndex()] +
+                BoardEvaluator::BasicFigureValues[actMove.GetKilledBoardIndex()] ==
+            0)
+    {
         TraceIfFalse(actMove.IsAttackingMove(), "if check should not allow any non attacking moves to enter!!");
 
         rv += isPv ? EVEN_EXCHANGE_EXTENSION_PV_NODE : EVEN_EXCHANGE_EXTENSION;
