@@ -277,9 +277,11 @@ int BestMoveSearch::_search(
     if constexpr (TestTT)
         TTable.UpdateStatistics(wasTTHit);
 
-    // Try to get a cut-off from tt record if the node is not pv node
+    // Try to get a cut-off from tt record if the node is not pv node.
+    // The depth must be higher than in actual node to get high quality score
+    // Additionally when we are in singular search we do not use cutoffs to prevent misinformation spread
     if constexpr (!IsPvNode)
-        if (wasTTHit && prevSearchRes.GetDepth() >= plyDepth)
+        if (_excludedMove.IsEmpty() && wasTTHit && prevSearchRes.GetDepth() >= plyDepth)
         {
             if (prevSearchRes.GetNodeType() == PV_NODE)
                 return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(ply);
@@ -326,7 +328,7 @@ int BestMoveSearch::_search(
                 // we follow only single PV we previously saved
                 _pullMoveToFront(moves, _pv[ply]);
 
-                // Extend pvs to detect changes earlier
+               // Extend pvs to detect changes earlier
                 if (ShouldExtend(ply, _rootDepth) && ply % 2 == 1) {
                     depthLeft += PV_EXTENSION;
 
@@ -336,7 +338,7 @@ int BestMoveSearch::_search(
             }
             else {
                 PackedMove prevBestMove{};
-                if (!wasTTHit) {
+                if (!wasTTHit && _excludedMove.IsEmpty()) {
                     // try to save our situation by researching children using IID
                     if (plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
                         _search<searchType, false>(alpha, beta, depthLeft - IID_REDUCTION, ply, zHash, prevMove, pv,
@@ -357,10 +359,15 @@ int BestMoveSearch::_search(
         else
             _fetchBestMove(moves, i);
 
+        if (moves[i].GetPackedMove() == _excludedMove)
+            continue;
+
         int extensions{};
         int seeValue = NEGATIVE_INFINITY;
-        // pruning
-        if (!IsPvNode && i != 0)
+
+        // ---------------------------- pruning -----------------------------------
+        // we should avoid pruning when returning a mate score is possible
+        if (ply > 0 && i != 0 && !IsMateScore(alpha))
         {
             if (moves[i].IsAttackingMove() || moves[i].IsChecking()) {
                 seeValue = mechanics.SEE(moves[i]);
@@ -370,7 +377,40 @@ int BestMoveSearch::_search(
             }
         }
 
+        // -------------------------- extensions --------------------------------
         if (ShouldExtend(ply, _rootDepth)){
+            // singular extensions:
+            // we try to use entry from TT to determine whether given move is the only good move in this node,
+            // if given thesis hold we extend proposed move search depth
+            if (ply > 0 && wasTTHit && _excludedMove.IsEmpty() && moves[i].GetPackedMove() == prevSearchRes.GetMove()
+                && plyDepth - prevSearchRes.GetDepth() <= SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT
+                && (prevSearchRes.GetNodeType() == LOWER_BOUND || prevSearchRes.GetNodeType() == PV_NODE)
+                && plyDepth > SINGULAR_EXTENSION_MIN_DEPTH)
+            {
+                // TODO: investigate deeply the depth
+                const int singularDepth = (depthLeft - FULL_DEPTH_FACTOR) / 2;
+                // TODO: might be mathematically optimised:
+                // The singular beta is decreased by some margin to preserve high quality results of the search
+                const int singularBeta = prevSearchRes.GetEval() - SINGULAR_EXTENSION_DEPTH_MARGIN * plyDepth;
+
+                // NOTE: due to single excluded move no recursive singular searched are allowed
+                _excludedMove = prevSearchRes.GetMove();
+                const int singularValue = _search<SearchType::NoPVSearch, false>(
+                singularBeta - 1, singularBeta, singularDepth, ply, zHash, prevMove, _dummyPv, nullptr
+                );
+                _excludedMove = PackedMove{};
+
+                // we failed low, so our hypothesis might be true
+                if (singularValue < singularBeta)
+                    extensions += SINGULAR_EXTENSION;
+                // Multi-cut pruning
+                else if (singularBeta >= beta) {
+                    _stack.PopAggregate(moves);
+                    return singularBeta;
+                }
+            }
+
+            // simple extensions deduction
             extensions += _deduceExtensions(prevMove, moves[i], seeValue,IsPvNode);
         }
 
@@ -438,8 +478,8 @@ int BestMoveSearch::_search(
     }
 
     // updating if profitable
-    if (plyDepth >= prevSearchRes.GetDepth() ||
-        (!wasTTHit && _board.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE))
+    if (_excludedMove.IsEmpty() && (plyDepth >= prevSearchRes.GetDepth() ||
+        (!wasTTHit && _board.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE)))
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 

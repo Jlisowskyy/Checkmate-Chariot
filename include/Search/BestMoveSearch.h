@@ -208,6 +208,7 @@ class BestMoveSearch
     HistoricTable _histTable{};
     int _maxPlyReached{};
     int _rootDepth{};
+    PackedMove _excludedMove{};
 };
 
 #endif // BESTMOVESEARCH_H

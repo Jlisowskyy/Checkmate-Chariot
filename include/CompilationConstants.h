@@ -27,13 +27,17 @@ static constexpr int16_t SPECIAL_DRAW_SCORE = 0;
 
 // ------------------------- EXTENSIONS ------------------------------
 static constexpr int FULL_DEPTH_FACTOR = 4;
-static constexpr int ONE_REPLY_EXTENSION_PV_NODE = 4;
-static constexpr int ONE_REPLY_EXTENSION = 2;
-static constexpr int CHECK_EXTENSION_PV_NODE = 4;
-static constexpr int CHECK_EXTENSION = 2;
-static constexpr int PV_EXTENSION = 2;
-static constexpr int EVEN_EXCHANGE_EXTENSION_PV_NODE = 4;
-static constexpr int EVEN_EXCHANGE_EXTENSION = 2;
+static constexpr int ONE_REPLY_EXTENSION_PV_NODE = FULL_DEPTH_FACTOR;
+static constexpr int ONE_REPLY_EXTENSION = FULL_DEPTH_FACTOR / 2;
+static constexpr int CHECK_EXTENSION_PV_NODE = FULL_DEPTH_FACTOR;
+static constexpr int CHECK_EXTENSION = FULL_DEPTH_FACTOR / 2;
+static constexpr int PV_EXTENSION = FULL_DEPTH_FACTOR / 2;
+static constexpr int EVEN_EXCHANGE_EXTENSION_PV_NODE = FULL_DEPTH_FACTOR;
+static constexpr int EVEN_EXCHANGE_EXTENSION = FULL_DEPTH_FACTOR / 2;
+static constexpr int SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT = 3;
+static constexpr int SINGULAR_EXTENSION_MIN_DEPTH = 4;
+static constexpr int SINGULAR_EXTENSION = FULL_DEPTH_FACTOR;
+static constexpr int SINGULAR_EXTENSION_DEPTH_MARGIN = 4;
 
 // limits maximal extensions inside the search tree to not overdo
 constexpr bool ShouldExtend(const int ply, const int rootDepth)
@@ -65,7 +69,7 @@ static constexpr int SEE_GOOD_MOVE_BOUNDARY = -(115 / 2) / SCORE_GRAIN;
 static constexpr int END_GAME_PHASE = 64;
 
 /* Depth from which Internal Iterative Deepening (IID) is used */
-static constexpr int IID_MIN_DEPTH_PLY_DEPTH = 5;
+static constexpr int IID_MIN_DEPTH_PLY_DEPTH = 3;
 
 /* Ply reduction for IID case*/
 static constexpr int IID_REDUCTION = 2 * FULL_DEPTH_FACTOR;
