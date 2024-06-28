@@ -306,7 +306,7 @@ int BestMoveSearch::_search(
 
     // If no move is possible: check whether we hit mate or stalemate
     if (moves.size == 0)
-        return mechanics.IsCheck() ? GetMateValue(ply) : DRAW_SCORE;
+        return _board.IsCheck ? GetMateValue(ply) : DRAW_SCORE;
 
     // Extends paths where we have only one move possible
     // TODO: consider do it other way to detect it also on leafs
@@ -408,7 +408,7 @@ int BestMoveSearch::_search(
             }
         }
 
-        // -------------------------- extensions --------------------------------
+        // -------------------------- Extensions --------------------------------
         // determine whether we should spend more time in this node
         if (ShouldExtend(ply, _rootDepth))
         {
@@ -447,6 +447,17 @@ int BestMoveSearch::_search(
             // simple extensions deduction
             extensions += _deduceExtensions(prevMove, moves[i], seeValue, IsPvNode);
         }
+
+        int Reductions{};
+        // -------------------------- Reductions --------------------------------
+        // determine whether we should spend more time in this node
+
+        // Late Move Reductions (LMR)
+        if constexpr (!IsPvNode)
+            if (!_board.IsCheck)
+            {
+                
+            }
 
         // stores the most recent return value of child trees,
         // alpha + 1 value enforces the second if trigger in first iteration in case of pv nodes
@@ -566,10 +577,11 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
 
     // When we have a check we cannot use static evaluation at all due to possible dangers that may happen
     // that means we should resolve most of the lines with checks
-    MoveGenerator mechanics(_board, _stack);
-    const bool isCheck = mechanics.IsCheck();
+    const bool isCheck = _board.IsCheck;
 
     // Avoid static evaluation when king is checked
+    MoveGenerator mechanics(_board, _stack);
+
     if (!isCheck)
     {
         if (wasTTHit)
@@ -622,20 +634,24 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         moves = mechanics.GetMovesFast<true>();
     }
     else
+    // we are inside the check, our king is not safe we should resolve all moves
     {
         // When there is check we need to go through every possible move to get a better view about the position
         moves = mechanics.GetMovesFast();
 
+        // we are in check and no moves are possible
         if (moves.size == 0)
-            return mechanics.IsCheck() ? GetMateValue(ply + extendedDepth) : DRAW_SCORE;
+            return GetMateValue(ply + extendedDepth);
     }
 
     // saving volatile fields
     VolatileBoardData oldData{_board};
     PackedMove bestMove{};
 
-    // Empty move cannot be a capture move se we are sure that valid move is saved
-    if (wasTTHit && ((prevSearchRes.GetNodeType() != UPPER_BOUND && isCheck) || prevSearchRes.GetMove().IsCapture()))
+    // avoid using moves from TT when inside singular search
+    if (wasTTHit
+       // Empty move cannot be a capture move se we are sure that valid move is saved
+       && ((prevSearchRes.GetNodeType() != UPPER_BOUND && isCheck) || prevSearchRes.GetMove().IsCapture()))
         _pullMoveToFront(moves, prevSearchRes.GetMove());
     else
         _fetchBestMove(moves, 0);
@@ -656,6 +672,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
             int delta = statEval + DELTA_PRUNING_SAFETY_MARGIN + SEEValue +
                         (moves[i].GetPackedMove().IsPromo() ? DELTA_PRUNING_PROMO : 0);
 
+            // There is high possibility that there is no chance to improve our position
             if (statEval + delta < alpha && !_board.IsEndGame())
                 continue;
 
@@ -672,6 +689,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         if (std::abs(moveValue) == TIME_STOP_RESERVED_VALUE)
             return TIME_STOP_RESERVED_VALUE;
 
+        // Update node info
         if (moveValue > bestEval)
         {
             bestEval = moveValue;
@@ -689,8 +707,9 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         }
     }
 
+    // saving the move is only possible when no excluded move is used
     if (!isCheck && !wasTTHit &&
-        (prevSearchRes.GetDepth() == 0 || _board.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+        ((prevSearchRes.GetDepth() == 0) || _board.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 

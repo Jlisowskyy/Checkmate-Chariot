@@ -9,6 +9,7 @@
 #include "../include/MoveGeneration/WhitePawnMap.h"
 #include "../include/ParseTools.h"
 #include "../include/Search/ZobristHash.h"
+#include "../include/MoveGeneration/ChessMechanics.h"
 
 bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
 {
@@ -34,8 +35,13 @@ bool FenTranslator::Translate(const std::string &fenPos, Board &bd)
         // We store half moves instead of full moves
         workBoard.Age = std::max(static_cast<uint16_t>(age * 2 - 1), static_cast<uint16_t>(1));
 
+        // store position inside the repetition map
         const uint64_t startHash = ZHasher.GenerateHash(workBoard);
         workBoard.Repetitions[startHash]++;
+
+        // store whether we have a check
+        ChessMechanics mech{workBoard};
+        workBoard.IsCheck = mech.IsCheck();
     }
     catch (const std::exception &exc)
     {

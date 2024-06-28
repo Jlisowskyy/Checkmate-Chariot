@@ -191,6 +191,7 @@ struct Board
     // ------------------------------
 
     int LastPhase = {}; // Field used to save previously calculated phase during evaluation
+    bool IsCheck{};
 };
 
 #endif // BOARD_H

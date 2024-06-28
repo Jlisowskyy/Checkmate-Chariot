@@ -127,13 +127,14 @@ struct VolatileBoardData
 {
     VolatileBoardData() = delete;
 
-    constexpr VolatileBoardData(const Board &bd)
-        : HalfMoves(bd.HalfMoves), Castlings(bd.Castlings), OldElPassant(bd.ElPassantField)
+    constexpr explicit VolatileBoardData(const Board &bd)
+        : HalfMoves(bd.HalfMoves), Castlings(bd.Castlings), IsCheck(bd.IsCheck), OldElPassant(bd.ElPassantField)
     {
     }
 
     const int HalfMoves;
     const std::bitset<Board::CastlingCount + 1> Castlings;
+    bool IsCheck;
     const uint64_t OldElPassant;
 };
 
@@ -205,6 +206,8 @@ class Move
         bd.BitBoards[boardIndex] |= field;
 
         bd.ChangePlayingColor();
+
+        bd.IsCheck = mv.IsChecking();
     }
 
     [[nodiscard]] bool IsAttackingMove() const { return _packedMove.IsCapture(); }
@@ -238,6 +241,8 @@ class Move
         // reverting castling operation
         const auto [boardIndex, field] = CastlingActions[mv.GetCastlingType()];
         bd.BitBoards[boardIndex] ^= field;
+
+        bd.IsCheck = data.IsCheck;
     }
 
     void SetEval(const int16_t eval) { _eval = eval; }
