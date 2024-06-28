@@ -285,6 +285,7 @@ int BestMoveSearch::_search(
     // The depth must be higher than in actual node to get high quality score
     // Additionally when we are in singular search we do not use cutoffs to prevent misinformation spread
     if constexpr (!IsPvNode)
+        // Avoid TT cutoffs whenever we exclude some move, otherwise we might return score not true according to exclusion
         if (_excludedMove.IsEmpty() && wasTTHit && prevSearchRes.GetDepth() >= plyDepth)
         {
             if (prevSearchRes.GetNodeType() == PV_NODE)
@@ -351,16 +352,22 @@ int BestMoveSearch::_search(
                 PackedMove prevBestMove{};
 
                 // IID (Internal Iteration Deepening ) in case of Transposition Table miss
-                // or the found move is not good enough
-                if ((!wasTTHit
+                // or the found move is not good enough.
+                // IMPORTANT NOTE:
+                // We should avoid using IID when we exclude some move due to increased possibility of TT miss
+                if (_excludedMove.IsEmpty()
+                    && (!wasTTHit
                     || (wasTTHit && (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetDepth() == 0)))
                     && plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
                 {
-                    _search<searchType, false>(
+                    const int IIDScore = _search<searchType, false>(
                         alpha, beta, depthLeft - IID_REDUCTION, ply, zHash, prevMove, pv, &prevBestMove
                     );
-
                     TraceIfFalse(!prevBestMove.IsEmpty(), "IID returned null move!");
+
+                    // if the search failed low we should avoid the result
+                    if (IIDScore < alpha)
+                        prevBestMove = PackedMove{};
                 }
                 // if we have any move saved from last time we visited that node and the move is valid try to use it
                 // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always
