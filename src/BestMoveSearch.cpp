@@ -249,11 +249,7 @@ int BestMoveSearch::_search(
     if constexpr (!IsPvNode)
         TraceIfFalse(beta == alpha + 1, "Invalid alpha/beta in zw search");
 
-    if (ply > _maxPlyReached)
-    {
-        _maxPlyReached = ply;
-        TraceWithInfo(std::format("Reached new max ply: {}", ply));
-    }
+    _maxPlyReached = std::max(_maxPlyReached, ply);
 
     // if we need to stop the search signal it
     if (GameTimeManager::GetShouldStop())
@@ -474,6 +470,7 @@ int BestMoveSearch::_search(
         {
             if (SEEValue == NEGATIVE_INFINITY) SEEValue = mech.SEE(moves[i]);
 
+            // increase reduction only in case of positive SEEValue
             if (SEEValue > 0)
                 reductions -= FULL_DEPTH_FACTOR;
         }
