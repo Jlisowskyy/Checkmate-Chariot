@@ -326,8 +326,10 @@ int BestMoveSearch::_search(
     // processing each move
     for (size_t i = 0; i < moves.size; ++i)
     {
+        // determine move to check first
         if (i == 0)
         {
+            // Only on pv nodes where pv following is enabled we fetch move from previously stored pv
             if (IsPvNode && followPv && _pv.Contains(ply))
             {
                 // first follow pv from previous ID (Iterative deepening) iteration,
@@ -343,33 +345,42 @@ int BestMoveSearch::_search(
                         TraceWithInfo("Applied pv extension");
                 }
             }
+            // otherwise fetch move the usual way
             else
             {
                 PackedMove prevBestMove{};
-                if (!wasTTHit && _excludedMove.IsEmpty())
+
+                // IID (Internal Iteration Deepening ) in case of Transposition Table miss
+                // or the found move is not good enough
+                if ((!wasTTHit
+                    || (wasTTHit && (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetDepth() == 0)))
+                    && plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
                 {
-                    // try to save our situation by researching children using IID
-                    if (plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
-                        _search<searchType, false>(
-                            alpha, beta, depthLeft - IID_REDUCTION, ply, zHash, prevMove, pv, &prevBestMove
-                        );
+                    _search<searchType, false>(
+                        alpha, beta, depthLeft - IID_REDUCTION, ply, zHash, prevMove, pv, &prevBestMove
+                    );
+
+                    TraceIfFalse(!prevBestMove.IsEmpty(), "IID returned null move!");
                 }
+                // if we have any move saved from last time we visited that node and the move is valid try to use it
+                // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always
+                // be empty
+                //       In other words we don't use best move from fail low nodes
                 else if (prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
-                    // if we have any move saved from last time we visited that node and the move is valid try to use it
-                    // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always
-                    // be empty
-                    //       In other words we don't use best move from fail low nodes
                     prevBestMove = prevSearchRes.GetMove();
 
+                // try to pull found move to the front otherwise simply fetch move by heuristic eval
                 if (!prevBestMove.IsEmpty())
                     _pullMoveToFront(moves, prevBestMove);
                 else
                     _fetchBestMove(moves, i);
             }
         }
+        // simply fetch move based on the heuristic eval
         else
             _fetchBestMove(moves, i);
 
+        // if the fetch move was excluded singular search simple skip this iteration
         if (moves[i].GetPackedMove() == _excludedMove)
             continue;
 
@@ -380,6 +391,7 @@ int BestMoveSearch::_search(
         // we should avoid pruning when returning a mate score is possible
         if (ply > 0 && i != 0 && !IsMateScore(alpha))
         {
+            // consider pruning of checks and captures with bad enough SEE value
             if (moves[i].IsAttackingMove() || moves[i].IsChecking())
             {
                 seeValue = mechanics.SEE(moves[i]);
@@ -390,6 +402,7 @@ int BestMoveSearch::_search(
         }
 
         // -------------------------- extensions --------------------------------
+        // determine whether we should spend more time in this node
         if (ShouldExtend(ply, _rootDepth))
         {
             // singular extensions:

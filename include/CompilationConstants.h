@@ -66,10 +66,10 @@ static constexpr int SEE_GOOD_MOVE_BOUNDARY = -(115 / 2) / SCORE_GRAIN;
 static constexpr int END_GAME_PHASE = 64;
 
 /* Depth from which Internal Iterative Deepening (IID) is used */
-static constexpr int IID_MIN_DEPTH_PLY_DEPTH = 3;
+static constexpr int IID_MIN_DEPTH_PLY_DEPTH = 7;
 
 /* Ply reduction for IID case*/
-static constexpr int IID_REDUCTION = 2 * FULL_DEPTH_FACTOR;
+static constexpr int IID_REDUCTION = 4 * FULL_DEPTH_FACTOR;
 
 /* Minimal depth from which Aspiration Windows are used*/
 static constexpr int ASP_WND_MIN_DEPTH = 7;

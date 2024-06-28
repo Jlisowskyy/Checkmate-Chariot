@@ -20,7 +20,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_definitions(TEST_TT=1)
 
 # Uncomment to add displaying debug info about aspiration window
-add_compile_definitions(TEST_ASP_WIN=1)
+#add_compile_definitions(TEST_ASP_WIN=1)
 
 # Uncomment to allow usage of aspiration windows inside the search
 add_compile_definitions(USE_ASP_WIN=1)
