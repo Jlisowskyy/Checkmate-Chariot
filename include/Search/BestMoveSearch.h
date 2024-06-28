@@ -44,6 +44,7 @@
  * When referring to ply search tree, it grows from top to bottom.
  * */
 
+class MoveGenerator;
 class BestMoveSearch
 {
     // ------------------------------
@@ -64,7 +65,6 @@ class BestMoveSearch
     struct PV
     {
         PV() = default;
-        explicit PV(const int depth) : _depth(depth) {}
 
         /*
          * Inserts the given move 'mv' as af first in the array and then pastes the rest of the other PV path 'pv',
@@ -74,23 +74,15 @@ class BestMoveSearch
         INLINE void InsertNext(const PackedMove mv, const PV &pv)
         {
             _path[0] = mv;
-            memcpy(_path + 1, pv._path, (_depth - 1) * sizeof(PackedMove));
-        }
-
-        INLINE void SetDepth(const int depth) { _depth = depth; }
-
-        /* Set a new depth and clears the path on that depth range */
-        INLINE void Clear(const int nDepth)
-        {
-            SetDepth(nDepth);
-            memset(_path, 0, _depth * sizeof(PackedMove));
+            memcpy(_path + 1, pv._path, pv._depth * sizeof(PackedMove));
+            _depth = 1 + pv._depth;
         }
 
         /* Clones the path from the given PV*/
         INLINE void Clone(const PV &pv)
         {
             _depth = pv._depth;
-            memcpy(_path, pv._path, (_depth) * sizeof(PackedMove));
+            memcpy(_path, pv._path, pv._depth * sizeof(PackedMove));
         }
 
         /* Prints the path to the Logger */
@@ -99,7 +91,7 @@ class BestMoveSearch
             std::string buff{};
 
             if (!isDraw)
-                // when no draw was detected we expect null moves to be printed to simplify debuging
+                // when no draw was detected we expect null moves to be printed to simplify debugging
                 for (int i = 0; i < _depth; ++i) buff += _path[i].GetLongAlgebraicNotation() + ' ';
             else
                 // We do not allow null moves when there was some draw detected
@@ -109,8 +101,10 @@ class BestMoveSearch
             GlobalLogger.LogStream << buff;
         }
 
+        [[nodiscard]] INLINE bool Contains(int ply) const { return ply < _depth; }
+
         /* Debug function to check internal state of the PV */
-        INLINE [[nodiscard]] bool IsFilled() const
+        [[nodiscard]] INLINE bool IsFilled() const
         {
             for (int i = 0; i < _depth; ++i)
                 if (_path[i].IsEmpty())
@@ -119,19 +113,12 @@ class BestMoveSearch
             return true;
         }
 
-        /* Returns the move on the given depth, with respect to given 'rootDepth' where depth is same as in search
-         * function */
-        INLINE PackedMove operator()(const int depthLeft, const int rootDepth) const
-        {
-            return _path[rootDepth - depthLeft];
-        }
-
         /* returns the move */
         INLINE PackedMove operator[](const int ply) const { return _path[ply]; }
 
         private:
         PackedMove _path[MAX_SEARCH_DEPTH + 1]{};
-        int _depth{1};
+        int _depth{};
     };
 
     enum class SearchType
@@ -186,23 +173,24 @@ class BestMoveSearch
     // ALPHA - minimum score of maximizing player
     // BETA - maximum score of minimizing player
 
-    template <SearchType searchType>
-    int _search(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);
+    template <SearchType searchType, bool followPv>
+    int _search(
+        int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv, PackedMove *bestMoveOut
+    );
 
-    template <SearchType searchType> int _qSearch(Board &bd, int alpha, int beta, uint64_t zHash, int extendedDepth);
-
-    [[nodiscard]] int
-    _pwsSearch(Board &bd, int alpha, int beta, int depthLeft, uint64_t zHash, Move prevMove, PV &pv, bool followPv);
+    template <SearchType searchType> int _qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth);
 
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
     static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);
 
-    void INLINE _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth)
+    INLINE void _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth, const int ply)
     {
-        _kTable.SaveKillerMove(mv, depth);
+        _kTable.SaveKillerMove(mv, ply);
         _cmTable.SaveCounterMove(mv.GetPackedMove(), prevMove);
         _histTable.SetBonusMove(mv, depth);
     }
+
+    int _deduceExtensions(Move prevMove, Move actMove, int seeValue, bool isPv);
 
     // ------------------------------
     // Class fields
@@ -214,10 +202,12 @@ class BestMoveSearch
     PV _dummyPv{};
     uint64_t _visitedNodes = 0;
     uint64_t _cutoffNodes  = 0;
-    int _currRootDepth     = 0;
     KillerTable _kTable{};
     CounterMoveTable _cmTable{};
     HistoricTable _histTable{};
+    int _maxPlyReached{};
+    int _rootDepth{};
+    PackedMove _excludedMove{};
 };
 
 #endif // BESTMOVESEARCH_H

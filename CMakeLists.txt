@@ -23,7 +23,10 @@ add_compile_definitions(TEST_TT=1)
 add_compile_definitions(TEST_ASP_WIN=1)
 
 # Uncomment to allow usage of aspiration windows inside the search
-#add_compile_definitions(USE_ASP_WIN=1)
+add_compile_definitions(USE_ASP_WIN=1)
+
+# Uncomment to allow tracing every extension applied
+add_compile_definitions(TRACE_EXTENSIONS=1)
 
 ################################################################################
 #                     Inspecting platform capabilities                         #
@@ -120,7 +123,6 @@ set(CHECKMATE_CHARIOT_SOURCES
         src/FancyMagicRookMap.cpp
         src/FancyMagicBishopMap.cpp
         src/Move.cpp
-        src/KillerTable.cpp
         src/MapCorrectnessTest.cpp
         src/MapPerformanceTest.cpp
         include/Evaluation/KingSafetyEval.h

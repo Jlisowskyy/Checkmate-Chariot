@@ -17,11 +17,32 @@ static constexpr size_t DEFAULT_STACK_SIZE = 32 * MB / sizeof(uint64_t);
 /* Defines maximal depth of search allowed across the project */
 static constexpr int MAX_SEARCH_DEPTH = 128;
 
+/* Defines granularity of score returned by the static evaluation function */
+static constexpr int SCORE_GRAIN = 4;
+
 static constexpr uint64_t MSEC_TO_NSEC = 1000 * 1000;
 
 static constexpr int16_t DRAW_SCORE         = 0;
 static constexpr int16_t SPECIAL_DRAW_SCORE = 0;
 
+// ------------------------- EXTENSIONS ------------------------------
+static constexpr int FULL_DEPTH_FACTOR                    = 4;
+static constexpr int ONE_REPLY_EXTENSION_PV_NODE          = FULL_DEPTH_FACTOR;
+static constexpr int ONE_REPLY_EXTENSION                  = FULL_DEPTH_FACTOR / 2;
+static constexpr int CHECK_EXTENSION_PV_NODE              = FULL_DEPTH_FACTOR;
+static constexpr int CHECK_EXTENSION                      = FULL_DEPTH_FACTOR / 2;
+static constexpr int PV_EXTENSION                         = FULL_DEPTH_FACTOR / 2;
+static constexpr int EVEN_EXCHANGE_EXTENSION_PV_NODE      = FULL_DEPTH_FACTOR;
+static constexpr int EVEN_EXCHANGE_EXTENSION              = FULL_DEPTH_FACTOR / 2;
+static constexpr int SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT = 3;
+static constexpr int SINGULAR_EXTENSION_MIN_DEPTH         = 4;
+static constexpr int SINGULAR_EXTENSION                   = FULL_DEPTH_FACTOR;
+static constexpr int SINGULAR_EXTENSION_DEPTH_MARGIN      = 4;
+
+// limits maximal extensions inside the search tree to not overdo
+constexpr bool ShouldExtend(const int ply, const int rootDepth) { return ply < rootDepth + 4; }
+
+// -------------------- RESERVED VALUES -------------------------------
 static constexpr int RESERVED_SCORE_VALUES           = 64;
 static constexpr int TIME_STOP_RESERVED_VALUE        = std::numeric_limits<int16_t>::max() - 1;
 static constexpr int NO_EVAL_RESERVED_VALUE          = std::numeric_limits<int16_t>::max() - 2;
@@ -34,21 +55,21 @@ static constexpr uint16_t QUIESENCE_AGE_DIFF_REPLACE = 16;
 static constexpr uint16_t DEFAULT_AGE_DIFF_REPLACE   = 10;
 
 // average pawn value + some part of average pawn
-static constexpr int DELTA_PRUNNING_SAFETY_MARGIN = 115 + 115 / 6;
+static constexpr int DELTA_PRUNING_SAFETY_MARGIN = (115 + 115) / SCORE_GRAIN;
 // average queen value - average pawn value
-static constexpr int DELTA_PRUNNING_PROMO = 1000 - 115;
+static constexpr int DELTA_PRUNING_PROMO = (1000 - 115) / SCORE_GRAIN;
 
 // value below which SEE capture is considered bad
-static constexpr int SEE_GOOD_MOVE_BOUNDARY = 115 / 2;
+static constexpr int SEE_GOOD_MOVE_BOUNDARY = -(115 / 2) / SCORE_GRAIN;
 
 // value of phase below game is considering to be an end-game
 static constexpr int END_GAME_PHASE = 64;
 
 /* Depth from which Internal Iterative Deepening (IID) is used */
-static constexpr int IID_MIN_DEPTH = 6;
+static constexpr int IID_MIN_DEPTH_PLY_DEPTH = 3;
 
 /* Ply reduction for IID case*/
-static constexpr int IID_REDUCTION = 2;
+static constexpr int IID_REDUCTION = 2 * FULL_DEPTH_FACTOR;
 
 /* Minimal depth from which Aspiration Windows are used*/
 static constexpr int ASP_WND_MIN_DEPTH = 7;
@@ -159,6 +180,20 @@ static constexpr bool TestAsp = false;
 #endif // TEST_ASP_WIN
 
 //---------------------------
+
+// --------------------------
+// Trace extension changes
+
+#ifdef TRACE_EXTENSIONS
+
+static constexpr bool TraceExtensions = true;
+
+#else
+
+static constexpr bool TraceExtensions = false;
+
+#endif // TRACE_EXTENSIONS
+// --------------------------
 
 // ssize_t is defined by POSIX. Such define allows to use it on posix+windows
 using signed_size_t = std::make_signed<size_t>::type;

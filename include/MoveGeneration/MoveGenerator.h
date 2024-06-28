@@ -36,10 +36,10 @@ struct MoveGenerator : ChessMechanics
 
     explicit MoveGenerator(
         const Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
-        const PackedMove counterMove = {}, const int depthLeft = 0, const int mostRecentMovedSquare = 0
+        const PackedMove counterMove = {}, const int ply = 0, const int mostRecentMovedSquare = 0
     )
-        : ChessMechanics(bd), _threadStack(s), _counterMove(counterMove), _kTable(kt), _hTable(ht),
-          _depthLeft(depthLeft), _mostRecentSq(mostRecentMovedSquare)
+        : ChessMechanics(bd), _threadStack(s), _counterMove(counterMove), _kTable(kt), _hTable(ht), _ply(ply),
+          _mostRecentSq(mostRecentMovedSquare)
     {
     }
 
@@ -66,6 +66,41 @@ struct MoveGenerator : ChessMechanics
     // ------------------------------
 
     private:
+    template <class MapT>
+    [[nodiscard]] INLINE bool _isGivingCheck(const int msbPos, const uint64_t fullMap, const int enemyColor) const
+    {
+        const uint64_t enemyKing = _board.BitBoards[enemyColor * Board::BitBoardsPerCol + kingIndex];
+        const uint64_t moves     = MapT::GetMoves(msbPos, fullMap, 0);
+
+        return (enemyKing & moves) != 0;
+    }
+
+    template <class MapT> [[nodiscard]] INLINE bool _isPawnGivingCheck(const uint64_t pawnBitMap) const
+    {
+        const int enemyColor     = SwapColor(MapT::GetColor());
+        const uint64_t enemyKing = _board.BitBoards[enemyColor * Board::BitBoardsPerCol + kingIndex];
+        const uint64_t moves     = MapT::GetAttackFields(pawnBitMap);
+
+        return (enemyKing & moves) != 0;
+    }
+
+    template <class MapT>
+    [[nodiscard]] INLINE bool
+    _isPromotingPawnGivingCheck(const int msbPos, const uint64_t fullMap, const int targetBitBoardIndex) const
+    {
+        static constexpr uint64_t (*moveGenerators[])(int, uint64_t, uint64_t){
+            nullptr, KnightMap::GetMoves, BishopMap::GetMoves, RookMap::GetMoves, QueenMap::GetMoves,
+        };
+
+        const int color          = MapT::GetColor();
+        const int enemyColor     = SwapColor(color);
+        const uint64_t enemyKing = _board.BitBoards[enemyColor * Board::BitBoardsPerCol + kingIndex];
+        auto func                = moveGenerators[targetBitBoardIndex - color * Board::BitBoardsPerCol];
+        const uint64_t moves     = func(msbPos, fullMap, 0);
+
+        return (enemyKing & moves) != 0;
+    }
+
     template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval>
     void _noCheckGen(payload &results, uint64_t fullMap, uint64_t blockedFigMap);
 
@@ -100,16 +135,17 @@ struct MoveGenerator : ChessMechanics
 
     // TODO: improve readability of code below
     template <
-        bool ApplyHeuristicEval, bool promotePawns, uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr>
+        class MapT, bool ApplyHeuristicEval, bool promotePawns,
+        uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr>
     void _processNonAttackingMoves(
         payload &results, uint64_t pawnAttacks, uint64_t nonAttackingMoves, size_t figBoardIndex, uint64_t startField,
-        std::bitset<Board::CastlingCount + 1> castlings
+        std::bitset<Board::CastlingCount + 1> castlings, uint64_t fullMap
     ) const;
 
-    template <bool ApplyHeuristicEval, bool promotePawns>
+    template <class MapT, bool ApplyHeuristicEval, bool promotePawns>
     void _processAttackingMoves(
         payload &results, uint64_t pawnAttacks, uint64_t attackingMoves, size_t figBoardIndex, uint64_t startField,
-        std::bitset<Board::CastlingCount + 1> castlings
+        std::bitset<Board::CastlingCount + 1> castlings, uint64_t fullMap
     ) const;
 
     // TODO: test copying all old castlings
@@ -136,7 +172,7 @@ struct MoveGenerator : ChessMechanics
     const PackedMove _counterMove;
     const KillerTable &_kTable;
     const HistoricTable &_hTable;
-    int _depthLeft;
+    int _ply;
     int _mostRecentSq;
 };
 
@@ -390,6 +426,9 @@ void MoveGenerator::_processElPassantMoves(
         mv.SetCasltingRights(_board.Castlings);
         mv.SetMoveType(PackedMove::CaptureFlag);
 
+        if (_isPawnGivingCheck<MapT>(moveMap))
+            mv.SetCheckType();
+
         // preparing heuristic evaluation
 
         if constexpr (ApplyHeuristicEval)
@@ -457,13 +496,14 @@ void MoveGenerator::_processFigMoves(
         // processing move consequences
 
         if constexpr (!GenOnlyAttackMoves)
-            _processNonAttackingMoves<ApplyHeuristicEval, promotePawns, elPassantFieldDeducer>(
+            _processNonAttackingMoves<MapT, ApplyHeuristicEval, promotePawns, elPassantFieldDeducer>(
                 results, pawnAttacks, nonAttackingMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard,
-                updatedCastlings
+                updatedCastlings, fullMap
             );
 
-        _processAttackingMoves<ApplyHeuristicEval, promotePawns>(
-            results, pawnAttacks, attackMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard, updatedCastlings
+        _processAttackingMoves<MapT, ApplyHeuristicEval, promotePawns>(
+            results, pawnAttacks, attackMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard, updatedCastlings,
+            fullMap
         );
 
         unpinnedOnes ^= figBoard;
@@ -492,24 +532,25 @@ void MoveGenerator::_processFigMoves(
         // processing move consequences
 
         if constexpr (!GenOnlyAttackMoves)
-            _processNonAttackingMoves<ApplyHeuristicEval, promotePawns, elPassantFieldDeducer>(
+            _processNonAttackingMoves<MapT, ApplyHeuristicEval, promotePawns, elPassantFieldDeducer>(
                 results, pawnAttacks, nonAttackingMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard,
-                _board.Castlings
+                _board.Castlings, fullMap
             );
 
         // TODO: There is exactly one move possible
-        _processAttackingMoves<ApplyHeuristicEval, promotePawns>(
-            results, pawnAttacks, attackMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard, _board.Castlings
+        _processAttackingMoves<MapT, ApplyHeuristicEval, promotePawns>(
+            results, pawnAttacks, attackMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard, _board.Castlings,
+            fullMap
         );
 
         pinnedOnes ^= figBoard;
     }
 }
 
-template <bool ApplyHeuristicEval, bool promotePawns, uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t)>
+template <class MapT, bool ApplyHeuristicEval, bool promotePawns, uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t)>
 void MoveGenerator::_processNonAttackingMoves(
     payload &results, const uint64_t pawnAttacks, uint64_t nonAttackingMoves, const size_t figBoardIndex,
-    const uint64_t startField, const std::bitset<Board::CastlingCount + 1> castlings
+    const uint64_t startField, const std::bitset<Board::CastlingCount + 1> castlings, const uint64_t fullMap
 ) const
 {
     TraceIfFalse(figBoardIndex < Board::BitBoardsCount, "Invalid figure board index!");
@@ -532,6 +573,11 @@ void MoveGenerator::_processNonAttackingMoves(
             mv.SetTargetBoardIndex(figBoardIndex);
             mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
 
+            if ((figBoardIndex == wPawnsIndex && _isPawnGivingCheck<WhitePawnMap>(moveBoard)) ||
+                (figBoardIndex == bPawnsIndex && _isPawnGivingCheck<BlackPawnMap>(moveBoard)) ||
+                _isGivingCheck<MapT>(movePos, fullMap, SwapColor(figBoardIndex > wKingIndex)))
+                mv.SetCheckType();
+
             // if el passant line is passed when a figure moved to these line flags will turn on
             if constexpr (elPassantFieldDeducer != nullptr)
             {
@@ -550,7 +596,7 @@ void MoveGenerator::_processNonAttackingMoves(
             if constexpr (ApplyHeuristicEval)
             {
                 int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
-                eval         = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _depthLeft);
+                eval         = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _ply);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
                 mv.SetEval(static_cast<int16_t>(eval));
@@ -578,6 +624,9 @@ void MoveGenerator::_processNonAttackingMoves(
                 mv.SetCasltingRights(castlings);
                 mv.SetMoveType(PackedMove::PromoFlag | PromoFlags[i]);
 
+                if (_isPromotingPawnGivingCheck<MapT>(movePos, fullMap, TargetBoard))
+                    mv.SetCheckType();
+
                 // preparing heuristic eval info
                 if constexpr (ApplyHeuristicEval)
                 {
@@ -594,10 +643,10 @@ void MoveGenerator::_processNonAttackingMoves(
     }
 }
 
-template <bool ApplyHeuristicEval, bool promotePawns>
+template <class MapT, bool ApplyHeuristicEval, bool promotePawns>
 void MoveGenerator::_processAttackingMoves(
     payload &results, const uint64_t pawnAttacks, uint64_t attackingMoves, const size_t figBoardIndex,
-    const uint64_t startField, const std::bitset<Board::CastlingCount + 1> castlings
+    const uint64_t startField, const std::bitset<Board::CastlingCount + 1> castlings, const uint64_t fullMap
 ) const
 {
     TraceIfFalse(figBoardIndex < Board::BitBoardsCount, "Invalid figure board index!");
@@ -624,6 +673,11 @@ void MoveGenerator::_processAttackingMoves(
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(castlings);
             mv.SetMoveType(PackedMove::CaptureFlag);
+
+            if ((figBoardIndex == wPawnsIndex && _isPawnGivingCheck<WhitePawnMap>(moveBoard)) ||
+                (figBoardIndex == bPawnsIndex && _isPawnGivingCheck<BlackPawnMap>(moveBoard)) ||
+                _isGivingCheck<MapT>(movePos, fullMap, SwapColor(figBoardIndex > wKingIndex)))
+                mv.SetCheckType();
 
             // preparing heuristic eval info
             if constexpr (ApplyHeuristicEval)
@@ -656,6 +710,9 @@ void MoveGenerator::_processAttackingMoves(
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
                 mv.SetMoveType(PackedMove::CaptureFlag | PackedMove::PromoFlag | PromoFlags[i]);
+
+                if (_isPromotingPawnGivingCheck<MapT>(movePos, fullMap, targetBoard))
+                    mv.SetCheckType();
 
                 // preparing heuristic eval info
 
@@ -717,10 +774,9 @@ void MoveGenerator::_processPlainKingMoves(
             mv.SetCasltingRights(castlings);
 
             // preparing heuristic eval info
-
             if constexpr (ApplyHeuristicEval)
             {
-                int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _ply);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
                 mv.SetEval(static_cast<int16_t>(eval));
@@ -804,7 +860,7 @@ void MoveGenerator::_processKingCastlings(payload &results, const uint64_t block
 
             if constexpr (ApplyHeuristicEval)
             {
-                int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _depthLeft);
+                int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _ply);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
                 mv.SetEval(static_cast<int16_t>(eval));

@@ -80,6 +80,6 @@ TEST(ChessMechTests, SEE1)
         ChessMechanics mech{bd};
         const Move mv = GetMoveDebug(bd, moves[i]);
 
-        EXPECT_EQ(mech.SEE(mv), scores[i]);
+        EXPECT_EQ(mech.SEE(mv), scores[i] / SCORE_GRAIN);
     }
 }
