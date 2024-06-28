@@ -323,6 +323,7 @@ int BestMoveSearch::_search(
     PackedMove bestMove{};
     int bestEval = NEGATIVE_INFINITY;
     PV inPV{};
+    int moveCount{};
 
     // processing each move
     for (size_t i = 0; i < moves.size; ++i)
@@ -392,7 +393,7 @@ int BestMoveSearch::_search(
             continue;
 
         int extensions{};
-        int seeValue = NEGATIVE_INFINITY;
+        int SEEValue = NEGATIVE_INFINITY;
 
         // ---------------------------- pruning -----------------------------------
         // we should avoid pruning when returning a mate score is possible
@@ -401,9 +402,9 @@ int BestMoveSearch::_search(
             // consider pruning of checks and captures with bad enough SEE value
             if (moves[i].IsAttackingMove() || moves[i].IsChecking())
             {
-                seeValue = mechanics.SEE(moves[i]);
+                SEEValue = mechanics.SEE(moves[i]);
 
-                if (seeValue < (2 * SEE_GOOD_MOVE_BOUNDARY * plyDepth))
+                if (SEEValue < (2 * SEE_GOOD_MOVE_BOUNDARY * plyDepth))
                     continue;
             }
         }
@@ -445,29 +446,68 @@ int BestMoveSearch::_search(
             }
 
             // simple extensions deduction
-            extensions += _deduceExtensions(prevMove, moves[i], seeValue, IsPvNode);
+            extensions += _deduceExtensions(prevMove, moves[i], SEEValue, IsPvNode);
         }
 
-        int Reductions{};
-        // -------------------------- Reductions --------------------------------
+        // apply the moves changes to the board:
+        zHash        = ProcessMove(_board, moves[i], ply, zHash, _kTable, oldData);
+        ++moveCount;
+
+        int reductions{};
+        // -------------------------- reductions --------------------------------
         // determine whether we should spend more time in this node
 
-        // Late Move Reductions (LMR)
-        if constexpr (!IsPvNode)
-            if (!_board.IsCheck)
-            {
-                
-            }
+        // Simplified LMR
+        reductions = CalcReductions(plyDepth, moveCount, beta - alpha);
+
+        // Decrease reductions for nodes which was on previous PV
+        if constexpr (followPv)
+            reductions -= FULL_DEPTH_FACTOR;
+
+        if constexpr (IsPvNode)
+            reductions -= FULL_DEPTH_FACTOR;
+
+        if (_kTable.IsKillerMove(moves[i], ply))
+            reductions -= FULL_DEPTH_FACTOR;
+
+        if (moves[i].IsAttackingMove() || moves[i].GetPackedMove().IsPromo())
+        {
+            if (SEEValue == NEGATIVE_INFINITY) SEEValue = mech.SEE(moves[i]);
+
+            if (SEEValue > 0)
+                reductions -= FULL_DEPTH_FACTOR;
+        }
+
+        if (moves[i].IsChecking())
+            reductions -= FULL_DEPTH_FACTOR;
 
         // stores the most recent return value of child trees,
         // alpha + 1 value enforces the second if trigger in first iteration in case of pv nodes
         int moveEval = alpha + 1;
-        zHash        = ProcessMove(_board, moves[i], ply, zHash, _kTable, oldData);
 
+        // Late Move reductions
+        if (reductions > 0 && depthLeft >= LMR_MIN_DEPTH && i != 0)
+        {
+            const int LMRDepth = depthLeft + extensions - reductions - FULL_DEPTH_FACTOR;
+
+            moveEval = -_search<SearchType::NoPVSearch, false>(
+                    -(alpha + 1), -alpha, LMRDepth, ply + 1, zHash, moves[i], _dummyPv,
+                    nullptr
+            );
+
+            // Perform research when move failed high
+            if (moveEval > alpha)
+            {
+                moveEval = -_search<SearchType::NoPVSearch, false>(
+                        -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR + extensions, ply + 1, zHash, moves[i], _dummyPv,
+                        nullptr
+                );
+            }
+        }
         // In pv nodes we always search first move on full window due to assumption that TT will give
         // us best move that is possible.
         // In case of non pv nodes we only search with zw
-        if (!IsPvNode || i != 0)
+        else if (!IsPvNode || i != 0)
         {
             moveEval = -_search<SearchType::NoPVSearch, false>(
                 -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR + extensions, ply + 1, zHash, moves[i], _dummyPv,

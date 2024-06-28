@@ -7,6 +7,7 @@
 
 #include <cinttypes>
 #include <numeric>
+#include <cmath>
 
 using lli                  = long long int;
 static constexpr size_t MB = 1024 * 1024;
@@ -39,8 +40,17 @@ static constexpr int SINGULAR_EXTENSION_MIN_DEPTH         = 4;
 static constexpr int SINGULAR_EXTENSION                   = FULL_DEPTH_FACTOR;
 static constexpr int SINGULAR_EXTENSION_DEPTH_MARGIN      = 4;
 
+// ------------------------------ REDUCTIONS --------------------------------------
+static constexpr int LMR_MIN_DEPTH = 3 * FULL_DEPTH_FACTOR;
+
 // limits maximal extensions inside the search tree to not overdo
 constexpr bool ShouldExtend(const int ply, const int rootDepth) { return ply < rootDepth + 4; }
+
+constexpr int CalcReductions(const int depth, const int moveCount, const int scoreDelta)
+{
+    const int reductionBase = int(std::sqrt(double(depth - 1)) + std::sqrt(double(moveCount - 1)));
+    return (scoreDelta == 1 ? 2 * reductionBase / 3 : reductionBase) * FULL_DEPTH_FACTOR;
+}
 
 // -------------------- RESERVED VALUES -------------------------------
 static constexpr int RESERVED_SCORE_VALUES           = 64;
