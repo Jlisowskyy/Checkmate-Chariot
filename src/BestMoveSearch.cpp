@@ -268,7 +268,7 @@ int BestMoveSearch::_search(
         return DRAW_SCORE;
 
     // reading Transposition table for the best move
-    const auto prevSearchRes = TTable.GetRecord(zHash);
+    auto& prevSearchRes = TTable.GetRecord(zHash);
 
     // check whether hashes are same
     bool wasTTHit = prevSearchRes.IsSameHash(zHash);
@@ -293,15 +293,50 @@ int BestMoveSearch::_search(
                 return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(ply);
         }
 
-    // generate moves
     MoveGenerator mechanics(
-        _board, _stack, _histTable, _kTable, _cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField()
+            _board, _stack, _histTable, _kTable, _cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField()
     );
+    int statEval{};
+    const bool isCheck = _board.IsCheck || mechanics.IsCheck();
+
+
+    if (isCheck)
+    // Do not evaluate statically position when in check
+        statEval = NO_EVAL_RESERVED_VALUE;
+    // Try to read static evaluation from the TT
+    else if (wasTTHit)
+    {
+        if (prevSearchRes.GetStatVal() != NO_EVAL_RESERVED_VALUE)
+            statEval = prevSearchRes.GetStatVal();
+        else
+        {
+            statEval = BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor);
+
+            // Additionally save the result to the table for later usage
+            prevSearchRes.SetStatVal(statEval);
+        }
+    }
+    else
+        statEval = BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor);
+
+    // ----------------------------------- RAZORING -------------------------------------------------
+    if constexpr (!IsPvNode && ENABLE_RAZORING)
+        if (!isCheck)
+        {
+            if (plyDepth <= RAZORING_DEPTH && statEval + RAZORING_MARGIN < beta)
+            {
+                const int qValue = _qSearch<SearchType::NoPVSearch>(alpha, beta, ply, zHash, 0);
+                if (qValue < beta)
+                    return qValue;
+            }
+        }
+
+    // generate moves
     auto moves = mechanics.GetMovesFast();
 
     // If no move is possible: check whether we hit mate or stalemate
     if (moves.size == 0)
-        return (_board.IsCheck || mechanics.IsCheck()) ? GetMateValue(ply) : DRAW_SCORE;
+        return isCheck ? GetMateValue(ply) : DRAW_SCORE;
 
     // Extends paths where we have only one move possible
     // TODO: consider do it other way to detect it also on leafs
@@ -352,6 +387,7 @@ int BestMoveSearch::_search(
                 // IMPORTANT NOTE:
                 // We should avoid using IID when we exclude some move due to increased possibility of TT miss
                 if (_excludedMove.IsEmpty()
+                    && IsPvNode
                     && (!wasTTHit
                     || (wasTTHit && (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetDepth() == 0)))
                     && plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
@@ -561,7 +597,7 @@ int BestMoveSearch::_search(
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
         const TranspositionTable::HashRecord record{
-            zHash,    bestMove, bestEval,   wasTTHit ? prevSearchRes.GetStatVal() : NO_EVAL_RESERVED_VALUE,
+            zHash,    bestMove, bestEval,   statEval,
             plyDepth, nType,    _board.Age, ply
         };
 

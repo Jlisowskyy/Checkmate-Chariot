@@ -38,7 +38,7 @@ static constexpr int EVEN_EXCHANGE_EXTENSION              = FULL_DEPTH_FACTOR / 
 static constexpr int SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT = 3;
 static constexpr int SINGULAR_EXTENSION_MIN_DEPTH         = 4;
 static constexpr int SINGULAR_EXTENSION                   = FULL_DEPTH_FACTOR;
-static constexpr int SINGULAR_EXTENSION_DEPTH_MARGIN      = 4;
+static constexpr int SINGULAR_EXTENSION_DEPTH_MARGIN      = 16 / SCORE_GRAIN;
 
 // ------------------------------ REDUCTIONS --------------------------------------
 static constexpr int LMR_MIN_DEPTH = 3 * FULL_DEPTH_FACTOR;
@@ -54,6 +54,11 @@ constexpr int CalcReductions(const int depth, const int moveCount, const int sco
             int(SCALE_COEF * std::sqrt(double(depth - 1)) * std::sqrt(double(moveCount - 1))) /  1024;
     return (scoreDelta == 1 ? 2 * reductionBase / 3 : reductionBase) * FULL_DEPTH_FACTOR;
 }
+
+static constexpr bool ENABLE_RAZORING = false;
+static constexpr int RAZORING_DEPTH = 3;
+// queen killed + promoted + rook killed + safety margin
+static constexpr int RAZORING_MARGIN = (900 + (900 - 100) + 500 + 100) / SCORE_GRAIN;
 
 // -------------------- RESERVED VALUES -------------------------------
 static constexpr int RESERVED_SCORE_VALUES           = 64;
