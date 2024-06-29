@@ -48,10 +48,10 @@ constexpr bool ShouldExtend(const int ply, const int rootDepth) { return ply < 2
 
 constexpr int CalcReductions(const int depth, const int moveCount, const int scoreDelta)
 {
-    // formula from: https://www.chessprogramming.org/Late_Move_Reductions
-    // TODO: deduce own formula and optimize
+    constexpr double SCALE_COEF = 400;
 
-    const int reductionBase = int(std::sqrt(double(depth - 1)) + std::sqrt(double(moveCount - 1)));
+    const int reductionBase =
+            int(SCALE_COEF * std::sqrt(double(depth - 1)) * std::sqrt(double(moveCount - 1))) /  1024;
     return (scoreDelta == 1 ? 2 * reductionBase / 3 : reductionBase) * FULL_DEPTH_FACTOR;
 }
 
