@@ -50,7 +50,6 @@ ProcessAttackMove(Board &bd, const Move mv, const uint64_t hash, const VolatileB
     const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
     TTable.Prefetch(nextHash);
     Move::MakeMove(mv, bd);
-    table.ClearPlyFloor(actualPly + 1);
     bd.Repetitions[nextHash]++;
 
     return nextHash;
@@ -455,6 +454,7 @@ int BestMoveSearch::_search(
 
                 // NOTE: due to single excluded move no recursive singular searched are allowed
                 _excludedMove           = prevSearchRes.GetMove();
+                _kTable.ClearPlyFloor(ply + 1);
                 const int singularValue = _search<SearchType::NoPVSearch, false>(
                     singularBeta - 1, singularBeta, singularDepth, ply, zHash, prevMove, _dummyPv, nullptr
                 );
@@ -513,10 +513,12 @@ int BestMoveSearch::_search(
         int moveEval = alpha + 1;
 
         // Late Move reductions
-        if (reductions > 0 && depthLeft >= LMR_MIN_DEPTH && i != 0)
+        // i > 1 - we want to be sure to explore move from TT and best move accordingly to sorting
+        if (reductions > 0 && depthLeft >= LMR_MIN_DEPTH && i > 1)
         {
             const int LMRDepth = depthLeft + extensions - reductions - FULL_DEPTH_FACTOR;
 
+            _kTable.ClearPlyFloor(ply + 1);
             moveEval = -_search<SearchType::NoPVSearch, false>(
                     -(alpha + 1), -alpha, LMRDepth, ply + 1, zHash, moves[i], _dummyPv,
                     nullptr
@@ -537,6 +539,7 @@ int BestMoveSearch::_search(
         // In case of non pv nodes we only search with zw
         else if (!IsPvNode || i != 0)
         {
+            _kTable.ClearPlyFloor(ply + 1);
             moveEval = -_search<SearchType::NoPVSearch, false>(
                 -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR + extensions, ply + 1, zHash, moves[i], _dummyPv,
                 nullptr

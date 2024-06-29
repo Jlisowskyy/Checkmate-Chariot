@@ -55,7 +55,7 @@ constexpr int CalcReductions(const int depth, const int moveCount, const int sco
     return (scoreDelta == 1 ? 2 * reductionBase / 3 : reductionBase) * FULL_DEPTH_FACTOR;
 }
 
-static constexpr bool ENABLE_RAZORING = false;
+static constexpr bool ENABLE_RAZORING = true;
 static constexpr int RAZORING_DEPTH = 3;
 // queen killed + promoted + rook killed + safety margin
 static constexpr int RAZORING_MARGIN = (900 + (900 - 100) + 500 + 100) / SCORE_GRAIN;

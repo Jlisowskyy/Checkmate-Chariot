@@ -19,7 +19,7 @@
 class KillerTable
 {
     // Controls how many moves per ply can be saved
-    static constexpr size_t MovesPerPly = 3;
+    static constexpr size_t MovesPerPly = 2;
 
     public:
     // ------------------------------
