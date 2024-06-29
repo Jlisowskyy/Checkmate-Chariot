@@ -300,6 +300,7 @@ int BestMoveSearch::_search(
     );
     auto moves = mechanics.GetMovesFast();
 
+    TraceIfFalse(mechanics.IsCheck() == _board.IsCheck, "Got invalid check state inside board!");
     // If no move is possible: check whether we hit mate or stalemate
     if (moves.size == 0)
         return _board.IsCheck ? GetMateValue(ply) : DRAW_SCORE;
@@ -357,20 +358,15 @@ int BestMoveSearch::_search(
                     || (wasTTHit && (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetDepth() == 0)))
                     && plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
                 {
-                    const int IIDScore = _search<searchType, false>(
+                    _search<searchType, false>(
                         alpha, beta, depthLeft - IID_REDUCTION, ply, zHash, prevMove, pv, &prevBestMove
                     );
-                    TraceIfFalse(!prevBestMove.IsEmpty(), "IID returned null move!");
-
-                    // if the search failed low we should avoid the result
-                    if (IIDScore < alpha)
-                        prevBestMove = PackedMove{};
                 }
                 // if we have any move saved from last time we visited that node and the move is valid try to use it
                 // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always
                 // be empty
                 //       In other words we don't use best move from fail low nodes
-                else if (prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
+                else if (wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
                     prevBestMove = prevSearchRes.GetMove();
 
                 // try to pull found move to the front otherwise simply fetch move by heuristic eval
@@ -447,6 +443,7 @@ int BestMoveSearch::_search(
 
         // apply the moves changes to the board:
         zHash        = ProcessMove(_board, moves[i], ply, zHash, _kTable, oldData);
+        TTable.Prefetch(zHash);
         ++moveCount;
 
         int reductions{};
@@ -495,6 +492,7 @@ int BestMoveSearch::_search(
             // Perform research when move failed high
             if (moveEval > alpha)
             {
+                _kTable.ClearPlyFloor(ply + 1);
                 moveEval = -_search<SearchType::NoPVSearch, false>(
                         -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR + extensions, ply + 1, zHash, moves[i], _dummyPv,
                         nullptr
@@ -515,7 +513,6 @@ int BestMoveSearch::_search(
         // if not, research move only in case of pv nodes
         if (IsPvNode && alpha < moveEval)
         {
-            TTable.Prefetch(zHash);
             _kTable.ClearPlyFloor(ply + 1);
 
             // Research with full window
