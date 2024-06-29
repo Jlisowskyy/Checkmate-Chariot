@@ -300,7 +300,7 @@ class Move
     [[nodiscard]] bool IsChecking() const
     {
         static constexpr uint16_t CheckTypeBit = 1LLU << 15;
-        return _packedIndexes & CheckTypeBit;
+        return (_packedIndexes & CheckTypeBit) > 0;
     }
 
     void SetKilledFigureField(const uint16_t killedFigureField) { _packedMisc |= killedFigureField; }

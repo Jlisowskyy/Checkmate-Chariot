@@ -191,7 +191,8 @@ struct Board
     // ------------------------------
 
     int LastPhase = {}; // Field used to save previously calculated phase during evaluation
-    bool IsCheck{};
+    bool IsCheck{}; // Contains information whether made move is directly checking king, that means
+                    // checks from cover are not dertected here
 };
 
 #endif // BOARD_H

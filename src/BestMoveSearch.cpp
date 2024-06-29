@@ -15,8 +15,7 @@
 #include "../include/Search/ZobristHash.h"
 #include "../include/TestsAndDebugging/DebugTools.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
-
-using RepMap = std::unordered_map<uint64_t, int>;
+#include "../include/Interface/FenTranslator.h"
 
 #ifndef NDEBUG
 
@@ -300,10 +299,9 @@ int BestMoveSearch::_search(
     );
     auto moves = mechanics.GetMovesFast();
 
-    TraceIfFalse(mechanics.IsCheck() == _board.IsCheck, "Got invalid check state inside board!");
     // If no move is possible: check whether we hit mate or stalemate
     if (moves.size == 0)
-        return _board.IsCheck ? GetMateValue(ply) : DRAW_SCORE;
+        return (_board.IsCheck || mechanics.IsCheck()) ? GetMateValue(ply) : DRAW_SCORE;
 
     // Extends paths where we have only one move possible
     // TODO: consider do it other way to detect it also on leafs
@@ -443,7 +441,6 @@ int BestMoveSearch::_search(
 
         // apply the moves changes to the board:
         zHash        = ProcessMove(_board, moves[i], ply, zHash, _kTable, oldData);
-        TTable.Prefetch(zHash);
         ++moveCount;
 
         int reductions{};
@@ -609,12 +606,12 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     // We got a hit
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
 
-    // When we have a check we cannot use static evaluation at all due to possible dangers that may happen
-    // that means we should resolve most of the lines with checks
-    const bool isCheck = _board.IsCheck;
-
     // Avoid static evaluation when king is checked
     MoveGenerator mechanics(_board, _stack);
+
+    // When we have a check we cannot use static evaluation at all due to possible dangers that may happen
+    // that means we should resolve most of the lines with checks
+    const bool isCheck = _board.IsCheck || mechanics.IsCheck();
 
     if (!isCheck)
     {

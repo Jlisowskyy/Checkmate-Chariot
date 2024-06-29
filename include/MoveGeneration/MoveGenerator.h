@@ -573,9 +573,11 @@ void MoveGenerator::_processNonAttackingMoves(
             mv.SetTargetBoardIndex(figBoardIndex);
             mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
 
-            if ((figBoardIndex == wPawnsIndex && _isPawnGivingCheck<WhitePawnMap>(moveBoard)) ||
-                (figBoardIndex == bPawnsIndex && _isPawnGivingCheck<BlackPawnMap>(moveBoard)) ||
-                _isGivingCheck<MapT>(movePos, fullMap, SwapColor(figBoardIndex > wKingIndex)))
+            if (figBoardIndex == wPawnsIndex && _isPawnGivingCheck<WhitePawnMap>(moveBoard))
+                mv.SetCheckType();
+            else if (figBoardIndex == bPawnsIndex && _isPawnGivingCheck<BlackPawnMap>(moveBoard))
+                mv.SetCheckType();
+            else if (_isGivingCheck<MapT>(movePos, fullMap ^ startField, SwapColor(figBoardIndex > wKingIndex)))
                 mv.SetCheckType();
 
             // if el passant line is passed when a figure moved to these line flags will turn on
@@ -624,7 +626,7 @@ void MoveGenerator::_processNonAttackingMoves(
                 mv.SetCasltingRights(castlings);
                 mv.SetMoveType(PackedMove::PromoFlag | PromoFlags[i]);
 
-                if (_isPromotingPawnGivingCheck<MapT>(movePos, fullMap, TargetBoard))
+                if (_isPromotingPawnGivingCheck<MapT>(movePos, fullMap ^ startField, TargetBoard))
                     mv.SetCheckType();
 
                 // preparing heuristic eval info
@@ -674,9 +676,11 @@ void MoveGenerator::_processAttackingMoves(
             mv.SetCasltingRights(castlings);
             mv.SetMoveType(PackedMove::CaptureFlag);
 
-            if ((figBoardIndex == wPawnsIndex && _isPawnGivingCheck<WhitePawnMap>(moveBoard)) ||
-                (figBoardIndex == bPawnsIndex && _isPawnGivingCheck<BlackPawnMap>(moveBoard)) ||
-                _isGivingCheck<MapT>(movePos, fullMap, SwapColor(figBoardIndex > wKingIndex)))
+            if (figBoardIndex == wPawnsIndex && _isPawnGivingCheck<WhitePawnMap>(moveBoard))
+                mv.SetCheckType();
+            else if (figBoardIndex == bPawnsIndex && _isPawnGivingCheck<BlackPawnMap>(moveBoard))
+                mv.SetCheckType();
+            else if (_isGivingCheck<MapT>(movePos, fullMap ^ startField, SwapColor(figBoardIndex > wKingIndex)))
                 mv.SetCheckType();
 
             // preparing heuristic eval info
@@ -711,7 +715,7 @@ void MoveGenerator::_processAttackingMoves(
                 mv.SetCasltingRights(castlings);
                 mv.SetMoveType(PackedMove::CaptureFlag | PackedMove::PromoFlag | PromoFlags[i]);
 
-                if (_isPromotingPawnGivingCheck<MapT>(movePos, fullMap, targetBoard))
+                if (_isPromotingPawnGivingCheck<MapT>(movePos, fullMap ^ startField, targetBoard))
                     mv.SetCheckType();
 
                 // preparing heuristic eval info
