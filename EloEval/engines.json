@@ -1,9 +1,58 @@
 [
   {
-    "name": "",
-    "command": "",
-    "protocol": "",
+    "name": "saruman",
+    "command": "./ReferenceEngines/saruman",
+    "protocol": "uci",
     "initStrings": "",
-    "ponder": ""
+    "ponder": "true"
+  },
+  {
+    "name": "stockfish",
+    "command": "./ReferenceEngines/stockfish",
+    "protocol": "uci",
+    "initStrings": "",
+    "ponder": "true"
+  },
+  {
+    "name": "winter",
+    "command": "./ReferenceEngines/winter",
+    "protocol": "uci",
+    "initStrings": "",
+    "ponder": "true"
+  },
+  {
+    "name": "princhess",
+    "command": "./ReferenceEngines/princhess",
+    "protocol": "uci",
+    "initStrings": "",
+    "ponder": "true"
+  },
+  {
+    "name": "pingu",
+    "command": "./ReferenceEngines/pingu",
+    "protocol": "uci",
+    "initStrings": "",
+    "ponder": "true"
+  },
+  {
+    "name": "dumb",
+    "command": "./ReferenceEngines/dumb",
+    "protocol": "uci",
+    "initStrings": "",
+    "ponder": "true"
+  },
+  {
+    "name": "maxwell",
+    "command": "./ReferenceEngines/maxwell",
+    "protocol": "uci",
+    "initStrings": "",
+    "ponder": "false"
+  },
+  {
+    "name": "snowy",
+    "command": "./ReferenceEngines/snowy",
+    "protocol": "uci",
+    "initStrings": "",
+    "ponder": "false"
   }
 ]
