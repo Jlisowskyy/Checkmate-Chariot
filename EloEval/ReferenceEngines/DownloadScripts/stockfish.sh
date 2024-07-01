@@ -23,3 +23,4 @@ cp stockfish ../../.. || clean_up # DownloadScripts/Stockfish/src
 
 # clean up
 rm -rf "${REPO_DIR}"
+echo SUCCESS

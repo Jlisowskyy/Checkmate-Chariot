@@ -19,7 +19,8 @@ git checkout 3ac0a0ff0f6f11a456b2b9c987c3ca30fa98d029 || clean_up
 
 # Build
 make -j "${CORES}" || clean_up
-cp Winter ../..|| clean_up # DownloadScripts/Winter
+cp Winter ../../winter || clean_up # DownloadScripts/Winter
 
 # clean up
 rm -rf "${REPO_DIR}"
+echo SUCCESS

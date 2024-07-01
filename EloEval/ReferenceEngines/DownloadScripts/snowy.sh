@@ -19,7 +19,8 @@ git checkout b0aa777ca69ef3411d9fb531e591306dbfaf6a48 || clean_up
 
 # Build
 make -j "${CORES}"
-mv build/release ../.. # DownloadScripts/snowy
+mv build/release ../../snowy # DownloadScripts/snowy
 
 # clean up
 rm -rf "${REPO_DIR}"
+echo SUCCESS

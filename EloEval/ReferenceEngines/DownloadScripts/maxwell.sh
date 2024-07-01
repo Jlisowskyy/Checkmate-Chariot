@@ -22,3 +22,4 @@ cp target/release/maxwell ../.. || clean_up # DownloadScripts/Maxwell
 
 # clean up
 rm -rf "${REPO_DIR}"
+echo SUCCESS

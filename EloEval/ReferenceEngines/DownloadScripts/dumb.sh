@@ -10,8 +10,6 @@ clean_up(){
 }
 
 # Prepare
-
-sudo pacman -S --noconfirm gdc
 cd "${SCRIPT_DIR}" || clean_up
 
 # Prepare repository
@@ -26,3 +24,4 @@ cp dumb ../../.. || clean_up # DownloadScripts/dumb/src
 
 # clean up
 rm -rf "${REPO_DIR}"
+echo SUCCESS

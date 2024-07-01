@@ -22,3 +22,4 @@ cp target/release/princhess ../.. || clean_up # DownloadScripts/princhess
 
 # clean up
 rm -rf "${REPO_DIR}"
+echo SUCCESS

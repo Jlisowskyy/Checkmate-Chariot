@@ -23,3 +23,4 @@ cp Pingu ../.. # DownloadScripts/Pingu
 
 # clean up
 rm -rf "${REPO_DIR}"
+echo SUCCESS

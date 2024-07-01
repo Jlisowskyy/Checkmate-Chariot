@@ -24,3 +24,4 @@ cp Saruman ../../.. || clean_up # DownloadScripts/saruman/engine
 
 # clean up
 rm -rf "${REPO_DIR}"
+echo SUCCESS

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_DIR="$(dirname -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 REPO_DIR="${SCRIPT_DIR}/cute-chess"
 CORES=$(nproc --all)
 
@@ -22,4 +22,5 @@ make -j "$CORES"
 # move the exec to the eval directory
 cp cutechess-cli ../..
 
+# clean up
 rm -rf "${REPO_DIR}"
