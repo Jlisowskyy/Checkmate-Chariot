@@ -14,12 +14,12 @@ cd "${SCRIPT_DIR}" || clean_up
 
 # Clone
 git clone https://github.com/WillChing01/Pingu.git || clean_up
-cd Pingu || clean_up
+cd pingu || clean_up
 git checkout 1a69999 || clean_up
 
 # Build
 make -j "${CORES}" || clean_up
-cp Pingu ../.. # DownloadScripts/Pingu
+cp pingu ../.. # DownloadScripts/pingu
 
 # clean up
 rm -rf "${REPO_DIR}"

@@ -20,7 +20,7 @@ cd engine || clean_up
 
 # Build
 make all -j "${CORES}" || clean_up
-cp Saruman ../../.. || clean_up # DownloadScripts/saruman/engine
+cp Saruman ../../../saruman || clean_up # DownloadScripts/saruman/engine
 
 # clean up
 rm -rf "${REPO_DIR}"

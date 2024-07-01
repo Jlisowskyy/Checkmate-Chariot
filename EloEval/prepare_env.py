@@ -30,6 +30,7 @@ def full_env_prepare(scripts_dir: str = WORKING_DIR):
         engine_path = os.path.join(scripts_dir, "ReferenceEngines", engine)
 
         if not os.path.isdir(engine_path):
+            print(f"Engine: {engine_path} does not exist")
             script_dir = os.path.join(scripts_dir, "ReferenceEngines", "DownloadScripts", f"{engine}.sh")
 
             run_script(script_dir)

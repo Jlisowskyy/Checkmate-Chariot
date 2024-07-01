@@ -9,4 +9,6 @@ engines = {
     'dumb': 2726,
     'maxwell': 2006,
     'snowy': 1924,
+    'Checkmate-Chariot': 2000,
+    'Checkmate-Chariot-dev': 2000
 }

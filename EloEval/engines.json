@@ -54,5 +54,20 @@
     "protocol": "uci",
     "initStrings": "",
     "ponder": "false"
+  },
+  {
+    "name": "Checkmate-Chariot",
+    "command": "./ReferenceEngines/Checkmate-Chariot",
+    "protocol": "uci",
+    "initStrings": "\"setoption name OwnBook value true\"",
+    "ponder": "false"
+  },
+  {
+    "name": "Checkmate-Chariot-dev",
+    "command": "./ReferenceEngines/Checkmate-Chariot-dev",
+    "protocol": "uci",
+    "initStrings": "\"setoption name OwnBook value true\"",
+    "ponder": "false"
   }
+
 ]
