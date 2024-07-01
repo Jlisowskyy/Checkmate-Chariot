@@ -1,22 +1,25 @@
 #!/bin/bash
 
-SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname -f "${BASH_SOURCE[0]}")"
 REPO_DIR="${SCRIPT_DIR}/cute-chess"
-START_DIR=$(pwd)
 CORES=$(nproc --all)
 
+clean_up(){
+  echo "Failed..."
+  cd "${START_DIR}" || exit 1
+}
+
 # clone the repo
-git clone https://github.com/cutechess/cutechess "$REPO_DIR" || exit
-cd "$REPO_DIR" || exit
+git clone https://github.com/cutechess/cutechess "$REPO_DIR"
+cd "$REPO_DIR" || clean_up
 
 # build the exec in the special directory
-mkdir build || exit
-cd build || exit
+mkdir build
+cd build || clean_up
 cmake ..
 make -j "$CORES"
 
 # move the exec to the eval directory
-mv cutechess-cli "${SCRIPT_DIR}"
+cp cutechess-cli ../..
 
-cd "$START_DIR" || exit
-#rm -rf "${REPO_DIR}"
+rm -rf "${REPO_DIR}"

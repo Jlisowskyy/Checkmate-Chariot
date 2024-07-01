@@ -1,19 +1,25 @@
 #!/bin/bash
-echo "Installing StockFish"
-git clone https://github.com/official-stockfish/Stockfish.git
 
-echo "Checking out to 2023-06-13"
-cd Stockfish
-git checkout 7922e07af83dd472da6e5b38fb84214cfe46a630
+SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+REPO_DIR="${SCRIPT_DIR}/Stockfish"
 
-echo "Building StockFish"
-cd src
-make -j profile-build
+clean_up(){
+  echo "Failed..."
+  rm -rf "${REPO_DIR}"
+}
 
-echo "Copying StockFish"
-mv stockfish ../../../Exes
+# Prepare
+cd "${SCRIPT_DIR}" || clean_up
 
-echo "Cleaning up"
-cd ../../
-rm -rf Stockfish
+# Clone
+git clone https://github.com/official-stockfish/Stockfish.git || clean_up
+cd Stockfish || clean_up
+git checkout 7922e07af83dd472da6e5b38fb84214cfe46a630 || clean_up
+cd src || clean_up
 
+# Build
+make -j profile-build ARCH=x86-64-avx2
+cp stockfish ../../.. || clean_up # DownloadScripts/Stockfish/src
+
+# clean up
+rm -rf "${REPO_DIR}"
