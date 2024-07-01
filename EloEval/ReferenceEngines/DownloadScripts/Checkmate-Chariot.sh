@@ -28,7 +28,9 @@ git checkout "${VERSION}" || clean_up
 # Build
 cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Release || clean_up
 make -j "${CORES}" || clean_up
-cp Checkmate-Chariot "../../${NAME}" || clean_up
+cp Checkmate-Chariot "../../${NAME}" ||
+cp uci_ready_long "../../uci_ready_long" || clean_up
+
 
 # clean up
 rm -rf "${REPO_DIR}"
