@@ -19,4 +19,4 @@ cd ..
           -pgnout "${PGN_OUT}" -games 100 \
           -engine conf="$1" \
           -engine conf="$2"  \
-          -each tc=10+1 timemargin=50 option.Hash=1024 dir="ReferenceEngines"
+          -each tc=10 timemargin=50 option.Hash=1024
