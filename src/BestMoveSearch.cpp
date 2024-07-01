@@ -509,8 +509,7 @@ int BestMoveSearch::_search(
             reductions -= FULL_DEPTH_FACTOR;
 
         // stores the most recent return value of child trees,
-        // alpha + 1 value enforces the second if trigger in first iteration in case of pv nodes
-        int moveEval = alpha + 1;
+        int moveEval = alpha;
 
         // Late Move reductions
         // i > 1 - we want to be sure to explore move from TT and best move accordingly to sorting
@@ -547,7 +546,7 @@ int BestMoveSearch::_search(
         }
 
         // if not, research move only in case of pv nodes
-        if (IsPvNode && alpha < moveEval)
+        if (IsPvNode && (i == 0 || alpha < moveEval))
         {
             _kTable.ClearPlyFloor(ply + 1);
 
