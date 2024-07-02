@@ -2,6 +2,7 @@
 
 # Possible arguments (only first positional argument):
 # - "r" - rebuild the release version of Checkmate-Chariot and setup the sparing
+# - "l" - compare latest commit from active branch with current code
 # - "{Engine name contained in ReferenceEngines}" - simply tries to setup the sparing with given engine - by default
 #                                                   Checkmate-Chariot
 
@@ -20,7 +21,16 @@ cd "${SCRIPT_DIR}" || clean_up
 
 # Reload flag to rebuild the main release exec
 if [ "$1" == "r" ] ; then
+  echo "Building the most recent release"
+
   ./ReferenceEngines/DownloadScripts/Checkmate-Chariot.sh
+elif [ "$1" == "l" ]; then
+  echo "Building active branch latest commit..."
+
+  cd ..
+  COMMIT_ID="$(git log --format="%H" -n 1)"
+  cd "${SCRIPT_DIR}" || exit
+  ./ReferenceEngines/DownloadScripts/Checkmate-Chariot.sh "${COMMIT_ID}"
 elif [ -f "${SCRIPT_DIR}/ReferenceEngines/${1}" ] ; then
   OP=$1
 fi

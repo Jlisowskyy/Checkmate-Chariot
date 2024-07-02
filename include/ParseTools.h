@@ -62,6 +62,8 @@ struct ParseTools
     // Function returns string with all leading and trailing blanks removed.
     static std::string GetTrimmed(const std::string &str);
 
+    // Function
+
     // Function splits the text into words, using the 'crit' function to determine the word boundaries.
     template <int (*crit)(int) = isblank>
     [[nodiscard]] static std::vector<std::string> Split(const std::string &text, size_t pos = 0);

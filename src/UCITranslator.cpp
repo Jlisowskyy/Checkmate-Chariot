@@ -324,8 +324,7 @@ UCITranslator::UCICommand UCITranslator::_goDeepDebugResponse(const std::string 
 
 UCITranslator::UCICommand UCITranslator::_goFileResponse(const std::string &str, size_t pos)
 {
-    std::string path{};
-    ParseTools::ExtractNextWord(str, path, pos);
+    const std::string path = ParseTools::GetTrimmed(str.substr(pos));
     const MoveGenerationTester tester{Engine::GetDebugEnginePath()};
     const bool result = tester.PerformSeriesOfDeepTestFromFile(path);
 
@@ -336,14 +335,10 @@ UCITranslator::UCICommand UCITranslator::_goFileResponse(const std::string &str,
 
 UCITranslator::UCICommand UCITranslator::_goPerfCompResponse(const std::string &str, size_t pos)
 {
-    std::string file1Str{};
-    std::string file2Str{};
-    pos = ParseTools::ExtractNextWord(str, file1Str, pos);
-    if (pos != ParseTools::InvalidNextWorldRead)
-        ParseTools::ExtractNextWord(str, file2Str, pos);
+    const std::string path = ParseTools::GetTrimmed(str.substr(pos));
 
     const MoveGenerationTester tester{Engine::GetDebugEnginePath()};
-    bool result = tester.PerformPerformanceTest(file1Str, file2Str);
+    bool result = tester.PerformPerformanceTest(path, "");
     if (!result)
         return UCICommand::InvalidCommand;
     return UCICommand::goCommand;
@@ -351,13 +346,9 @@ UCITranslator::UCICommand UCITranslator::_goPerfCompResponse(const std::string &
 
 UCITranslator::UCICommand UCITranslator::_goSearchPerftResponse(const std::string &str, size_t pos)
 {
-    std::string file1Str{};
-    std::string file2Str{};
-    pos = ParseTools::ExtractNextWord(str, file1Str, pos);
-    if (pos != ParseTools::InvalidNextWorldRead)
-        ParseTools::ExtractNextWord(str, file2Str, pos);
+    const std::string path = ParseTools::GetTrimmed(str.substr(pos));
 
-    bool result = SearchPerfTester::PerformSearchPerfTest(file1Str, file2Str, _engine.TManager.GetDefaultStack());
+    bool result = SearchPerfTester::PerformSearchPerfTest(path, "", _engine.TManager.GetDefaultStack());
     if (!result)
         return UCICommand::InvalidCommand;
     return UCICommand::goCommand;

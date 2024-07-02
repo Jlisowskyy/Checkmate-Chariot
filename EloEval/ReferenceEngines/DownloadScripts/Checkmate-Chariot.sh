@@ -11,10 +11,8 @@ clean_up(){
 
 if [ -z "$1" ]; then
   VERSION="HEAD"
-  NAME="Checkmate-Chariot"
 else
   VERSION="$1"
-  NAME="Checkmate-Chariot-dev"
 fi
 
 # Prepare
