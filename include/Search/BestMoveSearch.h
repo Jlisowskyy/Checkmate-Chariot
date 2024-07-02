@@ -206,6 +206,7 @@ class BestMoveSearch
     CounterMoveTable _cmTable{};
     HistoricTable _histTable{};
     int _maxPlyReached{};
+    int _maxPlyReachedWithQSearch{};
     int _rootDepth{};
     PackedMove _excludedMove{};
 };

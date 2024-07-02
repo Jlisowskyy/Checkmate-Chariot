@@ -629,6 +629,14 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     if (GameTimeManager::GetShouldStop())
         return TIME_STOP_RESERVED_VALUE;
 
+    if (ply > _maxPlyReachedWithQSearch)
+    {
+        _maxPlyReachedWithQSearch = ply;
+
+        if constexpr (Debug)
+            TRACE_STACK_USAGE();
+    }
+
     // incrementing nodes counter
     ++_visitedNodes;
 

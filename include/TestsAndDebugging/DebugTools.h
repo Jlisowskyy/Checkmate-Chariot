@@ -42,4 +42,47 @@ bool IsDrawDebug(const Board &bd);
 
 Move GetMoveDebug(const Board &bd, const std::string &str);
 
+#ifdef __unix__
+
+#include <cstdio>
+#include <execinfo.h>
+#include <csignal>
+#include <cstdlib>
+#include <unistd.h>
+#include <cstring>
+#include <sys/resource.h>
+
+/* Stack trace debug function */
+inline void TRACE_HANDLER(int sig) {
+    static constexpr size_t STACK_SIZE = 256;
+    void *array[STACK_SIZE];
+
+    // get void*'s for all entries on the stack
+    const int size = backtrace(array, STACK_SIZE);
+
+    // print out all the frames to stderr
+    fprintf(stderr, "Error received signal -> %s\n", strsignal(sig));
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    exit(1);
+}
+
+
+/* Prints information about actual stack usage */
+inline void TRACE_STACK_USAGE()
+{
+    struct rlimit limit{};
+    getrlimit (RLIMIT_STACK, &limit);
+
+    const rlim_t unusedBytes = limit.rlim_max - limit.rlim_cur;
+    const double availableSpace = (double)unusedBytes / (double)limit.rlim_max;
+    const double usage = (double)limit.rlim_cur / (double)limit.rlim_max;
+
+    GlobalLogger.LogStream << std::format("[ STACK INFO ] Queried following data about the stack:\n"
+                                          "\tUnused bytes: {}\n"
+                                          "\tUsage: {}\n"
+                                          "\tAvailable space: {}\n", unusedBytes, usage, availableSpace);
+}
+
+#endif // __unix__
+
 #endif // CHECKMATE_CHARIOT_DEBUGTOOLS_H

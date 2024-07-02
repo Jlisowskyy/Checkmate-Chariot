@@ -8,6 +8,7 @@
 #include "../include/ChessEngine.h"
 #include "../include/Engine.h"
 #include "../include/Interface/UCITranslator.h"
+#include "../include/TestsAndDebugging/DebugTools.h"
 
 void ChessEngineMainEntry(const int argc, const char **argv)
 {
