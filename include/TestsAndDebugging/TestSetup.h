@@ -31,7 +31,12 @@ struct TestSetup
     // Class interaction
     // ------------------------------
 
-    void Initialize() { _translatorThread = new std::thread(_job, &_stream, &_eng, &_inSem, &_outSem); }
+    void Initialize() {
+        _translatorThread = new std::thread(_job, &_stream, &_eng, &_inSem, &_outSem);
+
+        // IMPORTANT: We assumed engine used the book, if not it should be changed
+        _eng.SetUseOwnBook();
+    }
 
     void ProcessCommand(const std::string &str)
     {
@@ -60,6 +65,7 @@ struct TestSetup
     }
 
     Engine &GetEngine() { return _eng; }
+
 
     // ------------------------------
     // Private class methods

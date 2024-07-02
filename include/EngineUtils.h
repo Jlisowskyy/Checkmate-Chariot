@@ -100,6 +100,31 @@ inline INLINE bool IsMateScore(const int score) { return abs(score) >= BEST_MATE
 /* Function adjusts mate score accordingly to the distance to root */
 [[nodiscard]] inline INLINE int GetMateValue(const int ply) { return NEGATIVE_INFINITY + ply; }
 
+/* Stack trace debug function */
+#ifdef __unix__
+
+#include <cstdio>
+#include <execinfo.h>
+#include <csignal>
+#include <cstdlib>
+#include <unistd.h>
+#include <cstring>
+
+inline void TRACE_HANDLER(int sig) {
+    static constexpr size_t STACK_SIZE = 256;
+    void *array[STACK_SIZE];
+
+    // get void*'s for all entries on the stack
+    const int size = backtrace(array, STACK_SIZE);
+
+    // print out all the frames to stderr
+    fprintf(stderr, "Error received signal -> %s\n", strsignal(sig));
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    exit(1);
+}
+
+#endif // __unix__
+
 // Structure stores time information that were parsed and should be passed to 'go' search function
 struct GoTimeInfo
 {

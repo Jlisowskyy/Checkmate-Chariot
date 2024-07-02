@@ -98,6 +98,9 @@ class Engine
 
     static const std::string &GetDebugEnginePath() { return _debugEnginePath; }
 
+    void SetUseOwnBook() { UseOwnBook = true; }
+
+
     // ------------------------------
     // private methods
     // ------------------------------

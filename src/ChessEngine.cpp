@@ -3,6 +3,7 @@
 //
 
 #include <sstream>
+#include <iostream>
 
 #include "../include/ChessEngine.h"
 #include "../include/Engine.h"
@@ -18,6 +19,21 @@ void ChessEngineMainEntry(const int argc, const char **argv)
 
     // Provide to the translator the underlying engine instance
     UCITranslator translator{engine};
+
+    // Disable C compatibility:
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    std::cout.tie(nullptr);
+
+    // If on linux platform configure stack trace on signal:
+#ifdef __unix__
+
+    static constexpr int signals[] { SIGSEGV, SIGINT, SIGKILL, SIGTERM };
+
+    for (int sig : signals)
+        signal(sig, TRACE_HANDLER);
+
+#endif
 
     if (argc == 1)
         // Start the engine without any concerns if there is no command line arguments

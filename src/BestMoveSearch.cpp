@@ -231,6 +231,9 @@ int BestMoveSearch::IterativeDeepening(
             break;
     }
 
+    // Ensure no memory leak when we received time stop and rolled back
+    _stack.Clear();
+
     if constexpr (TestTT)
         TTable.DisplayStatisticsAndReset();
 
