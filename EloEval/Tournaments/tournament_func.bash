@@ -40,7 +40,7 @@ post_tournamanet(){
   ./parse_debug.py "${DEBUG_FILE}" "${DEBUG_OUT}"
 
   rm "${DEBUG_FILE}"
-  rm "${OUT_FILE}"
+#  rm "${OUT_FILE}"
 
   echo SUCCESS
 }

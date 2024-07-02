@@ -121,12 +121,21 @@ void SearchThreadManager::_passiveThreadSearchJob(
         bootup->release();
 
         // run search
-        BestMoveSearch searcher{bd, *s};
-        searcher.IterativeDeepening(&output, &ponder, depth);
 
-        GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
-                               << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
-                               << std::endl;
+        try{
+            BestMoveSearch searcher{bd, *s};
+            searcher.IterativeDeepening(&output, &ponder, depth);
+
+            GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
+                                   << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
+                                   << std::endl;
+        }
+        catch(const std::exception& e)
+        {
+            GlobalLogger.LogStream << std::format("[ ERROR ] Received exception: {}", e.what()) << std::endl;
+            exit(1);
+        }
+
 
         // harden search status
         *guard = false;
