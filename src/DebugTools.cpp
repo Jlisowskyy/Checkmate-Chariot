@@ -56,3 +56,9 @@ void AspWinStat::DisplayAndClean()
     }
     GlobalLogger.LogStream << std::endl;
 }
+
+#ifdef __unix__
+
+size_t StackStartAddress;
+
+#endif

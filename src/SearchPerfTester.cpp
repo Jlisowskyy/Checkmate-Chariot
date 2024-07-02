@@ -12,6 +12,7 @@
 #include "../include/Search/BestMoveSearch.h"
 #include "../include/Search/TranspositionTable.h"
 #include "../include/TestsAndDebugging/CsvOperator.h"
+#include "../include/ThreadManagement/GameTimeManager.h"
 
 bool SearchPerfTester::PerformSearchPerfTest(
     const std::string &inputTestPath, const std::string &output, Stack<Move, DEFAULT_STACK_SIZE> &stack
@@ -21,6 +22,8 @@ bool SearchPerfTester::PerformSearchPerfTest(
     auto tests = CsvOperator::ReadPosDepthCsv(inputTestPath.empty() ? defPath : inputTestPath);
     if (tests.empty())
         return false;
+
+    GameTimeManager::ShouldStop = false;
 
     std::vector<std::tuple<std::string, int, double>> results{};
     double sumTime{};
@@ -34,11 +37,11 @@ bool SearchPerfTester::PerformSearchPerfTest(
 
         GlobalLogger.LogStream << std::format(
             "Performed test on position with depth {}:\n\t{}\nAcquired results: {}ms\n", dep, testCase, result
-        );
+        ) << std::endl;
     }
 
     results.emplace_back("Average results based on test count:", tests.size(), sumTime / tests.size());
-    GlobalLogger.LogStream << std::format("Final average results: {}ms\n", sumTime / tests.size());
+    GlobalLogger.LogStream << std::format("Final average results: {}ms\n", sumTime / tests.size()) << std::endl;
 
     _saveResultsToCsv(output, results);
 

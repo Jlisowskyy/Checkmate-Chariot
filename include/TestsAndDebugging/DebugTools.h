@@ -51,6 +51,7 @@ Move GetMoveDebug(const Board &bd, const std::string &str);
 #include <unistd.h>
 #include <cstring>
 #include <sys/resource.h>
+#include <pthread.h>
 
 /* Stack trace debug function */
 inline void TRACE_HANDLER(int sig) {
@@ -66,22 +67,38 @@ inline void TRACE_HANDLER(int sig) {
     exit(1);
 }
 
+inline size_t GetCurrStackPtr() {
+    // This function returns the address of a local variable,
+    // which is used as an approximation of the current stack pointer.
+    int local;
+    return reinterpret_cast<size_t>(&local);
+}
+
+extern size_t StackStartAddress;
+inline const size_t StackSize = [](){
+    struct rlimit limits{};
+    getrlimit(RLIMIT_STACK, &limits);
+
+    return limits.rlim_cur;
+}();
 
 /* Prints information about actual stack usage */
 inline void TRACE_STACK_USAGE()
 {
-    struct rlimit limit{};
-    getrlimit (RLIMIT_STACK, &limit);
 
-    const rlim_t unusedBytes = limit.rlim_max - limit.rlim_cur;
-    const double availableSpace = (double)unusedBytes / (double)limit.rlim_max;
-    const double usage = (double)limit.rlim_cur / (double)limit.rlim_max;
+    // get approx of current stack addr
+    const size_t currentSP = GetCurrStackPtr();
+    const size_t startSP = StackStartAddress;
+    const size_t usedStack = startSP - currentSP;
+    const size_t availableStack = StackSize - usedStack;
+
+    const double availableSpace = (double)availableStack / (double)StackSize;
 
     GlobalLogger.LogStream << std::format("[ STACK INFO ] Queried following data about the stack:\n"
                                           "\tUnused bytes: {}\n"
-                                          "\tUsage: {}\n"
-                                          "\tAvailable space: {}\n", unusedBytes, usage, availableSpace);
+                                          "\tAvailable space: {}\n", availableStack, availableSpace) << std::endl;
 }
+
 
 #endif // __unix__
 
