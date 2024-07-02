@@ -5,6 +5,7 @@
 #include "../include/ThreadManagement/SearchThreadManager.h"
 #include "../include/Search/BestMoveSearch.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
+#include "../include/TestsAndDebugging/DebugTools.h"
 
 #include <format>
 
@@ -93,6 +94,10 @@ void SearchThreadManager::_passiveThreadSearchJob(
 {
     PackedMove output{};
     PackedMove ponder{};
+
+#ifdef __unix__
+    StackStartAddress = GetCurrStackPtr();
+#endif
 
     // be alive until SearchThreadManager is destructed
     while (!*shouldStop)

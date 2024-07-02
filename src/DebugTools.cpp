@@ -59,6 +59,6 @@ void AspWinStat::DisplayAndClean()
 
 #ifdef __unix__
 
-size_t StackStartAddress;
+__thread size_t StackStartAddress;
 
 #endif

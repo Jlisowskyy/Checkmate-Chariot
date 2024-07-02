@@ -74,7 +74,7 @@ inline size_t GetCurrStackPtr() {
     return reinterpret_cast<size_t>(&local);
 }
 
-extern size_t StackStartAddress;
+extern __thread size_t StackStartAddress;
 inline const size_t StackSize = [](){
     struct rlimit limits{};
     getrlimit(RLIMIT_STACK, &limits);
@@ -85,7 +85,6 @@ inline const size_t StackSize = [](){
 /* Prints information about actual stack usage */
 inline void TRACE_STACK_USAGE()
 {
-
     // get approx of current stack addr
     const size_t currentSP = GetCurrStackPtr();
     const size_t startSP = StackStartAddress;
@@ -94,9 +93,13 @@ inline void TRACE_STACK_USAGE()
 
     const double availableSpace = (double)availableStack / (double)StackSize;
 
-    GlobalLogger.LogStream << std::format("[ STACK INFO ] Queried following data about the stack:\n"
-                                          "\tUnused bytes: {}\n"
-                                          "\tAvailable space: {}\n", availableStack, availableSpace) << std::endl;
+    GlobalLogger.LogStream << std::format("[ STACK INFO ] Queried following data about the stack:"
+                                          " Unused bytes: {}"
+                                          " Used bytes: {}"
+                                          " Available space: {}", availableStack, usedStack, availableSpace) << std::endl;
+
+    if (availableStack < 0.1)
+        GlobalLogger.LogStream << "[ WARNING ] Stack available space dropped below 0.1!" << std::endl;
 }
 
 
