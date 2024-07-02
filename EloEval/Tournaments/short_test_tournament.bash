@@ -10,7 +10,7 @@ source tournament_func.bash
 cd ..
 
 ./cutechess-cli -debug -concurrency "${FAIR_CORES}" -resign score=600 movecount=5 \
-          -pgnout "${PGN_OUT}" -games 100 \
+          -pgnout "${PGN_OUT}" -games 10 \
           -engine conf="$1" \
           -engine conf="$2"  \
           -each tc=10 timemargin=500 option.Hash=1024 > "${OUT_FILE}" 2>&1 &
