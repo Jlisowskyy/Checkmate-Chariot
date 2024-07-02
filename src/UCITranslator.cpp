@@ -548,11 +548,9 @@ UCITranslator::UCICommand UCITranslator::_reconstruct(const std::string &str)
 
     const auto testLambda = [](TestSetup &)
     {
-        GlobalLogger.TraceStream << "BREAKPOINT FOUND!" << std::endl;
+        GlobalLogger.TraceStream << "BREAKPOINT FOUND! {PUT YOUR CODE HERE}" << std::endl;
     };
 
-    std::string path{};
-    ParseTools::ExtractNextWord(str, path, 0);
-
+    const std::string path = ParseTools::GetTrimmed(str);
     return StateReconstructor::Reconstruct(testLambda, path) ? UCICommand::debugCommand : UCICommand::InvalidCommand;
 }

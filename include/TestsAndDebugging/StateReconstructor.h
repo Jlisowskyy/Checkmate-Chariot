@@ -34,7 +34,7 @@ struct StateReconstructor
     // Class interaction
     // ------------------------------
 
-    template <class debugTool> static bool Reconstruct(debugTool tool, const std::string &inputPath)
+    template <class debugTool> static bool Reconstruct(debugTool tool, const std::string &inputPath, bool brakeAfterEveryCommand = false)
     {
         std::ifstream stream{inputPath};
 
@@ -48,7 +48,7 @@ struct StateReconstructor
         // process log line by line
         for (std::string line{}; std::getline(stream, line);)
         {
-            if (line == "breakpoint")
+            if (line == "breakpoint" || brakeAfterEveryCommand)
             {
                 tool(setup);
 
@@ -58,12 +58,10 @@ struct StateReconstructor
             }
 
             // Parse timings from the file
-            const auto split = ParseTools::Split<
-                [](const int c) -> int
-                {
-                    return c == '|';
-                }>(line);
-            const auto timeStr = ParseTools::GetTrimmed(split[0]);
+            std::string timeStr;
+            size_t pos;
+            if ((pos = ParseTools::ExtractNextWord(line, timeStr, 0)) == ParseTools::InvalidNextWorldRead)
+                continue;
 
             // Read timings from the log
             const lli milliseconds = std::stoll(timeStr);
@@ -73,16 +71,22 @@ struct StateReconstructor
             {
                 const lli diff = milliseconds - prevTime;
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(diff));
+                if (diff > 0)
+                    std::this_thread::sleep_for(std::chrono::milliseconds(diff));
+                prevTime = milliseconds;
             }
             else
                 prevTime = milliseconds;
 
-            const auto command = ParseTools::GetTrimmed(split[1]);
+            const auto command = ParseTools::GetTrimmed(line.substr(pos));
 
-            WrapTraceMsgInfo(std::format("Processing command: {}", command));
+            GlobalLogger.LogStream << std::format("Processing command: {}", command) << std::endl;
             setup.ProcessCommand(command);
         }
+
+        setup.Close();
+        UCITranslator finalTranslator(setup.GetEngine());
+        finalTranslator.BeginCommandTranslation(std::cin);
 
         return true;
     }
