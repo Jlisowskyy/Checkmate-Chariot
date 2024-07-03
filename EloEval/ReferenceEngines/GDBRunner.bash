@@ -19,13 +19,14 @@ cat <<EOF > gdb_commands.txt
 set pagination off
 
 # Display backtrace if program crashes
-# backtrace
+handle SIGABRT stop
+define hook-stop
+    thread apply all bt
+end
 
 # Log to given file
+set logging on
 set logging file $LOGFILE
-
-# Continue running the program
-# continue
 
 # Run the executable with arguments
 run $ARGS
