@@ -62,10 +62,6 @@ bool SearchThreadManager::GoInfinite(const Board &bd)
 
 void SearchThreadManager::Stop() const
 {
-    // avoiding unnecessary actions
-    if (!_isSearchOn)
-        return;
-
     // signaling forced abortion
     GameTimeManager::StopSearchManagement();
 }
