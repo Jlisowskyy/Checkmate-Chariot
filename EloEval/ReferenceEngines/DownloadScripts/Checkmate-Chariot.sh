@@ -24,8 +24,8 @@ cd Checkmate-Chariot || clean_up
 git checkout "${VERSION}" || clean_up
 
 # Build
-cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Release || clean_up
-make -j "${CORES}" || clean_up
+cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Debug || clean_up
+make Checkmate-Chariot -j "${CORES}" || clean_up
 cp Checkmate-Chariot "../../${NAME}" ||
 cp uci_ready_long "../../uci_ready_long" || clean_up
 

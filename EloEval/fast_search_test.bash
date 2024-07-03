@@ -37,8 +37,8 @@ fi
 
 # Always rebuild dev version
 cd ..
-cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Release || clean_up
-make -j "${CORES}" || clean_up
+cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Debug || clean_up
+make Checkmate-Chariot -j "${CORES}" || clean_up
 cp Checkmate-Chariot "./EloEval/ReferenceEngines/Checkmate-Chariot-dev" || clean_up
 
 # run the tournament
