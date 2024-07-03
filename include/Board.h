@@ -173,24 +173,24 @@ struct Board
     // Main processing components
     // --------------------------------
 
-    std::bitset<CastlingCount + 1> Castlings           = {0}; // additional sentinel field
+    std::bitset<CastlingCount + 1> Castlings           {0}; // additional sentinel field
     uint64_t ElPassantField                            = MaxMsbPossible >> InvalidElPassantField;
     int MovingColor                                    = WHITE;
-    std::array<uint64_t, BitBoardsCount + 1> BitBoards = {}; // additional sentinel board
+    std::array<uint64_t, BitBoardsCount + 1> BitBoards {}; // additional sentinel board
 
     // --------------------------------------
     // Draw and state monitoring fields
     // --------------------------------------
 
-    int HalfMoves                                 = {};
-    uint16_t Age                                  = {}; // stores total half moves since the beginning of the game
-    std::unordered_map<uint64_t, int> Repetitions = {}; // Stores hashes of previous encountered positions
+    int HalfMoves                                 {};
+    uint16_t Age                                  {}; // stores total half moves since the beginning of the game
+    std::unordered_map<uint64_t, int> Repetitions {}; // Stores hashes of previous encountered positions
 
     // ------------------------------
     // Optimisation components
     // ------------------------------
 
-    int LastPhase = {}; // Field used to save previously calculated phase during evaluation
+    int LastPhase{}; // Field used to save previously calculated phase during evaluation
     bool IsCheck{}; // Contains information whether made move is directly checking king, that means
                     // checks from cover are not dertected here
 };

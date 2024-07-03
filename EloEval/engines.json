@@ -57,14 +57,14 @@
   },
   {
     "name": "Checkmate-Chariot",
-    "command": "./ReferenceEngines/Checkmate-Chariot",
+      "command": "./ReferenceEngines/Checkmate-Chariot_gdb",
     "protocol": "uci",
     "initStrings": "\"setoption name OwnBook value true\"",
     "ponder": "false"
   },
   {
     "name": "Checkmate-Chariot-dev",
-    "command": "./ReferenceEngines/Checkmate-Chariot-dev",
+    "command": "./ReferenceEngines/Checkmate-Chariot-dev_gdb",
     "protocol": "uci",
     "initStrings": "\"setoption name OwnBook value true\"",
     "ponder": "false"
