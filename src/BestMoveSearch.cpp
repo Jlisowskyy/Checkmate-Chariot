@@ -252,8 +252,7 @@ int BestMoveSearch::_search(
     ++_visitedNodes;
 
     // Check whether we reached end of the legal path
-    ChessMechanics mech{_board};
-    if (mech.IsDrawByReps(zHash))
+    if (_moveGenerator.IsDrawByReps(zHash))
         return DRAW_SCORE;
 
     // reading Transposition table for the best move
@@ -282,11 +281,8 @@ int BestMoveSearch::_search(
                 return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(ply);
         }
 
-    MoveGenerator mechanics(
-            _board, _stack, _histTable, _kTable
-    );
     int statEval{};
-    const bool isCheck = _board.IsCheck || mechanics.IsCheck();
+    const bool isCheck = _board.IsCheck || _moveGenerator.IsCheck();
 
     if (isCheck)
     // Do not evaluate statically position when in check
@@ -320,7 +316,7 @@ int BestMoveSearch::_search(
         }
 
     // generate moves
-    auto moves = mechanics.GetMovesFast(_cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField());
+    auto moves = _moveGenerator.GetMovesFast(_cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField());
 
     // If no move is possible: check whether we hit mate or stalemate
     if (moves.size == 0)
@@ -416,7 +412,7 @@ int BestMoveSearch::_search(
             // consider pruning of checks and captures with bad enough SEE value
             if (moves[i].IsAttackingMove() || moves[i].IsChecking())
             {
-                SEEValue = mechanics.SEE(moves[i]);
+                SEEValue = _moveGenerator.SEE(moves[i]);
 
                 if (SEEValue < (2 * SEE_GOOD_MOVE_BOUNDARY * plyDepth))
                     continue;
@@ -487,7 +483,7 @@ int BestMoveSearch::_search(
 
         if (moves[i].IsAttackingMove() || moves[i].GetPackedMove().IsPromo())
         {
-            if (SEEValue == NEGATIVE_INFINITY) SEEValue = mech.SEE(moves[i]);
+            if (SEEValue == NEGATIVE_INFINITY) SEEValue = _moveGenerator.SEE(moves[i]);
 
             // increase reduction only in case of positive SEEValue
             if (SEEValue > 0)
@@ -621,14 +617,13 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     }
 
     // Check whether we reached end of the legal path
-    ChessMechanics mech{_board};
-    if (mech.IsDrawByReps(zHash))
+    if (_moveGenerator.IsDrawByReps(zHash))
         return DRAW_SCORE;
 
     // Return if max depth exceeded, additionally add penalty for check positions
     if (ply >= MAX_SEARCH_DEPTH)
         return BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor) +
-                (mech.IsCheck() ? -100 / SCORE_GRAIN : 0);
+                (_moveGenerator.IsCheck() ? -100 / SCORE_GRAIN : 0);
 
     // if we need to stop the search signal it
     if (GameTimeManager::GetShouldStop())
@@ -648,11 +643,9 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
 
     // Avoid static evaluation when king is checked
-    MoveGenerator mechanics(_board, _stack, _histTable, _kTable);
-
     // When we have a check we cannot use static evaluation at all due to possible dangers that may happen
     // that means we should resolve most of the lines with checks
-    const bool isCheck = _board.IsCheck || mechanics.IsCheck();
+    const bool isCheck = _board.IsCheck || _moveGenerator.IsCheck();
 
     if (!isCheck)
     {
@@ -703,13 +696,13 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
             alpha = bestEval;
         }
 
-        moves = mechanics.GetMovesFast<true>();
+        moves = _moveGenerator.GetMovesFast<true>();
     }
     else
     // we are inside the check, our king is not safe we should resolve all moves
     {
         // When there is check we need to go through every possible move to get a better view about the position
-        moves = mechanics.GetMovesFast(_cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField());
+        moves = _moveGenerator.GetMovesFast(_cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField());
 
         // we are in check and no moves are possible
         if (moves.size == 0)
@@ -737,7 +730,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         // pruning on the move
         if (!isCheck)
         {
-            const int SEEValue = mech.SEE(moves[i]);
+            const int SEEValue = _moveGenerator.SEE(moves[i]);
             /*                  DELTA PRUNING                              */
 
             // Increase delta in case of promotion

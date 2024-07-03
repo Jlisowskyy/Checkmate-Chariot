@@ -13,6 +13,7 @@
 #include "../Evaluation/KillerTable.h"
 #include "../Interface/Logger.h"
 #include "../ThreadManagement/Stack.h"
+#include "../MoveGeneration/MoveGenerator.h"
 
 /*
  * Class defines our search algorithm.
@@ -139,7 +140,8 @@ class BestMoveSearch
      * */
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board, Stack<Move, DEFAULT_STACK_SIZE> &s) : _stack(s), _board(board) {}
+    BestMoveSearch(const Board &board, Stack<Move, DEFAULT_STACK_SIZE> &s) : _stack(s), _board(board),
+                                                                             _moveGenerator(_board, s, _histTable, _kTable){}
     ~BestMoveSearch() = default;
 
     // ------------------------------
@@ -209,6 +211,7 @@ class BestMoveSearch
     int _maxPlyReachedWithQSearch{};
     int _rootDepth{};
     PackedMove _excludedMove{};
+    MoveGenerator _moveGenerator;
 };
 
 #endif // BESTMOVESEARCH_H
