@@ -35,11 +35,9 @@ struct MoveGenerator : ChessMechanics
     MoveGenerator() = delete;
 
     explicit MoveGenerator(
-        const Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht = {}, const KillerTable &kt = {},
-        const PackedMove counterMove = {}, const int ply = 0, const int mostRecentMovedSquare = 0
+        const Board &bd, Stack<Move, DEFAULT_STACK_SIZE> &s, const HistoricTable &ht, const KillerTable &kt
     )
-        : ChessMechanics(bd), _threadStack(s), _counterMove(counterMove), _kTable(kt), _hTable(ht), _ply(ply),
-          _mostRecentSq(mostRecentMovedSquare)
+        : ChessMechanics(bd), _threadStack(s), _kTable(kt), _hTable(ht)
     {
     }
 
@@ -53,7 +51,14 @@ struct MoveGenerator : ChessMechanics
     // Class interaction
     // ------------------------------
 
-    template <bool GenOnlyAttackMoves = false, bool ApplyHeuristicEval = true> payload GetMovesFast();
+    template <bool GenOnlyAttackMoves = false, bool ApplyHeuristicEval = true>
+    payload GetMovesFast(PackedMove counterMove, int ply, int mostRecentMovedSquare);
+
+    template <bool GenOnlyAttackMoves = false, bool ApplyHeuristicEval = true>
+    payload GetMovesFast1()
+    {
+        return GetMovesFast({}, MAX_SEARCH_DEPTH, -1);
+    }
 
     std::map<std::string, uint64_t> GetCountedMoves(int depth);
     uint64_t CountMoves(Board &bd, int depth);
@@ -169,15 +174,22 @@ struct MoveGenerator : ChessMechanics
     Stack<Move, DEFAULT_STACK_SIZE> &_threadStack;
 
     // Heuristic evaluation components
-    const PackedMove _counterMove;
     const KillerTable &_kTable;
     const HistoricTable &_hTable;
-    int _ply;
-    int _mostRecentSq;
+    int _ply = MAX_SEARCH_DEPTH;
+    int _mostRecentSq = -1;
+    PackedMove _counterMove{};
 };
 
-template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval> MoveGenerator::payload MoveGenerator::GetMovesFast()
+template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval> MoveGenerator::payload
+MoveGenerator::GetMovesFast(const PackedMove counterMove, const int ply, const int mostRecentMovedSquare)
 {
+    // Init of heuristic components
+    _counterMove = counterMove;
+    _ply = ply;
+    _mostRecentSq = mostRecentMovedSquare;
+
+    // Prepare crucial components and additionally detect whether we are at check and which figure type attacks king
     const uint64_t fullMap                             = GetFullBitMap();
     const auto [blockedFigMap, checksCount, checkType] = GetBlockedFieldBitMap(fullMap);
 
@@ -189,6 +201,7 @@ template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval> MoveGenerator::paylo
 
     payload results = _threadStack.GetPayload();
 
+    // depending on amount of checks branch to desired reaction
     switch (checksCount)
     {
     case 0:

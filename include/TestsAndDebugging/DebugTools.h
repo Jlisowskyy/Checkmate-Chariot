@@ -64,7 +64,7 @@ inline void TRACE_HANDLER(int sig) {
     // print out all the frames to stderr
     fprintf(stderr, "Error received signal -> %s\n", strsignal(sig));
     backtrace_symbols_fd(array, size, STDERR_FILENO);
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
 inline size_t GetCurrStackPtr() {

@@ -391,19 +391,19 @@ void MoveGenerationTester::_spawnEngine(const int *const inPipeFileDesc, const i
     // connecting with pipes
     if (dup2(outPipeFileDesc[ReadPipe], STDIN_FILENO) == -1)
     {
-        perror("Not able to comunicate with other engine!");
+        perror("Not able to comunicate with other engine!\n");
         exit(EXIT_FAILURE);
     }
 
     if (dup2(inPipeFileDesc[WritePipe], STDOUT_FILENO) == -1)
     {
-        perror("Not able to comunicate with other engine!");
+        perror("Not able to comunicate with other engine!\n");
         exit(EXIT_FAILURE);
     };
 
     if (dup2(inPipeFileDesc[WritePipe], STDERR_FILENO) == -1)
     {
-        perror("Not able to comunicate with other engine!");
+        perror("Not able to comunicate with other engine!\n");
         exit(EXIT_FAILURE);
     };
 
@@ -426,12 +426,12 @@ std::pair<std::array<int, 2>, pid_t> MoveGenerationTester::_getExternalEnginePro
 
     if (pipe(inPipeFileDesc))
     {
-        perror("inPipeFileDesc init failed!");
+        perror("inPipeFileDesc init failed!\n");
         exit(EXIT_FAILURE);
     }
     if (pipe(outPipeFileDesc))
     {
-        perror("outPipeFileDesc init failed!");
+        perror("outPipeFileDesc init failed!\n");
         exit(EXIT_FAILURE);
     }
 

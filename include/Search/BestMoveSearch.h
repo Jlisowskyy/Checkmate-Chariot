@@ -178,7 +178,7 @@ class BestMoveSearch
         int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv, PackedMove *bestMoveOut
     );
 
-    template <SearchType searchType> int _qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth);
+    template <SearchType searchType> int _qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth, Move prevMove);
 
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
     static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);

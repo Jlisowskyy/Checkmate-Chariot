@@ -80,4 +80,7 @@ struct HistoricTable
     };
 };
 
+// table used mainly to avoid passing new objects every time
+inline HistoricTable DummyHistoryTable{};
+
 #endif // HISTORICTABLE_H

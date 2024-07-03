@@ -133,7 +133,7 @@ void SearchThreadManager::_passiveThreadSearchJob(
         catch(const std::exception& e)
         {
             GlobalLogger.LogStream << std::format("[ ERROR ] Received exception: {}", e.what()) << std::endl;
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
 

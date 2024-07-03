@@ -260,7 +260,7 @@ int BestMoveSearch::_search(
     // when we exceeded maximally allowed depth simply return without consideration
     const int plyDepth = depthLeft / FULL_DEPTH_FACTOR;
     if (plyDepth <= 0 || ply >= MAX_SEARCH_DEPTH)
-        return _qSearch<searchType>(alpha, beta, ply, zHash, 0);
+        return _qSearch<searchType>(alpha, beta, ply, zHash, 0, prevMove);
 
     // incrementing nodes counter;
     ++_visitedNodes;
@@ -297,11 +297,10 @@ int BestMoveSearch::_search(
         }
 
     MoveGenerator mechanics(
-            _board, _stack, _histTable, _kTable, _cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField()
+            _board, _stack, _histTable, _kTable
     );
     int statEval{};
     const bool isCheck = _board.IsCheck || mechanics.IsCheck();
-
 
     if (isCheck)
     // Do not evaluate statically position when in check
@@ -328,14 +327,14 @@ int BestMoveSearch::_search(
         {
             if (plyDepth <= RAZORING_DEPTH && statEval + RAZORING_MARGIN < beta)
             {
-                const int qValue = _qSearch<SearchType::NoPVSearch>(alpha, beta, ply, zHash, 0);
+                const int qValue = _qSearch<SearchType::NoPVSearch>(alpha, beta, ply, zHash, 0, prevMove);
                 if (qValue < beta)
                     return qValue;
             }
         }
 
     // generate moves
-    auto moves = mechanics.GetMovesFast();
+    auto moves = mechanics.GetMovesFast(_cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField());
 
     // If no move is possible: check whether we hit mate or stalemate
     if (moves.size == 0)
@@ -619,7 +618,7 @@ int BestMoveSearch::_search(
 }
 
 template <BestMoveSearch::SearchType searchType>
-int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth)
+int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth, Move prevMove)
 {
     static constexpr bool IsPvNode = searchType == SearchType::PVSearch;
     TraceIfFalse(beta > alpha, "Beta is not greater than alpha");
@@ -652,8 +651,6 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     // incrementing nodes counter
     ++_visitedNodes;
 
-
-
     int bestEval = NEGATIVE_INFINITY;
     int statEval = NO_EVAL_RESERVED_VALUE;
     MoveGenerator::payload moves;
@@ -665,7 +662,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
 
     // Avoid static evaluation when king is checked
-    MoveGenerator mechanics(_board, _stack);
+    MoveGenerator mechanics(_board, _stack, _histTable, _kTable);
 
     // When we have a check we cannot use static evaluation at all due to possible dangers that may happen
     // that means we should resolve most of the lines with checks
@@ -720,13 +717,13 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
             alpha = bestEval;
         }
 
-        moves = mechanics.GetMovesFast<true>();
+        moves = mechanics.GetMovesFast1<true>();
     }
     else
     // we are inside the check, our king is not safe we should resolve all moves
     {
         // When there is check we need to go through every possible move to get a better view about the position
-        moves = mechanics.GetMovesFast();
+        moves = mechanics.GetMovesFast(_cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField());
 
         // we are in check and no moves are possible
         if (moves.size == 0)
@@ -771,7 +768,8 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         }
 
         zHash               = ProcessAttackMove(_board, moves[i], zHash, oldData);
-        const int moveValue = -_qSearch<searchType>(-beta, -alpha, ply + 1, zHash, extendedDepth + 1);
+        _kTable.ClearPlyFloor(ply + 1);
+        const int moveValue = -_qSearch<searchType>(-beta, -alpha, ply + 1, zHash, extendedDepth + 1, moves[i]);
         zHash               = RevertMove(_board, moves[i], zHash, oldData);
 
         // if there was call to abort then abort
@@ -869,7 +867,7 @@ int BestMoveSearch::QuiesceEval()
 {
     uint64_t hash = ZHasher.GenerateHash(_board);
 
-    return _qSearch<SearchType::PVSearch>(NEGATIVE_INFINITY, POSITIVE_INFINITY, 0, hash, 0);
+    return _qSearch<SearchType::PVSearch>(NEGATIVE_INFINITY, POSITIVE_INFINITY, 0, hash, 0, {});
 }
 
 int BestMoveSearch::_deduceExtensions(Move prevMove, Move actMove, const int seeValue, const bool isPv)

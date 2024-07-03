@@ -9,9 +9,9 @@
 bool IsDrawDebug(const Board &bd)
 {
     MoveGenerator::stck s{};
-    MoveGenerator generator{bd, s};
+    MoveGenerator generator{bd, s, DummyHistoryTable, DummyKillerTable};
 
-    auto mvs         = generator.GetMovesFast();
+    auto mvs         = generator.GetMovesFast1();
     const size_t cnt = mvs.size;
     s.PopAggregate(mvs);
     const uint64_t hash = ZHasher.GenerateHash(bd);
@@ -22,8 +22,8 @@ bool IsDrawDebug(const Board &bd)
 Move GetMoveDebug(const Board &bd, const std::string &str)
 {
     Stack<Move, DEFAULT_STACK_SIZE> s;
-    MoveGenerator mech{bd, s};
-    auto moves = mech.GetMovesFast();
+    MoveGenerator mech{bd, s, DummyHistoryTable, DummyKillerTable};
+    auto moves = mech.GetMovesFast1();
 
     for (size_t i = 0; i < moves.size; ++i)
         if (moves.data[i].GetLongAlgebraicNotation() == str)
