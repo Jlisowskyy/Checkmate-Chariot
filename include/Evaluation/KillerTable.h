@@ -77,8 +77,8 @@ class KillerTable
         // simply iterates through _killerMovesTable and compares given move to all inside
         [[nodiscard]] INLINE bool Contains(const Move mv) const
         {
-            for (size_t i = 0; i < MovesPerPly; ++i)
-                if (_killerMovesTable[i] == mv.GetPackedMove())
+            for (auto killerMove : _killerMovesTable)
+                if (killerMove == mv.GetPackedMove())
                     return true;
             return false;
         }

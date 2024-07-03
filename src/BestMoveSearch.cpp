@@ -256,9 +256,10 @@ int BestMoveSearch::_search(
     if (GameTimeManager::GetShouldStop())
         return TIME_STOP_RESERVED_VALUE;
 
-    // last depth static eval needed or prev pv node value
+    // when we exhausted this branch start static evaluation with qsearch, additionally
+    // when we exceeded maximally allowed depth simply return without consideration
     const int plyDepth = depthLeft / FULL_DEPTH_FACTOR;
-    if (plyDepth <= 0)
+    if (plyDepth <= 0 || ply >= MAX_SEARCH_DEPTH)
         return _qSearch<searchType>(alpha, beta, ply, zHash, 0);
 
     // incrementing nodes counter;
@@ -625,10 +626,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     if constexpr (!IsPvNode)
         TraceIfFalse(beta == alpha + 1, "Invalid alpha/beta in zw search");
 
-    // if we need to stop the search signal it
-    if (GameTimeManager::GetShouldStop())
-        return TIME_STOP_RESERVED_VALUE;
-
+    // save max depth reached with qsence
     if (ply > _maxPlyReachedWithQSearch)
     {
         _maxPlyReachedWithQSearch = ply;
@@ -637,13 +635,24 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
             TRACE_STACK_USAGE();
     }
 
-    // incrementing nodes counter
-    ++_visitedNodes;
-
     // Check whether we reached end of the legal path
     ChessMechanics mech{_board};
     if (mech.IsDrawByReps(zHash))
         return DRAW_SCORE;
+
+    // Return if max depth exceeded, additionally add penalty for check positions
+    if (ply >= MAX_SEARCH_DEPTH)
+        return BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor) +
+                (mech.IsCheck() ? -100 / SCORE_GRAIN : 0);
+
+    // if we need to stop the search signal it
+    if (GameTimeManager::GetShouldStop())
+        return TIME_STOP_RESERVED_VALUE;
+
+    // incrementing nodes counter
+    ++_visitedNodes;
+
+
 
     int bestEval = NEGATIVE_INFINITY;
     int statEval = NO_EVAL_RESERVED_VALUE;
