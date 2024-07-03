@@ -263,7 +263,7 @@ UCITranslator::UCICommand UCITranslator::_displayHelpResponse([[maybe_unused]] c
 
     GlobalLogger.LogStream << "Help content:\n\n"
                            << "TODO MAIN HELP\n\n" // TODO
-                           << CustomCommands;
+                           << CustomCommands << std::endl;
 
     return UCICommand::helpCommand;
 }

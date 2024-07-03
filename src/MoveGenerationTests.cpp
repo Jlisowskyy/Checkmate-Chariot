@@ -36,8 +36,8 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(
         {
             if (writeOnOut)
                 GlobalLogger.LogStream << std::format(
-                    "[ ERROR ] Internal Engine didnt detect move: {} on first depth!\n", move
-                );
+                    "[ ERROR ] Internal Engine didnt detect move: {} on first depth!", move
+                ) << std::endl;
             return {move, 0};
         }
 
@@ -46,9 +46,9 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(
         {
             if (writeOnOut)
                 GlobalLogger.LogStream << std::format(
-                    "[ ERROR ] Engine detected wrong number on move: {}\nCorrect one: {}\nBut returned: {}\n", move,
+                    "[ ERROR ] Engine detected wrong number on move: {}\nCorrect one: {}\nBut returned: {}", move,
                     count, internalEngineMoves.at(move)
-                );
+                ) << std::endl;
 
             return {move, depth};
         }
@@ -61,14 +61,14 @@ std::pair<std::string, int> MoveGenerationTester::PerformSingleShallowTest(
             if (!externalEngineMoves.contains(move))
             {
                 if (writeOnOut)
-                    GlobalLogger.LogStream << std::format("[ ERROR ] Engine made additional move: {}!\n", move);
+                    GlobalLogger.LogStream << std::format("[ ERROR ] Engine made additional move: {}!", move) << std::endl;
 
                 return {move, 0};
             }
     }
 
     if (writeOnOut)
-        GlobalLogger.LogStream << "[  OK  ] All moves were generated correctly!\n";
+        GlobalLogger.LogStream << "[  OK  ] All moves were generated correctly!" << std::endl;
 
     return {"", -1};
 }
@@ -82,17 +82,17 @@ void MoveGenerationTester::PerformDeepTest(
     _deepTestRecu(fenPosition, depth, innerMoves, invalidMoveChain);
 
     if (invalidMoveChain.empty())
-        GlobalLogger.LogStream << "[  OK  ] No errors occured!\n";
+        GlobalLogger.LogStream << "[  OK  ] No errors occured!" << std::endl;
     else
     {
         GlobalLogger.LogStream << std::format(
-            "[ ERROR ] Found invalind moves chain:\n\t{}\n", invalidMoveChain + " NULL"
-        );
+            "[ ERROR ] Found invalind moves chain:\n\t{}", invalidMoveChain + " NULL"
+        ) << std::endl;
 
         std::string moveString{};
         for (const auto &move : innerMoves) moveString += move + ' ';
 
-        GlobalLogger.LogStream << std::format("\tReady pos command:\n\tposition startpos moves {}\n", moveString);
+        GlobalLogger.LogStream << std::format("\tReady pos command:\n\tposition startpos moves {}", moveString) << std::endl;
     }
 }
 
@@ -101,8 +101,8 @@ void MoveGenerationTester::PerformSeriesOfDeepTests(const std::vector<std::pair<
     for (const auto &[position, depth] : testPositions)
     {
         GlobalLogger.LogStream << std::format(
-            "Starting deep debug test on position:\n\t{}\n\tWith depth: {}\n", position, depth
-        );
+            "Starting deep debug test on position:\n\t{}\n\tWith depth: {}", position, depth
+        ) << std::endl;
         PerformDeepTest(position, depth, std::vector<std::string>());
     }
 }
@@ -136,7 +136,7 @@ bool MoveGenerationTester::PerformPerformanceTest(const std::string &inputTestPa
     double externalSum{};
 
     GlobalLogger.LogStream << "All results are displayed in following manner:\n\t Internal Engine time in ms, "
-                              "External Engine time in ms, ratio (external/internal)\n";
+                              "External Engine time in ms, ratio (external/internal)" << std::endl;
 
     for (const auto &[pos, dep] : tests)
     {
@@ -150,9 +150,9 @@ bool MoveGenerationTester::PerformPerformanceTest(const std::string &inputTestPa
         results.emplace_back(pos, dep, internalTime, externalTime, ratio);
 
         GlobalLogger.LogStream << std::format(
-            "Performed test on position with depth {}:\n\t{}\nAcquired results: {}, {}, {}\n", dep, pos, internalTime,
+            "Performed test on position with depth {}:\n\t{}\nAcquired results: {}, {}, {}", dep, pos, internalTime,
             externalTime, ratio
-        );
+        ) << std::endl;
     }
 
     // last summary note
@@ -162,8 +162,8 @@ bool MoveGenerationTester::PerformPerformanceTest(const std::string &inputTestPa
         externalSum / internalSum
     );
     GlobalLogger.LogStream << std::format(
-        "Final average results: {}, {}, {}\n", internalSum / tCount, externalSum / tCount, externalSum / internalSum
-    );
+        "Final average results: {}, {}, {}", internalSum / tCount, externalSum / tCount, externalSum / internalSum
+    ) << std::endl;
 
     // writiing to desired csv file
     std::ofstream csvWrite(output.empty() ? DefaultSaveFile : output);
@@ -176,8 +176,9 @@ void MoveGenerationTester::_saveResultToCsv(
     const std::vector<std::tuple<std::string, int, double, double, double>> &results, std::ofstream &stream
 )
 {
-    stream << "Fen Position, depth, internal engine time, external engine time, ratio (external/internal)\n";
-    for (const auto &[i1, i2, i3, i4, i5] : results) stream << std::format("{}, {}, {}, {}, {}\n", i1, i2, i3, i4, i5);
+    stream << "Fen Position, depth, internal engine time, external engine time, ratio (external/internal)" << std::endl;
+    for (const auto &[i1, i2, i3, i4, i5] : results)
+        stream << std::format("{}, {}, {}, {}, {}", i1, i2, i3, i4, i5) << std::endl;
 }
 
 double MoveGenerationTester::_performExternalEngineSpeedTest(const std::string &fenPosition, int depth) const
