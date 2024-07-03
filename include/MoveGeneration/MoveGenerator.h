@@ -55,9 +55,9 @@ struct MoveGenerator : ChessMechanics
     payload GetMovesFast(PackedMove counterMove, int ply, int mostRecentMovedSquare);
 
     template <bool GenOnlyAttackMoves = false, bool ApplyHeuristicEval = true>
-    payload GetMovesFast1()
+    payload GetMovesFast()
     {
-        return GetMovesFast({}, MAX_SEARCH_DEPTH, -1);
+        return GetMovesFast<GenOnlyAttackMoves, ApplyHeuristicEval>({}, MAX_SEARCH_DEPTH, -1);
     }
 
     std::map<std::string, uint64_t> GetCountedMoves(int depth);

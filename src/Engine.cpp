@@ -16,7 +16,7 @@ void Engine::WriteBoard() const { DisplayBoard(_board); }
 
 std::map<std::string, uint64_t> Engine::GetPerft(const int depth)
 {
-    MoveGenerator mgen{_board, TManager.GetDefaultStack(), DummyHistoryTable, DummyHistoryTable};
+    MoveGenerator mgen{_board, TManager.GetDefaultStack(), DummyHistoryTable, DummyKillerTable };
     return mgen.GetCountedMoves(depth);
 }
 
@@ -86,7 +86,7 @@ bool Engine::_applyMove(Board &board, const std::string &move, uint64_t &hash)
     MoveGenerator mech(board, TManager.GetDefaultStack(), DummyHistoryTable, DummyKillerTable);
 
     // generating moves
-    auto moves = mech.GetMovesFast1<false, false>();
+    auto moves = mech.GetMovesFast<false, false>();
 
     for (size_t i = 0; i < moves.size; ++i)
         if (move == moves[i].GetLongAlgebraicNotation())

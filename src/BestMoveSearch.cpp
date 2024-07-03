@@ -30,21 +30,7 @@
 #endif // NDEBUG
 
 [[nodiscard]] inline INLINE uint64_t
-ProcessAttackMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardData &data)
-{
-
-    const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
-    TTable.Prefetch(nextHash);
-    Move::MakeMove(mv, bd);
-    bd.Repetitions[nextHash]++;
-
-    return nextHash;
-}
-
-[[nodiscard]] inline INLINE uint64_t ProcessMove(
-    Board &bd, const Move mv, const int actualPly, const uint64_t hash, KillerTable &table,
-    const VolatileBoardData &data
-)
+ProcessMove(Board &bd, const Move mv, const uint64_t hash, const VolatileBoardData &data)
 {
 
     const uint64_t nextHash = ZHasher.UpdateHash(hash, mv, data);
@@ -479,7 +465,7 @@ int BestMoveSearch::_search(
         }
 
         // apply the moves changes to the board:
-        zHash        = ProcessMove(_board, moves[i], ply, zHash, _kTable, oldData);
+        zHash        = ProcessMove(_board, moves[i], zHash, oldData);
         ++moveCount;
 
         int reductions{};
@@ -717,7 +703,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
             alpha = bestEval;
         }
 
-        moves = mechanics.GetMovesFast1<true>();
+        moves = mechanics.GetMovesFast<true>();
     }
     else
     // we are inside the check, our king is not safe we should resolve all moves
@@ -767,7 +753,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
                 continue;
         }
 
-        zHash               = ProcessAttackMove(_board, moves[i], zHash, oldData);
+        zHash               = ProcessMove(_board, moves[i], zHash, oldData);
         _kTable.ClearPlyFloor(ply + 1);
         const int moveValue = -_qSearch<searchType>(-beta, -alpha, ply + 1, zHash, extendedDepth + 1, moves[i]);
         zHash               = RevertMove(_board, moves[i], zHash, oldData);
