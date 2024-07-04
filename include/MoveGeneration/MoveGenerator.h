@@ -948,7 +948,7 @@ void MoveGenerator::_processKingCastlings(payload &results, const uint64_t block
             mv.SetKilledFigureField(ExtractMsbPos(Board::CastlingsRookMaps[castlingIndex]));
             mv.SetElPassantField(Board::InvalidElPassantField);
             mv.SetCasltingRights(castlings);
-            mv.SetCastlingType(1 + castlingIndex);
+            mv.SetCastlingType(1 + castlingIndex); // God only knows why I made a sentinel at index 0 at this moment
             mv.SetMoveType(PackedMove::CastlingFlag);
 
             // preparing heuristic eval
@@ -1073,7 +1073,7 @@ MoveGenerator::_processPawnPlainPseudoMoves(MoveGenerator::payload &results, con
 
     uint64_t firstMoves = MapT::GetSinglePlainMoves(nonPromoPieces, fullMap);
     uint64_t firstPawns = MapT::RevertSinglePlainMoves(firstMoves);
-    uint64_t secondMoves = MapT::GetSinglePlainMoves(firstMoves, fullMap);
+    uint64_t secondMoves = MapT::GetSinglePlainMoves(firstMoves & MapT::GetSinglePlainMoves(MapT::StartMask, fullMap), fullMap);
     uint64_t secondPawns = MapT::RevertSinglePlainMoves(MapT::RevertSinglePlainMoves(secondMoves));
 
     // go through single upfront moves

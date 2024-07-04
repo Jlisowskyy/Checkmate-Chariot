@@ -92,7 +92,7 @@ void MoveGenerationTester::PerformDeepTest(
         std::string moveString{};
         for (const auto &move : innerMoves) moveString += move + ' ';
 
-        GlobalLogger.LogStream << std::format("\tReady pos command:\n\tposition startpos moves {}", moveString) << std::endl;
+        GlobalLogger.LogStream << std::format("\tReady pos command:\n\tposition fen {} moves {}", fenPosition, moveString) << std::endl;
     }
 }
 

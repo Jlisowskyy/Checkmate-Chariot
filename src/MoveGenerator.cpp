@@ -73,7 +73,11 @@ bool MoveGenerator::_isCastlingLegal(Board& bd, Move mv)
     const auto [blocked, unused, unused1] =
             mech.GetBlockedFieldBitMap(mech.GetFullBitMap());
 
-    return (Board::CastlingSensitiveFields[mv.GetCastlingType()] & blocked) == 0;
+    // Refer to castling generating function in MoveGenerator, there is sentinel on index 0 somehow
+
+    // Check if the king is not attacked and castling sensitive fields too
+    return (Board::CastlingSensitiveFields[mv.GetCastlingType() - 1] & blocked) == 0 &&
+            (blocked & bd.GetFigBoard(bd.MovingColor, kingIndex)) == 0;
 }
 
 bool MoveGenerator::_isNormalMoveLegal(Board& bd, Move mv)

@@ -95,7 +95,7 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldBitMap(uin
         }
     );
 
-    // = 1 or 0 depending whether hits or not
+    // = 1 or 0 depending on whether hits or not
     const uint8_t wasCheckedByBishopFlag = (bishopBlockedMap & allyKingMap) >> allyKingShift;
     checksCount += wasCheckedByBishopFlag;
 
@@ -104,12 +104,12 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldBitMap(uin
     const uint64_t pawnBlockedMap =
         enemyCol == WHITE ? WhitePawnMap::GetAttackFields(pawnsMap) : BlackPawnMap::GetAttackFields(pawnsMap);
 
-    // = 1 or 0 depending whether hits or not
+    // = 1 or 0 depending on whether hits or not
     const uint8_t wasCheckedByPawnFlag = (pawnBlockedMap & allyKingMap) >> allyKingShift;
     checksCount += wasCheckedByPawnFlag;
 
-    // modyfing check type
-    chT += simpleFigCheck * wasCheckedByPawnFlag; // Note: king cannot be double checked by simple figure
+    // modifying check type
+    chT += simpleFigCheck * wasCheckedByPawnFlag; // Note: king cannot be double-checked by simple figure
 
     // Knight attacks generation.
     const uint64_t knighBlockedMap = _blockIterativeGenerator(
@@ -120,11 +120,11 @@ std::tuple<uint64_t, uint8_t, uint8_t> ChessMechanics::GetBlockedFieldBitMap(uin
         }
     );
 
-    // = 1 or 0 depending whether hits or not
+    // = 1 or 0 depending on whether hits or not
     const uint8_t wasCheckedByKnightFlag = (knighBlockedMap & allyKingMap) >> allyKingShift;
     checksCount += wasCheckedByKnightFlag;
 
-    // modyfing check type
+    // modifying check type
     chT += simpleFigCheck * wasCheckedByKnightFlag; // Note: king cannot be double checked by simple figure
 
     const uint64_t blockedMap = kingBlockedMap | pawnBlockedMap | knighBlockedMap | rookBlockedMap | bishopBlockedMap;
