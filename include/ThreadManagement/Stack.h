@@ -74,6 +74,7 @@ template <class ItemT, size_t StackSize> struct Stack
 
     void Clear() { _last = 0; }
 
+    [[nodiscard]] size_t Size() const { return _last; }
     // ------------------------------
     // Class fields
     // ------------------------------

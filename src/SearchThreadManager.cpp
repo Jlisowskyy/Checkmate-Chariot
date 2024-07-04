@@ -101,6 +101,9 @@ void SearchThreadManager::_passiveThreadSearchJob(
         // waiting for task
         taskSem->acquire();
 
+        // harden search status
+        *guard = true;
+
         // destruction is being processed
         if (*shouldStop)
         {
@@ -111,13 +114,10 @@ void SearchThreadManager::_passiveThreadSearchJob(
         const Board &bd = *(args->bd);
         const int depth = args->depth;
 
-        // harden search status
-        *guard = true;
         // signal start command that thread is ready
         bootup->release();
 
         // run search
-
         try{
             BestMoveSearch searcher{bd, *s};
             searcher.IterativeDeepening(&output, &ponder, depth);
@@ -131,7 +131,6 @@ void SearchThreadManager::_passiveThreadSearchJob(
             GlobalLogger.LogStream << std::format("[ ERROR ] Received exception: {}", e.what()) << std::endl;
             exit(EXIT_FAILURE);
         }
-
 
         // harden search status
         *guard = false;

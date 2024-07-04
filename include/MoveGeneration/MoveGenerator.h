@@ -55,10 +55,13 @@ struct MoveGenerator : ChessMechanics
     payload GetMovesFast(PackedMove counterMove, int ply, int mostRecentMovedSquare);
 
     template <bool GenOnlyAttackMoves = false, bool ApplyHeuristicEval = true>
-    payload GetMovesFast()
+    INLINE payload GetMovesFast()
     {
         return GetMovesFast<GenOnlyAttackMoves, ApplyHeuristicEval>({}, MAX_SEARCH_DEPTH, -1);
     }
+
+    template <bool GenOnlyAttackMoves = false, bool ApplyHeuristicEval = true>
+    payload GetPseudoLegalMoves(PackedMove counterMove, int ply, int mostRecentMovedSquare);
 
     std::map<std::string, uint64_t> GetCountedMoves(int depth);
     uint64_t CountMoves(Board &bd, int depth);
@@ -121,6 +124,27 @@ struct MoveGenerator : ChessMechanics
         [[maybe_unused]] uint64_t allowedMoveFilter = 0
     );
 
+    template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval, class MapT>
+    void _processPawnPseudoMoves(
+            payload &results, uint64_t pawnAttacks, uint64_t enemyMap, uint64_t allyMap
+    );
+
+    template <bool ApplyHeuristicEval, class MapT>
+    void _processPawnAttackPseudoMoves(
+            payload &results, uint64_t pawnAttacks, uint64_t enemyMap, uint64_t fullMap, uint64_t promoMoves, uint64_t nonoPromoMoves
+    );
+
+    template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval, class MapT>
+    void _processPawnPlainPseudoMoves(
+            payload &results, uint64_t pawnAttacks, uint64_t fullMap, uint64_t promoPieces, uint64_t nonPromoPieces
+    );
+
+    template <bool ApplyHeuristicEval, class MapT>
+    void _processElPassantPseudoMoves(
+            payload &results, uint64_t pawnAttacks, uint64_t pieces
+    );
+
+
     // TODO: Consider different solution?
     template <bool ApplyHeuristicEval, class MapT, bool isCheck = false>
     void _processElPassantMoves(
@@ -138,6 +162,14 @@ struct MoveGenerator : ChessMechanics
         [[maybe_unused]] uint64_t figureSelector = 0, [[maybe_unused]] uint64_t allowedMoveSelector = 0
     );
 
+    template <
+            bool GenOnlyAttackMoves, bool ApplyHeuristicEval, class MapT, bool checkForCastling = false
+    >
+    void _processFigPseudoMoves(
+            payload &results, uint64_t pawnAttacks, uint64_t enemyMap, uint64_t allyMap
+    );
+
+
     // TODO: improve readability of code below
     template <
         class MapT, bool ApplyHeuristicEval, bool promotePawns,
@@ -153,13 +185,17 @@ struct MoveGenerator : ChessMechanics
         std::bitset<Board::CastlingCount + 1> castlings, uint64_t fullMap
     ) const;
 
+    static constexpr uint64_t  KING_NO_BLOCKED_MAP = (~static_cast<uint64_t>(0));
+
     // TODO: test copying all old castlings
-    template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval>
+    template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval, bool GeneratePseudoMoves = false>
     void _processPlainKingMoves(payload &results, uint64_t blockedFigMap, uint64_t allyMap, uint64_t enemyMap) const;
+
+    static constexpr uint64_t CASTLING_PSEUDO_LEGAL_BLOCKED = 0;
 
     // TODO: simplify ifs??
     // TODO: cleanup left castling available when rook is dead then propagate no castling checking?
-    template <bool ApplyHeuristicEval>
+    template <bool ApplyHeuristicEval, bool GeneratePseudoLegalMoves = false>
     void _processKingCastlings(payload &results, uint64_t blockedFigMap, uint64_t fullMap) const;
 
     // ------------------------------
@@ -625,7 +661,7 @@ void MoveGenerator::_processNonAttackingMoves(
             // iterating through upgradable pieces
             for (size_t i = knightsIndex; i < kingIndex; ++i)
             {
-                const auto TargetBoard = _board.MovingColor * Board::BitBoardsPerCol + i;
+                const auto targetBoard = _board.MovingColor * Board::BitBoardsPerCol + i;
 
                 Move mv{};
 
@@ -633,20 +669,20 @@ void MoveGenerator::_processNonAttackingMoves(
                 mv.SetStartField(ExtractMsbPos(startField));
                 mv.SetStartBoardIndex(figBoardIndex);
                 mv.SetTargetField(movePos);
-                mv.SetTargetBoardIndex(TargetBoard);
+                mv.SetTargetBoardIndex(targetBoard);
                 mv.SetKilledBoardIndex(Board::SentinelBoardIndex);
                 mv.SetElPassantField(Board::InvalidElPassantField);
                 mv.SetCasltingRights(castlings);
                 mv.SetMoveType(PackedMove::PromoFlag | PromoFlags[i]);
 
-                if (_isPromotingPawnGivingCheck<MapT>(movePos, fullMap ^ startField, TargetBoard))
+                if (_isPromotingPawnGivingCheck<MapT>(movePos, fullMap ^ startField, targetBoard))
                     mv.SetCheckType();
 
                 // preparing heuristic eval info
                 if constexpr (ApplyHeuristicEval)
                 {
                     int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
-                    eval         = MoveSortEval::ApplyPromotionEffects(eval, TargetBoard);
+                    eval         = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
                     mv.SetEval(static_cast<int16_t>(eval));
                 }
 
@@ -750,7 +786,7 @@ void MoveGenerator::_processAttackingMoves(
     }
 }
 
-template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval>
+template <bool GenOnlyAttackMoves, bool ApplyHeuristicEval, bool GeneratePseudoMoves>
 void MoveGenerator::_processPlainKingMoves(
     payload &results, const uint64_t blockedFigMap, const uint64_t allyMap, const uint64_t enemyMap
 ) const
@@ -761,7 +797,8 @@ void MoveGenerator::_processPlainKingMoves(
     static constexpr size_t CastlingPerColor = 2;
 
     // generating moves
-    const uint64_t kingMoves = KingMap::GetMoves(_board.GetKingMsbPos(_board.MovingColor)) & ~blockedFigMap & ~allyMap;
+    const uint64_t kingMoves = KingMap::GetMoves(_board.GetKingMsbPos(_board.MovingColor)) &
+            (GeneratePseudoMoves ? KING_NO_BLOCKED_MAP : ~blockedFigMap) & ~allyMap;
     uint64_t attackingMoves  = kingMoves & enemyMap;
     [[maybe_unused]] uint64_t nonAttackingMoves = kingMoves ^ attackingMoves;
 
@@ -842,7 +879,8 @@ void MoveGenerator::_processPlainKingMoves(
     }
 }
 
-template <bool ApplyHeuristicEval>
+
+template <bool ApplyHeuristicEval, bool GeneratePseudoLegalMoves>
 void MoveGenerator::_processKingCastlings(payload &results, const uint64_t blockedFigMap, const uint64_t fullMap) const
 {
     TraceIfFalse(fullMap != 0, "Full map is empty!");
@@ -852,7 +890,7 @@ void MoveGenerator::_processKingCastlings(payload &results, const uint64_t block
             _board.Castlings[castlingIndex] &&
             (Board::CastlingsRookMaps[castlingIndex] &
              _board.BitBoards[_board.MovingColor * Board::BitBoardsPerCol + rooksIndex]) != 0 &&
-            (Board::CastlingSensitiveFields[castlingIndex] & blockedFigMap) == 0 &&
+            (Board::CastlingSensitiveFields[castlingIndex] & (GeneratePseudoLegalMoves ? CASTLING_PSEUDO_LEGAL_BLOCKED : blockedFigMap)) == 0 &&
             (Board::CastlingTouchedFields[castlingIndex] & fullMap) == 0)
         {
             auto castlings                                                                = _board.Castlings;

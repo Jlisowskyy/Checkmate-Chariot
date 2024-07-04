@@ -217,8 +217,7 @@ int BestMoveSearch::IterativeDeepening(
             break;
     }
 
-    // Ensure no memory leak when we received time stop and rolled back
-    _stack.Clear();
+    TraceIfFalse(_stack.Size() == 0, "Stack is not empty after the search!");
 
     if constexpr (TestTT)
         TTable.DisplayStatisticsAndReset();
@@ -450,10 +449,7 @@ int BestMoveSearch::_search(
                     extensions += SINGULAR_EXTENSION;
                 // Multi-cut pruning
                 else if (singularBeta >= beta)
-                {
-                    _stack.PopAggregate(moves);
-                    return singularBeta;
-                }
+                    return (_stack.PopAggregate(moves), singularBeta);
             }
 
             // simple extensions deduction
@@ -548,7 +544,7 @@ int BestMoveSearch::_search(
 
         // if there was call to abort then abort
         if (std::abs(moveEval) == TIME_STOP_RESERVED_VALUE)
-            return TIME_STOP_RESERVED_VALUE;
+            return (_stack.PopAggregate(moves), TIME_STOP_RESERVED_VALUE);
 
         // move reverted after possible research
         zHash = RevertMove(_board, moves[i], zHash, oldData);
@@ -595,8 +591,7 @@ int BestMoveSearch::_search(
         *bestMoveOut = bestMove;
 
     // clean up
-    _stack.PopAggregate(moves);
-    return bestEval;
+    return (_stack.PopAggregate(moves), bestEval);
 }
 
 template <BestMoveSearch::SearchType searchType>
@@ -753,7 +748,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
 
         // if there was call to abort then abort
         if (std::abs(moveValue) == TIME_STOP_RESERVED_VALUE)
-            return TIME_STOP_RESERVED_VALUE;
+            return (_stack.PopAggregate(moves), TIME_STOP_RESERVED_VALUE);
 
         // Update node info
         if (moveValue > bestEval)
@@ -784,9 +779,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         TTable.Add(record, zHash);
     }
 
-    // clean up
-    _stack.PopAggregate(moves);
-    return bestEval;
+    return (_stack.PopAggregate(moves), bestEval);
 }
 
 void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const PackedMove mv)

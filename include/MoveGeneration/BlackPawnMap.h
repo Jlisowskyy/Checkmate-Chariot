@@ -32,6 +32,10 @@ class BlackPawnMap
 
     [[nodiscard]] static constexpr uint64_t GetPlainMoves(uint64_t pawnBit, uint64_t fullMap);
 
+    [[nodiscard]] static constexpr uint64_t GetSinglePlainMoves(uint64_t pawnBit, uint64_t fullMap);
+
+    [[nodiscard]] static constexpr uint64_t RevertSinglePlainMoves(uint64_t pawnBit);
+
     // Returns all moves excepts ElPassantOnes
     [[nodiscard]] static constexpr uint64_t GetMoves(int msbPos, uint64_t fullMap, uint64_t enemyMap);
 
@@ -99,6 +103,14 @@ constexpr uint64_t BlackPawnMap::GetElPassantMoveField(const uint64_t elPassantF
 constexpr uint64_t BlackPawnMap::GetElPassantField(const uint64_t moveField, const uint64_t startField)
 {
     return moveField & ElPassantMask & (StartMask & startField) >> 16;
+}
+
+constexpr uint64_t BlackPawnMap::GetSinglePlainMoves(const uint64_t pawnBit, const uint64_t fullMap) {
+    return (pawnBit >> 8) & ~fullMap;
+}
+
+constexpr uint64_t BlackPawnMap::RevertSinglePlainMoves(uint64_t pawnBit) {
+    return pawnBit << 8;
 }
 
 #endif // BLACKPAWNMAP_H

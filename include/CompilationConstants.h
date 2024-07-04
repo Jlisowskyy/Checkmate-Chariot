@@ -143,7 +143,7 @@ static constexpr int MAX_ASP_WINDOW_RETRIES       = 4;
 
 #ifdef NDEBUG
 
-static constexpr bool Debug = true;
+static constexpr bool Debug = false;
 
 #else
 
