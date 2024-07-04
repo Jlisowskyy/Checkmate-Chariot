@@ -8,6 +8,10 @@
 #include "../include/MoveGeneration/BlackPawnMap.h"
 #include "../include/MoveGeneration/KingMap.h"
 #include "../include/MoveGeneration/WhitePawnMap.h"
+#include "../include/Interface/FenTranslator.h"
+#include "../include/TestsAndDebugging/DebugTools.h"
+
+#include <csignal>
 
 bool ChessMechanics::IsCheck() const
 {
@@ -222,6 +226,14 @@ int ChessMechanics::SEE(const Move mv) const
 
         color              = SwapColor(color);
         attackFromBitBoard = getLeastValuablePieceFromLegalToSquare(fullMap, attackersBitBoard, color, attackerFigType);
+
+        if (depth > MaximalFigureCount) {
+            GlobalLogger.LogStream
+                    << std::format("On fen: {}, and move: {}", FenTranslator::Translate(_board),
+                                   mv.GetLongAlgebraicNotation())
+                    << std::endl;
+            DISPLAY_BACKTRACE();
+        }
     } while (attackFromBitBoard);
 
     // add some bonus when finally king is left under the check

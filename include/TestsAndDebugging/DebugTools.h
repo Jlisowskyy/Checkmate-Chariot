@@ -53,8 +53,8 @@ Move GetMoveDebug(const Board &bd, const std::string &str);
 #include <sys/resource.h>
 #include <pthread.h>
 
-/* Stack trace debug function */
-inline void TRACE_HANDLER(int sig) {
+inline void DISPLAY_BACKTRACE()
+{
     static constexpr size_t STACK_SIZE = 256;
     void *array[STACK_SIZE];
 
@@ -62,8 +62,15 @@ inline void TRACE_HANDLER(int sig) {
     const int size = backtrace(array, STACK_SIZE);
 
     // print out all the frames to stderr
-    fprintf(stderr, "Error received signal -> %s\n", strsignal(sig));
     backtrace_symbols_fd(array, size, STDERR_FILENO);
+    fflush(stderr);
+    fflush(stdout);
+}
+
+/* Stack trace debug function */
+inline void TRACE_HANDLER(int sig) {
+    fprintf(stderr, "Error received signal -> %s\n", strsignal(sig));
+    DISPLAY_BACKTRACE();
     exit(EXIT_FAILURE);
 }
 

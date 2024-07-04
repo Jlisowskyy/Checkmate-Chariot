@@ -83,3 +83,14 @@ TEST(ChessMechTests, SEE1)
         EXPECT_EQ(mech.SEE(mv), scores[i] / SCORE_GRAIN);
     }
 }
+
+TEST(ChessMechTests, SEE_OVERFLOW_TEST)
+{
+    static constexpr char* pos = "2r5/3R4/8/3Rk3/3k4/K7/8/8 b - - 0 71";
+    static constexpr char* move = "d4d5";
+    const Board bd = FenTranslator::GetTranslated(pos);
+    const Move mv = GetMoveDebug(bd, move);
+
+    ChessMechanics mech{bd};
+    mech.SEE(mv);
+}

@@ -25,7 +25,7 @@ UCITranslator::UCICommand UCITranslator::BeginCommandTranslation(std::istream &i
 
         if (lastCommand == UCICommand::InvalidCommand)
             GlobalLogger.LogStream << "[ ERROR ] Error occurred during translation or execution.\n Refer to UCI "
-                                      "protocol manual to get more detailed information.\n";
+                                      "protocol manual to get more detailed information." << std::endl;
     }
 
     WrapTraceMsgInfo("UCI command translation finished.");
@@ -286,7 +286,7 @@ UCITranslator::UCICommand UCITranslator::_clearConsole([[maybe_unused]] const st
 
 UCITranslator::UCICommand UCITranslator::_displayFenResponse([[maybe_unused]] const std::string &unused)
 {
-    GlobalLogger.LogStream << "Acquired fen translation:\n" << _engine.GetFenTranslation() << '\n';
+    GlobalLogger.LogStream << "Acquired fen translation:\n" << _engine.GetFenTranslation() << std::endl;
     return UCICommand::displayCommand;
 }
 

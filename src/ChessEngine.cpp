@@ -28,11 +28,11 @@ void ChessEngineMainEntry(const int argc, const char **argv)
 
     // If on linux platform configure stack trace on signal:
 #ifdef __unix__
-
-    static constexpr int signals[] { SIGSEGV, SIGINT, SIGKILL, SIGTERM, SIGABRT };
-
-    for (int sig : signals)
-        signal(sig, TRACE_HANDLER);
+//
+//    static constexpr int signals[] { SIGSEGV, SIGINT, SIGKILL, SIGTERM, SIGABRT };
+//
+//    for (int sig : signals)
+//        signal(sig, TRACE_HANDLER);
 
 #endif
 
