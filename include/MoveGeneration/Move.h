@@ -86,6 +86,8 @@ struct PackedMove
 
     [[nodiscard]] bool IsPromo() const { return (_packedMove & PromoBit) != 0; }
 
+    [[nodiscard]] bool IsCastling() const { return (_packedMove & CastlingFlag) != 0; }
+
     void SetMoveType(const uint16_t MoveType) { _packedMove |= MoveType << 12; }
 
     [[nodiscard]] uint16_t GetMoveType() const { return (_packedMove & MoveTypeBits) >> 12; }

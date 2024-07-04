@@ -63,6 +63,8 @@ struct MoveGenerator : ChessMechanics
     template <bool GenOnlyTacticalMoves = false, bool ApplyHeuristicEval = true>
     payload GetPseudoLegalMoves(PackedMove counterMove, int ply, int mostRecentMovedSquare);
 
+    [[nodiscard]] static bool IsLegal(Board& bd, Move mv);
+
     std::map<std::string, uint64_t> GetCountedMoves(int depth);
     uint64_t CountMoves(Board &bd, int depth);
 
@@ -74,6 +76,10 @@ struct MoveGenerator : ChessMechanics
     // ------------------------------
 
     private:
+
+    [[nodiscard]] static bool _isCastlingLegal(Board& bd, Move mv);
+    [[nodiscard]] static bool _isNormalMoveLegal(Board& bd, Move mv);
+
     template <class MapT>
     [[nodiscard]] INLINE bool _isGivingCheck(const int msbPos, const uint64_t fullMap, const int enemyColor) const
     {

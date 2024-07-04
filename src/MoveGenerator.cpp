@@ -55,3 +55,76 @@ uint64_t MoveGenerator::CountMoves(Board &bd, const int depth)
     return sum;
 }
 
+bool MoveGenerator::IsLegal(Board& bd, const Move mv) {
+    // TODO: Possibility to improve performance by introducing global state holding pinned figures
+    // TODO: and distinguish given states:
+    // TODO: Castling -> (check for attacks on fields),
+    // TODO: King Move / El Passant -> (check if king is attacked from king's perspective),
+    // TODO: Rest of moves allowed only on line between pinned and king if pinned
+
+    return mv.GetPackedMove().IsCastling() ?
+        MoveGenerator::_isCastlingLegal(bd, mv) :
+        MoveGenerator::_isNormalMoveLegal(bd, mv);
+}
+
+bool MoveGenerator::_isCastlingLegal(Board& bd, Move mv)
+{
+    ChessMechanics mech(bd);
+    const auto [blocked, unused, unused1] =
+            mech.GetBlockedFieldBitMap(mech.GetFullBitMap());
+
+    return (Board::CastlingSensitiveFields[mv.GetCastlingType()] & blocked) == 0;
+}
+
+bool MoveGenerator::_isNormalMoveLegal(Board& bd, Move mv)
+{
+    bd.BitBoards[mv.GetStartBoardIndex()] ^= MaxMsbPossible >> mv.GetStartField();
+    bd.BitBoards[mv.GetTargetBoardIndex()] |= MaxMsbPossible >> mv.GetTargetField();
+    bd.BitBoards[mv.GetKilledBoardIndex()] ^= MaxMsbPossible >> mv.GetKilledFigureField();
+
+    auto reverse = [&](){
+        bd.BitBoards[mv.GetStartBoardIndex()] |= MaxMsbPossible >> mv.GetStartField();
+        bd.BitBoards[mv.GetTargetBoardIndex()] ^= MaxMsbPossible >> mv.GetTargetField();
+        bd.BitBoards[mv.GetKilledBoardIndex()] |= MaxMsbPossible >> mv.GetKilledFigureField();
+    };
+
+    ChessMechanics mechanics(bd);
+
+    const int enemyCol       = SwapColor(bd.MovingColor);
+    const int kingsMsb       = bd.GetKingMsbPos(bd.MovingColor);
+    const uint64_t fullBoard = mechanics.GetFullBitMap();
+
+    // Checking rook's perspective
+    const uint64_t enemyRooks  = bd.GetFigBoard(enemyCol, rooksIndex);
+    const uint64_t enemyQueens = bd.GetFigBoard(enemyCol, queensIndex);
+
+    const uint64_t kingsRookPerspective = RookMap::GetMoves(kingsMsb, fullBoard);
+
+    if ((kingsRookPerspective & (enemyRooks | enemyQueens)) != 0)
+        return (reverse(), false);
+
+    // Checking bishop's perspective
+    const uint64_t enemyBishops = bd.GetFigBoard(enemyCol, bishopsIndex);
+    const uint64_t kingsBishopPerspective = BishopMap::GetMoves(kingsMsb, fullBoard);
+
+    if ((kingsBishopPerspective & (enemyBishops | enemyQueens)) != 0)
+        return (reverse(), false);
+
+    // checking knights attacks
+    const uint64_t enemyKnights = bd.GetFigBoard(enemyCol, knightsIndex);
+    const uint64_t knightsPerspective = KnightMap::GetMoves(kingsMsb);
+
+    if ((knightsPerspective & (enemyKnights)) != 0)
+        return (reverse(), false);
+
+    // pawns checks
+    const uint64_t enemyPawns = bd.GetFigBoard(enemyCol, pawnsIndex);
+    const uint64_t pawnAttacks =
+            enemyCol == WHITE ? WhitePawnMap::GetAttackFields(enemyPawns) : BlackPawnMap::GetAttackFields(enemyPawns);
+
+    if ((pawnAttacks & (MaxMsbPossible >> kingsMsb)) != 0)
+        return (reverse(), false);
+
+    return (reverse(), true);
+}
+

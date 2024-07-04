@@ -5,11 +5,7 @@
 #include "../include/MoveGeneration/ChessMechanics.h"
 
 #include "../include/Evaluation/BoardEvaluator.h"
-#include "../include/MoveGeneration/BlackPawnMap.h"
-#include "../include/MoveGeneration/KingMap.h"
-#include "../include/MoveGeneration/WhitePawnMap.h"
 #include "../include/Interface/FenTranslator.h"
-#include "../include/TestsAndDebugging/DebugTools.h"
 
 #include <csignal>
 
