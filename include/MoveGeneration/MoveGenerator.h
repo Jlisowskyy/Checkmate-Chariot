@@ -22,6 +22,7 @@
 
 #include <array>
 #include <map>
+#include <queue>
 
 struct MoveGenerator : ChessMechanics
 {
@@ -53,6 +54,33 @@ struct MoveGenerator : ChessMechanics
 
     template <bool GenOnlyTacticalMoves = false, bool ApplyHeuristicEval = true>
     payload GetMovesFast(PackedMove counterMove, int ply, int mostRecentMovedSquare);
+
+    template <bool GenOnlyTacticalMoves = false, bool ApplyHeuristicEval = true>
+    payload GetMovesSlow(PackedMove counterMove, int ply, int mostRecentMovedSquare){
+        Board bd = _board;
+
+        payload load = GetPseudoLegalMoves<GenOnlyTacticalMoves, ApplyHeuristicEval>(counterMove, ply, mostRecentMovedSquare);
+
+        std::queue<Move> que{};
+        for (size_t i = 0; i < load.size; ++i)
+            if (MoveGenerator::IsLegal(bd, load.data[i]))
+                que.push(load.data[i]);
+
+        _threadStack.PopAggregate(load);
+        payload loadRV = _threadStack.GetPayload();
+
+        while(!que.empty()){
+            loadRV.Push(_threadStack, que.front());
+            que.pop();
+        }
+
+        return loadRV;
+    }
+
+    template <bool GenOnlyTacticalMoves = false, bool ApplyHeuristicEval = true>
+    INLINE payload GetMovesSlow(){
+        return GetMovesSlow<GenOnlyTacticalMoves, ApplyHeuristicEval>({}, MAX_SEARCH_DEPTH, -1);
+    }
 
     template <bool GenOnlyTacticalMoves = false, bool ApplyHeuristicEval = true>
     INLINE payload GetMovesFast()
