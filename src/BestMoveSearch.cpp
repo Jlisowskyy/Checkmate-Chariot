@@ -202,9 +202,9 @@ int BestMoveSearch::IterativeDeepening(
             const double cutOffPerc = static_cast<double>(_cutoffNodes) / static_cast<double>(_visitedNodes);
 
             GlobalLogger.LogStream << std::format(
-                "info depth {} seldepth {} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc "
+                "info depth {} seldepth {}/{} time {} nodes {} nps {} score cp {} currmove {} hashfull {} cut-offs perc "
                 "{:.2f} pv ",
-                depth, _maxPlyReached, spentMs, _visitedNodes, nps, IsMateScore(eval) ? eval : eval * SCORE_GRAIN,
+                depth, _maxPlyReached, _maxPlyReachedWithQSearch, spentMs, _visitedNodes, nps, IsMateScore(eval) ? eval : eval * SCORE_GRAIN,
                 _pv[0].GetLongAlgebraicNotation(), TTable.GetContainedElements(), cutOffPerc
             );
 
