@@ -838,7 +838,12 @@ void MoveGenerator::_processPlainKingMoves(
 
     // generating moves
     const uint64_t kingMoves = KingMap::GetMoves(_board.GetKingMsbPos(_board.MovingColor)) &
-            (GeneratePseudoMoves ? KING_NO_BLOCKED_MAP : ~blockedFigMap) & ~allyMap;
+            (GeneratePseudoMoves ? KING_NO_BLOCKED_MAP : ~blockedFigMap) &
+            ~allyMap &
+            // NOTE: when we do not use blocked fig map we should block kings to prevent attacking themselves
+            (GeneratePseudoMoves ? KingMap::GetMoves(_board.GetKingMsbPos(SwapColor(_board.MovingColor))) : KING_NO_BLOCKED_MAP);
+
+
     uint64_t attackingMoves  = kingMoves & enemyMap;
     [[maybe_unused]] uint64_t nonAttackingMoves = kingMoves ^ attackingMoves;
 
