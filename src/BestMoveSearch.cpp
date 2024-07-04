@@ -315,11 +315,7 @@ int BestMoveSearch::_search(
         }
 
     // generate moves
-    auto moves = _moveGenerator.GetMovesFast(_cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField());
-
-    // If no move is possible: check whether we hit mate or stalemate
-    if (moves.size == 0)
-        return isCheck ? GetMateValue(ply) : DRAW_SCORE;
+    auto moves = _moveGenerator.GetPseudoLegalMoves(_cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField());
 
     // Extends paths where we have only one move possible
     // TODO: consider do it other way to detect it also on leafs
@@ -336,7 +332,11 @@ int BestMoveSearch::_search(
     PackedMove bestMove{};
     int bestEval = NEGATIVE_INFINITY;
     PV inPV{};
-    int moveCount{};
+
+    // NOTE: legal move is needed for draw if test at the end.
+    // NOTE: moveCount is mainly used with multi-cut
+    int moveCount{}; // counts legal moves that were searched
+    int legalMoves{}; // Counts only legal moves
 
     // processing each move
     for (size_t i = 0; i < moves.size; ++i)
@@ -397,6 +397,11 @@ int BestMoveSearch::_search(
         else
             _fetchBestMove(moves, i);
 
+        // skip illegal moves
+        if (!MoveGenerator::IsLegal(_board, moves[i]))
+            continue;
+        legalMoves++;
+
         // if the fetch move was excluded singular search simple skip this iteration
         if (moves[i].GetPackedMove() == _excludedMove)
             continue;
@@ -406,7 +411,10 @@ int BestMoveSearch::_search(
 
         // ---------------------------- pruning -----------------------------------
         // we should avoid pruning when returning a mate score is possible
-        if (ply > 0 && i != 0 && !IsMateScore(alpha))
+        // Note: ply > 0 - ensures no move is cut on root node to assure all  subtrees were checked
+        // Note: moveCount != 0 - ensures that at least one move was tested before returning if there was legal one
+        // Note: !IsMateScore(alpha) - ensures we did not accidentally cut a checkmate
+        if (ply > 0 && moveCount != 0 && !IsMateScore(alpha))
         {
             // consider pruning of checks and captures with bad enough SEE value
             if (moves[i].IsAttackingMove() || moves[i].IsChecking())
@@ -425,6 +433,14 @@ int BestMoveSearch::_search(
             // singular extensions:
             // we try to use entry from TT to determine whether given move is the only good move in this node,
             // if given thesis hold we extend proposed move search depth
+            // Note: ply > 0 - ensures we do not accidentally cut a move at root
+            // Note: wasTTHit - ensures we have strong move saved from previous search
+            // Note: _excludedMove.IsEmpty() - ensures no nested singular search is allowed
+            // Note: moves[i].GetPackedMove() == prevSearchRes.GetMove() - ensures that only the strong move is searched
+            // Note: plyDepth - prevSearchRes.GetDepth() <= SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT - ensures
+            //       minimal quality of move probed from the TT
+            // Note: (prevSearchRes.GetNodeType() == LOWER_BOUND || prevSearchRes.GetNodeType() == PV_NODE) - ensures
+            //       we skip all-nodes in singular search
             if (ply > 0 && wasTTHit && _excludedMove.IsEmpty() && moves[i].GetPackedMove() == prevSearchRes.GetMove() &&
                 plyDepth - prevSearchRes.GetDepth() <= SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT &&
                 (prevSearchRes.GetNodeType() == LOWER_BOUND || prevSearchRes.GetNodeType() == PV_NODE) &&
@@ -493,8 +509,8 @@ int BestMoveSearch::_search(
         int moveEval = alpha;
 
         // Late Move reductions
-        // i > 1 - we want to be sure to explore move from TT and best move accordingly to sorting
-        if (reductions > 0 && depthLeft >= LMR_MIN_DEPTH && i > 1)
+        // moveCount > 2 - we want to be sure to explore move from TT and best move accordingly to sorting
+        if (reductions > 0 && depthLeft >= LMR_MIN_DEPTH && moveCount > 2)
         {
             const int LMRDepth = depthLeft + extensions - reductions - FULL_DEPTH_FACTOR;
 
@@ -517,7 +533,7 @@ int BestMoveSearch::_search(
         // In pv nodes we always search first move on full window due to assumption that TT will give
         // us best move that is possible.
         // In case of non pv nodes we only search with zw
-        else if (!IsPvNode || i != 0)
+        else if (!IsPvNode || moveCount != 1)
         {
             _kTable.ClearPlyFloor(ply + 1);
             moveEval = -_search<SearchType::NoPVSearch, false>(
@@ -527,12 +543,12 @@ int BestMoveSearch::_search(
         }
 
         // if not, research move only in case of pv nodes
-        if (IsPvNode && (i == 0 || alpha < moveEval))
+        if (IsPvNode && (moveCount == 1 || alpha < moveEval))
         {
             _kTable.ClearPlyFloor(ply + 1);
 
             // Research with full window
-            if (followPv && i == 0)
+            if (followPv && moveCount == 1)
                 moveEval = -_search<SearchType::PVSearch, true>(
                     -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, moves[i], inPV, nullptr
                 );
@@ -567,13 +583,20 @@ int BestMoveSearch::_search(
                     break;
                 }
 
+                // NOTE: in case of zero window search there is no possibility to improve alpha,
+                //       therefore pv will not be updated
                 alpha = bestEval;
                 pv.InsertNext(bestMove, inPV);
             }
         }
     }
 
+    // If no move is possible: check whether we hit mate or stalemate
+    if (legalMoves == 0)
+        return (_stack.PopAggregate(moves), isCheck ? GetMateValue(ply) : DRAW_SCORE);
+
     // updating if profitable
+    // NOTE: _excludedMove.IsEmpty() - ensures no move from singular search is saved
     if (_excludedMove.IsEmpty() && (plyDepth >= prevSearchRes.GetDepth() ||
                                     (!wasTTHit && _board.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE)))
     {
@@ -587,6 +610,7 @@ int BestMoveSearch::_search(
         TTable.Add(record, zHash);
     }
 
+    // Save move if possible
     if (bestMoveOut != nullptr)
         *bestMoveOut = bestMove;
 
@@ -691,17 +715,13 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
             alpha = bestEval;
         }
 
-        moves = _moveGenerator.GetMovesFast<true>();
+        moves = _moveGenerator.GetPseudoLegalMoves<true>();
     }
     else
     // we are inside the check, our king is not safe we should resolve all moves
     {
         // When there is check we need to go through every possible move to get a better view about the position
-        moves = _moveGenerator.GetMovesFast(_cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField());
-
-        // we are in check and no moves are possible
-        if (moves.size == 0)
-            return GetMateValue(ply + extendedDepth);
+        moves = _moveGenerator.GetPseudoLegalMoves(_cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField());
     }
 
     // saving volatile fields
@@ -717,10 +737,15 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         _fetchBestMove(moves, 0);
 
     // iterating through moves
+    int moveCount{}; // amount of legal moves
     for (size_t i = 0; i < moves.size; ++i)
     {
         if (i != 0)
             _fetchBestMove(moves, i);
+
+        if (!MoveGenerator::IsLegal(_board, moves[i]))
+            continue;
+        ++moveCount;
 
         // pruning on the move
         if (!isCheck)
@@ -768,8 +793,16 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         }
     }
 
-    // saving the move is only possible when no excluded move is used
-    if (!isCheck && !wasTTHit &&
+    // we are in check and no moves are possible
+    if (isCheck && moveCount == 0)
+        return (_stack.PopAggregate(moves), GetMateValue(ply + extendedDepth));
+
+    // Note: !(bestEval > alpha && bestMove.IsEmpty()) excludes situation when we improve score with stat eval
+    //       but no move exceeded alpha. In such situation node type check is invalid.
+    // Note: !wasTTHit if there was a hit there is no chance to improve anything due to depth 0 save.
+    // Note: (prevSearchRes.GetDepth() == 0) ensures we save only empty records and other qsearch saved records.
+    // Note: QUIESENCE_AGE_DIFF_REPLACE significantly bigger than usual threshold.
+    if (!isCheck && !wasTTHit && !(bestEval > alpha && bestMove.IsEmpty()) &&
         ((prevSearchRes.GetDepth() == 0) || _board.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);

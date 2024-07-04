@@ -63,6 +63,12 @@ struct MoveGenerator : ChessMechanics
     template <bool GenOnlyTacticalMoves = false, bool ApplyHeuristicEval = true>
     payload GetPseudoLegalMoves(PackedMove counterMove, int ply, int mostRecentMovedSquare);
 
+    template <bool GenOnlyTacticalMoves = false, bool ApplyHeuristicEval = true>
+    INLINE payload GetPseudoLegalMoves()
+    {
+        return GetPseudoLegalMoves<GenOnlyTacticalMoves, ApplyHeuristicEval>({}, MAX_SEARCH_DEPTH, -1);
+    }
+
     [[nodiscard]] static bool IsLegal(Board& bd, Move mv);
 
     std::map<std::string, uint64_t> GetCountedMoves(int depth);
@@ -1237,7 +1243,7 @@ void MoveGenerator::_processPawnPseudoMoves(MoveGenerator::payload &results, con
     const uint64_t nonPromotingPawns = _board.BitBoards[MapT::GetBoardIndex(0)] ^ promotingPawns;
     const uint64_t fullMap = enemyMap | allyMap;
 
-    _processPawnAttackPseudoMoves<MapT>(
+    _processPawnAttackPseudoMoves<ApplyHeuristicEval, MapT>(
             results, pawnAttacks, enemyMap, fullMap, promotingPawns, nonPromotingPawns
     );
 
