@@ -45,7 +45,7 @@
  * When referring to ply search tree, it grows from top to bottom.
  * */
 
-class MoveGenerator;
+struct MoveGenerator;
 class BestMoveSearch
 {
     // ------------------------------
@@ -102,7 +102,7 @@ class BestMoveSearch
             GlobalLogger.LogStream << buff;
         }
 
-        [[nodiscard]] INLINE bool Contains(int ply) const { return ply < _depth; }
+        [[nodiscard]] INLINE bool Contains(const int ply) const { return ply < _depth; }
 
         /* Debug function to check internal state of the PV */
         [[nodiscard]] INLINE bool IsFilled() const
@@ -112,6 +112,11 @@ class BestMoveSearch
                     return false;
 
             return true;
+        }
+
+        void INLINE Clear()
+        {
+            _depth = 0;
         }
 
         /* returns the move */

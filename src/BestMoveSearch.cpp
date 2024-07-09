@@ -95,7 +95,7 @@ int BestMoveSearch::IterativeDeepening(
 
             // performs the search without aspiration window to gather some initial statistics about the move
             eval = _search<SearchType::PVSearch, true>(
-                NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, _pv, nullptr
+                NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff, nullptr
             );
             TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
@@ -106,6 +106,7 @@ int BestMoveSearch::IterativeDeepening(
             // saving the move evaluation to the avg value
             // TODO: maybe check previous pv for the predicting value?
             avg += depth * eval;
+            _pv.Clone(pvBuff);
         }
         else
         {
@@ -251,7 +252,9 @@ int BestMoveSearch::_search(
     ++_visitedNodes;
 
     // Check whether we reached end of the legal path
-    if (_moveGenerator.IsDrawByReps(zHash))
+    // Note:
+    //   ply != 0 : prohibit behavior to return null move in case of draw by repetitions
+    if (ply != 0 && _moveGenerator.IsDrawByReps(zHash))
         return DRAW_SCORE;
 
     // reading Transposition table for the best move
@@ -316,16 +319,6 @@ int BestMoveSearch::_search(
 
     // generate moves
     auto moves = _moveGenerator.GetPseudoLegalMoves(_cmTable.GetCounterMove(prevMove), ply, prevMove.GetTargetField());
-
-    // Extends paths where we have only one move possible
-    // TODO: consider do it other way to detect it also on leafs
-    if (ShouldExtend(ply, _rootDepth) && moves.size == 1)
-    {
-        depthLeft += IsPvNode ? ONE_REPLY_EXTENSION_PV_NODE : ONE_REPLY_EXTENSION;
-
-        if constexpr (TraceExtensions)
-            TraceWithInfo("Applied one reply extension");
-    }
 
     // saving volatile board state
     VolatileBoardData oldData{_board};
@@ -510,7 +503,7 @@ int BestMoveSearch::_search(
 
         // Late Move reductions
         // moveCount > 2 - we want to be sure to explore move from TT and best move accordingly to sorting
-        if (reductions > 0 && depthLeft >= LMR_MIN_DEPTH && moveCount > 2)
+        if (moveCount > 2 && depthLeft >= LMR_MIN_DEPTH && reductions > 0)
         {
             const int LMRDepth = depthLeft + extensions - reductions - FULL_DEPTH_FACTOR;
 
@@ -558,12 +551,12 @@ int BestMoveSearch::_search(
                 );
         }
 
+        // move reverted after possible research
+        zHash = RevertMove(_board, moves[i], zHash, oldData);
+
         // if there was call to abort then abort
         if (std::abs(moveEval) == TIME_STOP_RESERVED_VALUE)
             return (_stack.PopAggregate(moves), TIME_STOP_RESERVED_VALUE);
-
-        // move reverted after possible research
-        zHash = RevertMove(_board, moves[i], zHash, oldData);
 
         // Check whether we should update values
         if (moveEval > bestEval)
@@ -586,7 +579,11 @@ int BestMoveSearch::_search(
                 // NOTE: in case of zero window search there is no possibility to improve alpha,
                 //       therefore pv will not be updated
                 alpha = bestEval;
+
+                // Only inserts the move from the PV
                 pv.InsertNext(bestMove, inPV);
+                // Additionaly clear the pv to prevent copying random moves in other iterations
+                inPV.Clear();
             }
         }
     }
@@ -627,13 +624,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         TraceIfFalse(beta == alpha + 1, "Invalid alpha/beta in zw search");
 
     // save max depth reached with qsence
-    if (ply > _maxPlyReachedWithQSearch)
-    {
-        _maxPlyReachedWithQSearch = ply;
-
-        if constexpr (Debug)
-            TRACE_STACK_USAGE();
-    }
+    _maxPlyReachedWithQSearch = std::max(_maxPlyReachedWithQSearch, ply);
 
     // Check whether we reached end of the legal path
     if (_moveGenerator.IsDrawByReps(zHash))

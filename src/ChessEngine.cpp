@@ -22,9 +22,9 @@ void ChessEngineMainEntry(const int argc, const char **argv)
     UCITranslator translator{engine};
 
     // Disable C compatibility:
-    std::ios_base::sync_with_stdio(false);
-    std::cin.tie(nullptr);
-    std::cout.tie(nullptr);
+    // std::ios_base::sync_with_stdio(false);
+    // std::cin.tie(nullptr);
+    // std::cout.tie(nullptr);
 
     // If on linux platform configure stack trace on signal:
 #ifdef __unix__
