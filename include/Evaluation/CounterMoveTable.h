@@ -37,15 +37,15 @@ struct CounterMoveTable
     // ------------------------------
 
     // Function returns move that is currently saved as counter move for that one
-    [[nodiscard]] INLINE PackedMove GetCounterMove(const Move previousMove) const
+    [[nodiscard]] INLINE PackedMove GetCounterMove(const Move previousMove, int movingColor) const
     {
-        return _counterMovesTable[previousMove.GetStartBoardIndex()][previousMove.GetTargetField()];
+        return _counterMovesTable[movingColor][previousMove.GetStartBoardIndex()][previousMove.GetTargetField()];
     }
 
     // Simply saves counter move for given move, without checking or considering anything
-    INLINE void SaveCounterMove(const PackedMove counterMove, const Move previousMove)
+    INLINE void SaveCounterMove(const PackedMove counterMove, const Move previousMove, int movingColor)
     {
-        _counterMovesTable[previousMove.GetStartBoardIndex()][previousMove.GetTargetField()] = counterMove;
+        _counterMovesTable[movingColor][previousMove.GetStartBoardIndex()][previousMove.GetTargetField()] = counterMove;
     }
 
     // Resets all values inside the table to default null move one
@@ -56,7 +56,7 @@ struct CounterMoveTable
     // ------------------------------
 
     private:
-    PackedMove _counterMovesTable[Board::BitBoardsCount][Board::BitBoardFields]{};
+    PackedMove _counterMovesTable[2][Board::BitBoardsCount][Board::BitBoardFields]{};
 };
 
 #endif // COUNTERMOVETABLE_H

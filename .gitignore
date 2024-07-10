@@ -1,4 +1,7 @@
 build/
+
+**/Logs
+
 .idea/
 cmake*
 python\ scripts/

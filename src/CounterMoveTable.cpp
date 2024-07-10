@@ -6,6 +6,7 @@
 
 void CounterMoveTable::ClearTable()
 {
-    for (auto &from : _counterMovesTable)
-        for (auto &fromTo : from) fromTo = PackedMove{};
+    for (auto& color : _counterMovesTable)
+        for (auto &from : color)
+            for (auto &fromTo : from) fromTo = PackedMove{};
 }

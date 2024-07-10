@@ -702,6 +702,7 @@ void MoveGenerator::_processNonAttackingMoves(
                 eval         = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _ply);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
+                eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
                 mv.SetEval(static_cast<int16_t>(eval));
             }
 
@@ -735,6 +736,7 @@ void MoveGenerator::_processNonAttackingMoves(
                 {
                     int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
                     eval         = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
+                    eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
                     mv.SetEval(static_cast<int16_t>(eval));
                 }
 
@@ -787,9 +789,13 @@ void MoveGenerator::_processAttackingMoves(
             // preparing heuristic eval info
             if constexpr (ApplyHeuristicEval)
             {
+                bool isGoodCapture{};
+
                 int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
-                eval         = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
+                eval         = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex, isGoodCapture);
                 eval         = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
+                eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
+
                 mv.SetEval(static_cast<int16_t>(eval));
             }
 
@@ -823,10 +829,13 @@ void MoveGenerator::_processAttackingMoves(
 
                 if constexpr (ApplyHeuristicEval)
                 {
+                    bool isGoodCapture{};
+
                     int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, startField, moveBoard);
-                    eval         = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex);
+                    eval         = MoveSortEval::ApplyKilledFigEffect(eval, figBoardIndex, attackedFigBoardIndex, isGoodCapture);
                     eval         = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
                     eval         = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, movePos);
+                    eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
                     mv.SetEval(static_cast<int16_t>(eval));
                 }
 
@@ -890,6 +899,7 @@ void MoveGenerator::_processPlainKingMoves(
                 int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _ply);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
+                eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
                 mv.SetEval(static_cast<int16_t>(eval));
             }
 
@@ -927,6 +937,7 @@ void MoveGenerator::_processPlainKingMoves(
         {
             int32_t eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(0, _mostRecentSq, newPos);
             eval += MoveSortEval::FigureEval[attackedFigBoardIndex]; // adding value of the killed figure
+            eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
             mv.SetEval(static_cast<int16_t>(eval));
         }
 
@@ -975,6 +986,7 @@ void MoveGenerator::_processKingCastlings(payload &results, const uint64_t block
                 int32_t eval = MoveSortEval::ApplyKillerMoveEffect(0, _kTable, mv, _ply);
                 eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
                 eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
+                eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
                 mv.SetEval(static_cast<int16_t>(eval));
             }
 
@@ -1020,6 +1032,7 @@ MoveGenerator::_processElPassantPseudoMoves(MoveGenerator::payload &results,
             int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, 0, pawnMap, moveBitMap);
             eval = MoveSortEval::ApplyAttackFieldEffects(eval, pawnAttacks, pawnMap, moveBitMap);
             eval = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, ExtractMsbPos(moveBitMap));
+            eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
             mv.SetEval(static_cast<int16_t>(eval));
         }
 
@@ -1072,6 +1085,7 @@ MoveGenerator::_processPawnPlainPseudoMoves(MoveGenerator::payload &results, con
                 {
                     int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, pawnBitBoard, pawnTargetBitBoard);
                     eval         = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
+                    eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
                     mv.SetEval(static_cast<int16_t>(eval));
                 }
 
@@ -1122,6 +1136,7 @@ MoveGenerator::_processPawnPlainPseudoMoves(MoveGenerator::payload &results, con
             eval         = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _ply);
             eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
             eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
+            eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
             mv.SetEval(static_cast<int16_t>(eval));
         }
 
@@ -1159,6 +1174,7 @@ MoveGenerator::_processPawnPlainPseudoMoves(MoveGenerator::payload &results, con
             eval         = MoveSortEval::ApplyKillerMoveEffect(eval, _kTable, mv, _ply);
             eval         = MoveSortEval::ApplyCounterMoveEffect(eval, _counterMove, mv);
             eval         = MoveSortEval::ApplyHistoryTableBonus(eval, mv, _hTable);
+            eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
             mv.SetEval(static_cast<int16_t>(eval));
         }
 
@@ -1209,9 +1225,13 @@ MoveGenerator::_processPawnAttackPseudoMoves(MoveGenerator::payload &results, co
             // preparing heuristic eval info
             if constexpr (ApplyHeuristicEval)
             {
+                bool isGoodCapture{};
+
                 int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, pawnBitBoard, pawnTargetBitBoard);
-                eval         = MoveSortEval::ApplyKilledFigEffect(eval, MapT::GetBoardIndex(0), attackedFigBoardIndex);
+                eval         = MoveSortEval::ApplyKilledFigEffect(eval, MapT::GetBoardIndex(0), attackedFigBoardIndex, isGoodCapture);
                 eval         = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, pawnPos);
+                eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
+
                 mv.SetEval(static_cast<int16_t>(eval));
             }
 
@@ -1262,10 +1282,14 @@ MoveGenerator::_processPawnAttackPseudoMoves(MoveGenerator::payload &results, co
 
                 if constexpr (ApplyHeuristicEval)
                 {
+                    bool isGoodCapture{};
+
                     int32_t eval = MoveSortEval::ApplyAttackFieldEffects(0, pawnAttacks, pawnBitBoard, pawnTargetBitBoard);
-                    eval         = MoveSortEval::ApplyKilledFigEffect(eval, MapT::GetBoardIndex(0), attackedFigBoardIndex);
+                    eval         = MoveSortEval::ApplyKilledFigEffect(eval, MapT::GetBoardIndex(0), attackedFigBoardIndex, isGoodCapture);
                     eval         = MoveSortEval::ApplyPromotionEffects(eval, targetBoard);
                     eval         = MoveSortEval::ApplyCaptureMostRecentSquareEffect(eval, _mostRecentSq, pawnTarget);
+                    eval         = MoveSortEval::ApplyCheckBonus(eval, mv.IsChecking());
+
                     mv.SetEval(static_cast<int16_t>(eval));
                 }
 

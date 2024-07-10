@@ -193,7 +193,7 @@ class BestMoveSearch
     INLINE void _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth, const int ply)
     {
         _kTable.SaveKillerMove(mv, ply);
-        _cmTable.SaveCounterMove(mv.GetPackedMove(), prevMove);
+        _cmTable.SaveCounterMove(mv.GetPackedMove(), prevMove, _board.MovingColor);
         _histTable.SetBonusMove(mv, depth);
     }
 
@@ -203,6 +203,9 @@ class BestMoveSearch
     // Class fields
     // ------------------------------
 
+
+    CounterMoveTable _cmTable{};
+    HistoricTable _histTable{};
     Stack<Move, DEFAULT_STACK_SIZE> &_stack;
     Board _board;
     PV _pv{};
@@ -210,8 +213,6 @@ class BestMoveSearch
     uint64_t _visitedNodes = 0;
     uint64_t _cutoffNodes  = 0;
     KillerTable _kTable{};
-    CounterMoveTable _cmTable{};
-    HistoricTable _histTable{};
     int _maxPlyReached{};
     int _maxPlyReachedWithQSearch{};
     int _rootDepth{};

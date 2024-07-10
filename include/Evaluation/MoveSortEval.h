@@ -12,28 +12,14 @@
 
 /*
  * TODO:
- * - add additional points for moves that gives a check,
+ *      - add additional points for moves that gives a check (Will be improved when better check detection is done / make better sorting still),
  * - add points for moves that escapes the danger,
  * - reconsider special sorting for moves when we are in check,
- * - add SEE for good captures
+ *      - add SEE for good captures (What about checks?)
  * - allow good quiets to be higher
  * - consider better histories and possibly more types
- *
- *
- *
- * */
-
-/*
- *      The purpose of MoveSortEval is to generate a value which estimates probability of move causing
- *      a beta-cutoff in alpha-beta pruning algorithm. The desired output is to evaluate moves in given order:
- *
- *     1) Previous move that caused beta-cutoff retrieved from TT (Realized inside the search
- *     2) Capture of the most recently moved figure
- *     3) All promotions
- *     4) All captures sorted in order from best to worst
- *     5) All Killer moves
- *     6) All Counter Moves
- *     7) All other silent moves according to the history table and pawn control
+ * - make check detection during move generation better
+ * - improve SEE quality
  *
  * */
 
@@ -77,16 +63,17 @@ struct MoveSortEval
     }
 
     // Function applies capture bonus and material balance of the move
-    static INLINE int32_t ApplyKilledFigEffect(const int32_t eval, const size_t attackFig, const size_t killedFig)
-
+    static INLINE int32_t ApplyKilledFigEffect(const int32_t eval, const size_t attackFig, const size_t killedFig, bool& isGoodCapture)
     {
-        return eval + FigureEval[killedFig] - FigureEval[attackFig] + TacticalBonus;
+        const int32_t moveEstimation = FigureEval[killedFig] - FigureEval[attackFig];
+        isGoodCapture = moveEstimation >= 0;
+
+        return eval + moveEstimation + TacticalBonus;
     }
 
     // Function applies killer move bonus to the eval
     static INLINE int32_t
     ApplyKillerMoveEffect(const int32_t eval, const KillerTable &kTable, const Move mv, const int ply)
-
     {
         return eval + KillerMovePrize * kTable.IsKillerMove(mv, ply);
     }
@@ -101,7 +88,6 @@ struct MoveSortEval
     // Function applies bonus to the eval if move is a capture of the most recently moved figure
     static INLINE int32_t
     ApplyCaptureMostRecentSquareEffect(const int32_t eval, const int mostRecentSquareMsb, const int moveSquare)
-
     {
         return eval + MostRecentSquarePrize * (mostRecentSquareMsb == moveSquare);
     }
@@ -112,9 +98,14 @@ struct MoveSortEval
         return eval + hTable.GetBonusMove(mv);
     }
 
-    static INLINE int32_t ApplyCheckBonus(const int32_t eval)
+    static INLINE int32_t ApplyCheckBonus(const int32_t eval, const bool isChecking)
     {
-        return eval + CheckingBonus;
+        return eval + CheckingBonus * isChecking;
+    }
+
+    static INLINE int32_t ApplySEEBonus(const int32_t eval, const int32_t SEEBonus)
+    {
+        return eval + SEEBonus * SEEMultiplier;
     }
 
     // ------------------------------
@@ -138,6 +129,8 @@ struct MoveSortEval
     // small prizes to distinguish nearly identical moves
     static constexpr int16_t AttackedFigurePenalty = -50;
     static constexpr int16_t RunAwayPrize          = 50;
+
+    static constexpr int16_t SEEMultiplier = 3;
 
     static constexpr int16_t FigureEval[] = {
         100, // wPawnsIndex,
