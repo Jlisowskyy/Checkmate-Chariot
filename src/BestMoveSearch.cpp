@@ -89,7 +89,6 @@ int BestMoveSearch::IterativeDeepening(
         if (!UseAsp || depth < ASP_WND_MIN_DEPTH)
         {
             // cleaning tables used in previous iteration
-            _kTable.ClearPlyFloor(0);
             _histTable.ScaleTableDown();
             _maxPlyReached = 0;
 
@@ -125,7 +124,6 @@ int BestMoveSearch::IterativeDeepening(
                 delta += delta;
 
                 // cleaning tables used in previous iterations
-                _kTable.ClearPlyFloor(0);
                 _histTable.ScaleTableDown();
                 _maxPlyReached = 0;
                 eval           = _search<SearchType::PVSearch, true>(
@@ -322,9 +320,12 @@ int BestMoveSearch::_search(
 
     // saving volatile board state
     VolatileBoardData oldData{_board};
-    PackedMove bestMove{};
+    Move bestMove{};
     int bestEval = NEGATIVE_INFINITY;
     PV inPV{};
+
+    // clear killer table for the childs
+    _kTable.ClearPlyFloor(ply);
 
     // NOTE: legal move is needed for draw if test at the end.
     // NOTE: moveCount is mainly used with multi-cut
@@ -447,7 +448,6 @@ int BestMoveSearch::_search(
 
                 // NOTE: due to single excluded move no recursive singular searched are allowed
                 _excludedMove           = prevSearchRes.GetMove();
-                _kTable.ClearPlyFloor(ply + 1);
                 const int singularValue = _search<SearchType::NoPVSearch, false>(
                     singularBeta - 1, singularBeta, singularDepth, ply, zHash, prevMove, _dummyPv, nullptr
                 );
@@ -507,7 +507,6 @@ int BestMoveSearch::_search(
         {
             const int LMRDepth = depthLeft + extensions - reductions - FULL_DEPTH_FACTOR;
 
-            _kTable.ClearPlyFloor(ply + 1);
             moveEval = -_search<SearchType::NoPVSearch, false>(
                     -(alpha + 1), -alpha, LMRDepth, ply + 1, zHash, moves[i], _dummyPv,
                     nullptr
@@ -516,7 +515,6 @@ int BestMoveSearch::_search(
             // Perform research when move failed high
             if (moveEval > alpha)
             {
-                _kTable.ClearPlyFloor(ply + 1);
                 moveEval = -_search<SearchType::NoPVSearch, false>(
                         -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR + extensions, ply + 1, zHash, moves[i], _dummyPv,
                         nullptr
@@ -528,7 +526,6 @@ int BestMoveSearch::_search(
         // In case of non pv nodes we only search with zw
         else if (!IsPvNode || moveCount != 1)
         {
-            _kTable.ClearPlyFloor(ply + 1);
             moveEval = -_search<SearchType::NoPVSearch, false>(
                 -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR + extensions, ply + 1, zHash, moves[i], _dummyPv,
                 nullptr
@@ -538,8 +535,6 @@ int BestMoveSearch::_search(
         // if not, research move only in case of pv nodes
         if (IsPvNode && (moveCount == 1 || alpha < moveEval))
         {
-            _kTable.ClearPlyFloor(ply + 1);
-
             // Research with full window
             if (followPv && moveCount == 1)
                 moveEval = -_search<SearchType::PVSearch, true>(
@@ -564,14 +559,11 @@ int BestMoveSearch::_search(
             bestEval = moveEval;
             if (moveEval > alpha)
             {
-                bestMove = moves[i].GetPackedMove();
+                bestMove = moves[i];
 
                 // cut-off found
                 if (moveEval >= beta)
                 {
-                    if (moves[i].IsQuietMove())
-                        _saveQuietMoveInfo(moves[i], prevMove, plyDepth, ply);
-
                     ++_cutoffNodes;
                     break;
                 }
@@ -581,7 +573,7 @@ int BestMoveSearch::_search(
                 alpha = bestEval;
 
                 // Only inserts the move from the PV
-                pv.InsertNext(bestMove, inPV);
+                pv.InsertNext(bestMove.GetPackedMove(), inPV);
                 // Additionaly clear the pv to prevent copying random moves in other iterations
                 inPV.Clear();
             }
@@ -589,8 +581,13 @@ int BestMoveSearch::_search(
     }
 
     // If no move is possible: check whether we hit mate or stalemate
+    // TODO: consider how to act in case of excluded move and no legal moves due to lack of it
     if (legalMoves == 0)
         return (_stack.PopAggregate(moves), isCheck ? GetMateValue(ply) : DRAW_SCORE);
+
+    // we found a good enough move update info about it
+    if (bestEval > alpha && bestMove.IsQuietMove())
+        _saveQuietMoveInfo(bestMove, prevMove, plyDepth, ply);
 
     // updating if profitable
     // NOTE: _excludedMove.IsEmpty() - ensures no move from singular search is saved
@@ -600,7 +597,7 @@ int BestMoveSearch::_search(
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
         const TranspositionTable::HashRecord record{
-            zHash,    bestMove, bestEval,   statEval,
+            zHash,    bestMove.GetPackedMove(), bestEval,   statEval,
             plyDepth, nType,    _board.Age, ply
         };
 
@@ -609,7 +606,7 @@ int BestMoveSearch::_search(
 
     // Save move if possible
     if (bestMoveOut != nullptr)
-        *bestMoveOut = bestMove;
+        *bestMoveOut = bestMove.GetPackedMove();
 
     // clean up
     return (_stack.PopAggregate(moves), bestEval);
@@ -642,6 +639,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     // incrementing nodes counter
     ++_visitedNodes;
 
+    _kTable.ClearPlyFloor(ply);
     int bestEval = NEGATIVE_INFINITY;
     int statEval = NO_EVAL_RESERVED_VALUE;
     MoveGenerator::payload moves;
@@ -758,7 +756,6 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
         }
 
         zHash               = ProcessMove(_board, moves[i], zHash, oldData);
-        _kTable.ClearPlyFloor(ply + 1);
         const int moveValue = -_qSearch<searchType>(-beta, -alpha, ply + 1, zHash, extendedDepth + 1, moves[i]);
         zHash               = RevertMove(_board, moves[i], zHash, oldData);
 

@@ -7,6 +7,7 @@
 
 #include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
+#include <cassert>
 
 /*
  *      Class used to implement so-called killed heuristic, which depends on observation
@@ -21,7 +22,16 @@ class KillerTable
     // Controls how many moves per ply can be saved
     static constexpr size_t MovesPerPly = 2;
 
+    // Ensure fast modulo operation
+    static_assert(MovesPerPly % 2 == 0);
+
     public:
+    // Used to provide smooth way to save garbage moves on root
+    static constexpr size_t SentinelWriteFloor = MAX_SEARCH_DEPTH;
+
+    // Used to provide clean null move floor for root node
+    static constexpr size_t SentinelReadFloor = SentinelWriteFloor + 1;
+
     // ------------------------------
     // Class creation
     // ------------------------------
@@ -40,10 +50,16 @@ class KillerTable
     // ------------------------------
 
     // simply clears previously saved moves
-    INLINE void ClearPlyFloor(int ply) { _kTable[ply] = {}; }
+    INLINE void ClearPlyFloor(const int ply) { _kTable[ply] = {}; }
 
     // saves move to the table if possible
-    INLINE void SaveKillerMove(const Move kMove, const int ply) { _kTable[ply].Push(kMove); }
+    INLINE void SaveKillerMove(const Move kMove, const int ply)
+    {
+        // Note: write to sentinel on root
+        const int floor = ply - 1 >= 0 ? ply - 1 : static_cast<int>(SentinelWriteFloor);
+
+        _kTable[floor].Push(kMove);
+    }
 
     // checks whether actual move is a "killer" move
     [[nodiscard]] INLINE bool IsKillerMove(const Move move, const int ply) const { return _kTable[ply].Contains(move); }
@@ -61,37 +77,36 @@ class KillerTable
         // Saves up to MovePerPly moves. Only first ones, no replacement policy, no duplicates saved.
         INLINE void Push(const Move mv)
         {
-            // all possible slots are used
-            if (last == MovesPerPly)
-                return;
-
             // ensuring that no same moves are stored twice
-            for (size_t i = 0; i < last; ++i)
-                if (_killerMovesTable[i] == mv.GetPackedMove())
+            for (const auto storedMove : _killerMovesTable)
+                if (storedMove == mv.GetPackedMove())
                     return;
 
             // saving move
             _killerMovesTable[last++] = mv.GetPackedMove();
+            last %= MovesPerPly;
         }
 
         // simply iterates through _killerMovesTable and compares given move to all inside
         [[nodiscard]] INLINE bool Contains(const Move mv) const
         {
-            for (auto killerMove : _killerMovesTable)
-                if (killerMove == mv.GetPackedMove())
-                    return true;
-            return false;
+            bool rv {};
+
+            for (const auto killerMove : _killerMovesTable)
+                rv |= (killerMove == mv.GetPackedMove());
+
+            return rv;
         }
 
         PackedMove _killerMovesTable[MovesPerPly]{};
-        uint8_t last{};
+        size_t last{};
     };
 
     // ------------------------------
     // Class fields
     // ------------------------------
 
-    _killerFloor_t _kTable[MAX_SEARCH_DEPTH + 1]{};
+    _killerFloor_t _kTable[MAX_SEARCH_DEPTH + 2]{};
 };
 
 // table used mainly to avoid passing new objects every time

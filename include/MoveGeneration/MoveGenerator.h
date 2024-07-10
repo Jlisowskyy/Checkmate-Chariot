@@ -56,26 +56,7 @@ struct MoveGenerator : ChessMechanics
     payload GetMovesFast(PackedMove counterMove, int ply, int mostRecentMovedSquare);
 
     template <bool GenOnlyTacticalMoves = false, bool ApplyHeuristicEval = true>
-    payload GetMovesSlow(PackedMove counterMove, int ply, int mostRecentMovedSquare){
-        Board bd = _board;
-
-        payload load = GetPseudoLegalMoves<GenOnlyTacticalMoves, ApplyHeuristicEval>(counterMove, ply, mostRecentMovedSquare);
-
-        std::queue<Move> que{};
-        for (size_t i = 0; i < load.size; ++i)
-            if (MoveGenerator::IsLegal(bd, load.data[i]))
-                que.push(load.data[i]);
-
-        _threadStack.PopAggregate(load);
-        payload loadRV = _threadStack.GetPayload();
-
-        while(!que.empty()){
-            loadRV.Push(_threadStack, que.front());
-            que.pop();
-        }
-
-        return loadRV;
-    }
+    payload GetMovesSlow(PackedMove counterMove, int ply, int mostRecentMovedSquare);
 
     template <bool GenOnlyTacticalMoves = false, bool ApplyHeuristicEval = true>
     INLINE payload GetMovesSlow(){
@@ -113,6 +94,12 @@ struct MoveGenerator : ChessMechanics
 
     [[nodiscard]] static bool _isCastlingLegal(Board& bd, Move mv);
     [[nodiscard]] static bool _isNormalMoveLegal(Board& bd, Move mv);
+
+    INLINE void _saveKillerPly(const int ply)
+    {
+        // Note: read from empty floor on root
+        _ply = ply - 1 >= 0 ? ply - 1 : static_cast<int>(KillerTable::SentinelReadFloor);
+    }
 
     template <class MapT>
     [[nodiscard]] INLINE bool _isGivingCheck(const int msbPos, const uint64_t fullMap, const int enemyColor) const
@@ -257,12 +244,13 @@ struct MoveGenerator : ChessMechanics
     PackedMove _counterMove{};
 };
 
-template <bool GenOnlyTacticalMoves, bool ApplyHeuristicEval> MoveGenerator::payload
+template <bool GenOnlyTacticalMoves, bool ApplyHeuristicEval>
+MoveGenerator::payload
 MoveGenerator::GetMovesFast(const PackedMove counterMove, const int ply, const int mostRecentMovedSquare)
 {
     // Init of heuristic components
-    _counterMove = counterMove;
-    _ply = ply;
+    _counterMove  = counterMove;
+    _saveKillerPly(ply);
     _mostRecentSq = mostRecentMovedSquare;
 
     // Prepare crucial components and additionally detect whether we are at check and which figure type attacks king
@@ -296,6 +284,30 @@ MoveGenerator::GetMovesFast(const PackedMove counterMove, const int ply, const i
     }
 
     return results;
+}
+template <bool GenOnlyTacticalMoves, bool ApplyHeuristicEval>
+MoveGenerator::payload MoveGenerator::GetMovesSlow(PackedMove counterMove, int ply, int mostRecentMovedSquare)
+{
+    Board bd = _board;
+
+    payload load =
+        GetPseudoLegalMoves<GenOnlyTacticalMoves, ApplyHeuristicEval>(counterMove, ply, mostRecentMovedSquare);
+
+    std::queue<Move> que{};
+    for (size_t i = 0; i < load.size; ++i)
+        if (MoveGenerator::IsLegal(bd, load.data[i]))
+            que.push(load.data[i]);
+
+    _threadStack.PopAggregate(load);
+    payload loadRV = _threadStack.GetPayload();
+
+    while (!que.empty())
+    {
+        loadRV.Push(_threadStack, que.front());
+        que.pop();
+    }
+
+    return loadRV;
 }
 
 template <bool GenOnlyTacticalMoves, bool ApplyHeuristicEval>
@@ -1338,7 +1350,7 @@ template<bool GenOnlyTacticalMoves, bool ApplyHeuristicEval>
 MoveGenerator::payload MoveGenerator::GetPseudoLegalMoves(const PackedMove counterMove, const int ply, const int mostRecentMovedSquare) {
     // Init of heuristic components
     _counterMove = counterMove;
-    _ply = ply;
+    _saveKillerPly(ply);
     _mostRecentSq = mostRecentMovedSquare;
 
     // allocate results container
