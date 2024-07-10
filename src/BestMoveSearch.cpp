@@ -211,9 +211,6 @@ int BestMoveSearch::IterativeDeepening(
             GlobalLogger.LogStream << std::endl;
         }
 
-        if constexpr (CollectSearchData)
-            _collectedData.DisplayData();
-
         // Stop search if we already found a mate
         if (IsMateScore(eval))
             break;
@@ -223,6 +220,9 @@ int BestMoveSearch::IterativeDeepening(
 
     if constexpr (TestTT)
         TTable.DisplayStatisticsAndReset();
+
+    if constexpr (CollectSearchData)
+        _collectedData.DisplayData();
 
     return prevEval;
 }
@@ -597,7 +597,7 @@ int BestMoveSearch::_search(
         _saveQuietMoveInfo(bestMove, prevMove, plyDepth, ply);
 
     if constexpr (CollectSearchData)
-        if (bestEval < beta) _collectedData.SaveNotCutOffNode(alpha, bestEval);
+        if (bestEval < beta) _collectedData.SaveNotCutOffNode(bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
     // updating if profitable
     // NOTE: _excludedMove.IsEmpty() - ensures no move from singular search is saved

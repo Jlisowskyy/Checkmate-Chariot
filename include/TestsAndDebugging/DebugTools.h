@@ -49,9 +49,8 @@ public:
         _nodeTypes[LOWER_BOUND]++;
     }
 
-    void SaveNotCutOffNode(const int alpha, const int score)
+    void SaveNotCutOffNode(const NodeType type)
     {
-        const NodeType type = score > alpha ? PV_NODE : UPPER_BOUND;
         _nodeTypes[type]++;
     }
 
@@ -74,6 +73,34 @@ public:
         GlobalLogger.LogStream << "Human friendly format: {index, number of cutoffs}";
         for (size_t i = 0; i <= maxInd; ++i) GlobalLogger.LogStream << std::format("\n{}: {}", i, _cutOffIndexes[i]);
         GlobalLogger.LogStream << std::endl;
+
+        uint64_t probesCount{};
+        uint64_t probesSum{};
+
+        for (size_t i = 0; i < maxInd; ++i)
+        {
+            probesCount += _cutOffIndexes[i];
+            probesSum += _cutOffIndexes[i] * i;
+        }
+
+        const double averageCuttOffIndex = static_cast<double>(probesSum) / static_cast<double>(probesCount);
+        const size_t medianProbe = probesCount / 2;
+
+        uint64_t checkProbes {};
+        size_t median{};
+        for(size_t i = 0; i < maxInd; ++i)
+        {
+            checkProbes += _cutOffIndexes[i];
+
+            if (checkProbes >= medianProbe)
+            {
+                median = i;
+                break;
+            }
+        }
+
+        GlobalLogger.LogStream << std::format("Data analysis:\nAverage: {}\nMedian: {}", averageCuttOffIndex, median)
+            << std::endl;
     }
 
     private:
