@@ -38,6 +38,50 @@ class AspWinStat
     void DisplayAndClean();
 };
 
+class SearchData
+{
+    static constexpr size_t MAX_MOVES = 256;
+public:
+
+    void SaveCutOff(const int ind)
+    {
+        _cutOffIndexes[ind]++;
+        _nodeTypes[LOWER_BOUND]++;
+    }
+
+    void SaveNotCutOffNode(const int alpha, const int score)
+    {
+        const NodeType type = score > alpha ? PV_NODE : UPPER_BOUND;
+        _nodeTypes[type]++;
+    }
+
+    void DisplayData()
+    {
+        size_t maxInd{};
+        for (size_t i = 0; i < MAX_MOVES; ++i) maxInd = _cutOffIndexes[i] > 0 ? i : maxInd;
+
+        GlobalLogger.LogStream << std::format(
+            "Node info:\n"
+            "\tPv nodes: {}\n"
+            "\tFail low nodes: {}\n"
+            "\tFail high nodes: {}",
+        _nodeTypes[PV_NODE], _nodeTypes[UPPER_BOUND], _nodeTypes[LOWER_BOUND]) << std::endl;
+
+        GlobalLogger.LogStream << "Move sort info:\nCsv ready values:\n";
+        for (size_t i = 0; i <= maxInd; ++i)  GlobalLogger.LogStream << _cutOffIndexes[i] << ", ";
+        GlobalLogger.LogStream << "0\n";
+
+        GlobalLogger.LogStream << "Human friendly format: {index, number of cutoffs}";
+        for (size_t i = 0; i <= maxInd; ++i) GlobalLogger.LogStream << std::format("\n{}: {}", i, _cutOffIndexes[i]);
+        GlobalLogger.LogStream << std::endl;
+    }
+
+    private:
+
+    uint64_t _nodeTypes[3]{};
+    uint64_t _cutOffIndexes[MAX_MOVES]{};
+};
+
 bool IsDrawDebug(const Board &bd);
 
 Move GetMoveDebug(const Board &bd, const std::string &str);

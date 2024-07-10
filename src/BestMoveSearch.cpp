@@ -211,6 +211,9 @@ int BestMoveSearch::IterativeDeepening(
             GlobalLogger.LogStream << std::endl;
         }
 
+        if constexpr (CollectSearchData)
+            _collectedData.DisplayData();
+
         // Stop search if we already found a mate
         if (IsMateScore(eval))
             break;
@@ -503,7 +506,7 @@ int BestMoveSearch::_search(
 
         // Late Move reductions
         // moveCount > 2 - we want to be sure to explore move from TT and best move accordingly to sorting
-        if (moveCount > 2 && depthLeft >= LMR_MIN_DEPTH && reductions > 0)
+        if constexpr (!DisableLmr && moveCount > 2 && depthLeft >= LMR_MIN_DEPTH && reductions > 0)
         {
             const int LMRDepth = depthLeft + extensions - reductions - FULL_DEPTH_FACTOR;
 
@@ -565,6 +568,10 @@ int BestMoveSearch::_search(
                 if (moveEval >= beta)
                 {
                     ++_cutoffNodes;
+
+                    if constexpr (CollectSearchData)
+                        _collectedData.SaveCutOff(legalMoves);
+
                     break;
                 }
 
@@ -588,6 +595,9 @@ int BestMoveSearch::_search(
     // we found a good enough move update info about it
     if (bestEval > alpha && bestMove.IsQuietMove())
         _saveQuietMoveInfo(bestMove, prevMove, plyDepth, ply);
+
+    if constexpr (CollectSearchData)
+        if (bestEval < beta) _collectedData.SaveNotCutOffNode(alpha, bestEval);
 
     // updating if profitable
     // NOTE: _excludedMove.IsEmpty() - ensures no move from singular search is saved

@@ -132,19 +132,6 @@ struct GoInfo
 };
 
 /*
- * Three types of nodes that we can find during the search.
- * To get more information about them, please visit:
- * https://www.chessprogramming.org/Node_Types
- * */
-
-enum NodeType : uint8_t
-{
-    PV_NODE,
-    LOWER_BOUND,
-    UPPER_BOUND
-};
-
-/*
  * Enum describes all possible type of actions that evaluation function is capable of performing.
  * In details, we have:
  *  - BaseMode - typical simple evaluation no info provided.

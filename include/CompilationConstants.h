@@ -97,6 +97,19 @@ static constexpr int ASP_WND_MIN_DEPTH = 7;
 static constexpr int16_t INITIAL_ASP_WINDOW_DELTA = 3;
 static constexpr int MAX_ASP_WINDOW_RETRIES       = 4;
 
+/*
+ * Three types of nodes that we can find during the search.
+ * To get more information about them, please visit:
+ * https://www.chessprogramming.org/Node_Types
+ * */
+
+enum NodeType : uint8_t
+{
+    PV_NODE,
+    LOWER_BOUND,
+    UPPER_BOUND
+};
+
 // ------------------------------
 // Platform specific defines for force inline attribute
 
@@ -211,6 +224,35 @@ static constexpr bool TraceExtensions = true;
 static constexpr bool TraceExtensions = false;
 
 #endif // TRACE_EXTENSIONS
+// --------------------------
+
+// --------------------------
+// Collect search data
+
+#ifdef COLLECT_SEARCH_DATA
+
+static constexpr bool CollectSearchData = true;
+
+#else
+
+static constexpr bool CollectSearchData = false;
+
+#endif // COLLECT_SEARCH_DATA
+
+// --------------------------
+
+// --------------------------
+
+#ifdef DISABLE_LMR
+
+static constexpr bool DisableLmr = true;
+
+#else
+
+static constexpr bool DisableLmr = false;
+
+#endif // COLLECT_SEARCH_DATA
+
 // --------------------------
 
 // ssize_t is defined by POSIX. Such define allows to use it on posix+windows

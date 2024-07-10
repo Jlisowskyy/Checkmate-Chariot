@@ -12,8 +12,9 @@
 #include "../Evaluation/HistoricTable.h"
 #include "../Evaluation/KillerTable.h"
 #include "../Interface/Logger.h"
-#include "../ThreadManagement/Stack.h"
 #include "../MoveGeneration/MoveGenerator.h"
+#include "../TestsAndDebugging/DebugTools.h"
+#include "../ThreadManagement/Stack.h"
 
 /*
  * Class defines our search algorithm.
@@ -203,7 +204,6 @@ class BestMoveSearch
     // Class fields
     // ------------------------------
 
-
     CounterMoveTable _cmTable{};
     HistoricTable _histTable{};
     Stack<Move, DEFAULT_STACK_SIZE> &_stack;
@@ -218,6 +218,9 @@ class BestMoveSearch
     int _rootDepth{};
     PackedMove _excludedMove{};
     MoveGenerator _moveGenerator;
+
+    // Debug objects
+    [[maybe_unused]] SearchData _collectedData{};
 };
 
 #endif // BESTMOVESEARCH_H
