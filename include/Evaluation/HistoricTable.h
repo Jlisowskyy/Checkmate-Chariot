@@ -41,7 +41,7 @@ struct HistoricTable
     // ------------------------------
 
     // Function takes move and depth and increments the move's value in the table
-    INLINE void SetBonusMove(Move mv, int depth)
+    INLINE void SetBonusMove(const Move mv, const int depth)
     {
         _table[mv.GetStartBoardIndex()][mv.GetTargetField()] = static_cast<int16_t>(
             std::min(_pointScale(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth), Barrier)
@@ -49,7 +49,7 @@ struct HistoricTable
     }
 
     // Function returns the value of the move from the table
-    [[nodiscard]] INLINE int32_t GetBonusMove(Move mv) const
+    [[nodiscard]] INLINE int32_t GetBonusMove(const Move mv) const
     {
         return _table[mv.GetStartBoardIndex()][mv.GetTargetField()];
     }
@@ -74,7 +74,7 @@ struct HistoricTable
     int16_t _table[Board::BitBoardsCount][Board::BitBoardFields]{};
 
     // Function used to determine the bonus value of the move, it is here to simplify its manipulation.
-    static constexpr auto _pointScale = [](int prevPoints, int depth) constexpr -> int32_t
+    static constexpr auto _pointScale = [](const int prevPoints, const int depth) constexpr -> int32_t
     {
         return static_cast<int16_t>(prevPoints + depth);
     };

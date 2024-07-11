@@ -229,7 +229,7 @@ int BestMoveSearch::IterativeDeepening(
 
 template <BestMoveSearch::SearchType searchType, bool followPv>
 int BestMoveSearch::_search(
-    int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv, PackedMove *bestMoveOut
+    int alpha, const int beta, int depthLeft, const int ply, uint64_t zHash, const Move prevMove, PV &pv, PackedMove *bestMoveOut
 )
 {
     static constexpr bool IsPvNode = searchType == SearchType::PVSearch;
@@ -262,7 +262,7 @@ int BestMoveSearch::_search(
     auto& prevSearchRes = TTable.GetRecord(zHash);
 
     // check whether hashes are same
-    bool wasTTHit = prevSearchRes.IsSameHash(zHash);
+    const bool wasTTHit = prevSearchRes.IsSameHash(zHash);
 
     if constexpr (TestTT)
         TTable.UpdateStatistics(wasTTHit);
@@ -322,10 +322,21 @@ int BestMoveSearch::_search(
     auto moves = _moveGenerator.GetPseudoLegalMoves(_cmTable.GetCounterMove(prevMove, _board.MovingColor), ply, prevMove.GetTargetField());
 
     // saving volatile board state
-    VolatileBoardData oldData{_board};
+    const VolatileBoardData oldData{_board};
+
+    // Note: moves deduced from fail-low nodes are not good enough quality to use them in search
+    // Note: when depth is equal to 0 there is an empty entry somehow or the stored moves was saved in qsearch,
+    //       what means that no all moves where checked during the search and we should discard the move
+    const bool isTTMoveUsable = wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0;
+
+    // Stores best move which at least exceeded initial alpha
     Move bestMove{};
+
+    // Stores best evaluation found in this node
     int bestEval = NEGATIVE_INFINITY;
-    PV inPV{};
+
+    // Used only for PV nodes
+    [[maybe_unused]] PV inPV{};
 
     // clear killer table for the childs
     _kTable.ClearPlyFloor(ply);
@@ -369,7 +380,7 @@ int BestMoveSearch::_search(
                 if (_excludedMove.IsEmpty()
                     && IsPvNode
                     && (!wasTTHit
-                    || (wasTTHit && (prevSearchRes.GetNodeType() == UPPER_BOUND && prevSearchRes.GetDepth() == 0)))
+                    || (wasTTHit && !isTTMoveUsable))
                     && plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
                 {
                     _search<searchType, false>(
@@ -380,7 +391,7 @@ int BestMoveSearch::_search(
                 // NOTE: We don't store moves from fail low nodes only score so the move from fail low should always
                 // be empty
                 //       In other words we don't use best move from fail low nodes
-                else if (wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0)
+                else if (isTTMoveUsable)
                     prevBestMove = prevSearchRes.GetMove();
 
                 // try to pull found move to the front otherwise simply fetch move by heuristic eval
@@ -470,26 +481,27 @@ int BestMoveSearch::_search(
 
         // apply the moves changes to the board:
         zHash        = ProcessMove(_board, moves[i], zHash, oldData);
+        // Note: increment counter of checked  childs in this node
         ++moveCount;
 
+        //
         int reductions{};
         // -------------------------- reductions --------------------------------
-        // determine whether we should spend more time in this node
+        // determine whether we should spend less time in this node
 
-        // Simplified LMR
+        // Simplified LMR initial reduction
         reductions = CalcReductions(plyDepth, moveCount, beta - alpha);
 
-        // Decrease reductions for nodes which was on previous PV
+        // Decrease reductions for nodes which was on previous PV to increase searched nodes on good paths
         if constexpr (followPv)
             reductions -= FULL_DEPTH_FACTOR;
 
-        if constexpr (IsPvNode)
-            reductions -= FULL_DEPTH_FACTOR;
-
+        // Killer moves that refuted neigbhoring nodes has high probability to refute in this ndoe
         if (_kTable.IsKillerMove(moves[i], ply))
             reductions -= FULL_DEPTH_FACTOR;
 
-        if (moves[i].IsAttackingMove() || moves[i].GetPackedMove().IsPromo())
+        // Do not extend tactical moves that has high probability to be bad quality moves
+        if (moves[i].IsAttackingMove() || moves[i].GetPackedMove().IsPromo() || moves[i].IsChecking())
         {
             if (SEEValue == NEGATIVE_INFINITY) SEEValue = _moveGenerator.SEE(moves[i]);
 
@@ -498,15 +510,12 @@ int BestMoveSearch::_search(
                 reductions -= FULL_DEPTH_FACTOR;
         }
 
-        if (moves[i].IsChecking())
-            reductions -= FULL_DEPTH_FACTOR;
-
         // stores the most recent return value of child trees,
         int moveEval = alpha;
 
         // Late Move reductions
         // moveCount > 2 - we want to be sure to explore move from TT and best move accordingly to sorting
-        if constexpr (!DisableLmr && moveCount > 2 && depthLeft >= LMR_MIN_DEPTH && reductions > 0)
+        if (!DisableLmr && moveCount > 2 && depthLeft >= LMR_MIN_DEPTH && reductions > 0)
         {
             const int LMRDepth = depthLeft + extensions - reductions - FULL_DEPTH_FACTOR;
 
@@ -596,6 +605,7 @@ int BestMoveSearch::_search(
     if (bestEval > alpha && bestMove.IsQuietMove())
         _saveQuietMoveInfo(bestMove, prevMove, plyDepth, ply);
 
+    // Note: compilation flag
     if constexpr (CollectSearchData)
         if (bestEval < beta) _collectedData.SaveNotCutOffNode(bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
@@ -623,7 +633,7 @@ int BestMoveSearch::_search(
 }
 
 template <BestMoveSearch::SearchType searchType>
-int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth, Move prevMove)
+int BestMoveSearch::_qSearch(int alpha, const int beta, const int ply, uint64_t zHash, const int extendedDepth, const Move prevMove)
 {
     static constexpr bool IsPvNode = searchType == SearchType::PVSearch;
     TraceIfFalse(beta > alpha, "Beta is not greater than alpha");
@@ -665,6 +675,14 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     // that means we should resolve most of the lines with checks
     const bool isCheck = _board.IsCheck || _moveGenerator.IsCheck();
 
+    // Note: IsCapture() will return true only if the stored move is not empty and is capture so no matter check state
+    //       we are in we will use the move
+    // Note: Otherwise if we are in check state and we can only use good moves (moves theh not comes from fail-low nodes)
+    //       Additionally we do not care about depth because move from any depth is better than qsearch depth
+    const bool isTTMoveUsable = (prevSearchRes.GetNodeType() != UPPER_BOUND && isCheck) || prevSearchRes.GetMove().IsCapture();
+
+    // Note: prevent tt based cut-offs in case of checks due to complications made by reductions and extensions
+    //       we should focus to provide best quality tactical estimation insideq search
     if (!isCheck)
     {
         if (wasTTHit)
@@ -672,6 +690,8 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
             // Check for tt cut-off in case of zw quiesce search
             if constexpr (!IsPvNode)
             {
+                // Return only matching scores
+
                 if (prevSearchRes.GetNodeType() == PV_NODE)
                     return ++_cutoffNodes, prevSearchRes.GetAdjustedEval(ply + extendedDepth);
 
@@ -697,6 +717,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
                     "Received suspicious static evaluation points!"
                 );
 
+                // Save the static evaluation for later usage
                 prevSearchRes.SetStatVal(statEval);
             }
         }
@@ -724,13 +745,10 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     }
 
     // saving volatile fields
-    VolatileBoardData oldData{_board};
+    const VolatileBoardData oldData{_board};
     PackedMove bestMove{};
 
-    // avoid using moves from TT when inside singular search
-    if (wasTTHit
-       // Empty move cannot be a capture move se we are sure that valid move is saved
-       && ((prevSearchRes.GetNodeType() != UPPER_BOUND && isCheck) || prevSearchRes.GetMove().IsCapture()))
+    if (wasTTHit && isTTMoveUsable)
         _pullMoveToFront(moves, prevSearchRes.GetMove());
     else
         _fetchBestMove(moves, 0);
@@ -739,6 +757,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     int moveCount{}; // amount of legal moves
     for (size_t i = 0; i < moves.size; ++i)
     {
+        // First move should be brouth to front if there was a tt hit
         if (i != 0)
             _fetchBestMove(moves, i);
 
@@ -753,7 +772,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
             /*                  DELTA PRUNING                              */
 
             // Increase delta in case of promotion
-            int delta = statEval + DELTA_PRUNING_SAFETY_MARGIN + SEEValue +
+            const int delta = statEval + DELTA_PRUNING_SAFETY_MARGIN + SEEValue +
                         (moves[i].GetPackedMove().IsPromo() ? DELTA_PRUNING_PROMO : 0);
 
             // There is high possibility that there is no chance to improve our position
@@ -813,7 +832,7 @@ int BestMoveSearch::_qSearch(int alpha, int beta, int ply, uint64_t zHash, int e
     return (_stack.PopAggregate(moves), bestEval);
 }
 
-void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const PackedMove mv)
+void BestMoveSearch::_pullMoveToFront(const MoveGenerator::payload moves, const PackedMove mv)
 {
     TraceIfFalse(mv.IsOkeyMove(), "Given move to find is a null move!");
 
@@ -831,7 +850,7 @@ void BestMoveSearch::_pullMoveToFront(MoveGenerator::payload moves, const Packed
     // if move found swapping
     if (ind != moves.size)
     {
-        auto bestMove = moves.data[ind];
+        const auto bestMove = moves.data[ind];
         for (signed_size_t i = static_cast<signed_size_t>(ind) - 1; i >= 0; --i) moves.data[i + 1] = moves.data[i];
         moves.data[0] = bestMove;
         return;
@@ -855,7 +874,7 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
     }
 
     const auto signedTargetPos = static_cast<signed_size_t>(targetPos);
-    auto bestMove              = moves.data[maxInd];
+    const auto bestMove              = moves.data[maxInd];
     for (signed_size_t i = static_cast<signed_size_t>(maxInd) - 1; i >= signedTargetPos; --i)
         moves.data[i + 1] = moves.data[i];
     moves.data[targetPos] = bestMove;
@@ -868,22 +887,23 @@ void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t t
 
 int BestMoveSearch::QuiesceEval()
 {
-    uint64_t hash = ZHasher.GenerateHash(_board);
+    const uint64_t hash = ZHasher.GenerateHash(_board);
 
     return _qSearch<SearchType::PVSearch>(NEGATIVE_INFINITY, POSITIVE_INFINITY, 0, hash, 0, {});
 }
 
-int BestMoveSearch::_deduceExtensions(Move prevMove, Move actMove, const int seeValue, const bool isPv)
+int BestMoveSearch::_deduceExtensions(const Move prevMove, const Move actMove, const int seeValue, const bool isPv)
+    const
 {
     int rv{};
 
-    ChessMechanics mech{_board};
+    const ChessMechanics mech{_board};
     // check extensions
 
     rv += (actMove.IsChecking() && (seeValue == NEGATIVE_INFINITY ? mech.SEE(actMove) : seeValue) > 0) *
           (isPv ? CHECK_EXTENSION_PV_NODE : CHECK_EXTENSION);
-    if (TraceExtensions && rv != 0)
-        TraceWithInfo("Applied check extension");
+    if constexpr (TraceExtensions)
+        if (rv != 0) TraceWithInfo("Applied check extension");
 
     // we are sure that actMove is attacking move because is moved to the same square as prevMove
     if (!prevMove.IsEmpty() && prevMove.GetTargetField() == actMove.GetTargetField() && prevMove.IsAttackingMove() &&

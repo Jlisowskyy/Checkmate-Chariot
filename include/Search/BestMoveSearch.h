@@ -198,7 +198,7 @@ class BestMoveSearch
         _histTable.SetBonusMove(mv, depth);
     }
 
-    int _deduceExtensions(Move prevMove, Move actMove, int seeValue, bool isPv);
+    int _deduceExtensions(Move prevMove, Move actMove, int seeValue, bool isPv) const;
 
     // ------------------------------
     // Class fields

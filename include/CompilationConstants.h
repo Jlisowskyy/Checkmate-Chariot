@@ -50,9 +50,12 @@ constexpr int CalcReductions(const int depth, const int moveCount, const int sco
 {
     constexpr double SCALE_COEF = 400;
 
+    // Base reduction calculating reduction base for expected fail nodes
     const int reductionBase =
             int(SCALE_COEF * std::sqrt(double(depth - 1)) * std::sqrt(double(moveCount - 1))) /  1024;
-    return (scoreDelta == 1 ? 2 * reductionBase / 3 : reductionBase) * FULL_DEPTH_FACTOR;
+
+    // Decrease reduction for PV-Nodes we are at full window search
+    return (scoreDelta != 1 ? 2 * reductionBase / 3 : reductionBase) * FULL_DEPTH_FACTOR;
 }
 
 static constexpr bool ENABLE_RAZORING = true;

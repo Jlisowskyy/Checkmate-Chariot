@@ -95,7 +95,7 @@ struct MoveSortEval
     // Function applies bonus according to the history table
     static INLINE int32_t ApplyHistoryTableBonus(const int32_t eval, const Move mv, const HistoricTable &hTable)
     {
-        return eval + hTable.GetBonusMove(mv);
+        return eval + HTableMultiplier * hTable.GetBonusMove(mv);
     }
 
     static INLINE int32_t ApplyCheckBonus(const int32_t eval, const bool isChecking)
@@ -131,6 +131,7 @@ struct MoveSortEval
     static constexpr int16_t RunAwayPrize          = 50;
 
     static constexpr int16_t SEEMultiplier = 3;
+    static constexpr int16_t HTableMultiplier = 1;
 
     static constexpr int16_t FigureEval[] = {
         100, // wPawnsIndex,

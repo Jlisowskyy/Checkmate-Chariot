@@ -32,7 +32,7 @@ add_compile_definitions(USE_ASP_WIN=1)
 add_compile_definitions(COLLECT_SEARCH_DATA=1)
 
 # Uncomment to disable LMR
-add_compile_definitions(DISABLE_LMR=1)
+#add_compile_definitions(DISABLE_LMR=1)
 
 ################################################################################
 #                     Inspecting platform capabilities                         #
