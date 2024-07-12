@@ -306,8 +306,17 @@ int BestMoveSearch::_search(
     else
         statEval = BoardEvaluator::DefaultFullEvalFunction(_board, _board.MovingColor);
 
+    // save static eval for later usage
+    _staticEvals[ply] = static_cast<int16_t>(statEval);
+
+    // Check whether static eval score improved compared with previous score
+    // Note: we do not allow to use improving flag when some of the states was in check
+    const bool isImprovingAllowed
+           = ply >=2 && _staticEvals[ply] != NO_EVAL_RESERVED_VALUE && _staticEvals[ply - 2] != NO_EVAL_RESERVED_VALUE;
+    const bool isImproving = isImprovingAllowed ? _staticEvals[ply] > _staticEvals[ply - 2] : false;
+
     // ----------------------------------- RAZORING -------------------------------------------------
-    if constexpr (!IsPvNode && ENABLE_RAZORING)
+    if constexpr (!IsPvNode && true ) //ENABLE_RAZORING)
         if (!isCheck)
         {
             if (plyDepth <= RAZORING_DEPTH && statEval + RAZORING_MARGIN < beta)
@@ -343,8 +352,10 @@ int BestMoveSearch::_search(
 
     // NOTE: legal move is needed for draw if test at the end.
     // NOTE: moveCount is mainly used with multi-cut
-    int moveCount{}; // counts legal moves that were searched
-    int legalMoves{}; // Counts only legal moves
+    // counts legal moves that were searched
+    int moveCount{};
+    // Counts only legal moves
+    int legalMoves{};
 
     // processing each move
     for (size_t i = 0; i < moves.size; ++i)
@@ -492,13 +503,24 @@ int BestMoveSearch::_search(
         // Simplified LMR initial reduction
         reductions = CalcReductions(plyDepth, moveCount, beta - alpha);
 
+        // Increase reductions in case of late moves and worsening situation
+        if (isImprovingAllowed && !isImproving && reductions >= 2)
+            reductions += FULL_DEPTH_FACTOR;
+
         // Decrease reductions for nodes which was on previous PV to increase searched nodes on good paths
-        if constexpr (followPv)
+        if  (_pv.IsMoveOnPv(moves[i].GetPackedMove()))
             reductions -= FULL_DEPTH_FACTOR;
+
+        // if constexpr (IsPvNode)
+        //     reductions -= FULL_DEPTH_FACTOR;
 
         // Killer moves that refuted neigbhoring nodes has high probability to refute in this ndoe
         if (_kTable.IsKillerMove(moves[i], ply))
             reductions -= FULL_DEPTH_FACTOR;
+
+        // if we do not have usable move from the TT there is high probability that we are at all-node
+        if (wasTTHit && !isTTMoveUsable && prevSearchRes.GetDepth() > 0)
+            reductions += NO_TT_MOVE_REDUCTION;
 
         // Do not extend tactical moves that has high probability to be bad quality moves
         if (moves[i].IsAttackingMove() || moves[i].GetPackedMove().IsPromo() || moves[i].IsChecking())
@@ -509,6 +531,8 @@ int BestMoveSearch::_search(
             if (SEEValue > 0)
                 reductions -= FULL_DEPTH_FACTOR;
         }
+
+        // reductions -= _histTable.GetBonusMove(moves[i]) / (HISTORY_TABLE_POINTS_LIMIT / 2);
 
         // stores the most recent return value of child trees,
         int moveEval = alpha;

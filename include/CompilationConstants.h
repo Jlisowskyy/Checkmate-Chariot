@@ -83,6 +83,9 @@ static constexpr int DELTA_PRUNING_PROMO = (1000 - 115) / SCORE_GRAIN;
 // value below which SEE capture is considered bad
 static constexpr int SEE_GOOD_MOVE_BOUNDARY = -(115 / 2) / SCORE_GRAIN;
 
+// value defines how much we redouce the search when no TT move is available
+static constexpr int NO_TT_MOVE_REDUCTION = 1 * FULL_DEPTH_FACTOR;
+
 // value of phase below game is considering to be an end-game
 static constexpr int END_GAME_PHASE = 64;
 
@@ -99,6 +102,9 @@ static constexpr int ASP_WND_MIN_DEPTH = 7;
 // (probably 8) ~= 48
 static constexpr int16_t INITIAL_ASP_WINDOW_DELTA = 3;
 static constexpr int MAX_ASP_WINDOW_RETRIES       = 4;
+
+// Defines maximal points stored inside the history table during the search
+static constexpr int16_t HISTORY_TABLE_POINTS_LIMIT = 1200;
 
 /*
  * Three types of nodes that we can find during the search.

@@ -47,6 +47,7 @@
  * */
 
 struct MoveGenerator;
+
 class BestMoveSearch
 {
     // ------------------------------
@@ -103,6 +104,15 @@ class BestMoveSearch
             GlobalLogger.LogStream << buff;
         }
 
+        INLINE bool IsMoveOnPv(const PackedMove move) const
+        {
+            for (size_t i = 0; i < _depth; ++i)
+                if (_path[i] == move)
+                    return true;
+
+            return false;
+        }
+
         [[nodiscard]] INLINE bool Contains(const int ply) const { return ply < _depth; }
 
         /* Debug function to check internal state of the PV */
@@ -115,10 +125,7 @@ class BestMoveSearch
             return true;
         }
 
-        void INLINE Clear()
-        {
-            _depth = 0;
-        }
+        void INLINE Clear() { _depth = 0; }
 
         /* returns the move */
         INLINE PackedMove operator[](const int ply) const { return _path[ply]; }
@@ -146,8 +153,10 @@ class BestMoveSearch
      * */
 
     BestMoveSearch() = delete;
-    BestMoveSearch(const Board &board, Stack<Move, DEFAULT_STACK_SIZE> &s) : _stack(s), _board(board),
-                                                                             _moveGenerator(_board, s, _histTable, _kTable){}
+    BestMoveSearch(const Board &board, Stack<Move, DEFAULT_STACK_SIZE> &s)
+        : _stack(s), _board(board), _moveGenerator(_board, s, _histTable, _kTable)
+    {
+    }
     ~BestMoveSearch() = default;
 
     // ------------------------------
@@ -186,7 +195,8 @@ class BestMoveSearch
         int alpha, int beta, int depthLeft, int ply, uint64_t zHash, Move prevMove, PV &pv, PackedMove *bestMoveOut
     );
 
-    template <SearchType searchType> int _qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth, Move prevMove);
+    template <SearchType searchType>
+    int _qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth, Move prevMove);
 
     static void _pullMoveToFront(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, PackedMove mv);
     static void _fetchBestMove(Stack<Move, DEFAULT_STACK_SIZE>::StackPayload moves, size_t targetPos);
@@ -204,23 +214,30 @@ class BestMoveSearch
     // Class fields
     // ------------------------------
 
+    // Basic search components fields
+    Board _board;
+    Stack<Move, DEFAULT_STACK_SIZE> &_stack;
+    MoveGenerator _moveGenerator;
+    PV _pv{};
+    PV _dummyPv{}; // used to provide smoooth
+
+    // Additional search feautures fields
+    PackedMove _excludedMove{};
+    int16_t _staticEvals[MAX_SEARCH_DEPTH]; // used for heuristics like improvement heuristic
+
+    // Elements used with heuristic eval
     CounterMoveTable _cmTable{};
     HistoricTable _histTable{};
-    Stack<Move, DEFAULT_STACK_SIZE> &_stack;
-    Board _board;
-    PV _pv{};
-    PV _dummyPv{};
-    uint64_t _visitedNodes = 0;
-    uint64_t _cutoffNodes  = 0;
     KillerTable _kTable{};
+
+    // Fields used to collect data during the search
+    uint64_t _visitedNodes{};
+    uint64_t _cutoffNodes{};
     int _maxPlyReached{};
     int _maxPlyReachedWithQSearch{};
     int _rootDepth{};
-    PackedMove _excludedMove{};
-    MoveGenerator _moveGenerator;
 
     // Debug objects
     [[maybe_unused]] SearchData _collectedData{};
 };
-
 #endif // BESTMOVESEARCH_H

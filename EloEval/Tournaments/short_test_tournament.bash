@@ -13,6 +13,6 @@ cd ..
           -pgnout "${PGN_OUT}" -games 100 \
           -engine conf="$1" \
           -engine conf="$2"  \
-          -each tc=10 timemargin=500 option.Hash=128 ponder > "${OUT_FILE}" 2>&1 &
+          -each tc=60 timemargin=500 option.Hash=128 ponder > "${OUT_FILE}" 2>&1 &
 
 post_tournamanet
