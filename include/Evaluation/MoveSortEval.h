@@ -35,9 +35,9 @@
  *     5) Good checks
  *     6) Killer Move
  *     7) Counter Move
- *     8) Rest promotions
- *     9) Rest captures
- *     10) All other silent moves according to the history table and pawn control
+ *     8) All other silent moves according to the history table and pawn control
+ *     9) bad captures
+ *     10) other promos
  *
  * */
 
@@ -63,12 +63,17 @@ struct MoveSortEval
     }
 
     // Function applies capture bonus and material balance of the move
-    static INLINE int32_t ApplyKilledFigEffect(const int32_t eval, const size_t attackFig, const size_t killedFig, bool& isGoodCapture)
+    template<bool IsQSearch, class SEEFunc>
+    static INLINE int32_t ApplyCaptureEffect(SEEFunc func, const int32_t eval, const size_t attackFig, const size_t killedFig)
     {
-        const int32_t moveEstimation = FigureEval[killedFig] - FigureEval[attackFig];
-        isGoodCapture = moveEstimation >= 0;
+        if constexpr (true)
+        {
+            const int32_t moveEstimation = FigureEval[killedFig] - FigureEval[attackFig];
+            return eval + moveEstimation + TacticalBonus;
+        }
 
-        return eval + moveEstimation + TacticalBonus;
+        const int32_t seeValue = func();
+        return eval + seeValue * SEEMultiplier + (seeValue <= 4 * SEE_GOOD_MOVE_BOUNDARY) * BadCapturePenalty;
     }
 
     // Function applies killer move bonus to the eval
@@ -95,17 +100,13 @@ struct MoveSortEval
     // Function applies bonus according to the history table
     static INLINE int32_t ApplyHistoryTableBonus(const int32_t eval, const Move mv, const HistoricTable &hTable)
     {
-        return eval + HTableMultiplier * hTable.GetBonusMove(mv);
+        const int points = hTable.GetBonusMove(mv);
+        return eval + HTableMultiplier * hTable.GetBonusMove(mv) + (points >= HISTORY_GOOD_MOVE) * HistoryGoodMovePrize;
     }
 
     static INLINE int32_t ApplyCheckBonus(const int32_t eval, const bool isChecking)
     {
         return eval + CheckingBonus * isChecking;
-    }
-
-    static INLINE int32_t ApplySEEBonus(const int32_t eval, const int32_t SEEBonus)
-    {
-        return eval + SEEBonus * SEEMultiplier;
     }
 
     // ------------------------------
@@ -130,6 +131,9 @@ struct MoveSortEval
     static constexpr int16_t AttackedFigurePenalty = -50;
     static constexpr int16_t RunAwayPrize          = 50;
 
+    static constexpr int16_t HistoryGoodMovePrize = 1000;
+    static constexpr int16_t BadCapturePenalty = -4000;
+
     static constexpr int16_t SEEMultiplier = 3;
     static constexpr int16_t HTableMultiplier = 1;
 
@@ -150,18 +154,18 @@ struct MoveSortEval
 
     // Note:
     //      - bigger quen prize to ensure is check as on of the first moves
-    //      - neutral prizes with offset for other figures to ensures good captures are always checked first
+    //      - negative prizes to postpone checking redundant moves
     static constexpr int16_t PromoEval[] = {
-        100, // wPawnsIndex,
-        1 - 150, // wKnightsIndex,
-        2 - 150, // wBishopsIndex,
-        3 - 150, // wRooksIndex,
+        0, // wPawnsIndex,
+        -6000, // wKnightsIndex,
+        -6000, // wBishopsIndex,
+        -6000, // wRooksIndex,
         QueenPromoPrize, // wQueensIndex,
         0,   // wKingIndex,
         100, // bPawnsIndex,
-        1 - 150, // bKnightsIndex,
-        2 - 150, // bBishopsIndex,
-        3 - 150, // bRooksIndex,
+        -6000, // bKnightsIndex,
+        -6000, // bBishopsIndex,
+        -6000, // bRooksIndex,
         QueenPromoPrize, // bQueensIndex,
         0,   // bKingIndex,
     };
