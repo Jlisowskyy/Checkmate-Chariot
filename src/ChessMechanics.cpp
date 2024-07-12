@@ -208,9 +208,9 @@ int ChessMechanics::SEE(const Move mv) const
         // sum up points
         scores[depth] = BoardEvaluator::ColorlessBasicFigureValues[attackerFigType] - scores[depth - 1];
 
-        //        // try to get a cut-off
-        //        if (std::max(-scores[depth - 1], scores[depth]) < 0)
-        //            break;
+        // try to get a cut-off
+        // if (std::max(-scores[depth - 1], scores[depth]) < 0)
+        //     break;
 
         // pseudo make move - remove figure from attackers and from the full map
         attackersBitBoard ^= attackFromBitBoard;
@@ -223,13 +223,6 @@ int ChessMechanics::SEE(const Move mv) const
         color              = SwapColor(color);
         attackFromBitBoard = getLeastValuablePieceFromLegalToSquare(fullMap, attackersBitBoard, color, attackerFigType);
 
-//        if (depth > MaximalFigureCount) {
-//            GlobalLogger.LogStream
-//                    << std::format("On fen: {}, and move: {}", FenTranslator::Translate(_board),
-//                                   mv.GetLongAlgebraicNotation())
-//                    << std::endl;
-//            DISPLAY_BACKTRACE();
-//        }
     } while (attackFromBitBoard);
 
     // add some bonus when finally king is left under the check

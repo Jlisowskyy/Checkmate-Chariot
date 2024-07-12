@@ -66,14 +66,14 @@ struct MoveSortEval
     template<bool IsQSearch, class SEEFunc>
     static INLINE int32_t ApplyCaptureEffect(SEEFunc func, const int32_t eval, const size_t attackFig, const size_t killedFig)
     {
-        if constexpr (true)
+        if constexpr (IsQSearch)
         {
             const int32_t moveEstimation = FigureEval[killedFig] - FigureEval[attackFig];
             return eval + moveEstimation + TacticalBonus;
         }
 
         const int32_t seeValue = func();
-        return eval + seeValue * SEEMultiplier + (seeValue <= 4 * SEE_GOOD_MOVE_BOUNDARY) * BadCapturePenalty;
+        return eval + TacticalBonus + seeValue + (seeValue <= 3 * SEE_GOOD_MOVE_BOUNDARY) * BadCapturePenalty;
     }
 
     // Function applies killer move bonus to the eval
@@ -132,7 +132,7 @@ struct MoveSortEval
     static constexpr int16_t RunAwayPrize          = 50;
 
     static constexpr int16_t HistoryGoodMovePrize = 1000;
-    static constexpr int16_t BadCapturePenalty = -4000;
+    static constexpr int16_t BadCapturePenalty = -300;
 
     static constexpr int16_t SEEMultiplier = 3;
     static constexpr int16_t HTableMultiplier = 1;
@@ -157,15 +157,15 @@ struct MoveSortEval
     //      - negative prizes to postpone checking redundant moves
     static constexpr int16_t PromoEval[] = {
         0, // wPawnsIndex,
-        -6000, // wKnightsIndex,
-        -6000, // wBishopsIndex,
-        -6000, // wRooksIndex,
+        -300, // wKnightsIndex,
+        -300, // wBishopsIndex,
+        -300, // wRooksIndex,
         QueenPromoPrize, // wQueensIndex,
         0,   // wKingIndex,
         100, // bPawnsIndex,
-        -6000, // bKnightsIndex,
-        -6000, // bBishopsIndex,
-        -6000, // bRooksIndex,
+        -300, // bKnightsIndex,
+        -300, // bBishopsIndex,
+        -300, // bRooksIndex,
         QueenPromoPrize, // bQueensIndex,
         0,   // bKingIndex,
     };
