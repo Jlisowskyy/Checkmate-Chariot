@@ -106,6 +106,9 @@ static constexpr int MAX_ASP_WINDOW_RETRIES       = 4;
 // Defines maximal points stored inside the history table during the search
 static constexpr int16_t HISTORY_TABLE_POINTS_LIMIT = 1200;
 
+// Defins threshold above which quiet move is took as good moe
+static constexpr int16_t HISTORY_GOOD_MOVE = 600;
+
 /*
  * Three types of nodes that we can find during the search.
  * To get more information about them, please visit:
@@ -260,11 +263,25 @@ static constexpr bool DisableLmr = true;
 
 static constexpr bool DisableLmr = false;
 
-#endif // COLLECT_SEARCH_DATA
+#endif // DISABLE_LMR
 
 // --------------------------
 
+// --------------------------
+// Display table data
+
+#ifdef COLLECT_TABLE_DATA
+
+static constexpr bool CollectTableData = true;
+
+#else
+
+static constexpr bool CollectTableData = false;
+
+#endif // COLLECT_TABLE_DATA
+// --------------------------
+
 // ssize_t is defined by POSIX. Such define allows to use it on posix+windows
-using signed_size_t = std::make_signed<size_t>::type;
+using signed_size_t = std::make_signed_t<size_t>;
 
 #endif // COMPILATION_CONSTANTS_H

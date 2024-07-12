@@ -44,15 +44,17 @@ struct HistoricTable
     // Function takes move and depth and increments the move's value in the table
     INLINE void SetBonusMove(const Move mv, const int depth)
     {
-        _table[mv.GetStartBoardIndex()][mv.GetTargetField()] = static_cast<int16_t>(
-            std::min(_pointScale(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth), Barrier)
-        );
+        _table[mv.GetStartBoardIndex()][mv.GetTargetField()] =
+            _pointScale(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth);
+
+        const int points = _table[mv.GetStartBoardIndex()][mv.GetTargetField()];
+        _maxPoints = std::max(points, _maxPoints);
     }
 
     // Function returns the value of the move from the table
     [[nodiscard]] INLINE int32_t GetBonusMove(const Move mv) const
     {
-        return _table[mv.GetStartBoardIndex()][mv.GetTargetField()];
+        return _getPoints(mv.GetStartBoardIndex(), mv.GetTargetField());
     }
 
     // Resets the content of the table
@@ -70,19 +72,27 @@ struct HistoricTable
     // ------------------------------
 
     // Factor used to scale all values inside the table
-    static constexpr int16_t ScaleFactor = 4;
+    static constexpr int ScaleFactor = 4;
 
     // Barrier to which all points are capped
     static constexpr int Barrier = 1200;
 
     private:
-    int16_t _table[Board::BitBoardsCount][Board::BitBoardFields]{};
+
+    // Functions scales down all points accordingally to currently best hold value if it exceeds the barrier
+    [[nodiscard]] int _getPoints(const int figT, const int field) const
+    {
+        return _maxPoints < Barrier ? _table[figT][field] : Barrier * _table[figT][field] / _maxPoints;
+    }
 
     // Function used to determine the bonus value of the move, it is here to simplify its manipulation.
-    static constexpr auto _pointScale = [](const int prevPoints, const int depth) constexpr -> int32_t
+    static constexpr int _pointScale (const int prevPoints, const int depth)
     {
-        return static_cast<int16_t>(prevPoints + depth);
+        return prevPoints + depth;
     };
+
+    int _maxPoints{};
+    int _table[Board::BitBoardsCount][Board::BitBoardFields]{};
 };
 
 // table used mainly to avoid passing new objects every time

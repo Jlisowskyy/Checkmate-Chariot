@@ -13,6 +13,8 @@ void HistoricTable::ScaleTableDown()
 {
     for (auto &figureMap : _table)
         for (auto &field : figureMap) field /= ScaleFactor;
+
+    _maxPoints /= ScaleFactor;
 }
 
 void HistoricTable::DisplayStats() const
@@ -45,7 +47,7 @@ void HistoricTable::DisplayStats() const
     for (size_t figT = 0; figT < Board::BitBoardsCount; ++figT)
         for (size_t field = 0; field < Board::BitBoardFields; ++field)
         {
-            const int points     = _table[figT][field];
+            const int points     = _getPoints(figT, field);
             const bool isNonZero = points != 0;
 
             if (isNonZero)

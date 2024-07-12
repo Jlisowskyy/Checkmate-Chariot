@@ -107,7 +107,7 @@ int BestMoveSearch::IterativeDeepening(
             avg += depth * eval;
             _pv.Clone(pvBuff);
 
-            if constexpr (CollectSearchData)
+            if constexpr (CollectSearchData && CollectTableData)
                 _histTable.DisplayStats();
         }
         else
@@ -133,7 +133,7 @@ int BestMoveSearch::IterativeDeepening(
                     alpha, beta, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff, nullptr
                 );
 
-                if constexpr (CollectSearchData)
+                if constexpr (CollectSearchData && CollectTableData)
                     _histTable.DisplayStats();
 
                 // if there was call to abort then abort
@@ -518,8 +518,8 @@ int BestMoveSearch::_search(
         if  (_pv.IsMoveOnPv(moves[i].GetPackedMove()))
             reductions -= FULL_DEPTH_FACTOR;
 
-        // if constexpr (IsPvNode)
-        //     reductions -= FULL_DEPTH_FACTOR;
+        if constexpr (IsPvNode)
+            reductions -= FULL_DEPTH_FACTOR;
 
         // Killer moves that refuted neigbhoring nodes has high probability to refute in this ndoe
         if (_kTable.IsKillerMove(moves[i], ply))
@@ -539,7 +539,7 @@ int BestMoveSearch::_search(
                 reductions -= FULL_DEPTH_FACTOR;
         }
 
-        // reductions -= _histTable.GetBonusMove(moves[i]) / (HISTORY_TABLE_POINTS_LIMIT / 2);
+        reductions -= _histTable.GetBonusMove(moves[i]) / (HISTORY_TABLE_POINTS_LIMIT / 2);
 
         // stores the most recent return value of child trees,
         int moveEval = alpha;

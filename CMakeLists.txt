@@ -34,6 +34,9 @@ add_compile_definitions(COLLECT_SEARCH_DATA=1)
 # Uncomment to disable LMR
 #add_compile_definitions(DISABLE_LMR=1)
 
+# Uncomment to display statistics about move heuristic eval storing tables
+# add_compile_definitions(COLLECT_TABLE_DATA=1)
+
 ################################################################################
 #                     Inspecting platform capabilities                         #
 ################################################################################
