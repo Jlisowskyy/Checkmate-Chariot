@@ -104,9 +104,9 @@ class BestMoveSearch
             GlobalLogger.LogStream << buff;
         }
 
-        INLINE bool IsMoveOnPv(const PackedMove move) const
+        [[nodiscard]] INLINE bool IsMoveOnPv(const PackedMove move) const
         {
-            for (size_t i = 0; i < _depth; ++i)
+            for (int i = 0; i < _depth; ++i)
                 if (_path[i] == move)
                     return true;
 
@@ -154,7 +154,7 @@ class BestMoveSearch
 
     BestMoveSearch() = delete;
     BestMoveSearch(const Board &board, Stack<Move, DEFAULT_STACK_SIZE> &s)
-        : _stack(s), _board(board), _moveGenerator(_board, s, _histTable, _kTable)
+        : _board(board), _stack(s), _moveGenerator(_board, s, _histTable, _kTable)
     {
     }
     ~BestMoveSearch() = default;
@@ -223,7 +223,7 @@ class BestMoveSearch
 
     // Additional search feautures fields
     PackedMove _excludedMove{};
-    int16_t _staticEvals[MAX_SEARCH_DEPTH]; // used for heuristics like improvement heuristic
+    int16_t _staticEvals[MAX_SEARCH_DEPTH]{}; // used for heuristics like improvement heuristic
 
     // Elements used with heuristic eval
     CounterMoveTable _cmTable{};

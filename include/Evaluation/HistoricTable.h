@@ -9,6 +9,7 @@
 #include "../MoveGeneration/Move.h"
 
 #include <cstring>
+#include <tuple>
 
 /*
  *  Class used to implement so-called history heuristic. The idea is based on the observation that during the search
@@ -59,6 +60,10 @@ struct HistoricTable
 
     // Scales down the values in the table according to the ScaleFactor value
     void ScaleTableDown();
+
+    // Debug function to display statistics about the content
+    // Display average points value inside the table and 10 best saved 'moves'
+    void DisplayStats() const;
 
     // ------------------------------
     // Class fields

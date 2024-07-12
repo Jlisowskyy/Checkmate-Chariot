@@ -106,6 +106,9 @@ int BestMoveSearch::IterativeDeepening(
             // TODO: maybe check previous pv for the predicting value?
             avg += depth * eval;
             _pv.Clone(pvBuff);
+
+            if constexpr (CollectSearchData)
+                _histTable.DisplayStats();
         }
         else
         {
@@ -129,6 +132,9 @@ int BestMoveSearch::IterativeDeepening(
                 eval           = _search<SearchType::PVSearch, true>(
                     alpha, beta, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff, nullptr
                 );
+
+                if constexpr (CollectSearchData)
+                    _histTable.DisplayStats();
 
                 // if there was call to abort then abort
                 if (std::abs(eval) == TIME_STOP_RESERVED_VALUE)
@@ -157,6 +163,7 @@ int BestMoveSearch::IterativeDeepening(
 
                     break;
                 }
+
             }
 
             // Display Asp Window statistics
@@ -316,7 +323,7 @@ int BestMoveSearch::_search(
     const bool isImproving = isImprovingAllowed ? _staticEvals[ply] > _staticEvals[ply - 2] : false;
 
     // ----------------------------------- RAZORING -------------------------------------------------
-    if constexpr (!IsPvNode && true ) //ENABLE_RAZORING)
+    if constexpr (!IsPvNode && ENABLE_RAZORING)
         if (!isCheck)
         {
             if (plyDepth <= RAZORING_DEPTH && statEval + RAZORING_MARGIN < beta)
