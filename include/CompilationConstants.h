@@ -26,6 +26,9 @@ static constexpr uint64_t MSEC_TO_NSEC = 1000 * 1000;
 static constexpr int16_t DRAW_SCORE         = 0;
 static constexpr int16_t SPECIAL_DRAW_SCORE = 0;
 
+static constexpr size_t MAX_MOVES = 256;
+static constexpr size_t MAX_QUIET_MOVES = 128;
+
 // ------------------------- EXTENSIONS ------------------------------
 static constexpr int FULL_DEPTH_FACTOR                    = 4;
 static constexpr int ONE_REPLY_EXTENSION_PV_NODE          = FULL_DEPTH_FACTOR;
@@ -103,11 +106,24 @@ static constexpr int ASP_WND_MIN_DEPTH = 7;
 static constexpr int16_t INITIAL_ASP_WINDOW_DELTA = 3;
 static constexpr int MAX_ASP_WINDOW_RETRIES       = 4;
 
+
+// -------------------------- HISTORY TABLE -----------------------------------------------
+
 // Defines maximal points stored inside the history table during the search
 static constexpr int16_t HISTORY_TABLE_POINTS_LIMIT = 1200;
 
 // Defins threshold above which quiet move is took as good moe
 static constexpr int16_t HISTORY_GOOD_MOVE = 600;
+
+// Bonus linear function parameters
+static constexpr int16_t HISTORY_BONUS_COEF = 1;
+static constexpr int16_t HISTORY_BONUS_BIAS = 0;
+
+// Penalty linear function parameters
+static constexpr int16_t HISTORY_PENALTY_COEF = 1;
+static constexpr int16_t HISTORY_PENALTY_BIAS = 1;
+
+// -----------------------------------------------------------------------------------------
 
 /*
  * Three types of nodes that we can find during the search.

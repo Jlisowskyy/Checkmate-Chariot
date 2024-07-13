@@ -364,6 +364,10 @@ int BestMoveSearch::_search(
     // Counts only legal moves
     int legalMoves{};
 
+    // Stores all tested quiet moves, they are used to assign bonuses and penalties at the end
+    Move testedQuietMoves[MAX_QUIET_MOVES]{};
+    size_t testedQuietsCounter{};
+
     // processing each move
     for (size_t i = 0; i < moves.size; ++i)
     {
@@ -625,6 +629,9 @@ int BestMoveSearch::_search(
                 inPV.Clear();
             }
         }
+
+        if (moves[i].IsQuietMove())
+            testedQuietMoves[testedQuietsCounter++] = moves[i];
     }
 
     // If no move is possible: check whether we hit mate or stalemate
@@ -635,6 +642,10 @@ int BestMoveSearch::_search(
     // we found a good enough move update info about it
     if (bestEval > alpha && bestMove.IsQuietMove())
         _saveQuietMoveInfo(bestMove, prevMove, plyDepth, ply);
+
+    // Apply penaltes for all checked but not good enough moves
+    for (size_t i = 0; i < testedQuietsCounter; ++i)
+        _histTable.SetPenaltyMove(testedQuietMoves[i], plyDepth);
 
     // Note: compilation flag
     if constexpr (CollectSearchData)

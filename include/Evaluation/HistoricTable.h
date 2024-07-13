@@ -19,8 +19,6 @@
  *  Resources: https://www.chessprogramming.org/History_Heuristic
  */
 
-// TODO: check whether in bonus there should be a 'depth' or 'ply left'
-
 struct HistoricTable
 {
     // ------------------------------
@@ -45,10 +43,19 @@ struct HistoricTable
     INLINE void SetBonusMove(const Move mv, const int depth)
     {
         _table[mv.GetStartBoardIndex()][mv.GetTargetField()] =
-            _pointScale(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth);
+            _pointScaleBonus(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth);
 
         const int points = _table[mv.GetStartBoardIndex()][mv.GetTargetField()];
         _maxPoints = std::max(points, _maxPoints);
+    }
+
+    INLINE void SetPenaltyMove(const Move mv, const int depth)
+    {
+        _table[mv.GetStartBoardIndex()][mv.GetTargetField()] =
+            _pointScalePenalty(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth);
+
+        const int points = _table[mv.GetStartBoardIndex()][mv.GetTargetField()];
+        _maxPoints = std::max(std::abs(points), _maxPoints);
     }
 
     // Function returns the value of the move from the table
@@ -86,10 +93,15 @@ struct HistoricTable
     }
 
     // Function used to determine the bonus value of the move, it is here to simplify its manipulation.
-    static constexpr int _pointScale (const int prevPoints, const int depth)
+    static constexpr int _pointScaleBonus (const int prevPoints, const int depth)
     {
-        return prevPoints + depth;
+        return prevPoints + HISTORY_BONUS_COEF * depth + HISTORY_BONUS_BIAS;
     };
+
+    static constexpr int _pointScalePenalty(const int prevPoints, const int depth)
+    {
+        return prevPoints - (HISTORY_PENALTY_COEF * depth / 2 + HISTORY_PENALTY_BIAS);
+    }
 
     int _maxPoints{};
     int _table[Board::BitBoardsCount][Board::BitBoardFields]{};

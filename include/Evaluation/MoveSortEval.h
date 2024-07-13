@@ -20,6 +20,7 @@
  * - consider better histories and possibly more types
  * - make check detection during move generation better
  * - improve SEE quality
+ * - on flight sorting would allow to distinguish types and collect data about moves on the run e.g history tables
  *
  * */
 
@@ -101,7 +102,7 @@ struct MoveSortEval
     static INLINE int32_t ApplyHistoryTableBonus(const int32_t eval, const Move mv, const HistoricTable &hTable)
     {
         const int points = hTable.GetBonusMove(mv);
-        return eval + HTableMultiplier * hTable.GetBonusMove(mv) + (points >= HISTORY_GOOD_MOVE) * HistoryGoodMovePrize;
+        return eval + HTableMultiplier * hTable.GetBonusMove(mv) + (points >= 0) * HistoryGoodMovePrize;
     }
 
     static INLINE int32_t ApplyCheckBonus(const int32_t eval, const bool isChecking)

@@ -35,7 +35,10 @@ add_compile_definitions(COLLECT_SEARCH_DATA=1)
 #add_compile_definitions(DISABLE_LMR=1)
 
 # Uncomment to display statistics about move heuristic eval storing tables
-# add_compile_definitions(COLLECT_TABLE_DATA=1)
+#add_compile_definitions(COLLECT_TABLE_DATA=1)
+
+# Uncomment to treat promos as single move
+add_compile_definitions(TREAT_PROMOS_AS_QUEEN_PROMO=1)
 
 ################################################################################
 #                     Inspecting platform capabilities                         #
@@ -150,6 +153,8 @@ set(CHECKMATE_CHARIOT_SOURCES
         include/TestsAndDebugging/StateReconstructor.h
         include/TestsAndDebugging/DebugTools.h
         src/DebugTools.cpp
+        include/Search/MoveIterator.h
+        src/MoveIterator.cpp
 )
 
 # Create a library with the core functionality
