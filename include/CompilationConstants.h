@@ -225,6 +225,21 @@ static constexpr bool UseAsp = false;
 
 //---------------------------
 
+// --------------------------
+// Treat promo as single pawn -> queen move
+
+#ifdef TREAT_PROMOS_AS_QUEEN_PROMO
+
+static constexpr bool TreatPromosAsSingle = true;
+
+#else
+
+static constexpr bool TreatPromosAsSingle = false;
+
+#endif // TREAT_PROMOS_AS_QUEEN_PROMO
+
+// --------------------------
+
 // ------------------------------
 // Display statistics about aspiration window flow
 

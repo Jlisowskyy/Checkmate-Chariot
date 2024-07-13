@@ -711,8 +711,11 @@ void MoveGenerator::_processNonAttackingMoves(
         if constexpr (promotePawns)
         // upgrading pawn case
         {
+            static constexpr size_t startInd = queensIndex;
+            static constexpr size_t limitInd = TreatPromosAsSingle ? queensIndex - 1 : pawnsIndex;
+
             // iterating through upgradable pieces
-            for (size_t i = knightsIndex; i < kingIndex; ++i)
+            for (size_t i = startInd; i > limitInd; --i)
             {
                 const auto targetBoard = _board.MovingColor * Board::BitBoardsPerCol + i;
 
@@ -802,8 +805,11 @@ void MoveGenerator::_processAttackingMoves(
         if constexpr (promotePawns)
         // upgrading pawn case
         {
+            static constexpr size_t startInd = queensIndex;
+            static constexpr size_t limitInd = TreatPromosAsSingle ? queensIndex - 1 : pawnsIndex;
+
             // iterating through upgradable pieces
-            for (size_t i = knightsIndex; i < kingIndex; ++i)
+            for (size_t i = startInd; i > limitInd; --i)
             {
                 const auto targetBoard = _board.MovingColor * Board::BitBoardsPerCol + i;
 
@@ -1053,11 +1059,14 @@ MoveGenerator::_processPawnPlainPseudoMoves(MoveGenerator::payload &results, con
 
         while (plainPseudoMoves)
         {
+            static constexpr size_t startInd = queensIndex;
+            static constexpr size_t limitInd = TreatPromosAsSingle ? queensIndex - 1 : pawnsIndex;
+
             const int pawnTarget        = ExtractMsbPos(plainPseudoMoves);
             const uint64_t pawnTargetBitBoard = MaxMsbPossible >> pawnTarget;
 
             // iterating through upgradable pieces
-            for (size_t i = knightsIndex; i < kingIndex; ++i)
+            for (size_t i = startInd; i > limitInd; --i)
             {
                 const auto targetBoard = _board.MovingColor * Board::BitBoardsPerCol + i;
 
@@ -1247,12 +1256,15 @@ MoveGenerator::_processPawnAttackPseudoMoves(payload &results, const uint64_t pa
 
         while (attackPseudoMoves)
         {
+            static constexpr size_t startInd = queensIndex;
+            static constexpr size_t limitInd = TreatPromosAsSingle ? queensIndex - 1 : pawnsIndex;
+
             const int pawnTarget        = ExtractMsbPos(attackPseudoMoves);
             const uint64_t pawnTargetBitBoard = MaxMsbPossible >> pawnTarget;
             const size_t attackedFigBoardIndex = GetIndexOfContainingBitBoard(pawnTargetBitBoard, SwapColor(_board.MovingColor));
 
             // iterating through upgradable pieces
-            for (size_t i = knightsIndex; i < kingIndex; ++i)
+            for (size_t i = startInd; i > limitInd; --i)
             {
                 const auto targetBoard = _board.MovingColor * Board::BitBoardsPerCol + i;
 

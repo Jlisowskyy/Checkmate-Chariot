@@ -874,59 +874,6 @@ int BestMoveSearch::_qSearch(int alpha, const int beta, const int ply, uint64_t 
     return (_stack.PopAggregate(moves), bestEval);
 }
 
-void BestMoveSearch::_pullMoveToFront(const MoveGenerator::payload moves, const PackedMove mv)
-{
-    TraceIfFalse(mv.IsOkeyMove(), "Given move to find is a null move!");
-
-    // preparing sentinel
-    const Move sentinelOld = moves.data[moves.size];
-    moves.data[moves.size] = Move(mv);
-
-    // finding stopping index
-    size_t ind = 0;
-    while (moves.data[ind] != Move(mv)) ind++;
-
-    // replacing old element
-    moves.data[moves.size] = sentinelOld;
-
-    // if move found swapping
-    if (ind != moves.size)
-    {
-        const auto bestMove = moves.data[ind];
-        for (signed_size_t i = static_cast<signed_size_t>(ind) - 1; i >= 0; --i) moves.data[i + 1] = moves.data[i];
-        moves.data[0] = bestMove;
-        return;
-    }
-
-    WrapTraceMsgError("Move stored inside the TT was not found in the moves list!");
-}
-
-void BestMoveSearch::_fetchBestMove(MoveGenerator::payload moves, const size_t targetPos)
-{
-    int maxValue  = NEGATIVE_INFINITY;
-    size_t maxInd = targetPos;
-
-    for (size_t i = targetPos; i < moves.size; ++i)
-    {
-        if (const int heuristicEval = moves[i].GetEval(); heuristicEval > maxValue)
-        {
-            maxInd   = i;
-            maxValue = heuristicEval;
-        }
-    }
-
-    const auto signedTargetPos = static_cast<signed_size_t>(targetPos);
-    const auto bestMove              = moves.data[maxInd];
-    for (signed_size_t i = static_cast<signed_size_t>(maxInd) - 1; i >= signedTargetPos; --i)
-        moves.data[i + 1] = moves.data[i];
-    moves.data[targetPos] = bestMove;
-
-    TraceIfFalse(
-        maxInd == targetPos || moves.data[targetPos].GetEval() >= moves.data[targetPos + 1].GetEval(),
-        "Move sorting failed!"
-    );
-}
-
 int BestMoveSearch::QuiesceEval()
 {
     const uint64_t hash = ZHasher.GenerateHash(_board);
