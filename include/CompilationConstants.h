@@ -145,6 +145,10 @@ static constexpr int16_t MOEV_SORT_GOOD_QUIET_DIV = 5;
 static constexpr int16_t MOVE_SORT_GOOD_QUIET_SCORE =
     // (HISTORY_TABLE_POINTS_LIMIT + COUNTER_MOVE_TABLE_PRIZE + MOVE_SORT_QUIET_CHECK) / MOEV_SORT_GOOD_QUIET_DIV;
     200;
+
+static constexpr int16_t MOVE_SORT_QUIETS_PAWN_EVASION_BONUS = 50;
+static constexpr int16_t MOVE_SORT_QUIETS_PAWN_DANGER_PENALTY = -50;
+
 // -----------------------------------------------------------------------------------------
 
 /*

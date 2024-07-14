@@ -85,6 +85,9 @@ public:
             }
         }
 
+        if (!PrintOut)
+            return;;
+
         GlobalLogger.LogStream << std::format(
             "Node info:\n"
             "\tPv nodes: {}\n"

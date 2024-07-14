@@ -92,7 +92,7 @@ class MoveIterator
     template <class PredT>
     [[nodiscard]] Move _pullMove(PredT pred);
     [[nodiscard]] int _scoreCapture(Move mv) const;
-    [[nodiscard]] int _scoreQuiet(Move mv) const;
+    [[nodiscard]] int _scoreQuiet(Move mv, uint64_t pawnAttacks) const;
 
     template <class PostActionT, class StorageT>
     INLINE static Move _makeStep(PostActionT action, StorageT& storage)

@@ -5,6 +5,7 @@
 #include "../include/Search/MoveIterator.h"
 
 #include <cassert>
+#include <cinttypes>
 
 Move MoveIterator::GetNextMove()
 {
@@ -211,23 +212,20 @@ void MoveIterator::_initCaptures()
 
 void MoveIterator::_initQuiets()
 {
-    // return eval + ((pawnAttacks & startField) != 0) * RunAwayPrize +
-    //            ((pawnAttacks & targetField) != 0) * AttackedFigurePenalty;
-
-    // const uint64_t pawnAttacks =
-    //     _board.MovingColor == WHITE
-    //         ? BlackPawnMap::GetAttackFields(
-    //               _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
-    //           )
-    //         : WhitePawnMap::GetAttackFields(
-    //               _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
-    //           );
+    const uint64_t pawnAttacks =
+        _board.MovingColor == WHITE
+            ? BlackPawnMap::GetAttackFields(
+                  _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
+              )
+            : WhitePawnMap::GetAttackFields(
+                  _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
+              );
 
     _initTables(
         [](const Move){ return true; },
         [&](Move mv)
         {
-            const auto score = static_cast<int16_t>(_scoreQuiet(mv));
+            const auto score = static_cast<int16_t>(_scoreQuiet(mv, pawnAttacks));
             mv.SetEval(score);
 
             if (score >= MOVE_SORT_GOOD_QUIET_SCORE)
@@ -295,7 +293,7 @@ int MoveIterator::_scoreCapture(const Move mv) const
 
     return FigureEval[mv.GetKilledBoardIndex()] - FigureEval[mv.GetStartBoardIndex()];
 }
-int MoveIterator::_scoreQuiet(const Move mv) const
+int MoveIterator::_scoreQuiet(const Move mv, const uint64_t pawnAttacks) const
 {
     int eval{};
 
@@ -316,6 +314,10 @@ int MoveIterator::_scoreQuiet(const Move mv) const
 
     // History table bonus
     eval += _hTable.GetBonusMove(mv);
+
+    // pawn attacks evasion/dange
+    eval += ((pawnAttacks & (MaxMsbPossible >> mv.GetStartField())) != 0) * MOVE_SORT_QUIETS_PAWN_EVASION_BONUS +
+            ((pawnAttacks & (MaxMsbPossible >> mv.GetTargetField())) != 0) * MOVE_SORT_QUIETS_PAWN_DANGER_PENALTY;
 
     return eval;
 }
