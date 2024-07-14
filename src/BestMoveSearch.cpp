@@ -336,7 +336,7 @@ int BestMoveSearch::_search(
         }
 
     // generate moves
-    auto moves = _moveGenerator.GetPseudoLegalMoves<false, false>(_cmTable.GetCounterMove(prevMove, _board.MovingColor), ply, prevMove.GetTargetField());
+    auto moves = _moveGenerator.GetPseudoLegalMoves<false>();
 
     // saving volatile board state
     const VolatileBoardData oldData{_board};
@@ -766,13 +766,13 @@ int BestMoveSearch::_qSearch(int alpha, const int beta, const int ply, uint64_t 
             alpha = bestEval;
         }
 
-        moves = _moveGenerator.GetPseudoLegalMoves<true, false>();
+        moves = _moveGenerator.GetPseudoLegalMoves<true>();
     }
     else
     // we are inside the check, our king is not safe we should resolve all moves
     {
         // When there is check we need to go through every possible move to get a better view about the position
-        moves = _moveGenerator.GetPseudoLegalMoves<false, false>();
+        moves = _moveGenerator.GetPseudoLegalMoves<false>();
     }
 
     // saving volatile fields

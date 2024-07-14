@@ -154,7 +154,7 @@ class BestMoveSearch
 
     BestMoveSearch() = delete;
     BestMoveSearch(const Board &board, Stack<Move, DEFAULT_STACK_SIZE> &s)
-        : _board(board), _stack(s), _moveGenerator(_board, s, _histTable, _kTable)
+        : _board(board), _stack(s), _moveGenerator(_board, s)
     {
     }
     ~BestMoveSearch() = default;

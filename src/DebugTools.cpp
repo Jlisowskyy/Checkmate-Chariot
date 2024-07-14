@@ -9,7 +9,7 @@
 bool IsDrawDebug(const Board &bd)
 {
     MoveGenerator::stck s{};
-    MoveGenerator generator{bd, s, DummyHistoryTable, DummyKillerTable};
+    MoveGenerator generator{bd, s};
 
     auto mvs         = generator.GetMovesFast();
     const size_t cnt = mvs.size;
@@ -22,7 +22,7 @@ bool IsDrawDebug(const Board &bd)
 Move GetMoveDebug(const Board &bd, const std::string &str)
 {
     Stack<Move, DEFAULT_STACK_SIZE> s;
-    MoveGenerator mech{bd, s, DummyHistoryTable, DummyKillerTable};
+    MoveGenerator mech{bd, s};
     auto moves = mech.GetMovesFast();
 
     for (size_t i = 0; i < moves.size; ++i)

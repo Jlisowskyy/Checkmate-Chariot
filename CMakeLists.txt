@@ -123,7 +123,6 @@ set(CHECKMATE_CHARIOT_SOURCES
         include/ThreadManagement/Stack.h
         include/ThreadManagement/SearchThreadManager.h
         src/SearchThreadManager.cpp
-        include/Evaluation/MoveSortEval.h
         include/Search/TranspositionTable.h
         include/Search/ZobristHash.h
         src/ZobristHash.cpp

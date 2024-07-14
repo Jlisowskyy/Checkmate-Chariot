@@ -120,15 +120,18 @@ Move MoveIterator::_processBadCaptures()
 
 Move MoveIterator::_processKillers()
 {
-    const Move retreivedMove = _pullMove(
-        [&](const Move mv)
-        {
-            return _kTable.IsKillerMove(mv, _ply);
-        }
-    );
+    if (_ply != 0)
+    {
+        const Move retreivedMove = _pullMove(
+            [&](const Move mv)
+            {
+                return _kTable.IsKillerMove(mv, _ply);
+            }
+        );
 
-    if (!retreivedMove.IsEmpty())
-        return retreivedMove;
+        if (!retreivedMove.IsEmpty())
+            return retreivedMove;
+    }
 
     _stage = MoveSortStages::GOOD_QUIETS;
     _initQuiets();
@@ -208,6 +211,9 @@ void MoveIterator::_initCaptures()
 
 void MoveIterator::_initQuiets()
 {
+    // return eval + ((pawnAttacks & startField) != 0) * RunAwayPrize +
+    //            ((pawnAttacks & targetField) != 0) * AttackedFigurePenalty;
+
     _initTables(
         [](const Move){ return true; },
         [&](Move mv)

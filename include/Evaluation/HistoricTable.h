@@ -107,7 +107,4 @@ struct HistoricTable
     int _table[Board::BitBoardsCount][Board::BitBoardFields]{};
 };
 
-// table used mainly to avoid passing new objects every time
-inline HistoricTable DummyHistoryTable{};
-
 #endif // HISTORICTABLE_H

@@ -13,7 +13,7 @@ std::map<std::string, uint64_t> MoveGenerator::GetCountedMoves(const int depth)
 
     VolatileBoardData data{_board};
 
-    auto moves = GetMovesSlow<false, false>();
+    auto moves = GetMovesSlow<false>();
     for (size_t i = 0; i < moves.size; ++i)
     {
         Move::MakeMove(moves[i], workBoard);
@@ -32,8 +32,8 @@ uint64_t MoveGenerator::CountMoves(Board &bd, const int depth)
     if (depth == 0)
         return 1;
 
-    MoveGenerator mgen{bd, _threadStack, DummyHistoryTable, DummyKillerTable};
-    const auto moves = mgen.GetMovesSlow<false, false>();
+    MoveGenerator mgen{bd, _threadStack};
+    const auto moves = mgen.GetMovesSlow<false>();
 
     if (depth == 1)
     {

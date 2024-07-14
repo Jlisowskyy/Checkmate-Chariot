@@ -6,6 +6,8 @@
 #define MOVEITERATOR_H
 #include "../Board.h"
 #include "../Evaluation/CounterMoveTable.h"
+#include "../Evaluation/HistoricTable.h"
+#include "../Evaluation/KillerTable.h"
 #include "../MoveGeneration/MoveGenerator.h"
 
 

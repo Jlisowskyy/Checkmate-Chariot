@@ -109,7 +109,4 @@ class KillerTable
     _killerFloor_t _kTable[MAX_SEARCH_DEPTH + 2]{};
 };
 
-// table used mainly to avoid passing new objects every time
-inline KillerTable DummyKillerTable{};
-
 #endif // KILLERTABLE_H
