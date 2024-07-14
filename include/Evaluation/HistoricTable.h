@@ -39,23 +39,23 @@ struct HistoricTable
     // Class interaction
     // ------------------------------
 
+    INLINE void SetPointsMove(const Move mv, const int points)
+    {
+        const int clampedPoints = std::clamp(points, -Barrier, Barrier);
+
+        _table[mv.GetStartBoardIndex()][mv.GetTargetField()]
+            += clampedPoints - _table[mv.GetStartBoardIndex()][mv.GetTargetField()] * abs(clampedPoints) / Barrier;
+    }
+
     // Function takes move and depth and increments the move's value in the table
     INLINE void SetBonusMove(const Move mv, const int depth)
     {
-        _table[mv.GetStartBoardIndex()][mv.GetTargetField()] =
-            _pointScaleBonus(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth);
-
-        const int points = _table[mv.GetStartBoardIndex()][mv.GetTargetField()];
-        _maxPoints = std::max(points, _maxPoints);
+        SetPointsMove(mv, _pointScaleBonus(depth));
     }
 
     INLINE void SetPenaltyMove(const Move mv, const int depth)
     {
-        _table[mv.GetStartBoardIndex()][mv.GetTargetField()] =
-            _pointScalePenalty(_table[mv.GetStartBoardIndex()][mv.GetTargetField()], depth);
-
-        const int points = _table[mv.GetStartBoardIndex()][mv.GetTargetField()];
-        _maxPoints = std::max(std::abs(points), _maxPoints);
+        SetPointsMove(mv, _pointScalePenalty(depth));
     }
 
     // Function returns the value of the move from the table
@@ -89,18 +89,18 @@ struct HistoricTable
     // Functions scales down all points accordingally to currently best hold value if it exceeds the barrier
     [[nodiscard]] int _getPoints(const int figT, const int field) const
     {
-        return _maxPoints < Barrier ? _table[figT][field] : Barrier * _table[figT][field] / _maxPoints;
+        return _table[figT][field];
     }
 
     // Function used to determine the bonus value of the move, it is here to simplify its manipulation.
-    static constexpr int _pointScaleBonus (const int prevPoints, const int depth)
+    static constexpr int _pointScaleBonus (const int depth)
     {
-        return prevPoints + HISTORY_BONUS_COEF * depth + HISTORY_BONUS_BIAS;
+        return HISTORY_BONUS_COEF * depth + HISTORY_BONUS_BIAS;
     };
 
-    static constexpr int _pointScalePenalty(const int prevPoints, const int depth)
+    static constexpr int _pointScalePenalty(const int depth)
     {
-        return prevPoints - (HISTORY_PENALTY_COEF * depth / 2 + HISTORY_PENALTY_BIAS);
+        return -(HISTORY_PENALTY_COEF * depth / 2+ HISTORY_PENALTY_BIAS);
     }
 
     int _maxPoints{};

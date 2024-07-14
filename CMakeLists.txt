@@ -29,7 +29,7 @@ add_compile_definitions(USE_ASP_WIN=1)
 #add_compile_definitions(TRACE_EXTENSIONS=1)
 
 # Uncomment to display detailed data collected from search
-add_compile_definitions(COLLECT_SEARCH_DATA=1)
+#add_compile_definitions(COLLECT_SEARCH_DATA=1)
 
 # Uncomment to disable LMR
 #add_compile_definitions(DISABLE_LMR=1)

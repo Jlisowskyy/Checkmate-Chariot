@@ -34,7 +34,7 @@ struct SearchPerfTester
     // ------------------------------
 
     private:
-    [[nodiscard]] static double
+    [[nodiscard]] static std::tuple<double, double>
     _performTestCase(const std::string &testCase, int depth, Stack<Move, DEFAULT_STACK_SIZE> &stack);
     static void
     _saveResultsToCsv(const std::string &output, const std::vector<std::tuple<std::string, int, double>> &results);

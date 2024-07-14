@@ -209,7 +209,7 @@ void MoveIterator::_initCaptures()
 void MoveIterator::_initQuiets()
 {
     _initTables(
-        [](const Move mv){ return true; },
+        [](const Move){ return true; },
         [&](Move mv)
         {
             const auto score = static_cast<int16_t>(_scoreQuiet(mv));

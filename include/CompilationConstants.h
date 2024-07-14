@@ -116,7 +116,7 @@ static constexpr int16_t HISTORY_TABLE_POINTS_LIMIT = 1200;
 static constexpr int16_t HISTORY_GOOD_MOVE = 600;
 
 // Bonus linear function parameters
-static constexpr int16_t HISTORY_BONUS_COEF = 1;
+static constexpr int16_t HISTORY_BONUS_COEF = 2;
 static constexpr int16_t HISTORY_BONUS_BIAS = 0;
 
 // Penalty linear function parameters
@@ -143,8 +143,8 @@ static constexpr int16_t MOVE_SORT_QUIET_CHECK = HISTORY_TABLE_POINTS_LIMIT;
 
 static constexpr int16_t MOEV_SORT_GOOD_QUIET_DIV = 5;
 static constexpr int16_t MOVE_SORT_GOOD_QUIET_SCORE =
-    (HISTORY_TABLE_POINTS_LIMIT + COUNTER_MOVE_TABLE_PRIZE + MOVE_SORT_QUIET_CHECK) / MOEV_SORT_GOOD_QUIET_DIV;
-
+    // (HISTORY_TABLE_POINTS_LIMIT + COUNTER_MOVE_TABLE_PRIZE + MOVE_SORT_QUIET_CHECK) / MOEV_SORT_GOOD_QUIET_DIV;
+    200;
 // -----------------------------------------------------------------------------------------
 
 /*

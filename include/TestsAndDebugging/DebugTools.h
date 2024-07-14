@@ -54,10 +54,36 @@ public:
         _nodeTypes[type]++;
     }
 
-    void DisplayData()
+    template<bool PrintOut = true>
+    void FinishCollecting()
     {
         size_t maxInd{};
         for (size_t i = 0; i < MAX_MOVES; ++i) maxInd = _cutOffIndexes[i] > 0 ? i : maxInd;
+
+        uint64_t probesCount{};
+        uint64_t probesSum{};
+
+        for (size_t i = 0; i < maxInd; ++i)
+        {
+            probesCount += _cutOffIndexes[i];
+            probesSum += _cutOffIndexes[i] * i;
+        }
+
+        averageCuttOffIndex = static_cast<double>(probesSum) / static_cast<double>(probesCount);
+        const size_t medianProbe = probesCount / 2;
+
+        uint64_t checkProbes {};
+        size_t median{};
+        for(size_t i = 0; i < maxInd; ++i)
+        {
+            checkProbes += _cutOffIndexes[i];
+
+            if (checkProbes >= medianProbe)
+            {
+                median = i;
+                break;
+            }
+        }
 
         GlobalLogger.LogStream << std::format(
             "Node info:\n"
@@ -74,34 +100,13 @@ public:
         for (size_t i = 0; i <= maxInd; ++i) GlobalLogger.LogStream << std::format("\n{}: {}", i, _cutOffIndexes[i]);
         GlobalLogger.LogStream << std::endl;
 
-        uint64_t probesCount{};
-        uint64_t probesSum{};
-
-        for (size_t i = 0; i < maxInd; ++i)
-        {
-            probesCount += _cutOffIndexes[i];
-            probesSum += _cutOffIndexes[i] * i;
-        }
-
-        const double averageCuttOffIndex = static_cast<double>(probesSum) / static_cast<double>(probesCount);
-        const size_t medianProbe = probesCount / 2;
-
-        uint64_t checkProbes {};
-        size_t median{};
-        for(size_t i = 0; i < maxInd; ++i)
-        {
-            checkProbes += _cutOffIndexes[i];
-
-            if (checkProbes >= medianProbe)
-            {
-                median = i;
-                break;
-            }
-        }
 
         GlobalLogger.LogStream << std::format("Data analysis:\nAverage: {}\nMedian: {}", averageCuttOffIndex, median)
             << std::endl;
     }
+
+    public:
+    double averageCuttOffIndex;
 
     private:
 

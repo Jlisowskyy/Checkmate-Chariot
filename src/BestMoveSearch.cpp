@@ -230,7 +230,7 @@ int BestMoveSearch::IterativeDeepening(
         TTable.DisplayStatisticsAndReset();
 
     if constexpr (CollectSearchData)
-        _collectedData.DisplayData();
+        CollectedData.FinishCollecting();
 
     return prevEval;
 }
@@ -603,7 +603,7 @@ int BestMoveSearch::_search(
                     ++_cutoffNodes;
 
                     if constexpr (CollectSearchData)
-                        _collectedData.SaveCutOff(legalMoves);
+                        CollectedData.SaveCutOff(legalMoves);
 
                     break;
                 }
@@ -633,12 +633,12 @@ int BestMoveSearch::_search(
         _saveQuietMoveInfo(bestMove, prevMove, plyDepth, ply);
 
     // Apply penaltes for all checked but not good enough moves
-    // for (size_t i = 0; i < testedQuietsCounter; ++i)
-        // _histTable.SetPenaltyMove(testedQuietMoves[i], plyDepth);
+    for (size_t i = 0; i < testedQuietsCounter; ++i)
+        _histTable.SetPenaltyMove(testedQuietMoves[i], plyDepth);
 
     // Note: compilation flag
     if constexpr (CollectSearchData)
-        if (bestEval < beta) _collectedData.SaveNotCutOffNode(bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
+        if (bestEval < beta) CollectedData.SaveNotCutOffNode(bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
     // updating if profitable
     // NOTE: _excludedMove.IsEmpty() - ensures no move from singular search is saved

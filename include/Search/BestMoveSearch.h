@@ -235,6 +235,7 @@ class BestMoveSearch
     int _rootDepth{};
 
     // Debug objects
-    [[maybe_unused]] SearchData _collectedData{};
+    public:
+    [[maybe_unused]] SearchData CollectedData{};
 };
 #endif // BESTMOVESEARCH_H
