@@ -122,28 +122,28 @@ struct MoveGenerator : ChessMechanics
 
     template <bool GenOnlyTacticalMoves, class MapT, bool isCheck = false>
     void _processPawnMoves(
-        payload &results, uint64_t pawnAttacks, uint64_t enemyMap, uint64_t allyMap, uint64_t pinnedFigMap,
+        payload &results, uint64_t enemyMap, uint64_t allyMap, uint64_t pinnedFigMap,
         [[maybe_unused]] uint64_t allowedMoveFilter = 0
     );
 
     template <bool GenOnlyTacticalMoves, class MapT>
     void _processPawnPseudoMoves(
-            payload &results, uint64_t pawnAttacks, uint64_t enemyMap, uint64_t allyMap
+            payload &results, uint64_t enemyMap, uint64_t allyMap
     );
 
     template <bool IsQSearch, class MapT>
     void _processPawnAttackPseudoMoves(
-            payload &results, uint64_t pawnAttacks, uint64_t enemyMap, uint64_t fullMap, uint64_t promoMoves, uint64_t nonPromoMoves
+            payload &results, uint64_t enemyMap, uint64_t fullMap, uint64_t promoMoves, uint64_t nonPromoMoves
     );
 
     template <bool GenOnlyTacticalMoves, class MapT>
     void _processPawnPlainPseudoMoves(
-            payload &results, uint64_t pawnAttacks, uint64_t fullMap, uint64_t promoPieces, uint64_t nonPromoPieces
+            payload &results, uint64_t fullMap, uint64_t promoPieces, uint64_t nonPromoPieces
     );
 
     template <class MapT>
     void _processElPassantPseudoMoves(
-            payload &results, uint64_t pawnAttacks, uint64_t pieces
+            payload &results, uint64_t pieces
     );
 
 
@@ -160,7 +160,7 @@ struct MoveGenerator : ChessMechanics
         bool promotePawns = false, bool selectFigures = false, bool isCheck = false,
         uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr>
     void _processFigMoves(
-        payload &results, uint64_t pawnAttacks, uint64_t enemyMap, uint64_t allyMap, uint64_t pinnedFigMap,
+        payload &results, uint64_t enemyMap, uint64_t allyMap, uint64_t pinnedFigMap,
         [[maybe_unused]] uint64_t figureSelector = 0, [[maybe_unused]] uint64_t allowedMoveSelector = 0
     );
 
@@ -168,7 +168,7 @@ struct MoveGenerator : ChessMechanics
             bool GenOnlyTacticalMoves, class MapT, bool checkForCastling = false
     >
     void _processFigPseudoMoves(
-            payload &results, uint64_t pawnAttacks, uint64_t enemyMap, uint64_t allyMap
+            payload &results, uint64_t enemyMap, uint64_t allyMap
     );
 
 
@@ -177,13 +177,13 @@ struct MoveGenerator : ChessMechanics
         class MapT, bool promotePawns,
         uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t) = nullptr>
     void _processNonAttackingMoves(
-        payload &results, uint64_t pawnAttacks, uint64_t nonAttackingMoves, size_t figBoardIndex, uint64_t startField,
+        payload &results, uint64_t nonAttackingMoves, size_t figBoardIndex, uint64_t startField,
         std::bitset<Board::CastlingCount + 1> castlings, uint64_t fullMap
     ) const;
 
     template <class MapT, bool IsQsearch, bool promotePawns>
     void _processAttackingMoves(
-        payload &results, uint64_t pawnAttacks, uint64_t attackingMoves, size_t figBoardIndex, uint64_t startField,
+        payload &results, uint64_t attackingMoves, size_t figBoardIndex, uint64_t startField,
         std::bitset<Board::CastlingCount + 1> castlings, uint64_t fullMap
     ) const;
 
@@ -284,38 +284,29 @@ void MoveGenerator::_noCheckGen(payload &results, const uint64_t fullMap, const 
     const uint64_t enemyMap = GetColBitMap(SwapColor(_board.MovingColor));
     const uint64_t allyMap  = GetColBitMap(_board.MovingColor);
 
-    const uint64_t pawnAttacks =
-        _board.MovingColor == WHITE
-            ? BlackPawnMap::GetAttackFields(
-                  _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
-              )
-            : WhitePawnMap::GetAttackFields(
-                  _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
-              );
-
     _processFigMoves<GenOnlyTacticalMoves, KnightMap>(
-        results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap
+        results, enemyMap, allyMap, pinnedFigsMap
     );
 
     _processFigMoves<GenOnlyTacticalMoves, BishopMap>(
-        results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap
+        results, enemyMap, allyMap, pinnedFigsMap
     );
 
     _processFigMoves<GenOnlyTacticalMoves, RookMap, true>(
-        results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap
+        results, enemyMap, allyMap, pinnedFigsMap
     );
 
     _processFigMoves<GenOnlyTacticalMoves, QueenMap>(
-        results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap
+        results, enemyMap, allyMap, pinnedFigsMap
     );
 
     if (_board.MovingColor == WHITE)
         _processPawnMoves<GenOnlyTacticalMoves, WhitePawnMap>(
-            results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap
+            results, enemyMap, allyMap, pinnedFigsMap
         );
     else
         _processPawnMoves<GenOnlyTacticalMoves, BlackPawnMap>(
-            results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap
+            results, enemyMap, allyMap, pinnedFigsMap
         );
 
     _processPlainKingMoves<GenOnlyTacticalMoves>(results, blockedFigMap, allyMap, enemyMap);
@@ -349,39 +340,30 @@ void MoveGenerator::_singleCheckGen(
     const uint64_t enemyMap = GetColBitMap(SwapColor(_board.MovingColor));
     const uint64_t allyMap  = GetColBitMap(_board.MovingColor);
 
-    const uint64_t pawnAttacks =
-        _board.MovingColor == WHITE
-            ? BlackPawnMap::GetAttackFields(
-                  _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
-              )
-            : WhitePawnMap::GetAttackFields(
-                  _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
-              );
-
     // Specific figure processing
     _processFigMoves<GenOnlyTacticalMoves, KnightMap, false, false, false, true>(
-        results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap, UNUSED, allowedTilesMap
+        results, enemyMap, allyMap, pinnedFigsMap, UNUSED, allowedTilesMap
     );
 
     _processFigMoves<GenOnlyTacticalMoves, BishopMap, false, false, false, true>(
-        results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap, UNUSED, allowedTilesMap
+        results, enemyMap, allyMap, pinnedFigsMap, UNUSED, allowedTilesMap
     );
 
     _processFigMoves<GenOnlyTacticalMoves, RookMap, true, false, false, true>(
-        results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap, UNUSED, allowedTilesMap
+        results, enemyMap, allyMap, pinnedFigsMap, UNUSED, allowedTilesMap
     );
 
     _processFigMoves<GenOnlyTacticalMoves, QueenMap, false, false, false, true>(
-        results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap, UNUSED, allowedTilesMap
+        results, enemyMap, allyMap, pinnedFigsMap, UNUSED, allowedTilesMap
     );
 
     if (_board.MovingColor == WHITE)
         _processPawnMoves<GenOnlyTacticalMoves, WhitePawnMap, true>(
-            results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap, allowedTilesMap
+            results, enemyMap, allyMap, pinnedFigsMap, allowedTilesMap
         );
     else
         _processPawnMoves<GenOnlyTacticalMoves, BlackPawnMap, true>(
-            results, pawnAttacks, enemyMap, allyMap, pinnedFigsMap, allowedTilesMap
+            results, enemyMap, allyMap, pinnedFigsMap, allowedTilesMap
         );
 
     _processPlainKingMoves<GenOnlyTacticalMoves>(results, blockedFigMap, allyMap, enemyMap);
@@ -397,7 +379,7 @@ void MoveGenerator::_doubleCheckGen(payload &results, const uint64_t blockedFigM
 
 template <bool GenOnlyTacticalMoves, class MapT, bool isCheck>
 void MoveGenerator::_processPawnMoves(
-    payload &results, const uint64_t pawnAttacks, const uint64_t enemyMap, const uint64_t allyMap,
+    payload &results, const uint64_t enemyMap, const uint64_t allyMap,
     const uint64_t pinnedFigMap, const uint64_t allowedMoveFilter
 )
 {
@@ -406,13 +388,13 @@ void MoveGenerator::_processPawnMoves(
 
     _processFigMoves<
         GenOnlyTacticalMoves, MapT, false, false, true, isCheck, MapT::GetElPassantField>(
-        results, pawnAttacks, enemyMap, allyMap, pinnedFigMap, nonPromotingPawns, allowedMoveFilter
+        results, enemyMap, allyMap, pinnedFigMap, nonPromotingPawns, allowedMoveFilter
     );
 
     // During quiesce search we should also check all promotions so GenOnlyTacticalMoves is false
     if (promotingPawns)
         _processFigMoves<false, MapT, false, true, true, isCheck>(
-            results, pawnAttacks, enemyMap, allyMap, pinnedFigMap, promotingPawns, allowedMoveFilter
+            results,  enemyMap, allyMap, pinnedFigMap, promotingPawns, allowedMoveFilter
         );
 
     _processElPassantMoves<MapT, isCheck>(
@@ -503,7 +485,7 @@ template <
     bool GenOnlyTacticalMoves, class MapT, bool checkForCastling, bool promotePawns,
     bool selectFigures, bool isCheck, uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t)>
 void MoveGenerator::_processFigMoves(
-    payload &results, const uint64_t pawnAttacks, const uint64_t enemyMap, const uint64_t allyMap,
+    payload &results, const uint64_t enemyMap, const uint64_t allyMap,
     const uint64_t pinnedFigMap, const uint64_t figureSelector, const uint64_t allowedMoveSelector
 )
 {
@@ -552,12 +534,12 @@ void MoveGenerator::_processFigMoves(
 
         if constexpr (!GenOnlyTacticalMoves)
             _processNonAttackingMoves<MapT, promotePawns, elPassantFieldDeducer>(
-                results, pawnAttacks, nonAttackingMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard,
+                results, nonAttackingMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard,
                 updatedCastlings, fullMap
             );
 
         _processAttackingMoves<MapT, GenOnlyTacticalMoves, promotePawns>(
-            results, pawnAttacks, attackMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard, updatedCastlings,
+            results, attackMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard, updatedCastlings,
             fullMap
         );
 
@@ -588,13 +570,13 @@ void MoveGenerator::_processFigMoves(
 
         if constexpr (!GenOnlyTacticalMoves)
             _processNonAttackingMoves<MapT, promotePawns, elPassantFieldDeducer>(
-                results, pawnAttacks, nonAttackingMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard,
+                results, nonAttackingMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard,
                 _board.Castlings, fullMap
             );
 
         // TODO: There is exactly one move possible
         _processAttackingMoves<MapT, GenOnlyTacticalMoves, promotePawns>(
-            results, pawnAttacks, attackMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard, _board.Castlings,
+            results, attackMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard, _board.Castlings,
             fullMap
         );
 
@@ -604,7 +586,7 @@ void MoveGenerator::_processFigMoves(
 
 template <class MapT, bool promotePawns, uint64_t (*elPassantFieldDeducer)(uint64_t, uint64_t)>
 void MoveGenerator::_processNonAttackingMoves(
-    payload &results, const uint64_t pawnAttacks, uint64_t nonAttackingMoves, const size_t figBoardIndex,
+    payload &results, uint64_t nonAttackingMoves, const size_t figBoardIndex,
     const uint64_t startField, const std::bitset<Board::CastlingCount + 1> castlings, const uint64_t fullMap
 ) const
 {
@@ -686,7 +668,7 @@ void MoveGenerator::_processNonAttackingMoves(
 
 template <class MapT, bool IsQsearch, bool promotePawns>
 void MoveGenerator::_processAttackingMoves(
-    payload &results, const uint64_t pawnAttacks, uint64_t attackingMoves, const size_t figBoardIndex,
+    payload &results, uint64_t attackingMoves, const size_t figBoardIndex,
     const uint64_t startField, const std::bitset<Board::CastlingCount + 1> castlings, const uint64_t fullMap
 ) const
 {
@@ -877,8 +859,7 @@ void MoveGenerator::_processKingCastlings(payload &results, const uint64_t block
 
 template<class MapT>
 void
-MoveGenerator::_processElPassantPseudoMoves(payload &results,
-                                            const uint64_t pawnAttacks, const uint64_t pieces)
+MoveGenerator::_processElPassantPseudoMoves(payload &results, const uint64_t pieces)
 {
     if (_board.ElPassantField == Board::InvalidElPassantBitBoard)
         return;
@@ -914,7 +895,7 @@ MoveGenerator::_processElPassantPseudoMoves(payload &results,
 
 template<bool GenOnlyTacticalMoves, class MapT>
 void
-MoveGenerator::_processPawnPlainPseudoMoves(MoveGenerator::payload &results, const uint64_t pawnAttacks,
+MoveGenerator::_processPawnPlainPseudoMoves(MoveGenerator::payload &results,
                                             const uint64_t fullMap, uint64_t promoPieces, const uint64_t nonPromoPieces)
 {
     // iterate through every promoting piece
@@ -1029,7 +1010,7 @@ MoveGenerator::_processPawnPlainPseudoMoves(MoveGenerator::payload &results, con
 
 template<bool IsQSearch, class MapT>
 void
-MoveGenerator::_processPawnAttackPseudoMoves(payload &results, const uint64_t pawnAttacks,
+MoveGenerator::_processPawnAttackPseudoMoves(payload &results,
                                              const uint64_t enemyMap, const uint64_t fullMap, uint64_t promoMoves, uint64_t nonPromoMoves)
 {
     // NOTE: attack can overlap each other so attacking moves should be generated separately for each piece
@@ -1122,7 +1103,7 @@ MoveGenerator::_processPawnAttackPseudoMoves(payload &results, const uint64_t pa
 }
 
 template<bool GenOnlyTacticalMoves, class MapT>
-void MoveGenerator::_processPawnPseudoMoves(payload &results, const uint64_t pawnAttacks, const uint64_t enemyMap,
+void MoveGenerator::_processPawnPseudoMoves(payload &results, const uint64_t enemyMap,
                                             const uint64_t allyMap)
 {
     // Distinguish pawns that should be promoted from usual ones
@@ -1131,18 +1112,18 @@ void MoveGenerator::_processPawnPseudoMoves(payload &results, const uint64_t paw
     const uint64_t fullMap = enemyMap | allyMap;
 
     _processPawnAttackPseudoMoves<GenOnlyTacticalMoves, MapT>(
-            results, pawnAttacks, enemyMap, fullMap, promotingPawns, nonPromotingPawns
+            results, enemyMap, fullMap, promotingPawns, nonPromotingPawns
     );
 
     _processPawnPlainPseudoMoves<GenOnlyTacticalMoves, MapT>(
-            results, pawnAttacks, fullMap, promotingPawns, nonPromotingPawns
+            results, fullMap, promotingPawns, nonPromotingPawns
     );
 
-    _processElPassantPseudoMoves<MapT>(results, pawnAttacks, nonPromotingPawns);
+    _processElPassantPseudoMoves<MapT>(results, nonPromotingPawns);
 }
 
 template<bool GenOnlyTacticalMoves, class MapT, bool checkForCastling>
-void MoveGenerator::_processFigPseudoMoves(MoveGenerator::payload &results, const uint64_t pawnAttacks, const uint64_t enemyMap,
+void MoveGenerator::_processFigPseudoMoves(MoveGenerator::payload &results, const uint64_t enemyMap,
                                            const uint64_t allyMap)
 {
     TraceIfFalse(enemyMap != 0, "Enemy map is empty!");
@@ -1175,12 +1156,12 @@ void MoveGenerator::_processFigPseudoMoves(MoveGenerator::payload &results, cons
         if constexpr (!GenOnlyTacticalMoves)
             // Don't add simple moves when we should generate only attacking moves
             _processNonAttackingMoves<MapT, false>(
-                    results, pawnAttacks, nonAttackingMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard,
+                    results, nonAttackingMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard,
                     updatedCastlings, fullMap
             );
 
         _processAttackingMoves<MapT, GenOnlyTacticalMoves, false>(
-                results, pawnAttacks, attackMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard, updatedCastlings,
+                results, attackMoves, MapT::GetBoardIndex(_board.MovingColor), figBoard, updatedCastlings,
                 fullMap
         );
 
@@ -1197,40 +1178,29 @@ MoveGenerator::payload MoveGenerator::GetPseudoLegalMoves() {
     const uint64_t enemyMap = GetColBitMap(SwapColor(_board.MovingColor));
     const uint64_t allyMap  = GetColBitMap(_board.MovingColor);
 
-    // prepare fields attacked by pawns - it will be used in heuristic sort eval
-    const uint64_t pawnAttacks =
-            _board.MovingColor == WHITE
-            ? BlackPawnMap::GetAttackFields(
-                    _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
-            )
-            : WhitePawnMap::GetAttackFields(
-                    _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
-            );
-
-
     _processFigPseudoMoves<GenOnlyTacticalMoves, KnightMap>(
-            results, pawnAttacks, enemyMap, allyMap
+            results, enemyMap, allyMap
     );
 
     _processFigPseudoMoves<GenOnlyTacticalMoves, BishopMap>(
-            results, pawnAttacks, enemyMap, allyMap
+            results, enemyMap, allyMap
     );
 
     _processFigPseudoMoves<GenOnlyTacticalMoves, RookMap, true>(
-            results, pawnAttacks, enemyMap, allyMap
+            results, enemyMap, allyMap
     );
 
     _processFigPseudoMoves<GenOnlyTacticalMoves, QueenMap>(
-            results, pawnAttacks, enemyMap, allyMap
+            results, enemyMap, allyMap
     );
 
     if (_board.MovingColor == WHITE)
         _processPawnPseudoMoves<GenOnlyTacticalMoves, WhitePawnMap>(
-                results, pawnAttacks, enemyMap, allyMap
+                results, enemyMap, allyMap
         );
     else
         _processPawnPseudoMoves<GenOnlyTacticalMoves, BlackPawnMap>(
-                results, pawnAttacks, enemyMap, allyMap
+                results, enemyMap, allyMap
         );
 
     _processPlainKingMoves<GenOnlyTacticalMoves, true>(

@@ -214,6 +214,15 @@ void MoveIterator::_initQuiets()
     // return eval + ((pawnAttacks & startField) != 0) * RunAwayPrize +
     //            ((pawnAttacks & targetField) != 0) * AttackedFigurePenalty;
 
+    // const uint64_t pawnAttacks =
+    //     _board.MovingColor == WHITE
+    //         ? BlackPawnMap::GetAttackFields(
+    //               _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
+    //           )
+    //         : WhitePawnMap::GetAttackFields(
+    //               _board.BitBoards[Board::BitBoardsPerCol * SwapColor(_board.MovingColor) + pawnsIndex]
+    //           );
+
     _initTables(
         [](const Move){ return true; },
         [&](Move mv)
