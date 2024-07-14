@@ -125,6 +125,28 @@ static constexpr int16_t HISTORY_PENALTY_BIAS = 1;
 
 // -----------------------------------------------------------------------------------------
 
+// --------------------------- Counter Move Table ------------------------------------------
+
+static constexpr int16_t COUNTER_MOVE_TABLE_PRIZE = 600;
+
+// -----------------------------------------------------------------------------------------
+
+// ---------------------------- Direct Move Sort -------------------------------------------
+
+static constexpr int16_t MOVE_SORT_PROMO_CHECK = 100;
+
+static constexpr int16_t MOVE_SORT_CAPTURE_COEF = 1;
+static constexpr int16_t MOVE_SORT_CAPTURE_BIAS = 0;
+static constexpr int16_t MOVE_SORT_CAPTURE_DIV = 8;
+
+static constexpr int16_t MOVE_SORT_QUIET_CHECK = HISTORY_TABLE_POINTS_LIMIT;
+
+static constexpr int16_t MOEV_SORT_GOOD_QUIET_DIV = 5;
+static constexpr int16_t MOVE_SORT_GOOD_QUIET_SCORE =
+    (HISTORY_TABLE_POINTS_LIMIT + COUNTER_MOVE_TABLE_PRIZE + MOVE_SORT_QUIET_CHECK) / MOEV_SORT_GOOD_QUIET_DIV;
+
+// -----------------------------------------------------------------------------------------
+
 /*
  * Three types of nodes that we can find during the search.
  * To get more information about them, please visit:

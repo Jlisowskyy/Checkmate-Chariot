@@ -23,6 +23,11 @@ Move MoveIterator::GetNextMove()
     } while (rv.IsEmpty());
 
     --_uncheckedMoves;
+    ++iters;
+
+    if (iters > 256)
+        GlobalLogger.LogStream << "XDDD";
+
     return rv;
 }
 Move MoveIterator::_processStage()
@@ -59,7 +64,7 @@ Move MoveIterator::_processTTMove()
         retreivedTT = _pullMove(
             [&](const Move mv)
             {
-                return mv.GetPackedMove() == _ttMove.GetPackedMove();
+                return mv.GetPackedMove() == _ttMove;
             }
         );
 
@@ -92,7 +97,7 @@ Move MoveIterator::_processBadPromos()
         {
             _stage = MoveSortStages::BAD_CAPTURES;
         },
-        _badCaptures
+        _badPromos
     );
 }
 Move MoveIterator::_processGoodCaptures()
@@ -158,7 +163,7 @@ void MoveIterator::_initPromos()
             // if the pawn is promoting and additionally capturing it is in most cases good move
             if (mv.IsAttackingMove())
             {
-                mv.SetEval(_scoreCapture(mv) + mv.IsChecking() ? 100 : 0);
+                mv.SetEval(_scoreCapture(mv) + mv.IsChecking() ? MOVE_SORT_PROMO_CHECK : 0);
                 _currStageMoves.Push(mv);
             }
             else
@@ -168,11 +173,11 @@ void MoveIterator::_initPromos()
                 // not worth promoting yet
                 // TODO: what about enforcing figure moving (that is tactical aspect?)
                 if (seeValue < 0)
-                    _badCaptures.Push(mv);
+                    _badPromos.Push(mv);
                 else
                 {
                     // enforce inspecting moves that give a check at first
-                    mv.SetEval(mv.IsChecking() ? 100 : 0);
+                    mv.SetEval(mv.IsChecking() ? MOVE_SORT_PROMO_CHECK : 0);
                     _currStageMoves.Push(mv);
                 }
             }
@@ -188,7 +193,15 @@ void MoveIterator::_initCaptures()
         },
         [&](Move mv)
         {
+            // const auto score = static_cast<int16_t>(_scoreCapture(mv));
+            // mv.SetEval(score);
 
+            const int seeScore = _generator.SEE(mv);
+            mv.SetEval(static_cast<int16_t>(seeScore));
+            if (seeScore < -(MOVE_SORT_CAPTURE_COEF * mv.GetEval() / MOVE_SORT_CAPTURE_DIV  + MOVE_SORT_CAPTURE_BIAS))
+                _badCaptures.Push(mv);
+            else
+                _currStageMoves.Push(mv);
         }
     );
 }
@@ -199,7 +212,13 @@ void MoveIterator::_initQuiets()
         [](const Move mv){ return true; },
         [&](Move mv)
         {
+            const auto score = static_cast<int16_t>(_scoreQuiet(mv));
+            mv.SetEval(score);
 
+            if (score >= MOVE_SORT_GOOD_QUIET_SCORE)
+                _currStageMoves.Push(mv);
+            else
+                _badQuiets.Push(mv);
         }
     );
 }
@@ -242,7 +261,7 @@ Move MoveIterator::_pullMove(PredT pred)
     return {};
 }
 
-int MoveIterator::_scoreCapture(const Move mv)
+int MoveIterator::_scoreCapture(const Move mv) const
 {
     static constexpr int16_t FigureEval[] = {
         100, // wPawnsIndex,
@@ -260,4 +279,28 @@ int MoveIterator::_scoreCapture(const Move mv)
     };
 
     return FigureEval[mv.GetKilledBoardIndex()] - FigureEval[mv.GetStartBoardIndex()];
+}
+int MoveIterator::_scoreQuiet(const Move mv) const
+{
+    int eval{};
+
+    const PackedMove counterMove = _cTable.GetCounterMove(_prevMove, _board.MovingColor);
+
+    // counter move table
+    eval += COUNTER_MOVE_TABLE_PRIZE * (mv.GetPackedMove() == counterMove);
+
+    // check bonus
+    if (mv.IsChecking())
+    {
+        // validate if the check is worth at all
+        const int seeValue = _generator.SEE(mv);
+
+        if (seeValue > SEE_GOOD_MOVE_BOUNDARY)
+            eval += MOVE_SORT_QUIET_CHECK;
+    }
+
+    // History table bonus
+    eval += _hTable.GetBonusMove(mv);
+
+    return eval;
 }

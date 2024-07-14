@@ -18,8 +18,8 @@ struct SearchPerfTester
     // Class creation
     // ------------------------------
 
-    SearchPerfTester()  = default;
-    ~SearchPerfTester() = default;
+    SearchPerfTester()  = delete;
+    ~SearchPerfTester() = delete;
 
     // ------------------------------
     // Class interaction

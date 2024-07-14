@@ -44,9 +44,9 @@ class MoveIterator
     // ------------------------------
     public:
 
-    MoveIterator(const Board &board, MoveGenerator &generator, MoveGenerator::payload moves, int plyDepth, int ply, Move ttMove,
+    MoveIterator(const Board &board, MoveGenerator &generator, MoveGenerator::payload moves, int plyDepth, int ply, Move prevMove, PackedMove ttMove,
         KillerTable& kTable, HistoricTable& hTable, CounterMoveTable& cTable)
-    : _board(board), _generator(generator), _moves(moves), _depth(plyDepth), _ply(ply), _ttMove(ttMove), _kTable(kTable),
+    : _board(board), _generator(generator), _moves(moves), _depth(plyDepth), _ply(ply), _prevMove(prevMove), _ttMove(ttMove), _kTable(kTable),
         _hTable(hTable), _cTable(cTable)
     {
         _uncheckedMoves = _unscoredMoves = moves.size;
@@ -88,10 +88,11 @@ class MoveIterator
     void _initQuiets();
 
     template <class PredT>
-    Move _pullMove(PredT pred);
-    int _scoreCapture(Move mv);
+    [[nodiscard]] Move _pullMove(PredT pred);
+    [[nodiscard]] int _scoreCapture(Move mv) const;
+    [[nodiscard]] int _scoreQuiet(Move mv) const;
 
-    template<class PostActionT, class StorageT>
+    template <class PostActionT, class StorageT>
     INLINE static Move _makeStep(PostActionT action, StorageT& storage)
     {
         if (const Move fetchedMove = storage.FetchBestMove(); !fetchedMove.IsEmpty())
@@ -105,14 +106,14 @@ class MoveIterator
     }
 
     template<class ExtractionPredT, class ActionT>
-    INLINE static void _initTables(ExtractionPredT extraction, ActionT action)
+    INLINE void _initTables(ExtractionPredT extraction, ActionT action)
     {
         Move _retrievedFigure = _pullMove(extraction);
 
         // Extract all figures
         while (!_retrievedFigure.IsEmpty())
         {
-            action();
+            action(_retrievedFigure);
             _retrievedFigure = _pullMove(extraction);
         }
     }
@@ -136,7 +137,8 @@ class MoveIterator
     MoveGenerator::payload _moves;
     const int _depth;
     const int _ply;
-    const Move _ttMove;
+    const Move _prevMove;
+    const PackedMove _ttMove;
 
     const KillerTable& _kTable;
     const HistoricTable& _hTable;
@@ -151,6 +153,8 @@ class MoveIterator
     _moveStorage<MAX_BAD_CAPTURES> _badCaptures{};
     _moveStorage<MAX_BAD_QUEITS> _badQuiets{};
     _moveStorage<MAX_CURR_TACTICAL> _currStageMoves{};
+
+    size_t iters{};
 };
 
 #endif //MOVEITERATOR_H
