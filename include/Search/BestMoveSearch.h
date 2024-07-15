@@ -11,6 +11,7 @@
 #include "../Evaluation/CounterMoveTable.h"
 #include "../Evaluation/HistoricTable.h"
 #include "../Evaluation/KillerTable.h"
+#include "../Evaluation/ContinuationHistory.h"
 #include "../Interface/Logger.h"
 #include "../MoveGeneration/MoveGenerator.h"
 #include "../TestsAndDebugging/DebugTools.h"
@@ -198,11 +199,14 @@ class BestMoveSearch
     template <SearchType searchType>
     int _qSearch(int alpha, int beta, int ply, uint64_t zHash, int extendedDepth, Move prevMove);
 
-    INLINE void _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth, const int ply)
+    INLINE void _saveQuietMoveInfo(const Move mv, const Move prevMove, const int depth, const int ply, HistoricTable** tables)
     {
         _kTable.SaveKillerMove(mv, ply);
         _cmTable.SaveCounterMove(mv.GetPackedMove(), prevMove, _board.MovingColor);
         _histTable.SetBonusMove(mv, depth);
+
+        for (size_t i = 0; i < CONT_HISTORY_SCORE_TABLES_COUNT; ++i)
+            tables[i]->SetBonusMove(mv, depth);
     }
 
     int _deduceExtensions(Move prevMove, Move actMove, int seeValue, bool isPv) const;
@@ -216,16 +220,18 @@ class BestMoveSearch
     Stack<Move, DEFAULT_STACK_SIZE> &_stack;
     MoveGenerator _moveGenerator;
     PV _pv{};
-    PV _dummyPv{}; // used to provide smoooth
+    PV _dummyPv{}; // used to provide smooth
 
-    // Additional search feautures fields
+    // Additional search features fields
     PackedMove _excludedMove{};
     int16_t _staticEvals[MAX_SEARCH_DEPTH]{}; // used for heuristics like improvement heuristic
+    HistoricTable* _contHistories[MAX_SEARCH_DEPTH]{};
 
     // Elements used with heuristic eval
     CounterMoveTable _cmTable{};
     HistoricTable _histTable{};
     KillerTable _kTable{};
+    ContinuationHistory _ctTable{};
 
     // Fields used to collect data during the search
     uint64_t _visitedNodes{};

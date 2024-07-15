@@ -410,7 +410,13 @@ int BestMoveSearch::_search(
             firstSortMove = prevSearchRes.GetMove();
     }
 
-    MoveIterator iterator(_board, _moveGenerator, moves, plyDepth, ply, prevMove, firstSortMove, _kTable, _histTable, _cmTable);
+    const HistoricTable* contHistories[] = {
+            ply - 1 < 0 ? &ContinuationHistory::DummyReadTable : _contHistories[ply - 1],
+            ply - 2 < 0 ? &ContinuationHistory::DummyReadTable : _contHistories[ply - 2],
+            ply - 3 < 0 ? &ContinuationHistory::DummyReadTable : _contHistories[ply - 3]
+    };
+
+    MoveIterator iterator(_board, _moveGenerator, moves, plyDepth, ply, prevMove, firstSortMove, _kTable, _histTable, _cmTable, contHistories);
 
     // processing each move
     Move currMove{};
@@ -495,7 +501,9 @@ int BestMoveSearch::_search(
         // Note: increment counter of checked  childs in this node
         ++moveCount;
 
-        //
+        // save the continuation history for this node:
+        _contHistories[ply] = _ctTable.GetTable(currMove, isCheck);
+
         int reductions{};
         // -------------------------- reductions --------------------------------
         // determine whether we should spend less time in this node
@@ -628,14 +636,25 @@ int BestMoveSearch::_search(
     if (legalMoves == 0)
         return (_stack.PopAggregate(moves), isCheck ? GetMateValue(ply) : DRAW_SCORE);
 
+    HistoricTable* contHist[] = {
+            ply - 1 < 0 ? &ContinuationHistory::DummyWriteTable : _contHistories[ply - 1],
+            ply - 2 < 0 ? &ContinuationHistory::DummyWriteTable : _contHistories[ply - 2],
+            ply - 3 < 0 ? &ContinuationHistory::DummyWriteTable : _contHistories[ply - 3]
+    };
+
     // we found a good enough move update info about it
     if (bestEval > alpha && bestMove.IsQuietMove())
-        _saveQuietMoveInfo(bestMove, prevMove, plyDepth, ply);
+        _saveQuietMoveInfo(bestMove, prevMove, plyDepth, ply, contHist);
 
-    if (!bestMove.IsEmpty())
+    if (!bestMove.IsEmpty()) {
         // Apply penaltes for all checked but not good enough moves
-        for (size_t i = 0; i < testedQuietsCounter; ++i)
+        for (size_t i = 0; i < testedQuietsCounter; ++i) {
             _histTable.SetPenaltyMove(testedQuietMoves[i], plyDepth);
+
+            for (size_t j = 0; j < CONT_HISTORY_SCORE_TABLES_COUNT; ++j)
+                contHist[j]->SetBonusMove(testedQuietMoves[i], plyDepth);
+        }
+    }
 
     // Note: compilation flag
     if constexpr (CollectSearchData)
@@ -784,7 +803,14 @@ int BestMoveSearch::_qSearch(int alpha, const int beta, const int ply, uint64_t 
     if (wasTTHit && isTTMoveUsable)
         ttMove = prevSearchRes.GetMove();
 
-    MoveIterator iterator(_board, _moveGenerator, moves, MAX_SEARCH_DEPTH, ply, prevMove, ttMove, _kTable, _histTable, _cmTable);
+    const HistoricTable* contHistories[] = {
+        ply - 1 < 0 ? &ContinuationHistory::DummyReadTable : _contHistories[ply - 1],
+        ply - 2 < 0 ? &ContinuationHistory::DummyReadTable : _contHistories[ply - 2],
+        ply - 3 < 0 ? &ContinuationHistory::DummyReadTable : _contHistories[ply - 3]
+    };
+
+
+    MoveIterator iterator(_board, _moveGenerator, moves, MAX_SEARCH_DEPTH, ply, prevMove, ttMove, _kTable, _histTable, _cmTable, contHistories);
 
     // processing each move
     Move currMove{};
@@ -818,6 +844,8 @@ int BestMoveSearch::_qSearch(int alpha, const int beta, const int ply, uint64_t 
         }
 
         zHash               = ProcessMove(_board, currMove, zHash, oldData);
+        _contHistories[ply] = _ctTable.GetTable(currMove, isCheck);
+
         const int moveValue = -_qSearch<searchType>(-beta, -alpha, ply + 1, zHash, extendedDepth + 1, currMove);
         zHash               = RevertMove(_board, currMove, zHash, oldData);
 

@@ -10,20 +10,6 @@
 class ContinuationHistory
 {
     // ------------------------------
-    // Class inner types
-    // ------------------------------
-
-    struct _contFloor_t
-    {
-        INLINE HistoricTable& GetTable(const Move prevMove)
-        {
-            return _tables[prevMove.GetStartField()][prevMove.GetTargetField()];
-        }
-
-        private:
-        HistoricTable _tables[Board::BitBoardFields][Board::BitBoardFields];
-    };
-    // ------------------------------
     // Class creation
     // ------------------------------
     public:
@@ -41,9 +27,9 @@ class ContinuationHistory
     // Class interaction
     // ------------------------------
 
-    int GetScore(const int ply, const Move prevMove, const Move currMove)
+    HistoricTable* GetTable(const Move prevMove, bool isCheck)
     {
-        return _floors[ply].GetTable(prevMove).GetBonusMove(currMove);
+        return &_tables[isCheck][prevMove.GetStartBoardIndex()][prevMove.GetTargetField()];
     }
 
     // ------------------------------
@@ -54,7 +40,10 @@ class ContinuationHistory
     // Class fields
     // ------------------------------
 
-    _contFloor_t _floors[MAX_SEARCH_DEPTH];
+    inline static HistoricTable DummyReadTable{};
+    inline static HistoricTable DummyWriteTable{};
+private:
+    HistoricTable _tables[2][Board::BitBoardsCount][Board::BitBoardFields];
 };
 
 #endif //CONTINUATIONHISTORY_H

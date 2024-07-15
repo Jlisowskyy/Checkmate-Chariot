@@ -131,6 +131,12 @@ static constexpr int16_t COUNTER_MOVE_TABLE_PRIZE = 600;
 
 // -----------------------------------------------------------------------------------------
 
+// ---------------------------- Cont history tables ----------------------------------------
+
+static constexpr int16_t CONT_HISTORY_SCORE_TABLES_COUNT = 3;
+
+// -----------------------------------------------------------------------------------------
+
 // ---------------------------- Direct Move Sort -------------------------------------------
 
 static constexpr int16_t MOVE_SORT_PROMO_CHECK = 100;
@@ -141,10 +147,10 @@ static constexpr int16_t MOVE_SORT_CAPTURE_DIV = 8;
 
 static constexpr int16_t MOVE_SORT_QUIET_CHECK = HISTORY_TABLE_POINTS_LIMIT;
 
-static constexpr int16_t MOEV_SORT_GOOD_QUIET_DIV = 5;
+static constexpr int16_t MOVE_SORT_GOOD_QUIET_DIV = 5;
 static constexpr int16_t MOVE_SORT_GOOD_QUIET_SCORE =
-    // (HISTORY_TABLE_POINTS_LIMIT + COUNTER_MOVE_TABLE_PRIZE + MOVE_SORT_QUIET_CHECK) / MOEV_SORT_GOOD_QUIET_DIV;
-    200;
+    // (HISTORY_TABLE_POINTS_LIMIT + COUNTER_MOVE_TABLE_PRIZE + MOVE_SORT_QUIET_CHECK) / MOVE_SORT_GOOD_QUIET_DIV;
+    250;
 
 static constexpr int16_t MOVE_SORT_QUIETS_PAWN_EVASION_BONUS = 50;
 static constexpr int16_t MOVE_SORT_QUIETS_PAWN_DANGER_PENALTY = -50;

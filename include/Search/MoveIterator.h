@@ -47,9 +47,9 @@ class MoveIterator
     public:
 
     MoveIterator(const Board &board, MoveGenerator &generator, MoveGenerator::payload moves, int plyDepth, int ply, Move prevMove, PackedMove ttMove,
-        KillerTable& kTable, HistoricTable& hTable, CounterMoveTable& cTable)
+        KillerTable& kTable, HistoricTable& hTable, CounterMoveTable& cTable, const HistoricTable** ctTables)
     : _board(board), _generator(generator), _moves(moves), _depth(plyDepth), _ply(ply), _prevMove(prevMove), _ttMove(ttMove), _kTable(kTable),
-        _hTable(hTable), _cTable(cTable)
+        _hTable(hTable), _cTable(cTable), _ctTables(ctTables)
     {
         _uncheckedMoves = _unscoredMoves = moves.size;
     }
@@ -145,6 +145,7 @@ class MoveIterator
     const KillerTable& _kTable;
     const HistoricTable& _hTable;
     const CounterMoveTable& _cTable;
+    const HistoricTable** _ctTables;
 
     MoveSortStages _stage { MoveSortStages::TT_MOVE };
     size_t _uncheckedMoves{};
