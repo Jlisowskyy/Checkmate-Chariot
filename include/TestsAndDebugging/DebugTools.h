@@ -86,7 +86,7 @@ public:
         }
 
         if (!PrintOut)
-            return;;
+            return;
 
         GlobalLogger.LogStream << std::format(
             "Node info:\n"

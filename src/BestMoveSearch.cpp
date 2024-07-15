@@ -632,9 +632,10 @@ int BestMoveSearch::_search(
     if (bestEval > alpha && bestMove.IsQuietMove())
         _saveQuietMoveInfo(bestMove, prevMove, plyDepth, ply);
 
-    // Apply penaltes for all checked but not good enough moves
-    for (size_t i = 0; i < testedQuietsCounter; ++i)
-        _histTable.SetPenaltyMove(testedQuietMoves[i], plyDepth);
+    if (!bestMove.IsEmpty())
+        // Apply penaltes for all checked but not good enough moves
+        for (size_t i = 0; i < testedQuietsCounter; ++i)
+            _histTable.SetPenaltyMove(testedQuietMoves[i], plyDepth);
 
     // Note: compilation flag
     if constexpr (CollectSearchData)

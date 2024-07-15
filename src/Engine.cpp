@@ -9,6 +9,7 @@
 #include "../include/Search/TranspositionTable.h"
 #include "../include/Search/ZobristHash.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
+#include "../include/Interface/FenTranslator.h"
 
 std::string Engine::_debugEnginePath = Engine::_defaultBookPath;
 

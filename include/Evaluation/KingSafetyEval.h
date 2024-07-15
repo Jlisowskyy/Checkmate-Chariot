@@ -72,14 +72,12 @@ struct KingSafetyEval
     template <EvalMode mode = EvalMode::BaseMode> [[nodiscard]] static INLINE int32_t EvalKingShelter(const Board &bd)
     {
         int32_t whiteShelter{}, blackShelter{};
-        if ((bd.BitBoards[wKingIndex] & KingMap::ShelterLocationMask[WHITE]) != 0 &&
-            CountOnesInBoard(
+        if (CountOnesInBoard(
                 bd.BitBoards[wPawnsIndex] & GetFrontLineMask<mode>(WHITE, ExtractMsbPos(bd.BitBoards[wKingIndex]))
             ) < 3)
             whiteShelter = KingNoShelterPenalty;
 
-        if ((bd.BitBoards[bKingIndex] & KingMap::ShelterLocationMask[BLACK]) != 0 &&
-            CountOnesInBoard(
+        if (CountOnesInBoard(
                 bd.BitBoards[bPawnsIndex] & GetFrontLineMask<mode>(BLACK, ExtractMsbPos(bd.BitBoards[bKingIndex]))
             ) < 3)
             blackShelter = -KingNoShelterPenalty;
