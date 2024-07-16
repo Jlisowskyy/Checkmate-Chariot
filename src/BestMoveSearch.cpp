@@ -91,6 +91,7 @@ int BestMoveSearch::IterativeDeepening(
         {
             // cleaning tables used in previous iteration
             _histTable.ScaleTableDown();
+            _ctTable.ScaleDown();
             _maxPlyReached = 0;
 
             // performs the search without aspiration window to gather some initial statistics about the move
@@ -129,6 +130,7 @@ int BestMoveSearch::IterativeDeepening(
 
                 // cleaning tables used in previous iterations
                 _histTable.ScaleTableDown();
+                _ctTable.ScaleDown();
                 _maxPlyReached = 0;
                 eval           = _search<SearchType::PVSearch, true>(
                     alpha, beta, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff, nullptr
@@ -343,7 +345,7 @@ int BestMoveSearch::_search(
 
     // Note: moves deduced from fail-low nodes are not good enough quality to use them in search
     // Note: when depth is equal to 0 there is an empty entry somehow or the stored moves was saved in qsearch,
-    //       what means that no all moves where checked during the search and we should discard the move
+    //       what means that no all moves where checked during the search, and we should discard the move
     const bool isTTMoveUsable = wasTTHit && prevSearchRes.GetNodeType() != UPPER_BOUND && prevSearchRes.GetDepth() != 0;
 
     // Stores best move which at least exceeded initial alpha
@@ -355,7 +357,7 @@ int BestMoveSearch::_search(
     // Used only for PV nodes
     [[maybe_unused]] PV inPV{};
 
-    // clear killer table for the childs
+    // clear killer table for the children
     _kTable.ClearPlyFloor(ply);
 
     // NOTE: legal move is needed for draw if test at the end.
@@ -376,15 +378,6 @@ int BestMoveSearch::_search(
         // first follow pv from previous ID (Iterative deepening) iteration,
         // we follow only single PV we previously saved
         firstSortMove = _pv[ply];
-
-        // Extend pvs to detect changes earlier
-        if (ShouldExtend(ply, _rootDepth) && ply % 2 == 1)
-        {
-            depthLeft += PV_EXTENSION;
-
-            if (TraceExtensions)
-                TraceWithInfo("Applied pv extension");
-        }
     }
     else
     {
@@ -394,8 +387,7 @@ int BestMoveSearch::_search(
         // We should avoid using IID when we exclude some move due to increased possibility of TT miss
         if (_excludedMove.IsEmpty()
             && IsPvNode
-            && (!wasTTHit
-            || (wasTTHit && !isTTMoveUsable))
+            && (!wasTTHit || prevSearchRes.GetDepth() == 0)
             && plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
         {
             _search<searchType, false>(
@@ -413,13 +405,14 @@ int BestMoveSearch::_search(
     const HistoricTable* contHistories[] = {
             ply - 1 < 0 ? &ContinuationHistory::DummyReadTable : _contHistories[ply - 1],
             ply - 2 < 0 ? &ContinuationHistory::DummyReadTable : _contHistories[ply - 2],
-            ply - 3 < 0 ? &ContinuationHistory::DummyReadTable : _contHistories[ply - 3]
+            ply - 4 < 0 ? &ContinuationHistory::DummyReadTable : _contHistories[ply - 4]
     };
 
     MoveIterator iterator(_board, _moveGenerator, moves, plyDepth, ply, prevMove, firstSortMove, _kTable, _histTable, _cmTable, contHistories);
 
     // processing each move
     Move currMove{};
+
     while (!(currMove = iterator.GetNextMove()).IsEmpty())
     {
         // skip illegal moves
@@ -446,7 +439,7 @@ int BestMoveSearch::_search(
             {
                 SEEValue = _moveGenerator.SEE(currMove);
 
-                if (SEEValue < (2 * SEE_GOOD_MOVE_BOUNDARY * plyDepth))
+                if (SEEValue < (SEE_BASED_PRUNING_GOOD_MOVE_COEF * SEE_GOOD_MOVE_BOUNDARY * plyDepth))
                     continue;
             }
         }
@@ -466,16 +459,17 @@ int BestMoveSearch::_search(
             //       minimal quality of move probed from the TT
             // Note: (prevSearchRes.GetNodeType() == LOWER_BOUND || prevSearchRes.GetNodeType() == PV_NODE) - ensures
             //       we skip all-nodes in singular search
-            if (ply > 0 && wasTTHit && _excludedMove.IsEmpty() && currMove.GetPackedMove() == prevSearchRes.GetMove() &&
+            if (_excludedMove.IsEmpty() && ply > 0 && wasTTHit && currMove.GetPackedMove() == prevSearchRes.GetMove() &&
                 plyDepth - prevSearchRes.GetDepth() <= SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT &&
                 (prevSearchRes.GetNodeType() == LOWER_BOUND || prevSearchRes.GetNodeType() == PV_NODE) &&
-                plyDepth > SINGULAR_EXTENSION_MIN_DEPTH)
+                plyDepth > SINGULAR_EXTENSION_MIN_DEPTH && !IsMateScore(prevSearchRes.GetEval()))
             {
                 // TODO: investigate deeply the depth
                 const int singularDepth = (depthLeft - FULL_DEPTH_FACTOR) / 2;
                 // TODO: might be mathematically optimised:
                 // The singular beta is decreased by some margin to preserve high quality results of the search
-                const int singularBeta = prevSearchRes.GetEval() - SINGULAR_EXTENSION_DEPTH_MARGIN * plyDepth;
+                const int singularBeta = prevSearchRes.GetEval()
+                        - SINGULAR_EXTENSION_BETA_COEF * plyDepth / SINGULAR_EXTENSION_BETA_DIV;
 
                 // NOTE: due to single excluded move no recursive singular searched are allowed
                 _excludedMove           = prevSearchRes.GetMove();
@@ -498,7 +492,7 @@ int BestMoveSearch::_search(
 
         // apply the moves changes to the board:
         zHash        = ProcessMove(_board, currMove, zHash, oldData);
-        // Note: increment counter of checked  childs in this node
+        // Note: increment counter of checked children in this node
         ++moveCount;
 
         // save the continuation history for this node:
@@ -522,12 +516,12 @@ int BestMoveSearch::_search(
         if constexpr (IsPvNode)
             reductions -= FULL_DEPTH_FACTOR;
 
-        // Killer moves that refuted neigbhoring nodes has high probability to refute in this ndoe
+        // Killer moves that refuted neighboring nodes has high probability to refute in this node
         if (_kTable.IsKillerMove(currMove, ply))
             reductions -= FULL_DEPTH_FACTOR;
 
         // if we do not have usable move from the TT there is high probability that we are at all-node
-        if (wasTTHit && !isTTMoveUsable && prevSearchRes.GetDepth() > 0)
+        if (wasTTHit && !isTTMoveUsable && (plyDepth - prevSearchRes.GetDepth()) < LMR_TT_ALL_NODE_REDUCTION_MAX_DEPTH_DIFF)
             reductions += NO_TT_MOVE_REDUCTION;
 
         // Do not extend tactical moves that has high probability to be bad quality moves
@@ -540,7 +534,7 @@ int BestMoveSearch::_search(
                 reductions -= FULL_DEPTH_FACTOR;
         }
 
-        reductions -= _histTable.GetBonusMove(currMove) / (HISTORY_TABLE_POINTS_LIMIT / 2);
+        reductions -= _histTable.GetBonusMove(currMove) / LMR_GOOD_HISTORY_REDUCTION_DIV;
 
         // stores the most recent return value of child trees,
         int moveEval = alpha;
@@ -549,7 +543,7 @@ int BestMoveSearch::_search(
         // moveCount > 2 - we want to be sure to explore move from TT and best move accordingly to sorting
         if (!DisableLmr && moveCount > 2 && depthLeft >= LMR_MIN_DEPTH && reductions > 0)
         {
-            const int LMRDepth = depthLeft + extensions - reductions - FULL_DEPTH_FACTOR;
+            const int LMRDepth = std::max(1, depthLeft + extensions - reductions - FULL_DEPTH_FACTOR);
 
             moveEval = -_search<SearchType::NoPVSearch, false>(
                     -(alpha + 1), -alpha, LMRDepth, ply + 1, zHash, currMove, _dummyPv,
@@ -639,7 +633,8 @@ int BestMoveSearch::_search(
     HistoricTable* contHist[] = {
             ply - 1 < 0 ? &ContinuationHistory::DummyWriteTable : _contHistories[ply - 1],
             ply - 2 < 0 ? &ContinuationHistory::DummyWriteTable : _contHistories[ply - 2],
-            ply - 3 < 0 ? &ContinuationHistory::DummyWriteTable : _contHistories[ply - 3]
+            ply - 3 < 0 ? &ContinuationHistory::DummyWriteTable : _contHistories[ply - 3],
+            ply - 4 < 0 ? &ContinuationHistory::DummyWriteTable : _contHistories[ply - 4]
     };
 
     // we found a good enough move update info about it
@@ -647,11 +642,11 @@ int BestMoveSearch::_search(
         _saveQuietMoveInfo(bestMove, prevMove, plyDepth, ply, contHist);
 
     if (!bestMove.IsEmpty()) {
-        // Apply penaltes for all checked but not good enough moves
+        // Apply penalties for all checked but not good enough moves
         for (size_t i = 0; i < testedQuietsCounter; ++i) {
             _histTable.SetPenaltyMove(testedQuietMoves[i], plyDepth);
 
-            for (size_t j = 0; j < CONT_HISTORY_SCORE_TABLES_COUNT; ++j)
+            for (size_t j = 0; j < CONT_HISTORY_SCORE_TABLES_WRITE_COUNT; ++j)
                 contHist[j]->SetBonusMove(testedQuietMoves[i], plyDepth);
         }
     }
@@ -906,8 +901,8 @@ int BestMoveSearch::_deduceExtensions(const Move prevMove, const Move actMove, c
     int rv{};
 
     const ChessMechanics mech{_board};
-    // check extensions
 
+    // check extensions
     rv += (actMove.IsChecking() && (seeValue == NEGATIVE_INFINITY ? mech.SEE(actMove) : seeValue) > 0) *
           (isPv ? CHECK_EXTENSION_PV_NODE : CHECK_EXTENSION);
     if constexpr (TraceExtensions)

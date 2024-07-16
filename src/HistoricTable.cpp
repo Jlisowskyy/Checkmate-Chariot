@@ -12,15 +12,13 @@ void HistoricTable::ClearTable()
 void HistoricTable::ScaleTableDown()
 {
     for (auto &figureMap : _table)
-        for (auto &field : figureMap) field /= ScaleFactor;
-
-    _maxPoints /= ScaleFactor;
+        for (auto &field : figureMap) field /= HISTORY_SCALE_DOWN_FACTOR;
 }
 
 void HistoricTable::DisplayStats() const
 {
     static constexpr size_t MAX_MOVES = 10;
-    static constexpr int EMPTY_MOVE   = -Barrier - 1;
+    static constexpr int EMPTY_MOVE   = -HISTORY_TABLE_POINTS_LIMIT - 1;
 
     std::tuple<std::tuple<size_t, size_t>, int> bestMoves[MAX_MOVES];
     const auto insertMove = [&](const size_t fig, const size_t field, const int points)
@@ -55,7 +53,7 @@ void HistoricTable::DisplayStats() const
 
             nonZeroElements += isNonZero;
             sum += points;
-            overflowsCounts += points == Barrier;
+            overflowsCounts += points == HISTORY_TABLE_POINTS_LIMIT;
         }
 
     // calculate averages

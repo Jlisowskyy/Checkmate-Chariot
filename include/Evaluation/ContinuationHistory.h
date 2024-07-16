@@ -32,6 +32,13 @@ class ContinuationHistory
         return &_tables[isCheck][prevMove.GetStartBoardIndex()][prevMove.GetTargetField()];
     }
 
+    void ScaleDown() {
+        for(auto& checks : _tables)
+            for(auto& figs : checks)
+                for (auto& tables : figs)
+                    tables.ScaleTableDown();
+    }
+
     // ------------------------------
     // Private class methods
     // ------------------------------

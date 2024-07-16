@@ -205,7 +205,7 @@ class BestMoveSearch
         _cmTable.SaveCounterMove(mv.GetPackedMove(), prevMove, _board.MovingColor);
         _histTable.SetBonusMove(mv, depth);
 
-        for (size_t i = 0; i < CONT_HISTORY_SCORE_TABLES_COUNT; ++i)
+        for (size_t i = 0; i < CONT_HISTORY_SCORE_TABLES_WRITE_COUNT; ++i)
             tables[i]->SetBonusMove(mv, depth);
     }
 

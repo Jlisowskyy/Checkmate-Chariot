@@ -40,10 +40,12 @@ static constexpr int EVEN_EXCHANGE_EXTENSION_PV_NODE      = FULL_DEPTH_FACTOR;
 static constexpr int EVEN_EXCHANGE_EXTENSION              = FULL_DEPTH_FACTOR / 2;
 static constexpr int SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT = 3;
 static constexpr int SINGULAR_EXTENSION_MIN_DEPTH         = 4;
-static constexpr int SINGULAR_EXTENSION                   = FULL_DEPTH_FACTOR;
-static constexpr int SINGULAR_EXTENSION_DEPTH_MARGIN      = 16 / SCORE_GRAIN;
+static constexpr int SINGULAR_EXTENSION                   = 2 * FULL_DEPTH_FACTOR;
+static constexpr int SINGULAR_EXTENSION_BETA_COEF      = 16 / SCORE_GRAIN;
+static constexpr int SINGULAR_EXTENSION_BETA_DIV = 1;
 
 // ------------------------------ REDUCTIONS --------------------------------------
+
 static constexpr int LMR_MIN_DEPTH = 3 * FULL_DEPTH_FACTOR;
 
 // limits maximal extensions inside the search tree to not overdo
@@ -61,11 +63,6 @@ constexpr int CalcReductions(const int depth, const int moveCount, const int sco
     return (scoreDelta != 1 ? 2 * reductionBase / 3 : reductionBase) * FULL_DEPTH_FACTOR;
 }
 
-static constexpr bool ENABLE_RAZORING = true;
-static constexpr int RAZORING_DEPTH = 3;
-// queen killed + promoted + rook killed + safety margin
-static constexpr int RAZORING_MARGIN = (900 + (900 - 100) + 500 + 100) / SCORE_GRAIN;
-
 // -------------------- RESERVED VALUES -------------------------------
 static constexpr int RESERVED_SCORE_VALUES           = 64;
 static constexpr int TIME_STOP_RESERVED_VALUE        = std::numeric_limits<int16_t>::max() - 1;
@@ -78,15 +75,10 @@ static constexpr int BEST_MATE_VALUE_ABS             = -(BEST_MATE_VALUE);
 static constexpr uint16_t QUIESENCE_AGE_DIFF_REPLACE = 16;
 static constexpr uint16_t DEFAULT_AGE_DIFF_REPLACE   = 10;
 
-// average pawn value + some part of average pawn
-static constexpr int DELTA_PRUNING_SAFETY_MARGIN = (115 + 115) / SCORE_GRAIN;
-// average queen value - average pawn value
-static constexpr int DELTA_PRUNING_PROMO = (1000 - 115) / SCORE_GRAIN;
-
 // value below which SEE capture is considered bad
-static constexpr int SEE_GOOD_MOVE_BOUNDARY = -(115 / 2) / SCORE_GRAIN;
+static constexpr int SEE_GOOD_MOVE_BOUNDARY = -115 / SCORE_GRAIN;
 
-// value defines how much we redouce the search when no TT move is available
+// value defines how much we reduce the search when no TT move is available
 static constexpr int NO_TT_MOVE_REDUCTION = 1 * FULL_DEPTH_FACTOR;
 
 // value of phase below game is considering to be an end-game
@@ -106,14 +98,32 @@ static constexpr int ASP_WND_MIN_DEPTH = 7;
 static constexpr int16_t INITIAL_ASP_WINDOW_DELTA = 3;
 static constexpr int MAX_ASP_WINDOW_RETRIES       = 4;
 
+static constexpr int LMR_TT_ALL_NODE_REDUCTION_MAX_DEPTH_DIFF = 5;
+
+// ------------------------- PRUNING ----------------------------------------------------
+
+// average pawn value + some part of average pawn
+static constexpr int DELTA_PRUNING_SAFETY_MARGIN = (115 + 115) / SCORE_GRAIN;
+// average queen value - average pawn value
+static constexpr int DELTA_PRUNING_PROMO = (1000 - 115) / SCORE_GRAIN;
+
+static constexpr int SEE_BASED_PRUNING_GOOD_MOVE_COEF = 8;
+
+static constexpr bool ENABLE_RAZORING = true;
+static constexpr int RAZORING_DEPTH = 3;
+// queen killed + promoted + rook killed + safety margin
+static constexpr int RAZORING_MARGIN = (900 + (900 - 100) + 500 + 100) / SCORE_GRAIN;
+
+// ---------------------------------------------------------------------------------------
+
 
 // -------------------------- HISTORY TABLE -----------------------------------------------
 
 // Defines maximal points stored inside the history table during the search
-static constexpr int16_t HISTORY_TABLE_POINTS_LIMIT = 1200;
+static constexpr int16_t HISTORY_TABLE_POINTS_LIMIT = 16*1024;
 
-// Defins threshold above which quiet move is took as good moe
-static constexpr int16_t HISTORY_GOOD_MOVE = 600;
+static constexpr int16_t  HISTORY_TABLE_SCORE_COEF = 16;
+static constexpr int16_t  HISTORY_TABLE_SCORE_DIV = 1024;
 
 // Bonus linear function parameters
 static constexpr int16_t HISTORY_BONUS_COEF = 2;
@@ -122,6 +132,10 @@ static constexpr int16_t HISTORY_BONUS_BIAS = 0;
 // Penalty linear function parameters
 static constexpr int16_t HISTORY_PENALTY_COEF = 1;
 static constexpr int16_t HISTORY_PENALTY_BIAS = 1;
+
+static constexpr int16_t HISTORY_SCALE_DOWN_FACTOR = 4;
+
+static constexpr int16_t LMR_GOOD_HISTORY_REDUCTION_DIV = (HISTORY_TABLE_POINTS_LIMIT / 2);
 
 // -----------------------------------------------------------------------------------------
 
@@ -133,7 +147,8 @@ static constexpr int16_t COUNTER_MOVE_TABLE_PRIZE = 600;
 
 // ---------------------------- Cont history tables ----------------------------------------
 
-static constexpr int16_t CONT_HISTORY_SCORE_TABLES_COUNT = 3;
+static constexpr int16_t CONT_HISTORY_SCORE_TABLES_WRITE_COUNT = 4;
+static constexpr int16_t CONT_HISTORY_SCORE_TABLES_READ_COUNT = 3;
 
 // -----------------------------------------------------------------------------------------
 
@@ -145,15 +160,19 @@ static constexpr int16_t MOVE_SORT_CAPTURE_COEF = 1;
 static constexpr int16_t MOVE_SORT_CAPTURE_BIAS = 0;
 static constexpr int16_t MOVE_SORT_CAPTURE_DIV = 8;
 
-static constexpr int16_t MOVE_SORT_QUIET_CHECK = HISTORY_TABLE_POINTS_LIMIT;
+static constexpr int16_t MOVE_SORT_QUIET_CHECK = HISTORY_TABLE_POINTS_LIMIT / 8;
 
-static constexpr int16_t MOVE_SORT_GOOD_QUIET_DIV = 5;
+static constexpr int16_t MOVE_SORT_GOOD_QUIET_DIV = 8;
 static constexpr int16_t MOVE_SORT_GOOD_QUIET_SCORE =
     // (HISTORY_TABLE_POINTS_LIMIT + COUNTER_MOVE_TABLE_PRIZE + MOVE_SORT_QUIET_CHECK) / MOVE_SORT_GOOD_QUIET_DIV;
-    250;
+    50;
 
 static constexpr int16_t MOVE_SORT_QUIETS_PAWN_EVASION_BONUS = 50;
 static constexpr int16_t MOVE_SORT_QUIETS_PAWN_DANGER_PENALTY = -50;
+
+// -----------------------------------------------------------------------------------------
+
+// ---------------------------- SINGULAR EXTENSIONS ----------------------------------------
 
 // -----------------------------------------------------------------------------------------
 

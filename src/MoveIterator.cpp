@@ -315,12 +315,12 @@ int MoveIterator::_scoreQuiet(const Move mv, const uint64_t pawnAttacks) const
     // History table bonus
     eval += _hTable.GetBonusMove(mv);
 
-    // pawn attacks evasion/dange
+    // pawn attacks evasion/danger
     eval += ((pawnAttacks & (MaxMsbPossible >> mv.GetStartField())) != 0) * MOVE_SORT_QUIETS_PAWN_EVASION_BONUS +
             ((pawnAttacks & (MaxMsbPossible >> mv.GetTargetField())) != 0) * MOVE_SORT_QUIETS_PAWN_DANGER_PENALTY;
 
     // continuation histories
-    for (size_t i = 0; i < CONT_HISTORY_SCORE_TABLES_COUNT; ++i)
+    for (size_t i = 0; i < CONT_HISTORY_SCORE_TABLES_READ_COUNT; ++i)
         eval += _ctTables[i]->GetBonusMove(mv);
 
     return eval;
