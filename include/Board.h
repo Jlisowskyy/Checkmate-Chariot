@@ -12,6 +12,7 @@
 
 #include "BitOperations.h"
 #include "CompilationConstants.h"
+#include "TunableParameters.h"
 
 /*
  * Given enum defines values and order of both colors. All indexing schemes used across the projects follows given

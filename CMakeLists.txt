@@ -40,6 +40,9 @@ add_compile_definitions(USE_ASP_WIN=1)
 # Uncomment to treat promos as single move
 add_compile_definitions(TREAT_PROMOS_AS_QUEEN_PROMO=1)
 
+# Uncomment to allow training
+add_compile_definitions(ALLOW_TESTING_VARIABLES=1)
+
 ################################################################################
 #                     Inspecting platform capabilities                         #
 ################################################################################
@@ -155,6 +158,7 @@ set(CHECKMATE_CHARIOT_SOURCES
         include/Search/MoveIterator.h
         src/MoveIterator.cpp
         include/Evaluation/ContinuationHistory.h
+        include/TunableParameters.h
 )
 
 # Create a library with the core functionality

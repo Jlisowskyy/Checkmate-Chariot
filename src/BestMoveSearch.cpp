@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../include/TunableParameters.h"
 #include "../include/Evaluation/BoardEvaluator.h"
 #include "../include/Interface/FenTranslator.h"
 #include "../include/MoveGeneration/MoveGenerator.h"
