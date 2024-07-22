@@ -59,6 +59,7 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         {         "zv",        &UCITranslator::_searchZobrist},
         {  "ponderhit",    &UCITranslator::_ponderhitResponse},
         {"reconstruct",          &UCITranslator::_reconstruct},
+        {"tune", &UCITranslator::_tuneParam}
     };
 
     std::string workStr;
@@ -553,4 +554,16 @@ UCITranslator::UCICommand UCITranslator::_reconstruct(const std::string &str)
 
     const std::string path = ParseTools::GetTrimmed(str);
     return StateReconstructor::Reconstruct(testLambda, path) ? UCICommand::debugCommand : UCICommand::InvalidCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_tuneParam(const std::string &str) {
+    const auto splitted = ParseTools::Split(str);
+
+    if (splitted.size() != 2)
+        return UCICommand::InvalidCommand;
+
+    if (GlobalParametersList::IsInited())
+        GlobalParametersList::GetInstance().SetParameter(splitted[0], splitted[1]);
+
+    return UCICommand::debugCommand;
 }

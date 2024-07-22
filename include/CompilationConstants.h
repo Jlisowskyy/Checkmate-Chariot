@@ -19,7 +19,7 @@ struct GlobalSingletonWrapper{
 
     // Access the instance, NOTE: _instance needs to be initialized before usage
     static T& GetInstance(){
-        assert(_instance != nullptr & "Not inited Singleton instance!");
+        assert(_instance != nullptr && "Not inited Singleton instance!");
         return *_instance;
     }
 

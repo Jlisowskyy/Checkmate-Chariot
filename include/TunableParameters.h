@@ -10,6 +10,7 @@
 #include <string>
 #include <unordered_map>
 #include <charconv>
+#include <iostream>
 
 // Determines whether we use variables or const values to parameters
 #ifdef ALLOW_TESTING_VARIABLES
@@ -44,6 +45,7 @@ struct GlobalParametersList : GlobalSingletonWrapper<GlobalParametersList>{
     {
         if (!_params.contains(param))
             _params[param] = func;
+
     }
 
     static void Init() { InitInstance(new GlobalParametersList()); }
@@ -74,7 +76,7 @@ struct name{    \
     type name::_param = []() {    \
         if (!GlobalParametersList::IsInited())  \
             GlobalParametersList::Init();   \
-        GlobalParametersList::GetInstance().AddEntry(#name, name::_translate);  \
+        GlobalParametersList::GetInstance().AddEntry(#name, name::_translate); \
         return defaultValue;    \
     }()
 

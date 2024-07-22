@@ -192,6 +192,8 @@ class UCITranslator
     /* Regular uci go command */
     UCICommand _goSearchRegular(const std::string &str);
 
+    UCICommand _tuneParam(const std::string& str);
+
     // ------------------------------
     /* Go parameter parsing and checking functions */
 
