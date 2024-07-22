@@ -8,7 +8,27 @@
 #include "CompilationConstants.h"
 
 #include <string>
-#include <map>
+#include <unordered_map>
+#include <charconv>
+
+// Determines whether we use variables or const values to parameters
+#ifdef ALLOW_TESTING_VARIABLES
+
+#define TEST_VARIABLE_MOD
+#define INIT_PARAM(defaultValue)
+#define TRANSLATE_PARAM(ParamT) \
+            if (ParamT rv{}; std::from_chars(str.c_str(), str.c_str() + str.size(), rv).ec != std::errc::invalid_argument)\
+                _param = rv;
+static constexpr bool AllowTestVariable = true;
+
+#else
+
+#define TEST_VARIABLE_MOD constexpr
+#define INIT_PARAM(defaultValue)  = defaultValue
+#define TRANSLATE_PARAM()
+static constexpr bool AllowTestVariable = false;
+
+#endif // ALLOW_TESTING_VARIABLES
 
 // Stores list of functions changing global tunable parameters
 struct GlobalParametersList : GlobalSingletonWrapper<GlobalParametersList>{
@@ -26,10 +46,8 @@ struct GlobalParametersList : GlobalSingletonWrapper<GlobalParametersList>{
             _params[param] = func;
     }
 
-    static void Init()
-    {
-        InitInstance(new GlobalParametersList());
-    }
+    static void Init() { InitInstance(new GlobalParametersList()); }
+    static bool IsInited() { return _instance != nullptr; }
 
 private:
     GlobalParametersList() = default;
@@ -37,30 +55,52 @@ private:
     std::unordered_map<std::string, void (*)(const std::string&)> _params{};
 };
 
-template<typename ParamTypeT>
-struct TunableParameter{
+#define DECLARE_TUNABLE_PARAM(ParamT, name, defaultValue) \
+struct name{    \
+    name() = delete;        \
+    ~name() = delete;   \
+    static TEST_VARIABLE_MOD ParamT Get() { return _param; } \
+    static void _translate([[maybe_unused]] const std::string& str)  \
+    {   \
+        TRANSLATE_PARAM(ParamT); \
+    } \
+    static TEST_VARIABLE_MOD ParamT _param INIT_PARAM(defaultValue);\
+}
 
+// Determines whether we use variables or const values to parameters
+#ifdef ALLOW_TESTING_VARIABLES
 
-private:
-    static ParamTypeT _param;
-};
+#define DEFINE_TUNABLE_PARAM(type, name, defaultValue) \
+    type name::_param = []() {    \
+        if (!GlobalParametersList::IsInited())  \
+            GlobalParametersList::Init();   \
+        GlobalParametersList::GetInstance().AddEntry(#name, name::_translate);  \
+        return defaultValue;    \
+    }()
+
+#else
+
+#define DEFINE_TUNABLE_PARAM(type, name, defaultValue)
+
+#endif // ALLOW_TESTING_VARIABLES
 
 // ------------------------- EXTENSIONS ------------------------------
-static constexpr int FULL_DEPTH_FACTOR                    = 4;
-static constexpr int CHECK_EXTENSION_PV_NODE              = FULL_DEPTH_FACTOR;
-static constexpr int CHECK_EXTENSION                      = FULL_DEPTH_FACTOR / 2;
-static constexpr int PV_EXTENSION                         = FULL_DEPTH_FACTOR / 2;
-static constexpr int EVEN_EXCHANGE_EXTENSION_PV_NODE      = FULL_DEPTH_FACTOR;
-static constexpr int EVEN_EXCHANGE_EXTENSION              = FULL_DEPTH_FACTOR / 2;
-static constexpr int SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT = 3;
-static constexpr int SINGULAR_EXTENSION_MIN_DEPTH         = 4;
-static constexpr int SINGULAR_EXTENSION                   = 2 * FULL_DEPTH_FACTOR;
-static constexpr int SINGULAR_EXTENSION_BETA_COEF      = 16 / SCORE_GRAIN;
-static constexpr int SINGULAR_EXTENSION_BETA_DIV = 1;
+
+DECLARE_TUNABLE_PARAM(int, FULL_DEPTH_FACTOR, 4);
+DECLARE_TUNABLE_PARAM(int, CHECK_EXTENSION_PV_NODE, FULL_DEPTH_FACTOR::Get());
+DECLARE_TUNABLE_PARAM(int, CHECK_EXTENSION, FULL_DEPTH_FACTOR::Get() / 2);
+DECLARE_TUNABLE_PARAM(int, PV_EXTENSION, FULL_DEPTH_FACTOR::Get() / 2);
+DECLARE_TUNABLE_PARAM(int, EVEN_EXCHANGE_EXTENSION_PV_NODE, FULL_DEPTH_FACTOR::Get());
+DECLARE_TUNABLE_PARAM(int, EVEN_EXCHANGE_EXTENSION, FULL_DEPTH_FACTOR::Get() / 2);
+DECLARE_TUNABLE_PARAM(int, SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT, 3);
+DECLARE_TUNABLE_PARAM(int, SINGULAR_EXTENSION_MIN_DEPTH, 4);
+DECLARE_TUNABLE_PARAM(int, SINGULAR_EXTENSION, FULL_DEPTH_FACTOR::Get() * 2);
+DECLARE_TUNABLE_PARAM(int, SINGULAR_EXTENSION_BETA_COEF, 16 / SCORE_GRAIN);
+DECLARE_TUNABLE_PARAM(int, SINGULAR_EXTENSION_BETA_DIV, 1);
 
 // ------------------------------ REDUCTIONS --------------------------------------
 
-static constexpr int LMR_MIN_DEPTH = 3 * FULL_DEPTH_FACTOR;
+static constexpr int LMR_MIN_DEPTH = 3 * 4;
 
 // limits maximal extensions inside the search tree to not overdo
 constexpr bool ShouldExtend(const int ply, const int rootDepth) { return ply < 2 * rootDepth; }
@@ -74,14 +114,14 @@ constexpr int CalcReductions(const int depth, const int moveCount, const int sco
             int(SCALE_COEF * std::sqrt(double(depth - 1)) * std::sqrt(double(moveCount - 1))) /  1024;
 
     // Decrease reduction for PV-Nodes we are at full window search
-    return (scoreDelta != 1 ? 2 * reductionBase / 3 : reductionBase) * FULL_DEPTH_FACTOR;
+    return (scoreDelta != 1 ? 2 * reductionBase / 3 : reductionBase) * 4;
 }
 
 // value below which SEE capture is considered bad
 static constexpr int SEE_GOOD_MOVE_BOUNDARY = -115 / SCORE_GRAIN;
 
 // value defines how much we reduce the search when no TT move is available
-static constexpr int NO_TT_MOVE_REDUCTION = 1 * FULL_DEPTH_FACTOR;
+static constexpr int NO_TT_MOVE_REDUCTION = 1 * 4;
 
 // value of phase below game is considering to be an end-game
 static constexpr int END_GAME_PHASE = 64;
@@ -90,7 +130,7 @@ static constexpr int END_GAME_PHASE = 64;
 static constexpr int IID_MIN_DEPTH_PLY_DEPTH = 5;
 
 /* Ply reduction for IID case*/
-static constexpr int IID_REDUCTION = 3 * FULL_DEPTH_FACTOR;
+static constexpr int IID_REDUCTION = 3 * 4;
 
 /* Minimal depth from which Aspiration Windows are used*/
 static constexpr int ASP_WND_MIN_DEPTH = 7;

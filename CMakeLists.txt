@@ -159,6 +159,7 @@ set(CHECKMATE_CHARIOT_SOURCES
         src/MoveIterator.cpp
         include/Evaluation/ContinuationHistory.h
         include/TunableParameters.h
+        src/TunableParameters.cpp
 )
 
 # Create a library with the core functionality

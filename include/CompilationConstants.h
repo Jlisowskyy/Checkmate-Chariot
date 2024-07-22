@@ -10,13 +10,6 @@
 #include <cmath>
 #include <cassert>
 
-// Determines whether we use variables or const values to parameters
-#ifdef ALLOW_TESTING_VARIABLES
-
-#else
-
-#endif // ALLOW_TESTING_VARIABLES
-
 // Defines simple interface to communicate with objects with SINGLETON pattern behavior.
 template<typename T>
 struct GlobalSingletonWrapper{
@@ -27,7 +20,7 @@ struct GlobalSingletonWrapper{
     // Access the instance, NOTE: _instance needs to be initialized before usage
     static T& GetInstance(){
         assert(_instance != nullptr & "Not inited Singleton instance!");
-        return _instance;
+        return *_instance;
     }
 
 protected:
@@ -37,7 +30,7 @@ protected:
         _instance = readyInstance;
     }
 
-    // Note: private constructor -> class is not able to instantiate outside of private methods
+    // Note: protected constructor -> class is not able to instantiate outside of child private methods
     GlobalSingletonWrapper() = default;
 
     static T* _instance;

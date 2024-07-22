@@ -9,6 +9,7 @@
 #include "../include/Engine.h"
 #include "../include/Interface/UCITranslator.h"
 #include "../include/TestsAndDebugging/DebugTools.h"
+#include "../include/TunableParameters.h"
 
 void ChessEngineMainEntry(const int argc, const char **argv)
 {
@@ -20,6 +21,9 @@ void ChessEngineMainEntry(const int argc, const char **argv)
 
     // Provide to the translator the underlying engine instance
     UCITranslator translator{engine};
+
+    // Initialize parameters list
+    GlobalParametersList::Init();
 
     // Disable C compatibility:
     // std::ios_base::sync_with_stdio(false);

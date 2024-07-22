@@ -97,7 +97,7 @@ int BestMoveSearch::IterativeDeepening(
 
             // performs the search without aspiration window to gather some initial statistics about the move
             eval = _search<SearchType::PVSearch, true>(
-                NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff, nullptr
+                NEGATIVE_INFINITY - 1, POSITIVE_INFINITY + 1, depth * FULL_DEPTH_FACTOR::Get(), 0, zHash, {}, pvBuff, nullptr
             );
             TraceIfFalse(_pv.IsFilled(), "PV buffer is not filled after the search!");
 
@@ -134,7 +134,7 @@ int BestMoveSearch::IterativeDeepening(
                 _ctTable.ScaleDown();
                 _maxPlyReached = 0;
                 eval           = _search<SearchType::PVSearch, true>(
-                    alpha, beta, depth * FULL_DEPTH_FACTOR, 0, zHash, {}, pvBuff, nullptr
+                    alpha, beta, depth * FULL_DEPTH_FACTOR::Get(), 0, zHash, {}, pvBuff, nullptr
                 );
 
                 if constexpr (CollectSearchData && CollectTableData)
@@ -256,7 +256,7 @@ int BestMoveSearch::_search(
 
     // when we exhausted this branch start static evaluation with qsearch, additionally
     // when we exceeded maximally allowed depth simply return without consideration
-    const int plyDepth = depthLeft / FULL_DEPTH_FACTOR;
+    const int plyDepth = depthLeft / FULL_DEPTH_FACTOR::Get();
     if (plyDepth <= 0 || ply >= MAX_SEARCH_DEPTH)
         return _qSearch<searchType>(alpha, beta, ply, zHash, 0, prevMove);
 
@@ -461,16 +461,16 @@ int BestMoveSearch::_search(
             // Note: (prevSearchRes.GetNodeType() == LOWER_BOUND || prevSearchRes.GetNodeType() == PV_NODE) - ensures
             //       we skip all-nodes in singular search
             if (_excludedMove.IsEmpty() && ply > 0 && wasTTHit && currMove.GetPackedMove() == prevSearchRes.GetMove() &&
-                plyDepth - prevSearchRes.GetDepth() <= SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT &&
+                plyDepth - prevSearchRes.GetDepth() <= SINGULAR_EXTENSION_DEPTH_PROBE_LIMIT::Get() &&
                 (prevSearchRes.GetNodeType() == LOWER_BOUND || prevSearchRes.GetNodeType() == PV_NODE) &&
-                plyDepth > SINGULAR_EXTENSION_MIN_DEPTH && !IsMateScore(prevSearchRes.GetEval()))
+                plyDepth > SINGULAR_EXTENSION_MIN_DEPTH::Get() && !IsMateScore(prevSearchRes.GetEval()))
             {
                 // TODO: investigate deeply the depth
-                const int singularDepth = (depthLeft - FULL_DEPTH_FACTOR) / 2;
+                const int singularDepth = (depthLeft - FULL_DEPTH_FACTOR::Get()) / 2;
                 // TODO: might be mathematically optimised:
                 // The singular beta is decreased by some margin to preserve high quality results of the search
                 const int singularBeta = prevSearchRes.GetEval()
-                        - SINGULAR_EXTENSION_BETA_COEF * plyDepth / SINGULAR_EXTENSION_BETA_DIV;
+                        - SINGULAR_EXTENSION_BETA_COEF::Get() * plyDepth / SINGULAR_EXTENSION_BETA_DIV::Get();
 
                 // NOTE: due to single excluded move no recursive singular searched are allowed
                 _excludedMove           = prevSearchRes.GetMove();
@@ -481,7 +481,7 @@ int BestMoveSearch::_search(
 
                 // we failed low, so our hypothesis might be true
                 if (singularValue < singularBeta)
-                    extensions += SINGULAR_EXTENSION;
+                    extensions += SINGULAR_EXTENSION::Get();
                 // Multi-cut pruning
                 else if (singularBeta >= beta)
                     return (_stack.PopAggregate(moves), singularBeta);
@@ -508,18 +508,18 @@ int BestMoveSearch::_search(
 
         // Increase reductions in case of late moves and worsening situation
         if (isImprovingAllowed && !isImproving && reductions >= 2)
-            reductions += FULL_DEPTH_FACTOR;
+            reductions += FULL_DEPTH_FACTOR::Get();
 
         // Decrease reductions for nodes which was on previous PV to increase searched nodes on good paths
         if  (_pv.IsMoveOnPv(currMove.GetPackedMove()))
-            reductions -= FULL_DEPTH_FACTOR;
+            reductions -= FULL_DEPTH_FACTOR::Get();
 
         if constexpr (IsPvNode)
-            reductions -= FULL_DEPTH_FACTOR;
+            reductions -= FULL_DEPTH_FACTOR::Get();
 
         // Killer moves that refuted neighboring nodes has high probability to refute in this node
         if (_kTable.IsKillerMove(currMove, ply))
-            reductions -= FULL_DEPTH_FACTOR;
+            reductions -= FULL_DEPTH_FACTOR::Get();
 
         // if we do not have usable move from the TT there is high probability that we are at all-node
         if (wasTTHit && !isTTMoveUsable && (plyDepth - prevSearchRes.GetDepth()) < LMR_TT_ALL_NODE_REDUCTION_MAX_DEPTH_DIFF)
@@ -532,7 +532,7 @@ int BestMoveSearch::_search(
 
             // increase reduction only in case of positive SEEValue
             if (SEEValue > 0)
-                reductions -= FULL_DEPTH_FACTOR;
+                reductions -= FULL_DEPTH_FACTOR::Get();
         }
 
         reductions -= _histTable.GetBonusMove(currMove) / LMR_GOOD_HISTORY_REDUCTION_DIV;
@@ -544,7 +544,7 @@ int BestMoveSearch::_search(
         // moveCount > 2 - we want to be sure to explore move from TT and best move accordingly to sorting
         if (!DisableLmr && moveCount > 2 && depthLeft >= LMR_MIN_DEPTH && reductions > 0)
         {
-            const int LMRDepth = std::max(1, depthLeft + extensions - reductions - FULL_DEPTH_FACTOR);
+            const int LMRDepth = std::max(1, depthLeft + extensions - reductions - FULL_DEPTH_FACTOR::Get());
 
             moveEval = -_search<SearchType::NoPVSearch, false>(
                     -(alpha + 1), -alpha, LMRDepth, ply + 1, zHash, currMove, _dummyPv,
@@ -555,7 +555,7 @@ int BestMoveSearch::_search(
             if (moveEval > alpha)
             {
                 moveEval = -_search<SearchType::NoPVSearch, false>(
-                        -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR + extensions, ply + 1, zHash, currMove, _dummyPv,
+                        -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR::Get() + extensions, ply + 1, zHash, currMove, _dummyPv,
                         nullptr
                 );
             }
@@ -566,7 +566,7 @@ int BestMoveSearch::_search(
         else if (!IsPvNode || moveCount != 1)
         {
             moveEval = -_search<SearchType::NoPVSearch, false>(
-                -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR + extensions, ply + 1, zHash, currMove, _dummyPv,
+                -(alpha + 1), -alpha, depthLeft - FULL_DEPTH_FACTOR::Get() + extensions, ply + 1, zHash, currMove, _dummyPv,
                 nullptr
             );
         }
@@ -577,11 +577,11 @@ int BestMoveSearch::_search(
             // Research with full window
             if (followPv && moveCount == 1)
                 moveEval = -_search<SearchType::PVSearch, true>(
-                    -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, currMove, inPV, nullptr
+                    -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR::Get(), ply + 1, zHash, currMove, inPV, nullptr
                 );
             else
                 moveEval = -_search<SearchType::PVSearch, false>(
-                    -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR, ply + 1, zHash, currMove, inPV, nullptr
+                    -beta, -alpha, depthLeft - FULL_DEPTH_FACTOR::Get(), ply + 1, zHash, currMove, inPV, nullptr
                 );
         }
 
@@ -905,7 +905,7 @@ int BestMoveSearch::_deduceExtensions(const Move prevMove, const Move actMove, c
 
     // check extensions
     rv += (actMove.IsChecking() && (seeValue == NEGATIVE_INFINITY ? mech.SEE(actMove) : seeValue) > 0) *
-          (isPv ? CHECK_EXTENSION_PV_NODE : CHECK_EXTENSION);
+          (isPv ? CHECK_EXTENSION_PV_NODE::Get() : CHECK_EXTENSION::Get());
     if constexpr (TraceExtensions)
         if (rv != 0) TraceWithInfo("Applied check extension");
 
@@ -917,7 +917,7 @@ int BestMoveSearch::_deduceExtensions(const Move prevMove, const Move actMove, c
     {
         TraceIfFalse(actMove.IsAttackingMove(), "if check should not allow any non attacking moves to enter!!");
 
-        rv += isPv ? EVEN_EXCHANGE_EXTENSION_PV_NODE : EVEN_EXCHANGE_EXTENSION;
+        rv += isPv ? EVEN_EXCHANGE_EXTENSION_PV_NODE::Get() : EVEN_EXCHANGE_EXTENSION::Get();
 
         if constexpr (TraceExtensions)
             TraceWithInfo("Applied even exchange extension");
