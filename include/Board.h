@@ -128,7 +128,7 @@ struct Board
 
     constexpr uint64_t GetFigBoard(int col, size_t figDesc) const { return BitBoards[col * BitBoardsPerCol + figDesc]; }
 
-    [[nodiscard]] bool IsEndGame() const { return LastPhase < END_GAME_PHASE; }
+    [[nodiscard]] bool IsEndGame() const { return LastPhase < END_GAME_PHASE::Get(); }
 
     // ------------------------------
     // Class fields

@@ -167,7 +167,7 @@ void MoveIterator::_initPromos()
             // if the pawn is promoting and additionally capturing it is in most cases good move
             if (mv.IsAttackingMove())
             {
-                mv.SetEval(_scoreCapture(mv) + mv.IsChecking() ? MOVE_SORT_PROMO_CHECK : 0);
+                mv.SetEval(_scoreCapture(mv) + mv.IsChecking() ? MOVE_SORT_PROMO_CHECK::Get() : 0);
                 _currStageMoves.Push(mv);
             }
             else
@@ -181,7 +181,7 @@ void MoveIterator::_initPromos()
                 else
                 {
                     // enforce inspecting moves that give a check at first
-                    mv.SetEval(mv.IsChecking() ? MOVE_SORT_PROMO_CHECK : 0);
+                    mv.SetEval(mv.IsChecking() ? MOVE_SORT_PROMO_CHECK::Get() : 0);
                     _currStageMoves.Push(mv);
                 }
             }
@@ -202,7 +202,7 @@ void MoveIterator::_initCaptures()
 
             const int seeScore = _generator.SEE(mv);
             mv.SetEval(static_cast<int16_t>(seeScore));
-            if (seeScore < -(MOVE_SORT_CAPTURE_COEF * mv.GetEval() / MOVE_SORT_CAPTURE_DIV  + MOVE_SORT_CAPTURE_BIAS))
+            if (seeScore < -(MOVE_SORT_CAPTURE_COEF::Get() * mv.GetEval() / MOVE_SORT_CAPTURE_DIV::Get() + MOVE_SORT_CAPTURE_BIAS::Get()))
                 _badCaptures.Push(mv);
             else
                 _currStageMoves.Push(mv);
@@ -228,7 +228,7 @@ void MoveIterator::_initQuiets()
             const auto score = static_cast<int16_t>(_scoreQuiet(mv, pawnAttacks));
             mv.SetEval(score);
 
-            if (score >= MOVE_SORT_GOOD_QUIET_SCORE)
+            if (score >= MOVE_SORT_GOOD_QUIET_SCORE::Get())
                 _currStageMoves.Push(mv);
             else
                 _badQuiets.Push(mv);
@@ -300,7 +300,7 @@ int MoveIterator::_scoreQuiet(const Move mv, const uint64_t pawnAttacks) const
     const PackedMove counterMove = _cTable.GetCounterMove(_prevMove, _board.MovingColor);
 
     // counter move table
-    eval += COUNTER_MOVE_TABLE_PRIZE * (mv.GetPackedMove() == counterMove);
+    eval += COUNTER_MOVE_TABLE_PRIZE::Get() * (mv.GetPackedMove() == counterMove);
 
     // check bonus
     if (mv.IsChecking())
@@ -308,16 +308,16 @@ int MoveIterator::_scoreQuiet(const Move mv, const uint64_t pawnAttacks) const
         // validate if the check is worth at all
         const int seeValue = _generator.SEE(mv);
 
-        if (seeValue > SEE_GOOD_MOVE_BOUNDARY)
-            eval += MOVE_SORT_QUIET_CHECK;
+        if (seeValue > SEE_GOOD_MOVE_BOUNDARY::Get())
+            eval += MOVE_SORT_QUIET_CHECK::Get();
     }
 
     // History table bonus
     eval += _hTable.GetBonusMove(mv);
 
     // pawn attacks evasion/danger
-    eval += ((pawnAttacks & (MaxMsbPossible >> mv.GetStartField())) != 0) * MOVE_SORT_QUIETS_PAWN_EVASION_BONUS +
-            ((pawnAttacks & (MaxMsbPossible >> mv.GetTargetField())) != 0) * MOVE_SORT_QUIETS_PAWN_DANGER_PENALTY;
+    eval += ((pawnAttacks & (MaxMsbPossible >> mv.GetStartField())) != 0) * MOVE_SORT_QUIETS_PAWN_EVASION_BONUS::Get() +
+            ((pawnAttacks & (MaxMsbPossible >> mv.GetTargetField())) != 0) * MOVE_SORT_QUIETS_PAWN_DANGER_PENALTY::Get();
 
     // continuation histories
     for (size_t i = 0; i < CONT_HISTORY_SCORE_TABLES_READ_COUNT; ++i)

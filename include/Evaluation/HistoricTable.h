@@ -41,11 +41,11 @@ struct HistoricTable
 
     INLINE void SetPointsMove(const Move mv, const int points)
     {
-        const int clampedPoints = std::clamp(points, (int)-HISTORY_TABLE_POINTS_LIMIT, (int)HISTORY_TABLE_POINTS_LIMIT);
+        const int clampedPoints = std::clamp(points, (int)-HISTORY_TABLE_POINTS_LIMIT::Get(), (int)HISTORY_TABLE_POINTS_LIMIT::Get());
 
         _table[mv.GetStartBoardIndex()][mv.GetTargetField()]
-            += HISTORY_TABLE_SCORE_COEF * clampedPoints
-                - _table[mv.GetStartBoardIndex()][mv.GetTargetField()] * abs(clampedPoints) / HISTORY_TABLE_SCORE_DIV;
+            += HISTORY_TABLE_SCORE_COEF::Get() * clampedPoints
+                - _table[mv.GetStartBoardIndex()][mv.GetTargetField()] * abs(clampedPoints) / HISTORY_TABLE_SCORE_DIV::Get();
     }
 
     // Function takes move and depth and increments the move's value in the table
@@ -84,18 +84,18 @@ struct HistoricTable
     // Functions scales down all points accordingally to currently best hold value if it exceeds the barrier
     [[nodiscard]] int _getPoints(const int figT, const int field) const
     {
-        return _table[figT][field] / MOVE_SORT_GOOD_QUIET_DIV;
+        return _table[figT][field] / MOVE_SORT_GOOD_QUIET_DIV::Get();
     }
 
     // Function used to determine the bonus value of the move, it is here to simplify its manipulation.
-    static constexpr int _pointScaleBonus (const int depth)
+    static int _pointScaleBonus (const int depth)
     {
-        return HISTORY_BONUS_COEF * depth + HISTORY_BONUS_BIAS;
+        return HISTORY_BONUS_COEF::Get() * depth + HISTORY_BONUS_BIAS::Get();
     };
 
-    static constexpr int _pointScalePenalty(const int depth)
+    static int _pointScalePenalty(const int depth)
     {
-        return -(HISTORY_PENALTY_COEF * depth / 2 + HISTORY_PENALTY_BIAS);
+        return -(HISTORY_PENALTY_COEF::Get() * depth / 2 + HISTORY_PENALTY_BIAS::Get());
     }
 
     int _table[Board::BitBoardsCount][Board::BitBoardFields]{};

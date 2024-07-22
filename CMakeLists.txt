@@ -41,7 +41,7 @@ add_compile_definitions(USE_ASP_WIN=1)
 add_compile_definitions(TREAT_PROMOS_AS_QUEEN_PROMO=1)
 
 # Uncomment to allow training
-add_compile_definitions(ALLOW_TESTING_VARIABLES=1)
+#add_compile_definitions(ALLOW_TESTING_VARIABLES=1)
 
 ################################################################################
 #                     Inspecting platform capabilities                         #

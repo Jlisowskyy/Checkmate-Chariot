@@ -88,7 +88,7 @@ int BestMoveSearch::IterativeDeepening(
         _cutoffNodes  = 0;
         _rootDepth    = depth;
 
-        if (!UseAsp || depth < ASP_WND_MIN_DEPTH)
+        if (!UseAsp || depth < ASP_WND_MIN_DEPTH::Get())
         {
             // cleaning tables used in previous iteration
             _histTable.ScaleTableDown();
@@ -118,7 +118,7 @@ int BestMoveSearch::IterativeDeepening(
             // Preparing variables for the aspiration window framework
             const int64_t coefSum   = (depth + 1) * depth / 2;
             const auto averageScore = static_cast<int32_t>(avg / coefSum);
-            int32_t delta           = INITIAL_ASP_WINDOW_DELTA;
+            int32_t delta           = INITIAL_ASP_WINDOW_DELTA::Get();
             int32_t alpha           = averageScore - delta;
             int32_t beta            = averageScore + delta;
             [[maybe_unused]] AspWinStat stat{}; // Used only with TEST_ASP_WIN define
@@ -327,10 +327,10 @@ int BestMoveSearch::_search(
     const bool isImproving = isImprovingAllowed ? _staticEvals[ply] > _staticEvals[ply - 2] : false;
 
     // ----------------------------------- RAZORING -------------------------------------------------
-    if constexpr (!IsPvNode && ENABLE_RAZORING)
+    if (!IsPvNode && ENABLE_RAZORING::Get())
         if (!isCheck)
         {
-            if (plyDepth <= RAZORING_DEPTH && statEval + RAZORING_MARGIN < beta)
+            if (plyDepth <= RAZORING_DEPTH::Get() && statEval + RAZORING_MARGIN::Get() < beta)
             {
                 const int qValue = _qSearch<SearchType::NoPVSearch>(alpha, beta, ply, zHash, 0, prevMove);
                 if (qValue < beta)
@@ -389,10 +389,10 @@ int BestMoveSearch::_search(
         if (_excludedMove.IsEmpty()
             && IsPvNode
             && (!wasTTHit || prevSearchRes.GetDepth() == 0)
-            && plyDepth >= IID_MIN_DEPTH_PLY_DEPTH)
+            && plyDepth >= IID_MIN_DEPTH_PLY_DEPTH::Get())
         {
             _search<searchType, false>(
-                alpha, beta, depthLeft - IID_REDUCTION, ply, zHash, prevMove, pv, &firstSortMove
+                alpha, beta, depthLeft - IID_REDUCTION::Get(), ply, zHash, prevMove, pv, &firstSortMove
             );
         }
         // if we have any move saved from last time we visited that node and the move is valid try to use it
@@ -440,7 +440,7 @@ int BestMoveSearch::_search(
             {
                 SEEValue = _moveGenerator.SEE(currMove);
 
-                if (SEEValue < (SEE_BASED_PRUNING_GOOD_MOVE_COEF * SEE_GOOD_MOVE_BOUNDARY * plyDepth))
+                if (SEEValue < (SEE_BASED_PRUNING_GOOD_MOVE_COEF::Get() * SEE_GOOD_MOVE_BOUNDARY::Get() * plyDepth))
                     continue;
             }
         }
@@ -522,8 +522,8 @@ int BestMoveSearch::_search(
             reductions -= FULL_DEPTH_FACTOR::Get();
 
         // if we do not have usable move from the TT there is high probability that we are at all-node
-        if (wasTTHit && !isTTMoveUsable && (plyDepth - prevSearchRes.GetDepth()) < LMR_TT_ALL_NODE_REDUCTION_MAX_DEPTH_DIFF)
-            reductions += NO_TT_MOVE_REDUCTION;
+        if (wasTTHit && !isTTMoveUsable && (plyDepth - prevSearchRes.GetDepth()) < LMR_TT_ALL_NODE_REDUCTION_MAX_DEPTH_DIFF::Get())
+            reductions += NO_TT_MOVE_REDUCTION::Get();
 
         // Do not extend tactical moves that has high probability to be bad quality moves
         if (currMove.IsAttackingMove() || currMove.GetPackedMove().IsPromo() || currMove.IsChecking())
@@ -535,14 +535,14 @@ int BestMoveSearch::_search(
                 reductions -= FULL_DEPTH_FACTOR::Get();
         }
 
-        reductions -= _histTable.GetBonusMove(currMove) / LMR_GOOD_HISTORY_REDUCTION_DIV;
+        reductions -= _histTable.GetBonusMove(currMove) / LMR_GOOD_HISTORY_REDUCTION_DIV::Get();
 
         // stores the most recent return value of child trees,
         int moveEval = alpha;
 
         // Late Move reductions
         // moveCount > 2 - we want to be sure to explore move from TT and best move accordingly to sorting
-        if (!DisableLmr && moveCount > 2 && depthLeft >= LMR_MIN_DEPTH && reductions > 0)
+        if (!DisableLmr && moveCount > 2 && depthLeft >= LMR_MIN_DEPTH::Get() && reductions > 0)
         {
             const int LMRDepth = std::max(1, depthLeft + extensions - reductions - FULL_DEPTH_FACTOR::Get());
 
@@ -659,7 +659,7 @@ int BestMoveSearch::_search(
     // updating if profitable
     // NOTE: _excludedMove.IsEmpty() - ensures no move from singular search is saved
     if (_excludedMove.IsEmpty() && (plyDepth >= prevSearchRes.GetDepth() ||
-                                    (!wasTTHit && _board.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE)))
+                                    (!wasTTHit && _board.Age - prevSearchRes.GetAge() >= DEFAULT_AGE_DIFF_REPLACE::Get())))
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
@@ -827,15 +827,15 @@ int BestMoveSearch::_qSearch(int alpha, const int beta, const int ply, uint64_t 
             /*                  DELTA PRUNING                              */
 
             // Increase delta in case of promotion
-            const int delta = statEval + DELTA_PRUNING_SAFETY_MARGIN + SEEValue +
-                        (currMove.GetPackedMove().IsPromo() ? DELTA_PRUNING_PROMO : 0);
+            const int delta = statEval + DELTA_PRUNING_SAFETY_MARGIN::Get() + SEEValue +
+                        (currMove.GetPackedMove().IsPromo() ? DELTA_PRUNING_PROMO::Get() : 0);
 
             // There is high possibility that there is no chance to improve our position
             if (statEval + delta < alpha && !_board.IsEndGame())
                 continue;
 
             /*                  SEE capture value estimation                */
-            if (SEEValue < SEE_GOOD_MOVE_BOUNDARY)
+            if (SEEValue < SEE_GOOD_MOVE_BOUNDARY::Get())
                 continue;
         }
 
@@ -877,7 +877,7 @@ int BestMoveSearch::_qSearch(int alpha, const int beta, const int ply, uint64_t 
     // Note: (prevSearchRes.GetDepth() == 0) ensures we save only empty records and other qsearch saved records.
     // Note: QUIESENCE_AGE_DIFF_REPLACE significantly bigger than usual threshold.
     if (!isCheck && !wasTTHit && !(bestEval > alpha && bestMove.IsEmpty()) &&
-        ((prevSearchRes.GetDepth() == 0) || _board.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE))
+        ((prevSearchRes.GetDepth() == 0) || _board.Age - prevSearchRes.GetAge() >= QUIESENCE_AGE_DIFF_REPLACE::Get()))
     {
         const NodeType nType = (bestEval >= beta ? LOWER_BOUND : bestMove.IsEmpty() ? UPPER_BOUND : PV_NODE);
 
