@@ -17,55 +17,80 @@
 
 #define TEST_VARIABLE_MOD
 #define INIT_PARAM(defaultValue)
-#define TRANSLATE_PARAM(ParamT) \
-            if (ParamT rv{}; std::from_chars(str.c_str(), str.c_str() + str.size(), rv).ec != std::errc::invalid_argument)\
-                _param = rv;
 static constexpr bool AllowTestVariable = true;
 
 #else
 
 #define TEST_VARIABLE_MOD constexpr
 #define INIT_PARAM(defaultValue)  = (defaultValue)
-#define TRANSLATE_PARAM(ParamT)
 static constexpr bool AllowTestVariable = false;
 
 #endif // ALLOW_TESTING_VARIABLES
+
+struct TunableParameterDraft {
+    virtual void Set(const std::string&) = 0;
+    virtual void Display() = 0;
+};
+
+template<typename ParamT>
+struct TunableParameter : TunableParameterDraft {
+    explicit TunableParameter(ParamT& param, const char* name) :
+        _name(name), _param(param){}
+    ~TunableParameter() = default;
+
+    void Set(const std::string& str) final {
+        if (ParamT rv{}; std::from_chars(str.c_str(), str.c_str() + str.size(), rv).ec != std::errc::invalid_argument)\
+                _param = rv;
+    }
+
+    void Display() final  {
+        std::cout << _name << " : " << _param << std::endl;
+    }
+
+private:
+    const char* _name;
+    ParamT& _param;
+};
 
 // Stores list of functions changing global tunable parameters
 struct GlobalParametersList : GlobalSingletonWrapper<GlobalParametersList>{
     ~GlobalParametersList() = default;
 
-    void SetParameter(const std::string& param, const std::string& value)
+    TunableParameterDraft* GetParameter(const std::string& param)
     {
         if (_params.contains(param))
-            _params[param](value);
+            return _params[param];
+        return nullptr;
     }
 
-    void AddEntry(const std::string& param, void (*func)(const std::string&))
+    void AddEntry(const std::string& param, TunableParameterDraft* wrapper)
     {
         if (!_params.contains(param))
-            _params[param] = func;
-
+            _params[param] = wrapper;
     }
 
-    static void Init() { InitInstance(new GlobalParametersList()); }
+    void DisplayAll() const {
+        for (const auto& [k, v] : _params)
+            v->Display();
+    }
+
+    static void Init() {
+        if (!IsInited())
+            InitInstance(new GlobalParametersList());
+    }
     static bool IsInited() { return _instance != nullptr; }
 
 private:
     GlobalParametersList() = default;
 
-    std::unordered_map<std::string, void (*)(const std::string&)> _params{};
+    std::unordered_map<std::string, TunableParameterDraft*> _params{};
 };
 
 #define DECLARE_TUNABLE_PARAM(ParamT, name, defaultValue) \
-struct name{    \
+struct name {    \
     name() = delete;        \
     ~name() = delete;   \
     static TEST_VARIABLE_MOD ParamT Get() { return _param; } \
-    static void _translate([[maybe_unused]] const std::string& str)  \
-    {   \
-        TRANSLATE_PARAM(ParamT); \
-    } \
     static TEST_VARIABLE_MOD ParamT _param INIT_PARAM(defaultValue);\
 }
 
@@ -76,7 +101,7 @@ struct name{    \
     type name::_param = []() {    \
         if (!GlobalParametersList::IsInited())  \
             GlobalParametersList::Init();   \
-        GlobalParametersList::GetInstance().AddEntry(#name, name::_translate); \
+        GlobalParametersList::GetInstance().AddEntry(#name, new TunableParameter(name::_param, #name)); \
         return defaultValue;    \
     }()
 

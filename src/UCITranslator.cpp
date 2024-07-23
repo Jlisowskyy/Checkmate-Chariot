@@ -59,7 +59,8 @@ UCITranslator::UCICommand UCITranslator::_dispatchCommands(const std::string &bu
         {         "zv",        &UCITranslator::_searchZobrist},
         {  "ponderhit",    &UCITranslator::_ponderhitResponse},
         {"reconstruct",          &UCITranslator::_reconstruct},
-        {"tune", &UCITranslator::_tuneParam}
+        {"tune", &UCITranslator::_tuneParam},
+        {"params", &UCITranslator::_params},
     };
 
     std::string workStr;
@@ -365,7 +366,7 @@ UCITranslator::UCICommand UCITranslator::_goSearchRegular(const std::string &str
         {   "btime",    &_goBTimeResponse},
         {   "wtime",    &_goWTimeResponse},
         {   "depth",    &_goDepthResponse},
-        {  "ponder",    &goPonderResponse},
+        {  "ponder", &_goPonderResponse},
     };
 
     GoInfo info{};
@@ -532,7 +533,7 @@ UCITranslator::UCICommand UCITranslator::_searchZobrist(const std::string &str)
     return UCITranslator::UCICommand::isreadyCommand;
 }
 
-size_t UCITranslator::goPonderResponse(const std::string &, size_t pos, GoInfo &info)
+size_t UCITranslator::_goPonderResponse(const std::string &str, size_t pos, GoInfo &info)
 {
     info.isPonderSearch = true;
     return pos;
@@ -562,8 +563,13 @@ UCITranslator::UCICommand UCITranslator::_tuneParam(const std::string &str) {
     if (splitted.size() != 2)
         return UCICommand::InvalidCommand;
 
-    if (GlobalParametersList::IsInited())
-        GlobalParametersList::GetInstance().SetParameter(splitted[0], splitted[1]);
+    GlobalParametersList::GetInstance().GetParameter(splitted[0])->Set(splitted[1]);
+
+    return UCICommand::debugCommand;
+}
+
+UCITranslator::UCICommand UCITranslator::_params(const std::string &) {
+    GlobalParametersList::GetInstance().DisplayAll();
 
     return UCICommand::debugCommand;
 }

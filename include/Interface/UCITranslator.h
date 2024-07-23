@@ -194,6 +194,8 @@ class UCITranslator
 
     UCICommand _tuneParam(const std::string& str);
 
+    UCICommand _params(const std::string &);
+
     // ------------------------------
     /* Go parameter parsing and checking functions */
 
@@ -209,7 +211,7 @@ class UCITranslator
 
     static size_t _goDepthResponse(const std::string &str, size_t pos, GoInfo &info);
 
-    static size_t goPonderResponse(const std::string &str, size_t pos, GoInfo &info);
+    static size_t _goPonderResponse(const std::string &str, size_t pos, GoInfo &info);
 
     // ------------------------------
 
