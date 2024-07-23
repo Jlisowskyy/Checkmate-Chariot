@@ -192,8 +192,10 @@ class UCITranslator
     /* Regular uci go command */
     UCICommand _goSearchRegular(const std::string &str);
 
+    /* Command used to tune internal parameters, when built in TUNE mode */
     UCICommand _tuneParam(const std::string& str);
 
+    /* Command used to display all parameters list, when built in TUNE mode */
     UCICommand _params(const std::string &);
 
     // ------------------------------

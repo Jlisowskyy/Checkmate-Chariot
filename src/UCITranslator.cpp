@@ -563,7 +563,8 @@ UCITranslator::UCICommand UCITranslator::_tuneParam(const std::string &str) {
     if (splitted.size() != 2)
         return UCICommand::InvalidCommand;
 
-    GlobalParametersList::GetInstance().GetParameter(splitted[0])->Set(splitted[1]);
+    if (auto ptr = GlobalParametersList::GetInstance().GetParameter(splitted[0]); ptr != nullptr)
+        ptr->Set(splitted[1]);
 
     return UCICommand::debugCommand;
 }
