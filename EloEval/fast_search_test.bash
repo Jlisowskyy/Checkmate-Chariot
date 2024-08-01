@@ -40,6 +40,7 @@ cd ..
 cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Release || clean_up
 make Checkmate-Chariot -j "${CORES}" || clean_up
 cp Checkmate-Chariot "./EloEval/ReferenceEngines/Checkmate-Chariot-dev" || clean_up
+./scripts/clean-cmake-sh
 
 # run the tournament
 ./EloEval/Tournaments/short_test_tournament.bash Checkmate-Chariot-dev "${OP}"

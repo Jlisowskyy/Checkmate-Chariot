@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Checkmate-Chariot",
+    "command": "./Checkmate-Chariot",
+    "protocol": "uci",
+    "initStrings": "\"setoption name OwnBook value true\"",
+    "ponder": "true"
+  },
+  {
+    "name": "bumblebee",
+    "command": "./bumblebee",
+    "protocol": "uci",
+    "ponder":"true"
+  },
+  {
+    "name": "snowy",
+    "command": "./snowy",
+    "protocol": "uci",
+    "initStrings": "",
+    "ponder": "false"
+  }
+]
