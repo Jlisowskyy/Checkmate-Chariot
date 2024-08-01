@@ -1,0 +1,26 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// CPQuadraticND.h
+//
+// Rémi Coulom
+//
+// February, 2009
+//
+/////////////////////////////////////////////////////////////////////////////
+#ifndef CPQuadraticND_Declared
+#define CPQuadraticND_Declared
+
+#include "CArtificialProblem.h"
+
+class CPQuadraticND: public CArtificialProblem // qnd
+{
+ private: ///////////////////////////////////////////////////////////////////
+  const int Dimensions;
+
+ public: ////////////////////////////////////////////////////////////////////
+  explicit CPQuadraticND(int Dimensions): Dimensions(Dimensions) {}
+  double GetStrength(const double v[]) const;
+  int GetDimensions() const {return Dimensions;}
+};
+
+#endif

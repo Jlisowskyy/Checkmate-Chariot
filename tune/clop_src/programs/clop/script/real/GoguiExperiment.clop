@@ -1,0 +1,5 @@
+Name GoguiExperiment
+LinearParameter PriorWeight 0.0 500.0
+Script ./GoguiScript.py
+Processor core1
+Processor core2

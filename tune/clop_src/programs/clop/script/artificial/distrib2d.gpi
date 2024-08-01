@@ -1,0 +1,6 @@
+reset
+set terminal x11
+set hidden3d
+splot "random.dat" using 1:2:4 with lines,\
+      "MAP.dat" using 1:2:4 with lines,\
+      "distrib.dat" with lines

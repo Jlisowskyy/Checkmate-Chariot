@@ -1,0 +1,26 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// CMESampleMean.cpp
+//
+// Rémi Coulom
+//
+// June, 2010
+//
+/////////////////////////////////////////////////////////////////////////////
+#include "CMESampleMean.h"
+#include "CRegression.h"
+
+/////////////////////////////////////////////////////////////////////////////
+// Compute weighted mean of all samples
+/////////////////////////////////////////////////////////////////////////////
+bool CMESampleMean::MaxParameter(double vMax[]) const
+{
+ const double TotalWeight = reg.GetTotalWeight();
+ const double *vTotalWeightedSample = reg.GetTotalWeightedSample();
+
+ if (TotalWeight > 0.0)
+  for (int i = reg.GetPF().GetDimensions(); --i >= 0;)
+   vMax[i] = vTotalWeightedSample[i] / TotalWeight;
+
+ return true;
+}

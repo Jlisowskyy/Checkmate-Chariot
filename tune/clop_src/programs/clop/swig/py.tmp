@@ -1,0 +1,16 @@
+                #check-pythonappend CArtificialExperiment::CArtificialExperiment
+                #check-pythonappend CBAST::CBAST
+                #check-pythonappend CCrossEntropy::CCrossEntropy
+                #check-pythonappend CDFVarianceAlpha::CDFVarianceAlpha
+                #check-pythonappend CDFVarianceDelta::CDFVarianceDelta
+                #check-pythonappend CMEQLRLCB::CMEQLRLCB
+                #check-pythonappend CMERegressionMAPMax::CMERegressionMAPMax
+                #check-pythonappend CPMultiple::CPMultiple
+                #check-pythonappend CPParametric::CPParametric
+                #check-pythonappend CRegression::CRegression
+                #check-pythonappend CRepeatThreads::CRepeatThreads
+                #check-pythonappend CRSPSA::CRSPSA
+                #check-pythonappend CSPComposite::CSPComposite
+                #check-pythonappend CSPQLRMax::CSPQLRMax
+                #check-pythonappend CSPSA::CSPSA
+                #check-pythonappend CSPVOptimal::CSPVOptimal

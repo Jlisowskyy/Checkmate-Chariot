@@ -1,0 +1,62 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// CSPQuasiRandom.h
+//
+// Rémi Coulom
+//
+// March, 2009
+//
+/////////////////////////////////////////////////////////////////////////////
+#ifndef CSPQuasiRandom_Declared
+#define CSPQuasiRandom_Declared
+
+#include "CSamplingPolicy.h"
+
+#include <gsl/gsl_qrng.h>
+#include <vector>
+
+/////////////////////////////////////////////////////////////////////////////
+class CSPQuasiRandom: public CSamplingPolicy // spQR
+/////////////////////////////////////////////////////////////////////////////
+{
+ private: ///////////////////////////////////////////////////////////////////
+  std::vector<double> v; 
+
+ protected: /////////////////////////////////////////////////////////////////
+  gsl_qrng *q;
+
+ public: ////////////////////////////////////////////////////////////////////
+  explicit CSPQuasiRandom(int Dimensions): v(Dimensions) {}
+
+  void Seed(unsigned n)
+  {
+   gsl_qrng_init(q);
+  }
+
+  const double *NextSample(int i)
+  {
+   gsl_qrng_get(q, &v[0]);
+   for (int j = v.size(); --j >= 0;)
+    v[j] = -1 + 2 * v[j];
+   return v;
+  }
+
+  ~CSPQuasiRandom()
+  {
+   gsl_qrng_free(q);
+  }
+};
+
+#if 0 // (only supported in more recent gsl)
+/////////////////////////////////////////////////////////////////////////////
+class CSPHalton: public CSPQuasiRandom
+{
+ public:
+  CSPHalton(int Dimensions): CSPQuasiRandom(Dimensions)
+  {
+   q = gsl_qrng_alloc(gsl_qrng_halton, Dimensions);
+  }
+};
+#endif
+
+#endif

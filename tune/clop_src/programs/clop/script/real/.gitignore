@@ -1,0 +1,16 @@
+DummyScript.log
+DummyExperiment.dat
+DummyExperiment-old.dat
+DummyExperiment.log
+GoguiExperiment.dat
+GoguiExperiment-old.dat
+GoguiExperiment.log
+GoguiExperiment.dir
+sentinel
+OAR.*.std???
+*.tmp
+MAP.dat
+N.dat
+max.dat
+random.dat
+samples.dat

@@ -1,0 +1,4 @@
+*.dat
+*.pyc
+*.pkl
+__cma_doctest__.txt

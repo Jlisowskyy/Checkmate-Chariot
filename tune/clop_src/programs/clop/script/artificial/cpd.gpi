@@ -1,0 +1,3 @@
+set terminal x11
+set logscale xy
+set style data linespoints

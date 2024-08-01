@@ -1,0 +1,78 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// CDFVariance.cpp
+//
+// Rémi Coulom
+//
+// March, 2009
+//
+/////////////////////////////////////////////////////////////////////////////
+#include "CDFVariance.h"
+#include "CRegression.h"
+#include "CMatrixOperations.h"
+
+/////////////////////////////////////////////////////////////////////////////
+// CholeskySolve
+/////////////////////////////////////////////////////////////////////////////
+void CDFVariance::CholeskySolve(std::vector<double> &v)
+{
+ reg.EnsureState(CRegression::S_Cholesky);
+ CMatrixOperations::Solve(&reg.vCholesky[0], &v[0], Parameters);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Constructor
+/////////////////////////////////////////////////////////////////////////////
+CDFVariance::CDFVariance(CRegression &reg):
+ CDiffFunction(reg.GetPF().GetDimensions()),
+ reg(reg),
+ Dimensions(reg.GetPF().GetDimensions()),
+ Parameters(reg.GetPF().GetParameters()),
+ vGradient(Dimensions),
+ vH(Dimensions * Dimensions),
+ MinSamples(0)
+{
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Compute Gradient
+/////////////////////////////////////////////////////////////////////////////
+void CDFVariance::ComputeGradient()
+{
+ const double Epsilon = 0.0001;
+
+ std::vector<double> v(Dimensions);
+ for (int i = Dimensions; --i >= 0;)
+  v[i] = pvx[i];
+
+ for (int i = Dimensions; --i >= 0;)
+ {
+  const double x = v[i];
+
+  v[i] = x - Epsilon;
+  double v0 = GetOutput(&v[0]);
+
+  v[i] = x + Epsilon;
+  double v1 = GetOutput(&v[0]);
+
+  v[i] = x;
+
+  vGradient[i] = (v1 - v0) / (2 * Epsilon);
+ }
+
+ GetOutput(&v[0]);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Normalize
+/////////////////////////////////////////////////////////////////////////////
+double CDFVariance::Normalize(double x) const
+{
+ if (x < -1)
+  return -1;
+
+ if (x > 1)
+  return 1;
+
+ return x;
+}

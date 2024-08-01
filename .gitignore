@@ -38,3 +38,9 @@ cutechess*
 cute*
 ./**/temp*
 tmp*z
+
+*.o
+*.so
+*.lib
+*.dll
+*.exe

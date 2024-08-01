@@ -1,0 +1,28 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// CMatrixIO.h
+//
+// Rémi Coulom
+//
+// February, 2009
+//
+/////////////////////////////////////////////////////////////////////////////
+#ifndef CMatrixIO_Declared
+#define CMatrixIO_Declared
+
+#include <vector>
+#include <iosfwd>
+
+class CMatrixIO // mio
+{
+ protected: /////////////////////////////////////////////////////////////////
+  const std::vector<double> &vMatrix;
+  const int Size;
+
+ public: ////////////////////////////////////////////////////////////////////
+  CMatrixIO(const std::vector<double> &v, int s): vMatrix(v), Size(s) {}
+  virtual double GetValue(int i, int j) const {return vMatrix[i*Size + j];}
+  void Dump(std::ostream &out);
+};
+
+#endif

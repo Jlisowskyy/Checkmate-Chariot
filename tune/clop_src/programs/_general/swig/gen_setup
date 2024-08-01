@@ -1,0 +1,2 @@
+#!/bin/bash
+cat ../../_general/swig/setup_template.py | sed -e "s/MODULE/`grep module *.i | sed -e "s/%module \(.*\)/\\1/"`/"

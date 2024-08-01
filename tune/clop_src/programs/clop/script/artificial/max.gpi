@@ -1,0 +1,10 @@
+reset
+
+set terminal x11
+set style data lines
+
+f(x)=1/(1+exp(-x))
+
+plot [-1:1][0:1] 1/0 notitle,\
+  "random.dat" using 1:(f($2)) lt 2 lc rgb "#00FF00" title "posterior",\
+  "max.dat" using 1:(f($2)) with points title "max"

@@ -1,0 +1,1 @@
+HINSTANCE GetInstance();

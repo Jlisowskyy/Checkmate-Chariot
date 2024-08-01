@@ -1,0 +1,8 @@
+# For more details about the format of this file, see DummyExperiment.clop
+Name GoguiExperiment
+LinearParameter PriorWeight 0.0 500.0
+# You may have to change the location of python.exe below
+# You should modify GoguiScript.py to adapt it to your program
+Script c:\Python26\python.exe GoguiScript.py
+Processor core1
+Processor core2

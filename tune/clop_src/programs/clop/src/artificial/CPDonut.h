@@ -1,0 +1,27 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// CPDonut.h
+//
+// Rémi Coulom
+//
+// January, 2010
+//
+/////////////////////////////////////////////////////////////////////////////
+#ifndef CPDonut_Declared
+#define CPDonut_Declared
+
+#include "CArtificialProblem.h"
+
+class CPDonut: public CArtificialProblem
+{
+ private: ///////////////////////////////////////////////////////////////////
+  const int Dimensions;
+
+ public: ////////////////////////////////////////////////////////////////////
+  explicit CPDonut(int Dimensions): Dimensions(Dimensions) {}
+  double GetStrength(const double v[]) const;
+  void GetOptimalParameters(double v[]) const;
+  int GetDimensions() const {return Dimensions;}
+};
+
+#endif

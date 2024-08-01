@@ -1,0 +1,38 @@
+reset
+! echo N=`grep -c $ samples.dat` >N.dat
+load "N.dat"
+
+S=1
+#S=int(N/100)
+
+set terminal x11
+xmin=0.98
+xmax=0.59
+ymax=0.82
+psize=1.0
+
+#set terminal png size 480,360
+#set output "test.png"
+#psize=0.2
+#xmax=0.4
+#ymax=0.78
+
+set key box width 1
+set style data lines
+
+set y2range [1:N]
+set xtics nomirror
+set ytics nomirror
+set y2tics
+
+g(x,y)=(S*(y+1))/((x<xmax)|(x>xmin)|((y/N)<ymax))
+rgb(r,g,b) = int(255*r)*65536 + int(255*g)*256 + int(255*b)
+col(x,w)=(x==1)?rgb(1.0,0.8 + 0.2*(1-w),1-w):rgb(0.6+0.4*(1-w),0.4+0.6*(1-w),1-w)
+#col(x,w)=(x==1)?rgb(1.0,0.8,0):rgb(0.6,0.4,0)
+x=2
+
+plot [-1:1][0:1] 1/0 notitle,\
+  "samples.dat" every S using 1:(g($1,$0)):(col($2,$3))  axis x1y2 with points pt 5 ps psize lc rgb variable title "games",\
+  "random.dat" using 1:3 lt 2 lc rgb "#00FF00" title "posterior",\
+  "MAP.dat" using 1:3 lt 1 lw 2 title "MAP",\
+  "distrib.dat" using 1:2 lt 3 lw 2 title "True"

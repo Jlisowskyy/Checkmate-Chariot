@@ -1,0 +1,8 @@
+reset
+set style data points
+rgb(r,g,b) = int(255*r)*65536 + int(255*g)*256 + int(255*b)
+
+plot [-1:1][-1:1] \
+ "samples.dat" using 1:($2/$3) lt 2 pt 5 lc rgb "#FFCC00" title "Win",\
+ "samples.dat" using 1:($2/(1-$3)) lt 1 pt 5 lc rgb "#996600" title "Loss",\
+ "max.dat" using 1:2 lt 2 pt 5 title "Posterior Max"

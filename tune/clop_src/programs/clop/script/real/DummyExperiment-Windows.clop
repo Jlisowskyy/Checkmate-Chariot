@@ -1,0 +1,9 @@
+# See DummExperiment.clop for documentation about file format
+Script Dummy.exe
+Name DummyExperiment
+LinearParameter p1  0.0 1.0
+LinearParameter p2 -1.0 2.0
+Processor machine1
+Processor machine1
+Processor machine2
+Processor machine2

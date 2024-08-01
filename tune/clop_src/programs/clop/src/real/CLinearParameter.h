@@ -1,0 +1,27 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// CLinearParameter.h
+//
+// Rémi Coulom
+//
+// August, 2009
+//
+/////////////////////////////////////////////////////////////////////////////
+#ifndef CLinearParameter_Declared
+#define CLinearParameter_Declared
+
+#include "CParameter.h"
+
+class CLinearParameter: public CParameter // linparam
+{
+ private: ///////////////////////////////////////////////////////////////////
+  const double Min;
+  const double Max;
+
+ public: ////////////////////////////////////////////////////////////////////
+  CLinearParameter(const std::string &s, double Min, double Max);
+  double TransformToQLR(double x) const;
+  double TransformFromQLR(double x) const;
+};
+
+#endif

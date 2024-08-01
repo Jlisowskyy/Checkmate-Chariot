@@ -1,0 +1,27 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// CIntegerParameter.h
+//
+// Rémi Coulom
+//
+// May, 2010
+//
+/////////////////////////////////////////////////////////////////////////////
+#ifndef CIntegerParameter_Declared
+#define CIntegerParameter_Declared
+
+#include "CParameter.h"
+
+class CIntegerParameter: public CParameter // intparam
+{
+ private: ///////////////////////////////////////////////////////////////////
+  const double Min;
+  const double Max;
+
+ public: ////////////////////////////////////////////////////////////////////
+  CIntegerParameter(const std::string &s, int Min, int Max);
+  double TransformToQLR(double x) const;
+  double TransformFromQLR(double x) const;
+};
+
+#endif
