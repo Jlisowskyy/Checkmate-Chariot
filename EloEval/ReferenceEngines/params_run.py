@@ -21,4 +21,7 @@ def main(args: list[str]):
 
 
 if __name__ == '__main__':
+    script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    os.chdir(script_dir)
+
     main(sys.argv)
