@@ -3,4 +3,4 @@
 - python
 - ccache
 - boost
-- qmake
+- qt4

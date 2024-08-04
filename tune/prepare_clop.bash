@@ -25,12 +25,12 @@ make clean || clean_up
 rm Makefile || clean_up
 
 # build CLOP GUI
-#cd clop_src/programs/clop/compqt/clop-gui || clean_up
-#qmake || clean_up
-#make || clean_up
-#cp clop-console "${SCRIPT_DIR}" || clean_up
-#make clean || clean_up
-#rm Makefile || clean_up
+cd clop_src/programs/clop/compqt/clop-gui || clean_up
+qmake-qt4 || clean_up
+make || clean_up
+cp clop-console "${SCRIPT_DIR}" || clean_up
+make clean || clean_up
+rm Makefile || clean_up
 
 # build cute-chess-cli
 cd "${SCRIPT_DIR}" || clean_up
