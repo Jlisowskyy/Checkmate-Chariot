@@ -38,7 +38,7 @@
  *  ON BY DEFAULT INITIALIZED OBJECTS EVERY ONE OF THEM WORKS ONCE
  */
 
-class Move;
+class alignas(16) Move;
 
 struct PackedMove
 {
@@ -249,11 +249,9 @@ class Move
         bd.IsCheck = data.IsCheck;
     }
 
-    void SetEval(const int16_t eval) { _eval = eval; }
+    void SetEval(const int32_t eval) { _eval = eval; }
 
-    void ReplaceEval(const int16_t eval) { SetEval(eval); }
-
-    [[nodiscard]] int16_t GetEval() const { return _eval; }
+    [[nodiscard]] int32_t GetEval() const { return _eval; }
 
     void SetStartField(const uint16_t startField) { _packedMove.SetStartField(startField); }
 
@@ -351,7 +349,7 @@ class Move
     static constexpr uint16_t Bit6 = 0b111111;
     static constexpr uint16_t Bit3 = 0b111;
 
-    int16_t _eval{};
+    int32_t _eval{};
     PackedMove _packedMove{};
     uint16_t _packedIndexes{};
     uint16_t _packedMisc{};

@@ -14,8 +14,8 @@ class ContinuationHistory
     // ------------------------------
     public:
 
-    ContinuationHistory()=default;
-    ~ContinuationHistory()=default;
+    ContinuationHistory() = default;
+    ~ContinuationHistory() = default;
 
     ContinuationHistory(const ContinuationHistory&) = delete;
     ContinuationHistory(ContinuationHistory&&) = delete;
@@ -27,7 +27,7 @@ class ContinuationHistory
     // Class interaction
     // ------------------------------
 
-    HistoricTable* GetTable(const Move prevMove, bool isCheck)
+    HistoricTable* GetTable(const Move prevMove, const bool isCheck)
     {
         return &_tables[isCheck][prevMove.GetStartBoardIndex()][prevMove.GetTargetField()];
     }

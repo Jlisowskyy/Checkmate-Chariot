@@ -160,6 +160,7 @@ set(CHECKMATE_CHARIOT_SOURCES
         include/Evaluation/ContinuationHistory.h
         include/TunableParameters.h
         src/TunableParameters.cpp
+        include/Evaluation/StatTable.h
 )
 
 # Create a library with the core functionality

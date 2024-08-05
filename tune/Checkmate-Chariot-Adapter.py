@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/python
 # -*- coding: utf-8 -*-
 
 """

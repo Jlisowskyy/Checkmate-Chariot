@@ -37,13 +37,13 @@ struct CounterMoveTable
     // ------------------------------
 
     // Function returns move that is currently saved as counter move for that one
-    [[nodiscard]] INLINE PackedMove GetCounterMove(const Move previousMove, int movingColor) const
+    [[nodiscard]] INLINE PackedMove GetCounterMove(const Move previousMove, const int movingColor) const
     {
         return _counterMovesTable[movingColor][previousMove.GetStartBoardIndex()][previousMove.GetTargetField()];
     }
 
     // Simply saves counter move for given move, without checking or considering anything
-    INLINE void SaveCounterMove(const PackedMove counterMove, const Move previousMove, int movingColor)
+    INLINE void SaveCounterMove(const PackedMove counterMove, const Move previousMove, const int movingColor)
     {
         _counterMovesTable[movingColor][previousMove.GetStartBoardIndex()][previousMove.GetTargetField()] = counterMove;
     }

@@ -4,17 +4,6 @@
 
 #include "../include/Evaluation/HistoricTable.h"
 
-void HistoricTable::ClearTable()
-{
-    for (auto &table : _table) std::fill_n(table, Board::BitBoardFields, 0);
-}
-
-void HistoricTable::ScaleTableDown()
-{
-    for (auto &figureMap : _table)
-        for (auto &field : figureMap) field /= HISTORY_SCALE_DOWN_FACTOR::Get();
-}
-
 void HistoricTable::DisplayStats() const
 {
     static constexpr size_t MAX_MOVES = 10;
@@ -45,7 +34,7 @@ void HistoricTable::DisplayStats() const
     for (size_t figT = 0; figT < Board::BitBoardsCount; ++figT)
         for (size_t field = 0; field < Board::BitBoardFields; ++field)
         {
-            const int points     = _getPoints(figT, field);
+            const int points     = Get(figT, field);
             const bool isNonZero = points != 0;
 
             if (isNonZero)
