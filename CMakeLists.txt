@@ -142,7 +142,6 @@ set(CHECKMATE_CHARIOT_SOURCES
         include/Evaluation/KingSafetyEval.h
         include/MoveGeneration/FileMap.h
         include/Evaluation/StructureEvaluator.h
-        src/HistoricTable.cpp
         src/CounterMoveTable.cpp
         include/ThreadManagement/GameTimeManager.h
         src/GameTimeManager.cpp
@@ -161,6 +160,7 @@ set(CHECKMATE_CHARIOT_SOURCES
         include/TunableParameters.h
         src/TunableParameters.cpp
         include/Evaluation/StatTable.h
+        src/HistoricTable.cpp
 )
 
 # Create a library with the core functionality

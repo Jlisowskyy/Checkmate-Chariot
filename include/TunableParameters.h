@@ -27,23 +27,25 @@ static constexpr bool AllowTestVariable = false;
 
 #endif // ALLOW_TESTING_VARIABLES
 
-struct TunableParameterDraft {
+/* Simple Interface struct defining operations allowed on parameter stored in global prameters list */
+struct TunableParameterIntf {
+    virtual ~TunableParameterIntf()      = default;
     virtual void Set(const std::string&) = 0;
     virtual void Display() = 0;
 };
 
+/* Simple class defining the interface operations mentioned above */
 template<typename ParamT>
-struct TunableParameter : TunableParameterDraft {
-    explicit TunableParameter(ParamT& param, const char* name) :
-        _name(name), _param(param){}
-    ~TunableParameter() = default;
+struct TunableParameter final : TunableParameterIntf {
+    explicit TunableParameter(ParamT &param, const char *name) : _name(name), _param(param) {}
+    ~TunableParameter() override = default;
 
-    void Set(const std::string& str) final {
+    void Set(const std::string &str) override {
         if (ParamT rv{}; std::from_chars(str.c_str(), str.c_str() + str.size(), rv).ec != std::errc::invalid_argument)\
                 _param = rv;
     }
 
-    void Display() final  {
+    void Display() override  {
         std::cout << _name << " : " << _param << std::endl;
     }
 
@@ -52,18 +54,18 @@ private:
     ParamT& _param;
 };
 
-// Stores list of functions changing global tunable parameters
+/* Singleton class storing interfaces of all defined parameters */
 struct GlobalParametersList : GlobalSingletonWrapper<GlobalParametersList>{
     ~GlobalParametersList() = default;
 
-    TunableParameterDraft* GetParameter(const std::string& param)
+    TunableParameterIntf* GetParameter(const std::string& param)
     {
         if (_params.contains(param))
             return _params[param];
         return nullptr;
     }
 
-    void AddEntry(const std::string& param, TunableParameterDraft* wrapper)
+    void AddEntry(const std::string& param, TunableParameterIntf* wrapper)
     {
         if (!_params.contains(param))
             _params[param] = wrapper;
@@ -83,7 +85,7 @@ struct GlobalParametersList : GlobalSingletonWrapper<GlobalParametersList>{
 private:
     GlobalParametersList() = default;
 
-    std::unordered_map<std::string, TunableParameterDraft*> _params{};
+    std::unordered_map<std::string, TunableParameterIntf*> _params{};
 };
 
 #define DECLARE_TUNABLE_PARAM(ParamT, name, defaultValue) \
@@ -134,7 +136,7 @@ constexpr int CalcReductions(const int depth, const int moveCount, const int sco
 
     // Base reduction calculating reduction base for expected fail nodes
     const int reductionBase =
-            int(SCALE_COEF * std::sqrt(double(depth - 1)) * std::sqrt(double(moveCount - 1))) /  1024;
+            static_cast<int>(SCALE_COEF * std::sqrt(static_cast<double>(depth - 1)) * std::sqrt(static_cast<double>(moveCount - 1))) /  1024;
 
     // Decrease reduction for PV-Nodes we are at full window search
     return (scoreDelta != 1 ? 2 * reductionBase / 3 : reductionBase) * 4;
@@ -191,8 +193,6 @@ DECLARE_TUNABLE_PARAM(int, HISTORY_TABLE_POINTS_LIMIT, 16*1024);
 
 DECLARE_TUNABLE_PARAM(int, HISTORY_TABLE_SCORE_COEF, 16);
 
-DECLARE_TUNABLE_PARAM(int, HISTORY_TABLE_SCORE_DIV, 1024);
-
 // Bonus linear function parameters
 DECLARE_TUNABLE_PARAM(int, HISTORY_BONUS_COEF, 2);
 DECLARE_TUNABLE_PARAM(int, HISTORY_BONUS_BIAS, 0);
@@ -203,7 +203,7 @@ DECLARE_TUNABLE_PARAM(int, HISTORY_PENALTY_BIAS, 1);
 
 DECLARE_TUNABLE_PARAM(int, HISTORY_SCALE_DOWN_FACTOR, 4);
 
-DECLARE_TUNABLE_PARAM(int, LMR_GOOD_HISTORY_REDUCTION_DIV, HISTORY_TABLE_POINTS_LIMIT::Get() / 2);;
+DECLARE_TUNABLE_PARAM(int, LMR_GOOD_HISTORY_REDUCTION_DIV, HISTORY_TABLE_POINTS_LIMIT::Get() / 2);
 
 // -----------------------------------------------------------------------------------------
 
@@ -217,6 +217,9 @@ DECLARE_TUNABLE_PARAM(int, COUNTER_MOVE_TABLE_PRIZE, 600);
 
 static constexpr int CONT_HISTORY_SCORE_TABLES_WRITE_COUNT = 4;
 static constexpr int CONT_HISTORY_SCORE_TABLES_READ_COUNT = 3;
+
+DECLARE_TUNABLE_PARAM(int, CONT_TABLE__TABLE_POINTS_LIMIT, 16*1024);
+DECLARE_TUNABLE_PARAM(int, CONT_TABLE_SCALE_DOWN_FACTOR, 4);
 
 // -----------------------------------------------------------------------------------------
 

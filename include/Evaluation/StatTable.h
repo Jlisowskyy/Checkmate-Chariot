@@ -6,10 +6,10 @@
 #define STATTABLE_H
 #include "../CompilationConstants.h"
 
-template <size_t dim, size_t ...args>
+template <typename PointLimitT, typename ScoreDownCoefT, size_t Dim, size_t ...Args>
 class StatTable
 {
-    using _innerTable_t = StatTable<args...>;
+    using _innerTable_t = StatTable<PointLimitT, ScoreDownCoefT, Args...>;
 
     public:
     // ------------------------------
@@ -38,20 +38,20 @@ class StatTable
     template<typename  ...idxesT>
     INLINE void SetPoints(const int points, idxesT ...idxes)
     {
-        const int clampedPoints = std::clamp(points, (int)-HISTORY_TABLE_POINTS_LIMIT::Get(), (int)HISTORY_TABLE_POINTS_LIMIT::Get());
+        const int clampedPoints = std::clamp(points, static_cast<int>(-PointLimitT::Get()), static_cast<int>(PointLimitT::Get()));
 
         const int entry = Get(idxes...);
-        const int newValue = entry + clampedPoints - entry * abs(clampedPoints) / HISTORY_TABLE_POINTS_LIMIT::Get();
+        const int newValue = entry + clampedPoints - entry * abs(clampedPoints) / PointLimitT::Get();
         Set(newValue, idxes...);
     }
 
-    void ClearTable()
+    INLINE void ClearTable()
     {
         for (_innerTable_t& table : _tables)
             table.ClearTable();
     }
 
-    void ScaleTableDown()
+    INLINE void ScaleTableDown()
     {
         for (_innerTable_t& table : _tables)
             table.ScaleTableDown();
@@ -62,11 +62,11 @@ class StatTable
     // ------------------------------
 
     private:
-    _innerTable_t _tables[dim]{};
+    _innerTable_t _tables[Dim]{};
 };
 
-template<size_t dim>
-class StatTable<dim>
+template<typename PointLimitT, typename ScoreDownCoefT, size_t Dim>
+class StatTable<PointLimitT, ScoreDownCoefT, Dim>
 {
     public:
     // ------------------------------
@@ -89,15 +89,15 @@ class StatTable<dim>
     [[nodiscard]] INLINE int Get(const size_t idx) const { return _table[idx]; }
     INLINE void Set(const int value, const size_t idx) { _table[idx] = value; }
 
-    void ClearTable()
+    INLINE void ClearTable()
     {
-        std::fill(_table, _table + dim, 0);
+        std::fill(_table, _table + Dim, 0);
     }
 
-    void ScaleTableDown()
+    INLINE void ScaleTableDown()
     {
         for (auto& val : _table)
-            val /= HISTORY_SCALE_DOWN_FACTOR::Get();
+            val /= ScoreDownCoefT::Get();
     }
 
     // ------------------------------
@@ -105,7 +105,7 @@ class StatTable<dim>
     // ------------------------------
 
     private:
-    int _table[dim]{};
+    int _table[Dim]{};
 };
 
 #endif //STATTABLE_H

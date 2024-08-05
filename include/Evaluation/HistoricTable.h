@@ -19,7 +19,7 @@
  *  Resources: https://www.chessprogramming.org/History_Heuristic
  */
 
-using HistoricTableBase = StatTable<Board::BitBoardsCount, Board::BitBoardFields>;
+using HistoricTableBase = StatTable<HISTORY_TABLE_POINTS_LIMIT, HISTORY_SCALE_DOWN_FACTOR, Board::BitBoardsCount, Board::BitBoardFields>;
 struct HistoricTable : protected HistoricTableBase
 {
     // ------------------------------
@@ -43,12 +43,12 @@ struct HistoricTable : protected HistoricTableBase
     // Function takes move and depth and increments the move's value in the table
     INLINE void SetBonusMove(const Move mv, const int depth)
     {
-        SetPoints(_pointScaleBonus(depth), mv.GetStartBoardIndex(), mv.GetStartField());
+        SetPoints(PointScaleBonus(depth), mv.GetStartBoardIndex(), mv.GetStartField());
     }
 
     INLINE void SetPenaltyMove(const Move mv, const int depth)
     {
-        SetPoints(_pointScalePenalty(depth), mv.GetStartBoardIndex(), mv.GetStartField());
+        SetPoints(PointScalePenalty(depth), mv.GetStartBoardIndex(), mv.GetStartField());
     }
 
     // Function returns the value of the move from the table
@@ -64,18 +64,13 @@ struct HistoricTable : protected HistoricTableBase
     // Display average points value inside the table and 10 best saved 'moves'
     void DisplayStats() const;
 
-    // ------------------------------
-    // Class fields
-    // ------------------------------
-
-    private:
     // Function used to determine the bonus value of the move, it is here to simplify its manipulation.
-    static int _pointScaleBonus (const int depth)
+    INLINE static int PointScaleBonus (const int depth)
     {
         return HISTORY_BONUS_COEF::Get() * depth + HISTORY_BONUS_BIAS::Get();
     };
 
-    static int _pointScalePenalty(const int depth)
+    INLINE static int PointScalePenalty(const int depth)
     {
         return -(HISTORY_PENALTY_COEF::Get() * depth / 2 + HISTORY_PENALTY_BIAS::Get());
     }
