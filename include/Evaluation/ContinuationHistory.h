@@ -7,6 +7,11 @@
 
 #include "HistoricTable.h"
 
+static constexpr size_t CHECK_COUNT = 2;
+using ContinuationHistoryBase =
+        StatTable<HISTORY_TABLE_POINTS_LIMIT, CONT_TABLE_SCALE_DOWN_FACTOR,
+        CHECK_COUNT, Board::BitBoardsCount, Board::BitBoardFields, Board::BitBoardsCount, Board::BitBoardFields>;
+
 class ContinuationHistory
 {
     // ------------------------------

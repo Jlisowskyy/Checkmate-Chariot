@@ -2,14 +2,21 @@
 // Created by Jlisowskyy on 8/5/24.
 //
 
-#ifndef STATTABLE_H
-#define STATTABLE_H
+#ifndef STAT_TABLE_H
+#define STAT_TABLE_H
+
 #include "../CompilationConstants.h"
 
-template <typename PointLimitT, typename ScoreDownCoefT, size_t Dim, size_t ...Args>
+#include <type_traits>
+
+template <typename PointLimitT, typename ScoreDownCoefT, size_t Dim = 1, size_t ...Args>
 class StatTable
 {
-    using _innerTable_t = StatTable<PointLimitT, ScoreDownCoefT, Args...>;
+    using _innerTable_t = std::conditional_t<
+        sizeof...(Args) == 0,
+        int,
+        StatTable<PointLimitT, ScoreDownCoefT, Args...>
+    >;
 
     public:
     // ------------------------------
@@ -30,14 +37,31 @@ class StatTable
     // ------------------------------
 
     template<typename ...idxesT>
-    [[nodiscard]] INLINE int Get(const size_t idx, idxesT ...idxes) const { return _tables[idx].Get(idxes...); }
+    [[nodiscard]] INLINE int Get(const size_t idx, idxesT ...idxes) const
+    {
+        static_assert(sizeof...(idxes) == sizeof...(Args), "Mismatched dimensions");
+
+        if constexpr (sizeof...(idxes) == 0)
+            return _table[idx];
+        else
+            return _table[idx].Get(idxes...);
+    }
 
     template<typename ...idxesT>
-    INLINE void Set(const int value, const size_t idx, idxesT ...idxes) { _tables[idx].Set(value, idxes...); }
+    INLINE void Set(const int value, const size_t idx, idxesT ...idxes)
+    {
+        static_assert(sizeof...(idxes) == sizeof...(Args), "Mismatched dimensions");
 
-    template<typename  ...idxesT>
+        if constexpr (sizeof...(idxes) == 0)
+            _table[idx] = value;
+        else
+            _table[idx].Set(value, idxes...);
+    }
+
+    template<typename ...idxesT>
     INLINE void SetPoints(const int points, idxesT ...idxes)
     {
+        static_assert(sizeof...(idxes) == sizeof...(Args) + 1, "Mismatched dimensions");
         const int clampedPoints = std::clamp(points, static_cast<int>(-PointLimitT::Get()), static_cast<int>(PointLimitT::Get()));
 
         const int entry = Get(idxes...);
@@ -47,65 +71,40 @@ class StatTable
 
     INLINE void ClearTable()
     {
-        for (_innerTable_t& table : _tables)
-            table.ClearTable();
+        for (_innerTable_t& innerObject : _table)
+            if constexpr (sizeof...(Args) == 0)
+                innerObject = 0;
+            else
+                innerObject.ClearTable();
     }
 
     INLINE void ScaleTableDown()
     {
-        for (_innerTable_t& table : _tables)
-            table.ScaleTableDown();
+        for (_innerTable_t& innerObject : _table)
+            if constexpr (sizeof...(Args) == 0)
+                innerObject /= ScoreDownCoefT::Get();
+            else
+                innerObject.ScaleTableDown();
     }
 
+    template<typename... IdxesT>
+    INLINE auto GetTable(const size_t idx, IdxesT... idxes)
+    {
+        static_assert(sizeof...(idxes) == sizeof...(Args), "Mismatched dimensions");
+
+        if constexpr (sizeof...(idxes) == 0) {
+            return &_table[idx];
+        } else {
+            return _table[idx].GetTable(idxes...);
+        }
+    }
+
+private:
     // ------------------------------
     // Class fields
     // ------------------------------
 
-    private:
-    _innerTable_t _tables[Dim]{};
+    std::array<_innerTable_t, Dim> _table{};
 };
 
-template<typename PointLimitT, typename ScoreDownCoefT, size_t Dim>
-class StatTable<PointLimitT, ScoreDownCoefT, Dim>
-{
-    public:
-    // ------------------------------
-    // Class creation
-    // ------------------------------
-
-    StatTable() = default;
-    ~StatTable() = default;
-
-    StatTable(StatTable &&)      = delete;
-    StatTable(const StatTable &) = delete;
-
-    StatTable &operator=(const StatTable &) = delete;
-    StatTable &operator=(StatTable &&)      = delete;
-
-    // ------------------------------
-    // Class interaction
-    // ------------------------------
-
-    [[nodiscard]] INLINE int Get(const size_t idx) const { return _table[idx]; }
-    INLINE void Set(const int value, const size_t idx) { _table[idx] = value; }
-
-    INLINE void ClearTable()
-    {
-        std::fill(_table, _table + Dim, 0);
-    }
-
-    INLINE void ScaleTableDown()
-    {
-        for (auto& val : _table)
-            val /= ScoreDownCoefT::Get();
-    }
-
-    // ------------------------------
-    // Class fields
-    // ------------------------------
-
-    private:
-    int _table[Dim]{};
-};
-
-#endif //STATTABLE_H
+#endif // STAT_TABLE_H
