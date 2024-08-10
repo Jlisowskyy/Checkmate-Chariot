@@ -2,8 +2,8 @@
 // Created by Jlisowskyy on 7/13/24.
 //
 
-#ifndef MOVEITERATOR_H
-#define MOVEITERATOR_H
+#ifndef MOVE_ITERATOR_H
+#define MOVE_ITERATOR_H
 #include "../Board.h"
 #include "../Evaluation/CounterMoveTable.h"
 #include "../Evaluation/HistoricTable.h"
@@ -11,7 +11,7 @@
 #include "../MoveGeneration/MoveGenerator.h"
 
 
-/* Class used to sort moves on the fly, accordingaly to strictly defined rules */
+/* Class used to sort moves on the fly, accordingly to strictly defined rules */
 class MoveIterator
 {
     enum class MoveSortStages
@@ -100,7 +100,7 @@ class MoveIterator
         if (const Move fetchedMove = storage.FetchBestMove(); !fetchedMove.IsEmpty())
             return fetchedMove;
 
-        // if no move was retreived, run the post action
+        // if no move was retrieved, run the post action
         action();
 
         // signal state transition
@@ -127,9 +127,9 @@ class MoveIterator
     // Amount of maximally available pawns
     static constexpr size_t MAX_BAD_PROMOS = 8;
 
-    // 10 qeeuns, ...
+    // 10 queens, ...
     static constexpr size_t MAX_BAD_CAPTURES = 112;
-    static constexpr size_t MAX_BAD_QUEITS = 256;
+    static constexpr size_t MAX_BAD_QUIETS = 256;
 
     // Comes from maximum number of captures
     static constexpr size_t MAX_CURR_TACTICAL = 112;
@@ -154,10 +154,10 @@ class MoveIterator
     // Stores move to use in later stage
     _moveStorage<MAX_BAD_PROMOS> _badPromos{};
     _moveStorage<MAX_BAD_CAPTURES> _badCaptures{};
-    _moveStorage<MAX_BAD_QUEITS> _badQuiets{};
+    _moveStorage<MAX_BAD_QUIETS> _badQuiets{};
     _moveStorage<MAX_CURR_TACTICAL> _currStageMoves{};
 
     size_t iters{};
 };
 
-#endif //MOVEITERATOR_H
+#endif //MOVE_ITERATOR_H

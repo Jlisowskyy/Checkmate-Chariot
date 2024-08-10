@@ -4,7 +4,6 @@
 
 #include "../include/Search/MoveIterator.h"
 
-#include <cassert>
 #include <cinttypes>
 
 Move MoveIterator::GetNextMove()
@@ -13,21 +12,18 @@ Move MoveIterator::GetNextMove()
 
     do
     {
-        // All moves were processed return immiediently
+        // All moves were processed return imminently
         if (_uncheckedMoves == 0)
             return {};
 
-        // Act accordingally to current stage
+        // Act accordingly to current stage
         rv = _processStage();
 
-        // Empty move signals that current stage was exhuasted without finding any move, retry again
+        // Empty move signals that current stage was exhausted without finding any move, retry again
     } while (rv.IsEmpty());
 
     --_uncheckedMoves;
     ++iters;
-
-    if (iters > 256)
-        GlobalLogger.LogStream << "XDDD";
 
     return rv;
 }
@@ -167,7 +163,7 @@ void MoveIterator::_initPromos()
             // if the pawn is promoting and additionally capturing it is in most cases good move
             if (mv.IsAttackingMove())
             {
-                mv.SetEval(_scoreCapture(mv) + mv.IsChecking() ? MOVE_SORT_PROMO_CHECK::Get() : 0);
+                mv.SetEval(_scoreCapture(mv) + (mv.IsChecking() ? MOVE_SORT_PROMO_CHECK::Get() : 0));
                 _currStageMoves.Push(mv);
             }
             else

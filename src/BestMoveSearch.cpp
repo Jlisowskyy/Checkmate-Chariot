@@ -18,6 +18,7 @@
 #include "../include/Search/ZobristHash.h"
 #include "../include/TestsAndDebugging/DebugTools.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
+#include "../include/todo.h"
 
 #ifndef NDEBUG
 
@@ -324,7 +325,7 @@ int BestMoveSearch::_search(
     // Note: we do not allow to use improving flag when some of the states was in check
     const bool isImprovingAllowed
            = ply >=2 && _staticEvals[ply] != NO_EVAL_RESERVED_VALUE && _staticEvals[ply - 2] != NO_EVAL_RESERVED_VALUE;
-    const bool isImproving = isImprovingAllowed ? _staticEvals[ply] > _staticEvals[ply - 2] : false;
+    const bool isImproving = isImprovingAllowed && _staticEvals[ply] > _staticEvals[ply - 2];
 
     // ----------------------------------- RAZORING -------------------------------------------------
     if (!IsPvNode && ENABLE_RAZORING::Get())
@@ -339,7 +340,7 @@ int BestMoveSearch::_search(
         }
 
     // generate moves
-    auto moves = _moveGenerator.GetPseudoLegalMoves<false>();
+    auto moves = _moveGenerator.GetPseudoLegalMoves();
 
     // saving volatile board state
     const VolatileBoardData oldData{_board};
@@ -433,17 +434,19 @@ int BestMoveSearch::_search(
         // Note: ply > 0 - ensures no move is cut on root node to assure all  subtrees were checked
         // Note: moveCount != 0 - ensures that at least one move was tested before returning if there was legal one
         // Note: !IsMateScore(alpha) - ensures we did not accidentally cut a checkmate
-        if (ply > 0 && moveCount != 0 && !IsMateScore(alpha))
-        {
-            // consider pruning of checks and captures with bad enough SEE value
-            if (currMove.IsAttackingMove() || currMove.IsChecking())
-            {
-                SEEValue = _moveGenerator.SEE(currMove);
 
-                if (SEEValue < (SEE_BASED_PRUNING_GOOD_MOVE_COEF::Get() * SEE_GOOD_MOVE_BOUNDARY::Get() * plyDepth))
-                    continue;
-            }
-        }
+        TODO_BEFORE_END_OF_0_18
+//        if (ply > 0 && moveCount != 0 && !IsMateScore(alpha))
+//        {
+//            // consider pruning of checks and captures with bad enough SEE value
+//            if (currMove.IsAttackingMove() || currMove.IsChecking())
+//            {
+//                SEEValue = _moveGenerator.SEE(currMove);
+//
+//                if (SEEValue < (SEE_BASED_PRUNING_GOOD_MOVE_COEF::Get() * SEE_GOOD_MOVE_BOUNDARY::Get() * plyDepth))
+//                    continue;
+//            }
+//        }
 
         // -------------------------- Extensions --------------------------------
         // determine whether we should spend more time in this node
@@ -483,8 +486,10 @@ int BestMoveSearch::_search(
                 if (singularValue < singularBeta)
                     extensions += SINGULAR_EXTENSION::Get();
                 // Multi-cut pruning
-                else if (singularBeta >= beta)
-                    return (_stack.PopAggregate(moves), singularBeta);
+
+                TODO_BEFORE_END_OF_0_18
+//                else if (singularBeta >= beta)
+//                    return (_stack.PopAggregate(moves), singularBeta);
             }
 
             // simple extensions deduction
@@ -617,12 +622,13 @@ int BestMoveSearch::_search(
 
                 // Only inserts the move from the PV
                 pv.InsertNext(bestMove.GetPackedMove(), inPV);
-                // Additionaly clear the pv to prevent copying random moves in other iterations
+                // Additionally clear the pv to prevent copying random moves in other iterations
                 inPV.Clear();
             }
         }
 
-        if (currMove.IsQuietMove())
+        // Note: we do not give penalty to moves that raised alpha or were above
+        if (bestMove != currMove && currMove.IsQuietMove())
             testedQuietMoves[testedQuietsCounter++] = currMove;
     }
 
@@ -639,7 +645,7 @@ int BestMoveSearch::_search(
     };
 
     // we found a good enough move update info about it
-    if (bestEval > alpha && bestMove.IsQuietMove())
+    if (!bestMove.IsEmpty() && bestMove.IsQuietMove())
         _saveQuietMoveInfo(bestMove, prevMove, plyDepth, ply, contHist);
 
     if (!bestMove.IsEmpty()) {
@@ -821,23 +827,25 @@ int BestMoveSearch::_qSearch(int alpha, const int beta, const int ply, uint64_t 
         ++moveCount;
 
         // pruning on the move
-        if (!isCheck)
-        {
-            const int SEEValue = _moveGenerator.SEE(currMove);
-            /*                  DELTA PRUNING                              */
 
-            // Increase delta in case of promotion
-            const int delta = statEval + DELTA_PRUNING_SAFETY_MARGIN::Get() + SEEValue +
-                        (currMove.GetPackedMove().IsPromo() ? DELTA_PRUNING_PROMO::Get() : 0);
-
-            // There is high possibility that there is no chance to improve our position
-            if (statEval + delta < alpha && !_board.IsEndGame())
-                continue;
-
-            /*                  SEE capture value estimation                */
-            if (SEEValue < SEE_GOOD_MOVE_BOUNDARY::Get())
-                continue;
-        }
+        TODO_BEFORE_END_OF_0_18
+//        if (!isCheck)
+//        {
+//            const int SEEValue = _moveGenerator.SEE(currMove);
+//            /*                  DELTA PRUNING                              */
+//
+//            // Increase delta in case of promotion
+//            const int delta = statEval + DELTA_PRUNING_SAFETY_MARGIN::Get() + SEEValue +
+//                        (currMove.GetPackedMove().IsPromo() ? DELTA_PRUNING_PROMO::Get() : 0);
+//
+//            // There is high possibility that there is no chance to improve our position
+//            if (statEval + delta < alpha && !_board.IsEndGame())
+//                continue;
+//
+//            /*                  SEE capture value estimation                */
+//            if (SEEValue < SEE_GOOD_MOVE_BOUNDARY::Get())
+//                continue;
+//        }
 
         zHash               = ProcessMove(_board, currMove, zHash, oldData);
         _contHistories[ply] = _ctTable.GetTable(currMove, isCheck);
