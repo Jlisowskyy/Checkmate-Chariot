@@ -18,7 +18,7 @@
 #include "../include/Search/ZobristHash.h"
 #include "../include/TestsAndDebugging/DebugTools.h"
 #include "../include/ThreadManagement/GameTimeManager.h"
-#include "../include/todo.h"
+#include "../include/Todo.h"
 
 #ifndef NDEBUG
 
@@ -540,7 +540,8 @@ int BestMoveSearch::_search(
                 reductions -= FULL_DEPTH_FACTOR::Get();
         }
 
-        reductions -= _histTable.GetBonusMove(currMove) / LMR_GOOD_HISTORY_REDUCTION_DIV::Get();
+        TODO_BEFORE_END_OF_0_18
+//        reductions -= _histTable.GetBonusMove(currMove) / LMR_GOOD_HISTORY_REDUCTION_DIV::Get();
 
         // stores the most recent return value of child trees,
         int moveEval = alpha;

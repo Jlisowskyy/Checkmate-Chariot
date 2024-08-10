@@ -3,6 +3,7 @@
 //
 
 #include "../include/Search/MoveIterator.h"
+#include "../include/Todo.h"
 
 #include <cinttypes>
 
@@ -193,12 +194,12 @@ void MoveIterator::_initCaptures()
         },
         [&](Move mv)
         {
-            // const auto score = static_cast<int16_t>(_scoreCapture(mv));
-            // mv.SetEval(score);
+            TODO_BEFORE_END_OF_0_18
+             const auto score = static_cast<int16_t>(_scoreCapture(mv));
+             mv.SetEval(score);
 
             const int seeScore = _generator.SEE(mv);
-            mv.SetEval(static_cast<int16_t>(seeScore));
-            if (seeScore < -(MOVE_SORT_CAPTURE_COEF::Get() * mv.GetEval() / MOVE_SORT_CAPTURE_DIV::Get() + MOVE_SORT_CAPTURE_BIAS::Get()))
+            if (seeScore < -(MOVE_SORT_CAPTURE_COEF::Get() * mv.GetEval() / MOVE_SORT_CAPTURE_DIV::Get()))
                 _badCaptures.Push(mv);
             else
                 _currStageMoves.Push(mv);
@@ -221,7 +222,7 @@ void MoveIterator::_initQuiets()
         [](const Move){ return true; },
         [&](Move mv)
         {
-            const auto score = static_cast<int16_t>(_scoreQuiet(mv, pawnAttacks));
+            const auto score = _scoreQuiet(mv, pawnAttacks);
             mv.SetEval(score);
 
             if (score >= MOVE_SORT_GOOD_QUIET_SCORE::Get())
