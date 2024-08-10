@@ -2,8 +2,8 @@
 // Created by Jlisowskyy on 7/15/24.
 //
 
-#ifndef CONTINUATIONHISTORY_H
-#define CONTINUATIONHISTORY_H
+#ifndef CONTINUATION_HISTORY_H
+#define CONTINUATION_HISTORY_H
 
 #include "HistoricTable.h"
 
@@ -12,7 +12,7 @@ using ContinuationHistoryBase =
         StatTable<HISTORY_TABLE_POINTS_LIMIT, CONT_TABLE_SCALE_DOWN_FACTOR,
         CHECK_COUNT, Board::BitBoardsCount, Board::BitBoardFields, Board::BitBoardsCount, Board::BitBoardFields>;
 
-class ContinuationHistory
+class ContinuationHistory : ContinuationHistoryBase
 {
     // ------------------------------
     // Class creation
@@ -34,19 +34,11 @@ class ContinuationHistory
 
     HistoricTable* GetTable(const Move prevMove, const bool isCheck)
     {
-        return &_tables[isCheck][prevMove.GetStartBoardIndex()][prevMove.GetTargetField()];
+        return (HistoricTable*)ContinuationHistoryBase::GetTable(isCheck, prevMove.GetStartBoardIndex(), prevMove.GetTargetField());
     }
 
-    void ScaleDown() {
-        for(auto& checks : _tables)
-            for(auto& figs : checks)
-                for (auto& tables : figs)
-                    tables.ScaleTableDown();
-    }
-
-    // ------------------------------
-    // Private class methods
-    // ------------------------------
+    using ContinuationHistoryBase::ScaleTableDown;
+    using ContinuationHistoryBase::ClearTable;
 
     // ------------------------------
     // Class fields
@@ -54,8 +46,6 @@ class ContinuationHistory
 
     inline static HistoricTable DummyReadTable{};
     inline static HistoricTable DummyWriteTable{};
-private:
-    HistoricTable _tables[2][Board::BitBoardsCount][Board::BitBoardFields];
 };
 
-#endif //CONTINUATIONHISTORY_H
+#endif // CONTINUATION_HISTORY_H

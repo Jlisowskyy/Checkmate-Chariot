@@ -90,8 +90,6 @@ class StatTable
     template<typename... IdxesT>
     INLINE auto GetTable(const size_t idx, IdxesT... idxes)
     {
-        static_assert(sizeof...(idxes) == sizeof...(Args), "Mismatched dimensions");
-
         if constexpr (sizeof...(idxes) == 0) {
             return &_table[idx];
         } else {

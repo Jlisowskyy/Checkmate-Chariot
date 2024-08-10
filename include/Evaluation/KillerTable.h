@@ -2,8 +2,8 @@
 // Created by Jlisowskyy on 3/18/24.
 //
 
-#ifndef KILLERTABLE_H
-#define KILLERTABLE_H
+#ifndef KILLER_TABLE_H
+#define KILLER_TABLE_H
 
 #include "../EngineUtils.h"
 #include "../MoveGeneration/Move.h"
@@ -62,7 +62,13 @@ class KillerTable
     }
 
     // checks whether actual move is a "killer" move
-    [[nodiscard]] INLINE bool IsKillerMove(const Move move, const int ply) const { return _kTable[ply].Contains(move); }
+    [[nodiscard]] INLINE bool IsKillerMove(const Move move, const int ply) const
+    {
+        // Note: write to sentinel on root
+        const int floor = ply - 1 >= 0 ? ply - 1 : static_cast<int>(SentinelReadFloor);
+
+        return _kTable[floor].Contains(move);
+    }
 
     private:
     // ------------------------------
@@ -109,4 +115,4 @@ class KillerTable
     _killerFloor_t _kTable[MAX_SEARCH_DEPTH + 2]{};
 };
 
-#endif // KILLERTABLE_H
+#endif // KILLER_TABLE_H

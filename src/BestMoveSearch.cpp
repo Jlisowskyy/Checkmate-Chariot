@@ -92,7 +92,7 @@ int BestMoveSearch::IterativeDeepening(
         {
             // cleaning tables used in previous iteration
             _histTable.ScaleTableDown();
-            _ctTable.ScaleDown();
+            _ctTable.ScaleTableDown();
             _maxPlyReached = 0;
 
             // performs the search without aspiration window to gather some initial statistics about the move
@@ -131,7 +131,7 @@ int BestMoveSearch::IterativeDeepening(
 
                 // cleaning tables used in previous iterations
                 _histTable.ScaleTableDown();
-                _ctTable.ScaleDown();
+                _ctTable.ScaleTableDown();
                 _maxPlyReached = 0;
                 eval           = _search<SearchType::PVSearch, true>(
                     alpha, beta, depth * FULL_DEPTH_FACTOR::Get(), 0, zHash, {}, pvBuff, nullptr
