@@ -12,7 +12,7 @@ cd "${SCRIPT_DIR}" || clean_up
 # build CLOP
 cd clop_src/programs/clop/compgcc || clean_up
 make -j "${CORES}" || clean_up
-cp bin/clop "${SCRIPT_DIR}" || clean_up
+mv bin/clop "${SCRIPT_DIR}" || clean_up
 make clean || clean_up
 cd "${SCRIPT_DIR}" || clean_up
 
@@ -20,15 +20,16 @@ cd "${SCRIPT_DIR}" || clean_up
 cd clop_src/programs/clop/compqt/clop-console || clean_up
 qmake || clean_up
 make -j "${CORES}"|| clean_up
-cp clop-console "${SCRIPT_DIR}" || clean_up
+mv clop-console "${SCRIPT_DIR}" || clean_up
 make clean || clean_up
 rm Makefile || clean_up
+cd "${SCRIPT_DIR}" || clean_up
 
 # build CLOP GUI
 cd clop_src/programs/clop/compqt/clop-gui || clean_up
 qmake-qt4 || clean_up
 make || clean_up
-cp clop-console "${SCRIPT_DIR}" || clean_up
+mv clop-gui "${SCRIPT_DIR}" || clean_up
 make clean || clean_up
 rm Makefile || clean_up
 

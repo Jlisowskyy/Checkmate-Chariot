@@ -31,7 +31,7 @@ elif [ "$1" == "l" ]; then
   COMMIT_ID="$(git log --format="%H" -n 1)"
   cd "${SCRIPT_DIR}" || exit
   ./ReferenceEngines/DownloadScripts/Checkmate-Chariot.sh "${COMMIT_ID}"
-elif [ -f "${SCRIPT_DIR}/ReferenceEngines/${1}" ] ; then
+elif [ -f "${SCRIPT_DIR}/ReferenceEngines/${1}" ] || [ "$1" == "params" ]; then
   OP=$1
 else
   clean_up
