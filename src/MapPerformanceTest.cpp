@@ -6,7 +6,7 @@
 
 #include <fstream>
 
-MapPerformanceTester::RecordsPack MapPerformanceTester::_readTestFile(std::string filename)
+MapPerformanceTester::RecordsPack MapPerformanceTester::readTestFile(std::string filename)
 {
     std::ifstream stream(filename, std::ios::binary | std::ios::in);
 

@@ -49,14 +49,13 @@ class MapPerformanceTester
     // Private class methods
     // ------------------------------
 
-    private:
-    static RecordsPack _readTestFile(std::string filename);
+    static RecordsPack readTestFile(std::string filename);
 };
 
 template <class MapT>
 double MapPerformanceTester::PerformTest(const std::string &filename, const MapT &map) noexcept(false)
 {
-    auto [recordCount, fullMaps, figureMaps] = _readTestFile(filename);
+    auto [recordCount, fullMaps, figureMaps] = readTestFile(filename);
     uint64_t mapReads{};
     uint64_t trulyNotRandomNumber{}; // was unsure about optimizations done when there was no use of read value
 
