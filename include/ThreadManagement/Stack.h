@@ -7,6 +7,8 @@
 
 #include <cstdlib>
 
+#include "../EngineUtils.h"
+
 /*
  *              Important notes:
  *  Performs all operations without boundary checks nor any sanity checks

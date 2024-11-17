@@ -7,6 +7,7 @@
 
 #include <cinttypes>
 #include <numeric>
+#include <cstddef>
 
 using lli                  = long long int;
 static constexpr size_t MB = 1024 * 1024;

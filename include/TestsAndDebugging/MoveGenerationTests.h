@@ -5,11 +5,13 @@
 #ifndef MOVEGENERATIONTESTS_H
 #define MOVEGENERATIONTESTS_H
 
-#ifdef __unix__
-
 #include <map>
 #include <string>
 #include <utility>
+#include <vector>
+#include <cinttypes>
+
+#ifdef __unix__
 
 class MoveGenerationTester
 {
