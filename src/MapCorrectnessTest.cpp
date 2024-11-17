@@ -4,7 +4,7 @@
 
 #include "../include/TestsAndDebugging/MapCorrectnessTest.h"
 
-MapCorrectnessTester::RecordsPack MapCorrectnessTester::_readTestFile(std::string filename)
+MapCorrectnessTester::RecordsPack MapCorrectnessTester::readTestFile(std::string filename)
 {
     std::fstream stream(filename, std::fstream::binary | std::fstream::in);
 
