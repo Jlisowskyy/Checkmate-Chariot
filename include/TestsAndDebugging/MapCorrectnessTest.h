@@ -52,19 +52,13 @@ class MapCorrectnessTester
     // ------------------------------
 
     template <class MapT> static void PerformTest(const std::string &filename, const MapT &map) noexcept(false);
-
-    // ------------------------------
-    // Private class methods
-    // ------------------------------
-
-    private:
-    static RecordsPack _readTestFile(std::string filename);
+    static RecordsPack readTestFile(std::string filename);
 };
 
 template <class MapT>
 void MapCorrectnessTester::PerformTest(const std::string &filename, const MapT &map) noexcept(false)
 {
-    auto [recordCount, fullMaps, figureMaps, correctMoves] = _readTestFile(filename);
+    auto [recordCount, fullMaps, figureMaps, correctMoves] = readTestFile(filename);
     uint64_t errorCount{};
     uint64_t moveCount{};
     uint64_t lastErrorMove{};

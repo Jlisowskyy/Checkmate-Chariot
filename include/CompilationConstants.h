@@ -9,6 +9,7 @@
 #include <numeric>
 #include <cmath>
 #include <cassert>
+#include <cstddef>
 
 // Defines simple interface to communicate with objects with SINGLETON pattern behavior.
 template<typename T>

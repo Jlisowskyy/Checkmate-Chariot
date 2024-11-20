@@ -99,6 +99,8 @@ struct PackedMove
 
     [[nodiscard]] std::string GetLongAlgebraicNotation() const;
 
+    [[nodiscard]] uint16_t DumpContent() const { return _packedMove; }
+
     // ------------------------------
     // Class fields
     // ------------------------------
@@ -335,6 +337,12 @@ class Move
 
         return arr;
     }
+
+    [[nodiscard]] uint16_t DumpEval() const { return _eval; }
+
+    [[nodiscard]] uint16_t DumpIndexes() const { return _packedIndexes; }
+
+    [[nodiscard]] uint16_t DumpMisc() const { return _packedMisc; }
 
     // ------------------------------
     // Private class methods
