@@ -8,6 +8,7 @@
 #include "../CompilationConstants.h"
 
 #include <type_traits>
+#include <algorithm>
 
 template <typename PointLimitT, typename ScoreDownCoefT, size_t Dim = 1, size_t ...Args>
 class StatTable
