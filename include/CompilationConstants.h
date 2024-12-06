@@ -41,7 +41,17 @@ using lli                  = long long int;
 static constexpr size_t MB = 1024 * 1024;
 
 // global defined Stack capacity used to store generated moves per thread
+
+#ifdef STACK_SIZE
+
+static constexpr size_t DEFAULT_STACK_SIZE = STACK_SIZE * MB / sizeof(uint64_t);
+
+#else
+
 static constexpr size_t DEFAULT_STACK_SIZE = 32 * MB / sizeof(uint64_t);
+
+#endif
+
 
 /* Defines maximal depth of search allowed across the project */
 static constexpr int MAX_SEARCH_DEPTH = 128;
