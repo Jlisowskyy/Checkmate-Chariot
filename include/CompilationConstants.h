@@ -42,9 +42,9 @@ static constexpr size_t MB = 1024 * 1024;
 
 // global defined Stack capacity used to store generated moves per thread
 
-#ifdef STACK_SIZE
+#ifdef STACK_SIZE_MOVES
 
-static constexpr size_t DEFAULT_STACK_SIZE = STACK_SIZE * MB / sizeof(uint64_t);
+static constexpr size_t DEFAULT_STACK_SIZE = STACK_SIZE_MOVES * MB / sizeof(uint64_t);
 
 #else
 
