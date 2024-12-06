@@ -130,7 +130,7 @@ DECLARE_TUNABLE_PARAM(int, LMR_MIN_DEPTH, 3 * FULL_DEPTH_FACTOR::Get());
 // limits maximal extensions inside the search tree to not overdo
 constexpr bool ShouldExtend(const int ply, const int rootDepth) { return ply < 2 * rootDepth; }
 
-int CalcReductions(const int depth, const int moveCount, const int scoreDelta)
+inline INLINE int CalcReductions(const int depth, const int moveCount, const int scoreDelta)
 {
     constexpr double SCALE_COEF = 400;
 

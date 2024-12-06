@@ -144,7 +144,7 @@ void *AlignedAlloc(const size_t alignment, const size_t size)
     return std::aligned_alloc(alignment, size);
 #endif
 }
-void AlignedFree(void *ptr)
+void AlignedFree(void *ptr) {
  
 #ifdef _MSC_VER 
     _aligned_free(ptr);
