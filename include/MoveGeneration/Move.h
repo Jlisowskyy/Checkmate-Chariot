@@ -144,7 +144,7 @@ struct VolatileBoardData
     const uint64_t OldElPassant;
 };
 
-class Move
+class alignas(16) Move
 {
     public:
     // ------------------------------

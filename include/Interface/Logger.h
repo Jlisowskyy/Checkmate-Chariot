@@ -95,7 +95,8 @@ class [[maybe_unused]] Logger
     {
         public:
         TraceC(Logger &logger) : logger(logger) {}
-        template <Streamable T> TraceC &INLINE operator<<(const T &logMessage)
+        template <Streamable T> 
+        INLINE TraceC &operator<<(const T &logMessage)
         {
             logger.Trace(logMessage);
             return *this;
