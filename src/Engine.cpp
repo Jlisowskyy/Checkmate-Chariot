@@ -11,6 +11,8 @@
 #include "../include/ThreadManagement/GameTimeManager.h"
 #include "../include/Interface/FenTranslator.h"
 
+#include <memory>
+
 std::string Engine::_debugEnginePath = Engine::_defaultBookPath;
 
 void Engine::WriteBoard() const { DisplayBoard(_board); }
@@ -190,8 +192,8 @@ void Engine::PonderHit()
 
 int Engine::GetQuiesceEval()
 {
-    BestMoveSearch searcher{_board, TManager.GetDefaultStack()};
-    return searcher.QuiesceEval() * SCORE_GRAIN;
+    auto searcher = std::make_shared<BestMoveSearch>(_board, TManager.GetDefaultStack());
+    return searcher->QuiesceEval() * SCORE_GRAIN;
 }
 
 int Engine::GetEvalPrinted()

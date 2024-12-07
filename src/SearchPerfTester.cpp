@@ -59,11 +59,11 @@ SearchPerfTester::_performTestCase(const std::string &testCase, const int depth,
 {
     Board bd;
     FenTranslator::Translate(testCase, bd);
-    BestMoveSearch searcher(bd, stack);
+    auto searcher = std::make_shared<BestMoveSearch>(bd, stack);
 
     const auto tStart = std::chrono::steady_clock::now();
     if (depth > 0)
-        searcher.IterativeDeepening(nullptr, nullptr, depth);
+        searcher->IterativeDeepening(nullptr, nullptr, depth);
     else
     {
         const int eval = BoardEvaluator::DefaultFullEvalFunction(bd, bd.MovingColor);
@@ -74,8 +74,8 @@ SearchPerfTester::_performTestCase(const std::string &testCase, const int depth,
     // cleaning up after test
     TTable.ClearTable();
 
-    searcher.CollectedData.FinishCollecting<false>();
-    return {(double)std::chrono::duration_cast<std::chrono::milliseconds>(tStop - tStart).count(), searcher.CollectedData.averageCuttOffIndex};
+    searcher->CollectedData.FinishCollecting<false>();
+    return {(double)std::chrono::duration_cast<std::chrono::milliseconds>(tStop - tStart).count(), searcher->CollectedData.averageCuttOffIndex};
 }
 
 void SearchPerfTester::_saveResultsToCsv(

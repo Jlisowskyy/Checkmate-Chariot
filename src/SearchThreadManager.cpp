@@ -75,8 +75,8 @@ void SearchThreadManager::GoWoutThread(const Board &bd, const GoInfo &info)
     PackedMove output{};
     PackedMove ponder{};
 
-    BestMoveSearch searcher{bd, s};
-    searcher.IterativeDeepening(&output, &ponder, info.depth);
+    auto searcher = std::make_shared<BestMoveSearch>(bd, s);
+    searcher->IterativeDeepening(&output, &ponder, info.depth);
 
     GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
                            << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))
@@ -119,8 +119,9 @@ void SearchThreadManager::_passiveThreadSearchJob(
 
         // run search
         try{
-            BestMoveSearch searcher{bd, *s};
-            searcher.IterativeDeepening(&output, &ponder, depth);
+            auto searcher = std::make_shared<BestMoveSearch>(bd, *s);
+
+            searcher->IterativeDeepening(&output, &ponder, depth);
 
             GlobalLogger.LogStream << std::format("bestmove {}", output.GetLongAlgebraicNotation())
                                    << (ponder.IsEmpty() ? "" : std::format(" ponder {}", ponder.GetLongAlgebraicNotation()))

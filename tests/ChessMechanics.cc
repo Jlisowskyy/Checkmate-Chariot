@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <memory>
+
 #include "../include/MoveGeneration/MoveGenerator.h"
 #include "../include/Search/BestMoveSearch.h"
 #include "../include/TestsAndDebugging/DebugTools.h"
@@ -59,9 +61,9 @@ TEST(ChessMechTests, ThreeFoldRepetition)
     EXPECT_EQ(counter(bd.Repetitions), 8);
 
     Stack<Move, DEFAULT_STACK_SIZE> s;
-    BestMoveSearch searcher{bd, s};
+    auto searcher = std::make_shared<BestMoveSearch>(bd, s);
 
-    EXPECT_EQ(searcher.IterativeDeepening(nullptr, nullptr, 5, false), 0);
+    EXPECT_EQ(searcher->IterativeDeepening(nullptr, nullptr, 5, false), 0);
 }
 
 TEST(ChessMechTests, SEE1)
