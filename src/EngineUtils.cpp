@@ -138,7 +138,7 @@ std::string ConvertToStrPos(const int boardPosMsb)
 std::string ConvertToStrPos(const uint64_t boardMap) { return ConvertToStrPos(ExtractMsbPos(boardMap)); }
 void *AlignedAlloc(const size_t alignment, const size_t size)
 {
-#ifdef _MSC_VER 
+#if defined(_MSC_VER) || defined(__WIN32__) || defined(__MINGW32__) || defined(__MINGW64__) || defined(_WIN32)
     return _aligned_malloc(size, alignment);
 #else
     return std::aligned_alloc(alignment, size);
@@ -146,7 +146,7 @@ void *AlignedAlloc(const size_t alignment, const size_t size)
 }
 void AlignedFree(void *ptr) {
  
-#ifdef _MSC_VER 
+#if defined(_MSC_VER) || defined(__WIN32__) || defined(__MINGW32__) || defined(__MINGW64__) || defined(_WIN32)
     _aligned_free(ptr);
 #else
     std::free(ptr);
