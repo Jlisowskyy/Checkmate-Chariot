@@ -80,7 +80,6 @@ struct GlobalParametersList : GlobalSingletonWrapper<GlobalParametersList>{
         if (!IsInited())
             InitInstance(new GlobalParametersList());
     }
-    static bool IsInited() { return _instance != nullptr; }
 
 private:
     GlobalParametersList() = default;

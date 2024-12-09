@@ -14,31 +14,35 @@
 
 // Defines simple interface to communicate with objects with SINGLETON pattern behavior.
 template<typename T>
-struct GlobalSingletonWrapper{
-    ~GlobalSingletonWrapper(){
+struct GlobalSingletonWrapper {
+    ~GlobalSingletonWrapper() {
         delete _instance;
     }
 
     // Access the instance, NOTE: _instance needs to be initialized before usage
-    static T& GetInstance(){
+    static T &GetInstance() {
         assert(_instance != nullptr && "Not inited Singleton instance!");
         return *_instance;
     }
 
+    static bool IsInited() { return _instance != nullptr; }
+
 protected:
     // Note: Should be used in some deriving class init api.
-    static void InitInstance(T* readyInstance)
-    {
+    static void InitInstance(T *readyInstance) {
         _instance = readyInstance;
     }
 
     // Note: protected constructor -> class is not able to instantiate outside of child private methods
     GlobalSingletonWrapper() = default;
 
-    static T* _instance;
+    static T *_instance;
 };
 
-using lli                  = long long int;
+template<typename T>
+T *GlobalSingletonWrapper<T>::_instance = nullptr;
+
+using lli = long long int;
 static constexpr size_t MB = 1024 * 1024;
 
 // global defined Stack capacity used to store generated moves per thread
@@ -62,21 +66,21 @@ static constexpr int SCORE_GRAIN = 4;
 
 static constexpr uint64_t MSEC_TO_NSEC = 1000 * 1000;
 
-static constexpr int16_t DRAW_SCORE         = 0;
+static constexpr int16_t DRAW_SCORE = 0;
 static constexpr int16_t SPECIAL_DRAW_SCORE = 0;
 
 static constexpr size_t MAX_MOVES = 256;
 static constexpr size_t MAX_QUIET_MOVES = 128;
 
 // -------------------- RESERVED VALUES -------------------------------
-static constexpr int RESERVED_SCORE_VALUES           = 64;
-static constexpr int TIME_STOP_RESERVED_VALUE        = std::numeric_limits<int16_t>::max() - 1;
-static constexpr int NO_EVAL_RESERVED_VALUE          = std::numeric_limits<int16_t>::max() - 2;
-static constexpr int EVAL_DRAW_RESERVED_VALUE        = std::numeric_limits<int16_t>::max() - 3;
-static constexpr int NEGATIVE_INFINITY               = std::numeric_limits<int16_t>::min() + RESERVED_SCORE_VALUES + 1;
-static constexpr int POSITIVE_INFINITY               = std::numeric_limits<int16_t>::max() - RESERVED_SCORE_VALUES;
-static constexpr int BEST_MATE_VALUE                 = NEGATIVE_INFINITY + MAX_SEARCH_DEPTH;
-static constexpr int BEST_MATE_VALUE_ABS             = -(BEST_MATE_VALUE);
+static constexpr int RESERVED_SCORE_VALUES = 64;
+static constexpr int TIME_STOP_RESERVED_VALUE = std::numeric_limits<int16_t>::max() - 1;
+static constexpr int NO_EVAL_RESERVED_VALUE = std::numeric_limits<int16_t>::max() - 2;
+static constexpr int EVAL_DRAW_RESERVED_VALUE = std::numeric_limits<int16_t>::max() - 3;
+static constexpr int NEGATIVE_INFINITY = std::numeric_limits<int16_t>::min() + RESERVED_SCORE_VALUES + 1;
+static constexpr int POSITIVE_INFINITY = std::numeric_limits<int16_t>::max() - RESERVED_SCORE_VALUES;
+static constexpr int BEST_MATE_VALUE = NEGATIVE_INFINITY + MAX_SEARCH_DEPTH;
+static constexpr int BEST_MATE_VALUE_ABS = -(BEST_MATE_VALUE);
 
 /*
  * Three types of nodes that we can find during the search.
@@ -84,8 +88,7 @@ static constexpr int BEST_MATE_VALUE_ABS             = -(BEST_MATE_VALUE);
  * https://www.chessprogramming.org/Node_Types
  * */
 
-enum NodeType : uint8_t
-{
+enum NodeType : uint8_t {
     PV_NODE,
     LOWER_BOUND,
     UPPER_BOUND
