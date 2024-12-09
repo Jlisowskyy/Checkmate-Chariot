@@ -4,8 +4,6 @@
 
 #include "../include/TunableParameters.h"
 
-template<> GlobalParametersList* GlobalSingletonWrapper<GlobalParametersList>::_instance = nullptr;
-
 DEFINE_TUNABLE_PARAM(int, FULL_DEPTH_FACTOR, 4);
 DEFINE_TUNABLE_PARAM(int, CHECK_EXTENSION_PV_NODE, FULL_DEPTH_FACTOR::Get());
 DEFINE_TUNABLE_PARAM(int, CHECK_EXTENSION, FULL_DEPTH_FACTOR::Get() / 2);
